@@ -113,6 +113,35 @@ bash install.sh --help
 
 ---
 
+## Upstream Contribution Policy
+
+**NEVER push to upstream** — only pull from it.
+
+**Git workflow:**
+```
+upstream (Dicklesworthstone) ──fetch/pull──> local ──push──> origin (joyshmitz)
+```
+
+- `origin` = `github.com/joyshmitz/agentic_coding_flywheel_setup` (push here)
+- `upstream` = `github.com/Dicklesworthstone/agentic_coding_flywheel_setup` (pull only)
+
+**Sync command:**
+```bash
+git fetch upstream && git merge upstream/main
+git push origin <branch>   # push to fork only
+```
+
+**Facts (from README "About Contributions"):**
+- Author explicitly states: "I do not accept outside contributions for any of my projects"
+- PRs will NOT be merged directly
+- PR #1 was closed without merge (2025-12-21)
+
+**What to do instead:**
+- Submit **issues** for bugs, suggestions, questions
+- Keep all work in fork, never create PRs to upstream
+
+---
+
 ## Red Flags
 
 - Never modify manifest without understanding downstream effects
