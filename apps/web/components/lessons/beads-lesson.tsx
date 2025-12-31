@@ -25,55 +25,54 @@ import {
   FeatureCard,
   FeatureGrid,
 } from "./lesson-components";
+import { T } from "@/components/translatable-text";
 
 export function BeadsLesson() {
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Track issues with dependencies and let graph analysis guide your work.
+        <T>Track issues with dependencies and let graph analysis guide your work.</T>
       </GoalBanner>
 
       {/* What Is Beads */}
       <Section
-        title="What Is Beads?"
+        title={<T>What Is Beads?</T>}
         icon={<ListTodo className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>Beads</Highlight> is a graph-aware issue tracking system
-          designed for agent workflows. It tracks dependencies between tasks
-          and uses graph algorithms to tell you what to work on next.
+          <Highlight>Beads</Highlight>{" "}
+          <T>is a graph-aware issue tracking system designed for agent workflows. It tracks dependencies between tasks and uses graph algorithms to tell you what to work on next.</T>
         </Paragraph>
         <Paragraph>
-          <Highlight>BV (Beads Viewer)</Highlight> is the TUI and CLI for
-          working with Beads. It provides both interactive views and
-          machine-readable outputs for agents.
+          <Highlight>BV (Beads Viewer)</Highlight>{" "}
+          <T>is the TUI and CLI for working with Beads. It provides both interactive views and machine-readable outputs for agents.</T>
         </Paragraph>
 
         <div className="mt-8">
           <FeatureGrid>
             <FeatureCard
               icon={<GitBranch className="h-5 w-5" />}
-              title="Dependency Tracking"
-              description="Issues can block other issues"
+              title={<T>Dependency Tracking</T>}
+              description={<T>Issues can block other issues</T>}
               gradient="from-primary/20 to-violet-500/20"
             />
             <FeatureCard
               icon={<BarChart className="h-5 w-5" />}
-              title="Graph Metrics"
+              title={<T>Graph Metrics</T>}
               description="PageRank, betweenness, critical path"
               gradient="from-emerald-500/20 to-teal-500/20"
             />
             <FeatureCard
               icon={<Target className="h-5 w-5" />}
-              title="Smart Triage"
-              description="Know what to work on next"
+              title={<T>Smart Triage</T>}
+              description={<T>Know what to work on next</T>}
               gradient="from-amber-500/20 to-orange-500/20"
             />
             <FeatureCard
               icon={<Network className="h-5 w-5" />}
-              title="Git Integration"
-              description="All data lives in .beads/"
+              title={<T>Git Integration</T>}
+              description={<T>All data lives in .beads/</T>}
               gradient="from-blue-500/20 to-indigo-500/20"
             />
           </FeatureGrid>
@@ -84,12 +83,12 @@ export function BeadsLesson() {
 
       {/* Core Commands */}
       <Section
-        title="Core bd Commands"
+        title={<T>Core bd Commands</T>}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          <code>bd</code> is the CLI for managing Beads issues:
+          <code>bd</code> <T>is the CLI for managing Beads issues:</T>
         </Paragraph>
 
         <div className="mt-6">
@@ -128,14 +127,15 @@ export function BeadsLesson() {
                 description: "Sync with git remote",
               },
             ]}
-          />
+            />
         </div>
 
         <div className="mt-6">
           <TipBox variant="warning">
-            <strong>Important:</strong> Never run bare <code>bv</code>—it
-            launches a TUI. Use <code>bv --robot-*</code> flags for agent
-            output.
+            <strong><T>Important:</T></strong>{" "}
+            <T>Never run bare</T> <code>bv</code>—
+            <T>it launches a TUI. Use</T> <code>bv --robot-*</code>{" "}
+            <T>flags for agent output.</T>
           </TipBox>
         </div>
       </Section>
@@ -144,12 +144,12 @@ export function BeadsLesson() {
 
       {/* BV Robot Commands */}
       <Section
-        title="BV Robot Commands"
+        title={<T>BV Robot Commands</T>}
         icon={<Zap className="h-5 w-5" />}
         delay={0.2}
       >
         <Paragraph>
-          BV provides machine-readable outputs with precomputed graph metrics:
+          <T>BV provides machine-readable outputs with precomputed graph metrics:</T>
         </Paragraph>
 
         <div className="mt-6 space-y-6">
@@ -184,7 +184,7 @@ export function BeadsLesson() {
 
       {/* Issue Types & Priorities */}
       <Section
-        title="Issue Types & Priorities"
+        title={<T>Issue Types & Priorities</T>}
         icon={<ListTodo className="h-5 w-5" />}
         delay={0.25}
       >
@@ -219,7 +219,7 @@ export function BeadsLesson() {
 
       {/* The Agent Workflow */}
       <Section
-        title="The Agent Workflow"
+        title={<T>The Agent Workflow</T>}
         icon={<Workflow className="h-5 w-5" />}
         delay={0.3}
       >
@@ -230,12 +230,12 @@ export function BeadsLesson() {
 
       {/* Understanding Graph Metrics */}
       <Section
-        title="Understanding Graph Metrics"
+        title={<T>Understanding Graph Metrics</T>}
         icon={<BarChart className="h-5 w-5" />}
         delay={0.35}
       >
         <Paragraph>
-          BV calculates graph metrics to help prioritize work:
+          <T>BV calculates graph metrics to help prioritize work:</T>
         </Paragraph>
 
         <div className="mt-6 space-y-4">
@@ -266,7 +266,7 @@ export function BeadsLesson() {
 
       {/* Best Practices */}
       <Section
-        title="Best Practices"
+        title={<T>Best Practices</T>}
         icon={<CheckCircle className="h-5 w-5" />}
         delay={0.4}
       >
@@ -305,7 +305,7 @@ export function BeadsLesson() {
 
       {/* Try It Now */}
       <Section
-        title="Try It Now"
+        title={<T>Try It Now</T>}
         icon={<Play className="h-5 w-5" />}
         delay={0.45}
       >

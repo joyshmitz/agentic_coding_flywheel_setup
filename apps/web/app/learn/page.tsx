@@ -30,6 +30,7 @@ import {
 import { springs } from "@/lib/design-tokens";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import { sendEvent, initLessonFunnel, getLessonFunnelData } from "@/lib/analytics";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 type LessonStatus = "completed" | "current" | "locked";
 
@@ -266,6 +267,7 @@ export default function LearnDashboard() {
           </Link>
 
           <div className="flex items-center gap-3 sm:gap-4">
+            <LanguageSwitcher />
             <span className="hidden text-xs text-muted-foreground/60 lg:block">
               <kbd className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px]">j</kbd>
               /

@@ -5,6 +5,7 @@ import { QueryProvider } from "@/components/query-provider";
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { ThirdPartyScripts } from "@/components/third-party-scripts";
 import { MotionProvider } from "@/components/motion/motion-provider";
+import { LocaleProvider } from "@/lib/i18n";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -84,9 +85,11 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <ThirdPartyScripts />
           <QueryProvider>
-            <MotionProvider>
-              <AnalyticsProvider>{children}</AnalyticsProvider>
-            </MotionProvider>
+            <LocaleProvider>
+              <MotionProvider>
+                <AnalyticsProvider>{children}</AnalyticsProvider>
+              </MotionProvider>
+            </LocaleProvider>
           </QueryProvider>
         </Suspense>
       </body>

@@ -1,0 +1,295 @@
+/**
+ * Commands Data - Ukrainian
+ *
+ * Ukrainian translations for command categories and descriptions.
+ * Technical command names stay in English.
+ */
+
+import type { CommandCategory, CommandRef } from "./commands";
+
+export const COMMAND_CATEGORIES_UK: Array<{
+  id: CommandCategory;
+  label: string;
+  description: string;
+}> = [
+  {
+    id: "agents",
+    label: "Агенти",
+    description: "AI асистенти для кодування, встановлені ACFS",
+  },
+  {
+    id: "search",
+    label: "Пошук",
+    description: "Швидкий пошук файлів та патернів",
+  },
+  {
+    id: "git",
+    label: "Git",
+    description: "Інструменти контролю версій",
+  },
+  {
+    id: "system",
+    label: "Система",
+    description: "Shell, термінал та зручні інструменти",
+  },
+  {
+    id: "stack",
+    label: "Stack",
+    description: "Інструменти Dicklesworthstone для агентних воркфлоу",
+  },
+  {
+    id: "languages",
+    label: "Мови",
+    description: "Рантайми та пакетні менеджери",
+  },
+  {
+    id: "cloud",
+    label: "Cloud",
+    description: "CLI для хмари та баз даних",
+  },
+];
+
+export const COMMANDS_UK: CommandRef[] = [
+  {
+    name: "cc",
+    fullName: "Claude Code",
+    description: "Агент Anthropic для кодування (аліас для claude).",
+    category: "agents",
+    example: 'cc "fix the auth bug in auth.ts"',
+    aliases: ["claude"],
+    docsUrl: "/learn/agent-commands",
+  },
+  {
+    name: "cod",
+    fullName: "Codex CLI",
+    description: "Агент OpenAI для кодування (аліас для codex).",
+    category: "agents",
+    example: 'cod "add tests for utils.ts"',
+    aliases: ["codex"],
+    docsUrl: "/learn/agent-commands",
+  },
+  {
+    name: "gmi",
+    fullName: "Gemini CLI",
+    description: "Агент Google для кодування (аліас для gemini).",
+    category: "agents",
+    example: 'gmi "review this PR"',
+    aliases: ["gemini"],
+    docsUrl: "/learn/agent-commands",
+  },
+  {
+    name: "rg",
+    fullName: "ripgrep",
+    description: "Надшвидкий пошук по коду.",
+    category: "search",
+    example: 'rg "TODO" ./apps',
+    aliases: ["grep"],
+  },
+  {
+    name: "fd",
+    fullName: "fd-find",
+    description: "Швидкий пошук файлів.",
+    category: "search",
+    example: 'fd "*.ts"',
+    aliases: ["find", "fdfind"],
+  },
+  {
+    name: "fzf",
+    fullName: "Fuzzy Finder",
+    description: "Інтерактивний нечіткий пошук файлів та команд.",
+    category: "search",
+    example: "fzf",
+  },
+  {
+    name: "sg",
+    fullName: "ast-grep",
+    description: "Структурний пошук та заміна коду.",
+    category: "search",
+    example: 'sg -p "foo($A)" -r "bar($A)"',
+  },
+  {
+    name: "git",
+    fullName: "Git",
+    description: "Система контролю версій.",
+    category: "git",
+    example: "git status",
+  },
+  {
+    name: "lazygit",
+    fullName: "LazyGit",
+    description: "Термінальний UI для Git.",
+    category: "git",
+    example: "lazygit",
+    aliases: ["lg"],
+  },
+  {
+    name: "ntm",
+    fullName: "Named Tmux Manager",
+    description: "Менеджер сесій для агентів та воркфлоу.",
+    category: "system",
+    example: "ntm new acfs",
+  },
+  {
+    name: "tmux",
+    fullName: "tmux",
+    description: "Термінальний мультиплексор.",
+    category: "system",
+    example: "tmux new -s work",
+  },
+  {
+    name: "lsd",
+    fullName: "LSDeluxe",
+    description: "Сучасна заміна ls (fallback eza).",
+    category: "system",
+    example: "lsd -la",
+    aliases: ["eza", "ls"],
+  },
+  {
+    name: "bat",
+    fullName: "bat",
+    description: "Cat з підсвіткою синтаксису.",
+    category: "system",
+    example: "bat README.md",
+    aliases: ["cat", "batcat"],
+  },
+  {
+    name: "zoxide",
+    fullName: "zoxide",
+    description: "Розумна заміна cd.",
+    category: "system",
+    example: "z project",
+  },
+  {
+    name: "atuin",
+    fullName: "atuin",
+    description: "Синхронізація історії shell з потужним пошуком.",
+    category: "system",
+    example: "atuin search ssh",
+  },
+  {
+    name: "direnv",
+    fullName: "direnv",
+    description: "Змінні середовища для директорій.",
+    category: "system",
+    example: "direnv allow",
+  },
+  {
+    name: "bd",
+    fullName: "Beads CLI",
+    description: "Управління графом задач.",
+    category: "stack",
+    example: "bd ready",
+  },
+  {
+    name: "bv",
+    fullName: "Beads Viewer",
+    description: "Переглядач issues та воркфлоу (--robot-* флаги).",
+    category: "stack",
+    example: "bv --robot-triage",
+  },
+  {
+    name: "ubs",
+    fullName: "Ultimate Bug Scanner",
+    description: "Статичний аналіз з guardrails.",
+    category: "stack",
+    example: "ubs .",
+  },
+  {
+    name: "cass",
+    fullName: "CASS",
+    description: "Пошук по сесіях агентів.",
+    category: "stack",
+    example: "cass health",
+  },
+  {
+    name: "cm",
+    fullName: "CASS Memory",
+    description: "Процедурна пам'ять для агентних воркфлоу.",
+    category: "stack",
+    example: 'cm context "auth flow"',
+  },
+  {
+    name: "caam",
+    fullName: "CAAM",
+    description: "Менеджер акаунтів агентів.",
+    category: "stack",
+    example: "caam status",
+  },
+  {
+    name: "slb",
+    fullName: "Simultaneous Launch Button",
+    description: "Правило двох осіб для небезпечних команд.",
+    category: "stack",
+    example: "slb",
+  },
+  {
+    name: "am",
+    fullName: "Agent Mail",
+    description: "Координація та обмін повідомленнями між агентами.",
+    category: "stack",
+    example: "am status",
+  },
+  {
+    name: "bun",
+    fullName: "Bun",
+    description: "JS/TS рантайм та пакетний менеджер.",
+    category: "languages",
+    example: "bun install",
+  },
+  {
+    name: "uv",
+    fullName: "uv",
+    description: "Швидкий пакетний менеджер Python.",
+    category: "languages",
+    example: "uv venv",
+  },
+  {
+    name: "cargo",
+    fullName: "Rust Cargo",
+    description: "Пакетний менеджер Rust.",
+    category: "languages",
+    example: "cargo build",
+  },
+  {
+    name: "go",
+    fullName: "Go",
+    description: "Go toolchain.",
+    category: "languages",
+    example: "go test ./...",
+  },
+  {
+    name: "wrangler",
+    fullName: "Wrangler",
+    description: "CLI для Cloudflare.",
+    category: "cloud",
+    example: "wrangler whoami",
+  },
+  {
+    name: "supabase",
+    fullName: "Supabase CLI",
+    description: "Інструменти управління Supabase.",
+    category: "cloud",
+    example: "supabase status",
+  },
+  {
+    name: "vercel",
+    fullName: "Vercel CLI",
+    description: "Інструменти деплою Vercel.",
+    category: "cloud",
+    example: "vercel whoami",
+  },
+  {
+    name: "psql",
+    fullName: "PostgreSQL Client",
+    description: "Підключення до баз даних PostgreSQL.",
+    category: "cloud",
+    example: "psql -h localhost -U postgres",
+  },
+  {
+    name: "vault",
+    fullName: "Vault CLI",
+    description: "Менеджер секретів HashiCorp Vault.",
+    category: "cloud",
+    example: "vault status",
+  },
+];

@@ -38,6 +38,7 @@ import {
   FinalCelebrationModal,
 } from "@/components/learn/confetti-celebration";
 import { useLessonAnalytics } from "@/lib/hooks/useLessonAnalytics";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 interface Props {
   lesson: Lesson;
@@ -450,6 +451,7 @@ export function LessonContent({ lesson }: Props) {
                   <span className="text-sm font-medium">Back</span>
                 </Link>
                 <div className="flex items-center gap-3">
+                  <LanguageSwitcher />
                   <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/[0.05] border border-white/[0.08]">
                     <span className="text-sm font-bold text-primary tabular-nums">{lesson.id + 1}</span>
                     <span className="text-white/30">/</span>

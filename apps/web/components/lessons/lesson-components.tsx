@@ -17,7 +17,7 @@ import {
 // SECTION COMPONENT - Beautiful section dividers with gradient headers
 // =============================================================================
 interface SectionProps {
-  title: string;
+  title: ReactNode;
   icon?: ReactNode;
   children: ReactNode;
   delay?: number;
@@ -186,8 +186,8 @@ export function InlineCode({ children }: { children: ReactNode }) {
 // =============================================================================
 interface FeatureCardProps {
   icon: ReactNode;
-  title: string;
-  description: string;
+  title: ReactNode;
+  description: ReactNode;
   gradient?: string;
 }
 
