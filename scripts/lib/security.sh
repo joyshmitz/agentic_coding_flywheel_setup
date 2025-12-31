@@ -24,12 +24,19 @@ fi
 # Check if running in interactive mode
 # Returns 0 if interactive, 1 if non-interactive
 _acfs_is_interactive() {
-    [[ "${ACFS_INTERACTIVE:-true}" == "true" ]] && [[ -t 0 ]]
+    [[ "${ACFS_INTERACTIVE:-true}" == "true" ]] || return 1
+
+    # Prefer /dev/tty so curl|bash (stdin is a pipe) can still prompt safely.
+    if [[ -e /dev/tty ]] && (exec 3<>/dev/tty) 2>/dev/null; then
+        return 0
+    fi
+
+    [[ -t 0 ]]
 }
 
 # curl defaults: enforce HTTPS (including redirects) when supported
 ACFS_CURL_BASE_ARGS=(-fsSL)
-if curl --help all 2>/dev/null | grep -q -- '--proto'; then
+if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
     ACFS_CURL_BASE_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
 fi
 
@@ -254,7 +261,10 @@ verify_checksum() {
         echo -e "  Actual:   $actual_sha256" >&2
         echo -e "  URL: $url" >&2
         echo -e "  Refusing to execute unverified installer script." >&2
-        echo -e "  Fix: update checksums.yaml (./scripts/lib/security.sh --update-checksums > checksums.yaml)" >&2
+        echo -e "  Fix:" >&2
+        echo -e "    - End users: update ACFS to refresh checksums.yaml (re-run install.sh / update scripts)" >&2
+        echo -e "    - Maintainers: regenerate checksums.yaml with:" >&2
+        echo -e "        ./scripts/lib/security.sh --update-checksums > checksums.yaml" >&2
         return 1
     fi
 
@@ -279,7 +289,10 @@ fetch_and_run() {
         echo -e "${RED}Security Error:${NC} Missing checksum for $name" >&2
         echo -e "  URL: $url" >&2
         echo -e "  Refusing to execute unverified installer script." >&2
-        echo -e "  Fix: update checksums.yaml (./scripts/lib/security.sh --update-checksums > checksums.yaml)" >&2
+        echo -e "  Fix:" >&2
+        echo -e "    - End users: update ACFS to refresh checksums.yaml (re-run install.sh / update scripts)" >&2
+        echo -e "    - Maintainers: regenerate checksums.yaml with:" >&2
+        echo -e "        ./scripts/lib/security.sh --update-checksums > checksums.yaml" >&2
         return 1
     fi
 
@@ -663,9 +676,10 @@ handle_all_checksum_mismatches() {
     echo "" >&2
 
     if [[ "$has_critical" == "true" ]]; then
-        echo -e "${RED}WARNING: ${#critical_tools[@]} CRITICAL tool(s) affected.${NC}" >&2
-        echo "Skipping critical tools may break the installation." >&2
-        echo "" >&2
+        echo -e "${RED}ABORTING: ${#critical_tools[@]} CRITICAL tool(s) have checksum mismatches.${NC}" >&2
+        echo "ACFS will not run unverified CRITICAL installers." >&2
+        echo "Fix: update ACFS/checksums.yaml (or pin ACFS_REF to a known-good version) and re-run." >&2
+        return 1
     fi
 
     echo "Options:" >&2
@@ -674,18 +688,22 @@ handle_all_checksum_mismatches() {
     echo "" >&2
 
     local choice
-    read -r -p "Choice [s/A]: " choice < /dev/tty
+    if [[ -t 0 ]]; then
+        read -r -p "Choice [s/A]: " choice
+    elif [[ -r /dev/tty ]]; then
+        read -r -p "Choice [s/A]: " choice < /dev/tty
+    else
+        choice=""
+    fi
 
     case "${choice,,}" in
         s|skip)
             # Add all mismatched tools to SKIPPED_TOOLS
             for entry in "${CHECKSUM_MISMATCHES[@]}"; do
-                IFS="|" read -r tool _ _ _ <<< "$entry"
-                if declare -f handle_tool_failure &>/dev/null; then
-                    # Use tool classification logic
-                    handle_tool_failure "$tool" "Checksum mismatch (user chose to skip)" || return 1
+                IFS="|" read -r tool url _ _ <<< "$entry"
+                if declare -f record_skipped_tool &>/dev/null; then
+                    record_skipped_tool "$tool" "Checksum mismatch (user chose to skip)" "$url"
                 else
-                    # Fallback: just track skipped
                     SKIPPED_TOOLS+=("$tool")
                 fi
             done
@@ -733,8 +751,8 @@ _handle_mismatches_noninteractive() {
             critical_names+=("$tool")
         else
             echo -e "  ${YELLOW}[skipping]${NC} $tool - checksum mismatch" >&2
-            if declare -f handle_tool_failure &>/dev/null; then
-                handle_tool_failure "$tool" "Checksum mismatch (auto-skipped in non-interactive mode)"
+            if declare -f record_skipped_tool &>/dev/null; then
+                record_skipped_tool "$tool" "Checksum mismatch (auto-skipped in non-interactive mode)" "$url"
             else
                 SKIPPED_TOOLS+=("$tool")
             fi
@@ -817,8 +835,10 @@ handle_checksum_mismatch() {
             return 1  # Abort
         else
             echo -e "${YELLOW}Skipping $tool (checksum mismatch, non-interactive)${NC}" >&2
-            if declare -f handle_tool_failure &>/dev/null; then
-                handle_tool_failure "$tool" "Checksum mismatch (auto-skipped)"
+            if declare -f record_skipped_tool &>/dev/null; then
+                record_skipped_tool "$tool" "Checksum mismatch (auto-skipped)" "$url"
+            else
+                SKIPPED_TOOLS+=("$tool")
             fi
             return 0  # Skip
         fi
@@ -843,22 +863,33 @@ handle_checksum_mismatch() {
     echo "" >&2
     echo "This usually means the upstream script was updated." >&2
     echo "" >&2
+
+    if [[ "$is_critical" == "true" ]]; then
+        echo -e "${RED}ABORTING:${NC} $tool is CRITICAL and its installer checksum changed." >&2
+        echo "Update ACFS/checksums.yaml and re-run to proceed safely." >&2
+        return 1
+    fi
+
     echo "Options:" >&2
     echo "  [S] Skip this tool" >&2
     echo "  [A] Abort installation" >&2
     echo "" >&2
 
-    if [[ "$is_critical" == "true" ]]; then
-        echo -e "${RED}WARNING: Skipping a CRITICAL tool may break installation.${NC}" >&2
-    fi
-
     local choice
-    read -r -p "Choice [s/A]: " choice < /dev/tty
+    if [[ -t 0 ]]; then
+        read -r -p "Choice [s/A]: " choice
+    elif [[ -r /dev/tty ]]; then
+        read -r -p "Choice [s/A]: " choice < /dev/tty
+    else
+        choice=""
+    fi
 
     case "${choice,,}" in
         s|skip)
-            if declare -f handle_tool_failure &>/dev/null; then
-                handle_tool_failure "$tool" "Checksum mismatch (user chose to skip)"
+            if declare -f record_skipped_tool &>/dev/null; then
+                record_skipped_tool "$tool" "Checksum mismatch (user chose to skip)" "$url"
+            else
+                SKIPPED_TOOLS+=("$tool")
             fi
             return 0  # Skip
             ;;

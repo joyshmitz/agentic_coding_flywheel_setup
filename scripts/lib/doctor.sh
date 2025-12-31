@@ -160,10 +160,6 @@ resolve_session_lib() {
         echo "$SCRIPT_DIR/session.sh"
         return 0
     fi
-    if [[ -f "$SCRIPT_DIR/../scripts/lib/session.sh" ]]; then
-        echo "$SCRIPT_DIR/../scripts/lib/session.sh"
-        return 0
-    fi
     return 1
 }
 
@@ -572,6 +568,51 @@ check_optional_command() {
     fi
 }
 
+# Check NTM ↔ CASS compatibility.
+#
+# NTM v1.2.0 calls `cass robot search ...`, but modern CASS uses `cass search ... --robot`.
+# This can break `ntm send` when the CASS duplicate-check path is enabled.
+check_ntm_cass_compat() {
+    # Only relevant when both tools exist.
+    command -v ntm >/dev/null 2>&1 || return 0
+    command -v cass >/dev/null 2>&1 || return 0
+
+    local ntm_version_line=""
+    ntm_version_line="$(ntm --version 2>/dev/null | head -n 1 || true)"
+    [[ -z "$ntm_version_line" ]] && ntm_version_line="$(ntm version 2>/dev/null | head -n 1 || true)"
+
+    local ntm_semver=""
+    if [[ "$ntm_version_line" =~ ([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+        ntm_semver="${BASH_REMATCH[1]}"
+    fi
+
+    # Only flag the known-bad release; newer NTM releases should fix this.
+    [[ -n "$ntm_semver" ]] || return 0
+    [[ "$ntm_semver" == "1.2.0" ]] || return 0
+
+    local output=""
+    local status=0
+    output="$(cass robot --help 2>&1)" || status=$?
+
+    if (( status == 0 )); then
+        check "stack.ntm_cass_compat" "NTM↔CASS compatibility" "pass" "ok"
+        return 0
+    fi
+
+    if echo "$output" | grep -qiE "unrecognized subcommand|unknown subcommand|unknown command"; then
+        check "stack.ntm_cass_compat" "NTM↔CASS compatibility" "warn" \
+            "ntm send may fail (CASS has no 'robot' subcommand)" \
+            "Workarounds: ntm send <session> --no-cass-check --all \"...\"  OR  ntm --robot-send <session> --msg \"...\" --all"
+        return 0
+    fi
+
+    local first_line=""
+    first_line="$(printf '%s\n' "$output" | head -n 1)"
+    [[ -z "$first_line" ]] && first_line="cass robot --help failed"
+    check "stack.ntm_cass_compat" "NTM↔CASS compatibility" "warn" "could not verify ($first_line)" \
+        "Try: cass robot --help"
+}
+
 # Check identity
 check_identity() {
     section "Identity"
@@ -747,7 +788,7 @@ check_agent_path_conflicts() {
             # Package manager version - warn about potential conflicts
             check "agent.path.claude" "Claude Code path" "warn" \
                 "using bun/npm version ($claude_path)" \
-                "rm '$claude_path' to use native install"
+                "Switch to native: acfs update --force --agents-only (removes bun version, installs native)"
         fi
     else
         # Some other path - just note it
@@ -801,9 +842,9 @@ check_cloud() {
 
     check_optional_command "cloud.vault" "Vault" "vault"
     check_optional_command "cloud.postgres" "PostgreSQL" "psql"
-    check_optional_command "cloud.wrangler" "Wrangler" "wrangler" "bun install -g --trust wrangler"
-    check_optional_command "cloud.supabase" "Supabase CLI" "supabase" "bun install -g --trust supabase"
-    check_optional_command "cloud.vercel" "Vercel CLI" "vercel" "bun install -g --trust vercel"
+    check_optional_command "cloud.wrangler" "Wrangler" "wrangler" "bun install -g --trust wrangler@latest"
+    check_optional_command "cloud.supabase" "Supabase CLI" "supabase" "acfs update --cloud-only --force"
+    check_optional_command "cloud.vercel" "Vercel CLI" "vercel" "bun install -g --trust vercel@latest"
 
     # Tailscale VPN (bt5)
     if command -v tailscale &>/dev/null; then
@@ -837,7 +878,7 @@ check_cloud() {
         if [[ "$doctor_ci" == "true" ]]; then
             check "network.tailscale" "Tailscale (not installed)" "pass" "ok in CI"
         else
-            check "network.tailscale" "Tailscale" "warn" "not installed (optional)" "Install: curl -fsSL https://tailscale.com/install.sh | sh"
+            check "network.tailscale" "Tailscale" "warn" "not installed (optional)" "Install: curl --proto '=https' --proto-redir '=https' -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only network.tailscale"
         fi
     fi
 
@@ -850,9 +891,30 @@ check_stack() {
 
     check_command "stack.ntm" "NTM" "ntm"
     check_command "stack.slb" "SLB" "slb"
-    check_command "stack.ubs" "UBS" "ubs"
+
+    # UBS - custom check
+    if command -v ubs &>/dev/null; then
+        local version
+        version=$(get_version_line "ubs")
+        check "stack.ubs" "UBS ($version)" "pass" "installed"
+    else
+        check "stack.ubs" "UBS" "fail" "not found" \
+            "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh | bash"
+    fi
+
     check_command "stack.bv" "Beads Viewer" "bv"
-    check_command "stack.cass" "CASS" "cass"
+
+    # CASS - custom check
+    if command -v cass &>/dev/null; then
+        local version
+        version=$(get_version_line "cass")
+        check "stack.cass" "CASS ($version)" "pass" "installed"
+    else
+        check "stack.cass" "CASS" "fail" "not found" \
+            "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh | bash -s -- --easy-mode"
+    fi
+
+    check_ntm_cass_compat
     check_command "stack.cm" "CASS Memory" "cm"
     check_command "stack.caam" "CAAM" "caam"
 
@@ -1009,6 +1071,9 @@ run_deep_checks() {
     # Cloud CLI checks
     deep_check_cloud
 
+    # tmux responsiveness checks (GitHub issue #20: NTM timeouts / slow tmux)
+    deep_check_tmux_performance
+
     # Calculate deep check specific counts
     DEEP_PASS_COUNT=$((PASS_COUNT - pre_pass))
     DEEP_WARN_COUNT=$((WARN_COUNT - pre_warn))
@@ -1060,13 +1125,13 @@ deep_check_agent_auth() {
 check_claude_auth() {
     # Skip if not installed
     if ! command -v claude &>/dev/null; then
-        check "deep.agent.claude_auth" "Claude Code" "warn" "not installed" "curl -fsSL https://claude.ai/install.sh | bash"
+        check "deep.agent.claude_auth" "Claude Code" "warn" "not installed" "acfs update --force --agents-only"
         return
     fi
 
     # Check if binary works
     if ! claude --version &>/dev/null; then
-        check "deep.agent.claude_auth" "Claude Code auth" "fail" "binary error" "Reinstall: curl -fsSL https://claude.ai/install.sh | bash"
+        check "deep.agent.claude_auth" "Claude Code auth" "fail" "binary error" "Reinstall: acfs update --force --agents-only"
         return
     fi
 
@@ -1266,6 +1331,75 @@ deep_check_cloud() {
     check_vercel_auth
 }
 
+# Deep check: tmux responsiveness
+# Related: GitHub issue #20 (NTM: "context deadline exceeded")
+deep_check_tmux_performance() {
+    if ! command -v tmux &>/dev/null; then
+        check "deep.tmux.present" "tmux responsiveness" "warn" "tmux not installed" "sudo apt install tmux"
+        return
+    fi
+
+    local timeout_secs=5
+    local warn_threshold_ms=1000
+    local hint="If NTM shows 'context deadline exceeded', tmux may be slow. Try running NTM outside of tmux (fresh SSH session). Diagnose with: time tmux list-sessions; time tmux list-panes -a; ls -la /tmp/tmux-*."
+    if [[ -n "${TMUX:-}" ]]; then
+        hint="You are currently inside tmux. If NTM is timing out, try running it outside tmux (new SSH session). Diagnose with: time tmux list-sessions; time tmux list-panes -a; ls -la /tmp/tmux-*."
+    fi
+
+    _deep_check_tmux_cmd() {
+        local id="$1"
+        local label="$2"
+        shift 2
+
+        local start_ns end_ns elapsed_ms
+        start_ns=$(date +%s%N 2>/dev/null || echo "")
+
+        local output status
+        output=$(run_with_timeout "$timeout_secs" "$label" "$@")
+        status=$?
+
+        end_ns=$(date +%s%N 2>/dev/null || echo "")
+        if [[ "$start_ns" =~ ^[0-9]+$ ]] && [[ "$end_ns" =~ ^[0-9]+$ ]]; then
+            elapsed_ms=$(((end_ns - start_ns) / 1000000))
+        else
+            elapsed_ms=-1
+        fi
+
+        if ((status == 124)); then
+            check_with_timeout_status "$id" "$label" "timeout" "timed out after ${timeout_secs}s" "$hint"
+            return 0
+        fi
+
+        if ((status != 0)); then
+            if echo "$output" | grep -qiE "no server running|failed to connect to server"; then
+                check "$id" "$label (no server)" "pass" "no tmux server running"
+                return 0
+            fi
+
+            local first_line=""
+            first_line="$(printf '%s\n' "$output" | head -n 1)"
+            [[ -z "$first_line" ]] && first_line="tmux command failed"
+            check "$id" "$label" "warn" "$first_line" "$hint"
+            return 0
+        fi
+
+        local label_with_timing="$label"
+        if ((elapsed_ms >= 0)); then
+            label_with_timing="$label (${elapsed_ms}ms)"
+        fi
+
+        if ((elapsed_ms >= 0)) && ((elapsed_ms >= warn_threshold_ms)); then
+            check "$id" "$label_with_timing" "warn" "slow tmux" "$hint"
+        else
+            check "$id" "$label_with_timing" "pass" "ok"
+        fi
+        return 0
+    }
+
+    _deep_check_tmux_cmd "deep.tmux.list_sessions" "tmux list-sessions responsiveness" bash -lc "tmux list-sessions >/dev/null"
+    _deep_check_tmux_cmd "deep.tmux.list_panes" "tmux list-panes -a responsiveness" bash -lc "tmux list-panes -a -F '#{pane_id}' >/dev/null"
+}
+
 # check_vault_configured - Check if Vault is configured and reachable
 # Related: bead azw
 check_vault_configured() {
@@ -1333,7 +1467,7 @@ check_gh_auth() {
 # Enhanced: Caching and timeout support (bead lz1)
 check_wrangler_auth() {
     if ! command -v wrangler &>/dev/null; then
-        check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare)" "warn" "not installed" "bun install -g --trust wrangler"
+        check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare)" "warn" "not installed" "bun install -g --trust wrangler@latest"
         return
     fi
 
@@ -1369,13 +1503,13 @@ check_wrangler_auth() {
 # Related: bead azw
 check_supabase_auth() {
     if ! command -v supabase &>/dev/null; then
-        check "deep.cloud.supabase" "Supabase CLI" "warn" "not installed" "bun install -g --trust supabase"
+        check "deep.cloud.supabase" "Supabase CLI" "warn" "not installed" "acfs update --cloud-only --force"
         return
     fi
 
     # Check if binary works
     if ! timeout 5 supabase --version &>/dev/null; then
-        check "deep.cloud.supabase" "Supabase CLI" "fail" "binary error" "Reinstall: bun install -g --trust supabase"
+        check "deep.cloud.supabase" "Supabase CLI" "fail" "binary error" "Reinstall: acfs update --cloud-only --force"
         return
     fi
 
@@ -1402,7 +1536,7 @@ check_supabase_auth() {
 # Enhanced: Caching and timeout support (bead lz1)
 check_vercel_auth() {
     if ! command -v vercel &>/dev/null; then
-        check "deep.cloud.vercel_auth" "Vercel CLI" "warn" "not installed" "bun install -g --trust vercel"
+        check "deep.cloud.vercel_auth" "Vercel CLI" "warn" "not installed" "bun install -g --trust vercel@latest"
         return
     fi
 
@@ -1566,8 +1700,6 @@ main() {
                 info_script="$HOME/.acfs/scripts/lib/info.sh"
             elif [[ -f "$SCRIPT_DIR/info.sh" ]]; then
                 info_script="$SCRIPT_DIR/info.sh"
-            elif [[ -f "$SCRIPT_DIR/../scripts/lib/info.sh" ]]; then
-                info_script="$SCRIPT_DIR/../scripts/lib/info.sh"
             fi
 
             if [[ -n "$info_script" ]]; then
@@ -1584,8 +1716,6 @@ main() {
                 dashboard_script="$HOME/.acfs/scripts/lib/dashboard.sh"
             elif [[ -f "$SCRIPT_DIR/dashboard.sh" ]]; then
                 dashboard_script="$SCRIPT_DIR/dashboard.sh"
-            elif [[ -f "$SCRIPT_DIR/../scripts/lib/dashboard.sh" ]]; then
-                dashboard_script="$SCRIPT_DIR/../scripts/lib/dashboard.sh"
             fi
 
             if [[ -n "$dashboard_script" ]]; then
@@ -1602,8 +1732,6 @@ main() {
                 continue_script="$HOME/.acfs/scripts/lib/continue.sh"
             elif [[ -f "$SCRIPT_DIR/continue.sh" ]]; then
                 continue_script="$SCRIPT_DIR/continue.sh"
-            elif [[ -f "$SCRIPT_DIR/../scripts/lib/continue.sh" ]]; then
-                continue_script="$SCRIPT_DIR/../scripts/lib/continue.sh"
             fi
 
             if [[ -n "$continue_script" ]]; then
@@ -1620,8 +1748,6 @@ main() {
                 cheatsheet_script="$HOME/.acfs/scripts/lib/cheatsheet.sh"
             elif [[ -f "$SCRIPT_DIR/cheatsheet.sh" ]]; then
                 cheatsheet_script="$SCRIPT_DIR/cheatsheet.sh"
-            elif [[ -f "$SCRIPT_DIR/../scripts/lib/cheatsheet.sh" ]]; then
-                cheatsheet_script="$SCRIPT_DIR/../scripts/lib/cheatsheet.sh"
             fi
 
             if [[ -n "$cheatsheet_script" ]]; then
@@ -1643,8 +1769,6 @@ main() {
                 update_script="$HOME/.acfs/scripts/lib/update.sh"
             elif [[ -f "$SCRIPT_DIR/update.sh" ]]; then
                 update_script="$SCRIPT_DIR/update.sh"
-            elif [[ -f "$SCRIPT_DIR/../scripts/lib/update.sh" ]]; then
-                update_script="$SCRIPT_DIR/../scripts/lib/update.sh"
             fi
 
             if [[ -n "$update_script" ]]; then
@@ -1661,8 +1785,6 @@ main() {
                 services_script="$HOME/.acfs/scripts/services-setup.sh"
             elif [[ -f "$SCRIPT_DIR/../services-setup.sh" ]]; then
                 services_script="$SCRIPT_DIR/../services-setup.sh"
-            elif [[ -f "$SCRIPT_DIR/../scripts/services-setup.sh" ]]; then
-                services_script="$SCRIPT_DIR/../scripts/services-setup.sh"
             fi
 
             if [[ -n "$services_script" ]]; then

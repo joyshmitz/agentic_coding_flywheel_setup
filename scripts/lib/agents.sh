@@ -18,7 +18,7 @@ fi
 # ============================================================
 
 # NPM package names for each agent
-CLAUDE_PACKAGE="@anthropic-ai/claude-code@latest"
+CLAUDE_PACKAGE="@anthropic-ai/claude-code@stable"
 CODEX_PACKAGE="@openai/codex@latest"
 GEMINI_PACKAGE="@google/gemini-cli@latest"
 
@@ -90,6 +90,29 @@ _agent_check_bun() {
     return 0
 }
 
+# Create a wrapper script that uses bun as the runtime instead of node.
+# This avoids the "node not found" error when nvm hasn't added node to PATH yet.
+# The wrapper is placed in ~/.local/bin which is early in PATH.
+_agent_create_bun_wrapper() {
+    local target_home="$1"
+    local tool_name="$2"
+    local wrapper_path="$target_home/.local/bin/$tool_name"
+    local bun_tool_path="$target_home/.bun/bin/$tool_name"
+
+    # Skip if wrapper already exists
+    [[ -x "$wrapper_path" ]] && return 0
+
+    # Skip if bun tool doesn't exist
+    [[ -x "$bun_tool_path" ]] || return 0
+
+    log_detail "Creating $tool_name bun wrapper at $wrapper_path"
+    _agent_run_as_user "mkdir -p '$target_home/.local/bin'" || return 1
+    # Use printf to avoid heredoc quoting issues with variable expansion
+    _agent_run_as_user "printf '%s\\n' '#!/bin/bash' 'exec ~/.bun/bin/bun ~/.bun/bin/$tool_name \"\$@\"' > '$wrapper_path'" || return 1
+    _agent_run_as_user "chmod +x '$wrapper_path'" || return 1
+    return 0
+}
+
 # ============================================================
 # Claude Code Installation
 # ============================================================
@@ -117,7 +140,7 @@ install_claude_code() {
             local url="${KNOWN_INSTALLERS[claude]}"
             local sha="${LOADED_CHECKSUMS[claude]}"
             if [[ -n "$url" && -n "$sha" ]]; then
-                if _agent_run_as_user "source '$AGENTS_SCRIPT_DIR/security.sh'; verify_checksum '$url' '$sha' 'claude' | bash"; then
+                if _agent_run_as_user "source '$AGENTS_SCRIPT_DIR/security.sh'; verify_checksum '$url' '$sha' 'claude' | bash -s -- stable"; then
                     log_success "Claude Code installed (verified)"
                     return 0
                 fi
@@ -154,7 +177,7 @@ upgrade_claude_code() {
     bun_bin=$(_agent_get_bun_bin)
     if _agent_check_bun; then
         log_detail "Upgrading Claude Code (bun)..."
-        _agent_run_as_user "\"$bun_bin\" add -g $CLAUDE_PACKAGE" && log_success "Claude Code upgraded"
+        _agent_run_as_user "\"$bun_bin\" install -g --trust $CLAUDE_PACKAGE" && log_success "Claude Code upgraded"
         return 0
     fi
 
@@ -174,10 +197,17 @@ install_codex_cli() {
     local bun_bin
     bun_bin=$(_agent_get_bun_bin)
     local codex_bin="$target_home/.bun/bin/$CODEX_BIN"
+    local codex_wrapper="$target_home/.local/bin/codex"
 
-    # Check if already installed
+    # Check if already installed (wrapper takes precedence)
+    if [[ -x "$codex_wrapper" ]]; then
+        log_detail "Codex CLI already installed at $codex_wrapper"
+        return 0
+    fi
     if [[ -x "$codex_bin" ]]; then
         log_detail "Codex CLI already installed at $codex_bin"
+        # Create wrapper if missing (fixes node PATH issues)
+        _agent_create_bun_wrapper "$target_home" "codex"
         return 0
     fi
 
@@ -189,8 +219,10 @@ install_codex_cli() {
     log_detail "Installing Codex CLI for $target_user..."
 
     # Install via bun global
-    if _agent_run_as_user "\"$bun_bin\" add -g $CODEX_PACKAGE"; then
+    if _agent_run_as_user "\"$bun_bin\" install -g --trust $CODEX_PACKAGE"; then
         if [[ -x "$codex_bin" ]]; then
+            # Create wrapper script that uses bun as runtime (avoids node PATH issues)
+            _agent_create_bun_wrapper "$target_home" "codex"
             log_success "Codex CLI installed"
             log_detail "Note: Run 'codex login' to authenticate with your ChatGPT Pro account"
             return 0
@@ -212,7 +244,7 @@ upgrade_codex_cli() {
     fi
 
     log_detail "Upgrading Codex CLI..."
-    _agent_run_as_user "\"$bun_bin\" add -g $CODEX_PACKAGE" && log_success "Codex CLI upgraded"
+    _agent_run_as_user "\"$bun_bin\" install -g --trust $CODEX_PACKAGE" && log_success "Codex CLI upgraded"
 }
 
 # ============================================================
@@ -227,10 +259,17 @@ install_gemini_cli() {
     local bun_bin
     bun_bin=$(_agent_get_bun_bin)
     local gemini_bin="$target_home/.bun/bin/$GEMINI_BIN"
+    local gemini_wrapper="$target_home/.local/bin/gemini"
 
-    # Check if already installed
+    # Check if already installed (wrapper takes precedence)
+    if [[ -x "$gemini_wrapper" ]]; then
+        log_detail "Gemini CLI already installed at $gemini_wrapper"
+        return 0
+    fi
     if [[ -x "$gemini_bin" ]]; then
         log_detail "Gemini CLI already installed at $gemini_bin"
+        # Create wrapper if missing (fixes node PATH issues)
+        _agent_create_bun_wrapper "$target_home" "gemini"
         return 0
     fi
 
@@ -242,8 +281,10 @@ install_gemini_cli() {
     log_detail "Installing Gemini CLI for $target_user..."
 
     # Install via bun global
-    if _agent_run_as_user "\"$bun_bin\" add -g $GEMINI_PACKAGE"; then
+    if _agent_run_as_user "\"$bun_bin\" install -g --trust $GEMINI_PACKAGE"; then
         if [[ -x "$gemini_bin" ]]; then
+            # Create wrapper script that uses bun as runtime (avoids node PATH issues)
+            _agent_create_bun_wrapper "$target_home" "gemini"
             log_success "Gemini CLI installed"
             log_detail "Note: Run 'gemini' to complete Google login"
             return 0
@@ -265,7 +306,7 @@ upgrade_gemini_cli() {
     fi
 
     log_detail "Upgrading Gemini CLI..."
-    _agent_run_as_user "\"$bun_bin\" add -g $GEMINI_PACKAGE" && log_success "Gemini CLI upgraded"
+    _agent_run_as_user "\"$bun_bin\" install -g --trust $GEMINI_PACKAGE" && log_success "Gemini CLI upgraded"
 }
 
 # ============================================================

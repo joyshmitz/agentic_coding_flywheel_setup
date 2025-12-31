@@ -9,6 +9,39 @@ set -euo pipefail
 
 # Ensure logging functions available
 ACFS_GENERATED_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# When running a generated installer directly (not sourced by install.sh),
+# set sane defaults and derive ACFS paths from the script location so
+# contract validation passes and local assets are discoverable.
+if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
+    # Match install.sh defaults
+    TARGET_USER="${TARGET_USER:-ubuntu}"
+    MODE="${MODE:-vibe}"
+
+    if [[ -z "${TARGET_HOME:-}" ]]; then
+        if [[ "${TARGET_USER}" == "root" ]]; then
+            TARGET_HOME="/root"
+        elif [[ "$(whoami 2>/dev/null || true)" == "${TARGET_USER}" ]]; then
+            TARGET_HOME="${HOME}"
+        else
+            TARGET_HOME="/home/${TARGET_USER}"
+        fi
+    fi
+
+    # Derive "bootstrap" paths from the repo layout (scripts/generated/.. -> repo root).
+    if [[ -z "${ACFS_BOOTSTRAP_DIR:-}" ]]; then
+        ACFS_BOOTSTRAP_DIR="$(cd "$ACFS_GENERATED_SCRIPT_DIR/../.." && pwd)"
+    fi
+
+    ACFS_LIB_DIR="${ACFS_LIB_DIR:-$ACFS_BOOTSTRAP_DIR/scripts/lib}"
+    ACFS_GENERATED_DIR="${ACFS_GENERATED_DIR:-$ACFS_BOOTSTRAP_DIR/scripts/generated}"
+    ACFS_ASSETS_DIR="${ACFS_ASSETS_DIR:-$ACFS_BOOTSTRAP_DIR/acfs}"
+    ACFS_CHECKSUMS_YAML="${ACFS_CHECKSUMS_YAML:-$ACFS_BOOTSTRAP_DIR/checksums.yaml}"
+    ACFS_MANIFEST_YAML="${ACFS_MANIFEST_YAML:-$ACFS_BOOTSTRAP_DIR/acfs.manifest.yaml}"
+
+    export TARGET_USER TARGET_HOME MODE
+    export ACFS_BOOTSTRAP_DIR ACFS_LIB_DIR ACFS_GENERATED_DIR ACFS_ASSETS_DIR ACFS_CHECKSUMS_YAML ACFS_MANIFEST_YAML
+fi
 if [[ -f "$ACFS_GENERATED_SCRIPT_DIR/../lib/logging.sh" ]]; then
     source "$ACFS_GENERATED_SCRIPT_DIR/../lib/logging.sh"
 else
@@ -36,7 +69,7 @@ fi
 # Scripts that need it should call: acfs_security_init
 ACFS_SECURITY_READY=false
 acfs_security_init() {
-    if [[ "${ACFS_SECURITY_READY}" == "true" ]]; then
+    if [[ "${ACFS_SECURITY_READY}" = "true" ]]; then
         return 0
     fi
 
@@ -68,20 +101,64 @@ install_agents_claude() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing agents.claude"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
-        log_info "dry-run: install: curl -fsSL https://claude.ai/install.sh | bash (target_user)"
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verified installer: agents.claude"
     else
-        if ! run_as_target_shell <<'INSTALL_AGENTS_CLAUDE'
-curl -fsSL https://claude.ai/install.sh | bash
-INSTALL_AGENTS_CLAUDE
-        then
-            log_error "agents.claude: install command failed: curl -fsSL https://claude.ai/install.sh | bash"
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
+                if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="claude"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "agents.claude: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s' '--' 'stable'; then
+                            install_success=true
+                        else
+                            log_error "agents.claude: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "agents.claude: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "agents.claude: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "agents.claude: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "agents.claude: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # No unverified fallback: verified install is required
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for agents.claude"
+                false
+            fi
+        }; then
+            log_error "agents.claude: verified installer failed"
             return 1
         fi
     fi
 
     # Verify
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: ~/.local/bin/claude --version || ~/.local/bin/claude --help (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_AGENTS_CLAUDE'
@@ -102,7 +179,7 @@ install_agents_codex() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing agents.codex"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: ~/.bun/bin/bun install -g --trust @openai/codex@latest (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_AGENTS_CODEX'
@@ -113,7 +190,7 @@ INSTALL_AGENTS_CODEX
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: mkdir -p ~/.local/bin (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_AGENTS_CODEX'
@@ -131,7 +208,7 @@ INSTALL_AGENTS_CODEX
     fi
 
     # Verify
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: ~/.local/bin/codex --version || ~/.local/bin/codex --help (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_AGENTS_CODEX'
@@ -152,7 +229,7 @@ install_agents_gemini() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing agents.gemini"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: ~/.bun/bin/bun install -g --trust @google/gemini-cli@latest (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_AGENTS_GEMINI'
@@ -163,7 +240,7 @@ INSTALL_AGENTS_GEMINI
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: mkdir -p ~/.local/bin (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_AGENTS_GEMINI'
@@ -181,7 +258,7 @@ INSTALL_AGENTS_GEMINI
     fi
 
     # Verify
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: ~/.local/bin/gemini --version || ~/.local/bin/gemini --help (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_AGENTS_GEMINI'
@@ -205,6 +282,6 @@ install_agents() {
 }
 
 # Run if executed directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
     install_agents
 fi

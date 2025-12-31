@@ -9,6 +9,39 @@ set -euo pipefail
 
 # Ensure logging functions available
 ACFS_GENERATED_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# When running a generated installer directly (not sourced by install.sh),
+# set sane defaults and derive ACFS paths from the script location so
+# contract validation passes and local assets are discoverable.
+if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
+    # Match install.sh defaults
+    TARGET_USER="${TARGET_USER:-ubuntu}"
+    MODE="${MODE:-vibe}"
+
+    if [[ -z "${TARGET_HOME:-}" ]]; then
+        if [[ "${TARGET_USER}" == "root" ]]; then
+            TARGET_HOME="/root"
+        elif [[ "$(whoami 2>/dev/null || true)" == "${TARGET_USER}" ]]; then
+            TARGET_HOME="${HOME}"
+        else
+            TARGET_HOME="/home/${TARGET_USER}"
+        fi
+    fi
+
+    # Derive "bootstrap" paths from the repo layout (scripts/generated/.. -> repo root).
+    if [[ -z "${ACFS_BOOTSTRAP_DIR:-}" ]]; then
+        ACFS_BOOTSTRAP_DIR="$(cd "$ACFS_GENERATED_SCRIPT_DIR/../.." && pwd)"
+    fi
+
+    ACFS_LIB_DIR="${ACFS_LIB_DIR:-$ACFS_BOOTSTRAP_DIR/scripts/lib}"
+    ACFS_GENERATED_DIR="${ACFS_GENERATED_DIR:-$ACFS_BOOTSTRAP_DIR/scripts/generated}"
+    ACFS_ASSETS_DIR="${ACFS_ASSETS_DIR:-$ACFS_BOOTSTRAP_DIR/acfs}"
+    ACFS_CHECKSUMS_YAML="${ACFS_CHECKSUMS_YAML:-$ACFS_BOOTSTRAP_DIR/checksums.yaml}"
+    ACFS_MANIFEST_YAML="${ACFS_MANIFEST_YAML:-$ACFS_BOOTSTRAP_DIR/acfs.manifest.yaml}"
+
+    export TARGET_USER TARGET_HOME MODE
+    export ACFS_BOOTSTRAP_DIR ACFS_LIB_DIR ACFS_GENERATED_DIR ACFS_ASSETS_DIR ACFS_CHECKSUMS_YAML ACFS_MANIFEST_YAML
+fi
 if [[ -f "$ACFS_GENERATED_SCRIPT_DIR/../lib/logging.sh" ]]; then
     source "$ACFS_GENERATED_SCRIPT_DIR/../lib/logging.sh"
 else
@@ -36,7 +69,7 @@ fi
 # Scripts that need it should call: acfs_security_init
 ACFS_SECURITY_READY=false
 acfs_security_init() {
-    if [[ "${ACFS_SECURITY_READY}" == "true" ]]; then
+    if [[ "${ACFS_SECURITY_READY}" = "true" ]]; then
         return 0
     fi
 
@@ -68,7 +101,7 @@ install_shell_zsh() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing shell.zsh"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: apt-get install -y zsh (root)"
     else
         if ! run_as_root_shell <<'INSTALL_SHELL_ZSH'
@@ -81,7 +114,7 @@ INSTALL_SHELL_ZSH
     fi
 
     # Verify
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: zsh --version (root)"
     else
         if ! run_as_root_shell <<'INSTALL_SHELL_ZSH'
@@ -102,7 +135,7 @@ install_shell_omz() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing shell.omz"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verified installer: shell.omz"
     else
         if ! {
@@ -146,7 +179,9 @@ install_shell_omz() {
             fi
 
             # No unverified fallback: verified install is required
-            if [[ "$install_success" != "true" ]]; then
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
                 log_error "Verified install failed for shell.omz"
                 false
             fi
@@ -155,7 +190,7 @@ install_shell_omz() {
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: # Install Powerlevel10k (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_SHELL_OMZ'
@@ -169,7 +204,7 @@ INSTALL_SHELL_OMZ
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: # Install zsh-autosuggestions (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_SHELL_OMZ'
@@ -183,7 +218,7 @@ INSTALL_SHELL_OMZ
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: # Install zsh-syntax-highlighting (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_SHELL_OMZ'
@@ -197,34 +232,42 @@ INSTALL_SHELL_OMZ
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: # Install ACFS zshrc (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_SHELL_OMZ'
 # Install ACFS zshrc
 ACFS_RAW="${ACFS_RAW:-https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main}"
 mkdir -p ~/.acfs/zsh
-curl --proto '=https' --proto-redir '=https' -fsSL -o ~/.acfs/zsh/acfs.zshrc "${ACFS_RAW}/acfs/zsh/acfs.zshrc"
+CURL_ARGS=(-fsSL)
+if curl --help all 2>/dev/null | grep -q -- '--proto'; then
+  CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+fi
+curl "${CURL_ARGS[@]}" -o ~/.acfs/zsh/acfs.zshrc "${ACFS_RAW}/acfs/zsh/acfs.zshrc"
 INSTALL_SHELL_OMZ
         then
             log_error "shell.omz: install command failed: # Install ACFS zshrc"
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: # Install pre-configured Powerlevel10k settings (prevents config wizard on first login) (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_SHELL_OMZ'
 # Install pre-configured Powerlevel10k settings (prevents config wizard on first login)
 ACFS_RAW="${ACFS_RAW:-https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main}"
-curl --proto '=https' --proto-redir '=https' -fsSL -o ~/.p10k.zsh "${ACFS_RAW}/acfs/zsh/p10k.zsh"
+CURL_ARGS=(-fsSL)
+if curl --help all 2>/dev/null | grep -q -- '--proto'; then
+  CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+fi
+curl "${CURL_ARGS[@]}" -o ~/.p10k.zsh "${ACFS_RAW}/acfs/zsh/p10k.zsh"
 INSTALL_SHELL_OMZ
         then
             log_error "shell.omz: install command failed: # Install pre-configured Powerlevel10k settings (prevents config wizard on first login)"
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: # Setup loader .zshrc (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_SHELL_OMZ'
@@ -243,7 +286,7 @@ INSTALL_SHELL_OMZ
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: # Setup ~/.profile for bash login shells (prevents PATH warnings from installers) (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_SHELL_OMZ'
@@ -264,7 +307,7 @@ INSTALL_SHELL_OMZ
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: # Set default shell (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_SHELL_OMZ'
@@ -295,7 +338,7 @@ INSTALL_SHELL_OMZ
     fi
 
     # Verify
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: test -d ~/.oh-my-zsh (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_SHELL_OMZ'
@@ -306,7 +349,7 @@ INSTALL_SHELL_OMZ
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: test -f ~/.acfs/zsh/acfs.zshrc (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_SHELL_OMZ'
@@ -317,7 +360,7 @@ INSTALL_SHELL_OMZ
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: test -f ~/.p10k.zsh (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_SHELL_OMZ'
@@ -340,6 +383,6 @@ install_shell() {
 }
 
 # Run if executed directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
     install_shell
 fi

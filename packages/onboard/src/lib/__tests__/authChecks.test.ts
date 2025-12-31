@@ -102,7 +102,7 @@ describe('authChecks', () => {
     const checks = createAuthChecks(
       makeDeps({
         existsSync: (filePath) => filePath === authPath,
-        readFileSync: () => JSON.stringify({ token: 'vercel-token', user: { email: 'me@example.com' } }),
+        readFileSync: () => JSON.stringify({ user: { email: 'me@example.com' } }),
       }),
     );
 

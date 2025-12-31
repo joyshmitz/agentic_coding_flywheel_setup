@@ -199,6 +199,31 @@ describe('Generated category scripts exist', () => {
   });
 });
 
+describe('Generated filesystem script hardening', () => {
+  let filesystemContent: string;
+
+  beforeAll(() => {
+    const filesystemPath = resolve(GENERATED_DIR, 'install_filesystem.sh');
+    expect(existsSync(filesystemPath)).toBe(true);
+    filesystemContent = readFileSync(filesystemPath, 'utf-8');
+  });
+
+  test('does not recursively chown /data (avoid over-broad ownership changes)', () => {
+    expect(filesystemContent).not.toContain('chown -R');
+    expect(filesystemContent).not.toMatch(/chown\s+-R[^\n]*\s\/data\b/);
+  });
+
+  test('refuses symlinked /data paths (hardening against symlink tricks)', () => {
+    expect(filesystemContent).toContain('Refusing to use symlinked path');
+    expect(filesystemContent).toContain('for p in /data /data/projects /data/cache; do');
+    expect(filesystemContent).toContain('if [[ -e "$p" && -L "$p" ]]; then');
+  });
+
+  test('uses no-dereference recursive chown for the ACFS dir', () => {
+    expect(filesystemContent).toContain('chown -hR');
+  });
+});
+
 describe('doctor_checks.sh content', () => {
   let doctorContent: string;
   let manifest: Manifest;
@@ -317,11 +342,11 @@ describe('Utils: getTransitiveDependencies', () => {
 
   test('includes all transitive dependencies', () => {
     // Find a module with nested dependencies
-    // agents.claude -> lang.bun -> base.system
-    const claudeDeps = getTransitiveDependencies(manifest, 'agents.claude');
+    // agents.codex -> lang.bun -> base.system
+    const codexDeps = getTransitiveDependencies(manifest, 'agents.codex');
 
     // Should include lang.bun and base.system
-    const depIds = claudeDeps.map((d) => d.id);
+    const depIds = codexDeps.map((d) => d.id);
     expect(depIds).toContain('lang.bun');
     expect(depIds).toContain('base.system');
   });

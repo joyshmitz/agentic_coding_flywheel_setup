@@ -370,13 +370,43 @@ update_require_security() {
         return 0
     fi
 
-    if [[ ! -f "$SCRIPT_DIR/security.sh" ]]; then
+    # Check for security.sh in expected locations
+    local security_script=""
+    if [[ -f "$SCRIPT_DIR/security.sh" ]]; then
+        security_script="$SCRIPT_DIR/security.sh"
+    elif [[ -f "$HOME/.acfs/scripts/lib/security.sh" ]]; then
+        security_script="$HOME/.acfs/scripts/lib/security.sh"
+    fi
+
+    if [[ -z "$security_script" ]]; then
+        echo "" >&2
+        echo "═══════════════════════════════════════════════════════════════" >&2
+        echo "  ERROR: security.sh not found" >&2
+        echo "═══════════════════════════════════════════════════════════════" >&2
+        echo "" >&2
+        echo "  The security verification script is missing." >&2
+        echo "  This is required for --stack updates." >&2
+        echo "" >&2
+        echo "  Checked locations:" >&2
+        echo "    - $SCRIPT_DIR/security.sh" >&2
+        echo "    - $HOME/.acfs/scripts/lib/security.sh" >&2
+        echo "" >&2
+        echo "  This usually means:" >&2
+        echo "    1. You have an older ACFS installation, OR" >&2
+        echo "    2. The installation didn't complete fully" >&2
+        echo "" >&2
+        echo "  TO FIX: Re-run the ACFS installer:" >&2
+        echo "" >&2
+        echo "    curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes" >&2
+        echo "" >&2
+        echo "═══════════════════════════════════════════════════════════════" >&2
+        echo "" >&2
         return 1
     fi
 
     # shellcheck source=security.sh
     # shellcheck disable=SC1091  # runtime relative source
-    source "$SCRIPT_DIR/security.sh"
+    source "$security_script"
     load_checksums || return 1
 
     UPDATE_SECURITY_READY=true
@@ -549,22 +579,58 @@ update_agents() {
         return 0
     fi
 
-    local bun_bin="$HOME/.bun/bin/bun"
+    # Claude Code - can update without bun; supports install/reinstall with --force.
+    #
+    # Check for bun-installed Claude and remove it if native install is requested.
+    # The native install goes to ~/.local/bin/claude which should take precedence,
+    # but having both can cause PATH confusion and doctor warnings.
+    local claude_path=""
+    claude_path=$(command -v claude 2>/dev/null) || true
+    local bun_claude_detected=false
 
-    if [[ ! -x "$bun_bin" ]]; then
-        log_item "fail" "Bun not installed" "required for agent updates"
-        return 0
+    # Check if claude is bun-installed. This can happen in two ways:
+    # 1. Direct path: ~/.bun/bin/claude
+    # 2. Symlink: ~/.local/bin/claude -> ~/.bun/bin/claude (created by installer)
+    # We need to resolve symlinks to detect case 2.
+    if [[ -n "$claude_path" ]]; then
+        local resolved_path="$claude_path"
+        if [[ -L "$claude_path" ]]; then
+            resolved_path=$(readlink -f "$claude_path" 2>/dev/null) || resolved_path="$claude_path"
+        fi
+        if [[ "$claude_path" == *".bun"* || "$claude_path" == *"node_modules"* || \
+              "$resolved_path" == *".bun"* || "$resolved_path" == *"node_modules"* ]]; then
+            bun_claude_detected=true
+        fi
     fi
 
-    # Claude Code - has native update with fallback to reinstall
-    if cmd_exists claude; then
+    if [[ "$bun_claude_detected" == "true" ]] && [[ "$FORCE_MODE" == "true" ]]; then
+        log_to_file "Removing bun-installed Claude to switch to native version: $claude_path"
+        local bun_bin="$HOME/.bun/bin/bun"
+        if [[ -x "$bun_bin" ]]; then
+            # Try to uninstall via bun
+            "$bun_bin" remove -g @anthropic-ai/claude-code 2>/dev/null || true
+        fi
+        # Also remove the symlink/binary directly if it still exists
+        if [[ -f "$claude_path" || -L "$claude_path" ]]; then
+            rm -f "$claude_path" 2>/dev/null || true
+        fi
+        # Remove the actual bun binary too if it's separate from the symlink
+        local bun_claude_bin="$HOME/.bun/bin/claude"
+        if [[ -f "$bun_claude_bin" || -L "$bun_claude_bin" ]] && [[ "$bun_claude_bin" != "$claude_path" ]]; then
+            rm -f "$bun_claude_bin" 2>/dev/null || true
+        fi
+        # Clear the cached path so we detect as "not installed" for fresh install
+        claude_path=""
+    fi
+
+    if cmd_exists claude && [[ "$bun_claude_detected" != "true" || "$FORCE_MODE" != "true" ]]; then
         capture_version_before "claude"
 
         # Try native update first
         if ! run_cmd_claude_update; then
             log_to_file "Claude update failed, attempting reinstall via official installer"
             if update_require_security; then
-                run_cmd "Claude Code (reinstall)" update_run_verified_installer claude
+                run_cmd "Claude Code (reinstall)" update_run_verified_installer claude stable
             else
                 log_item "fail" "Claude Code" "update failed and reinstall unavailable (missing security.sh)"
             fi
@@ -574,8 +640,24 @@ update_agents() {
         if capture_version_after "claude"; then
             [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[claude]} → ${VERSION_AFTER[claude]}${NC}"
         fi
+    elif [[ "$FORCE_MODE" == "true" ]]; then
+        capture_version_before "claude"
+        if update_require_security; then
+            run_cmd "Claude Code (install)" update_run_verified_installer claude stable
+            if capture_version_after "claude"; then
+                [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[claude]} → ${VERSION_AFTER[claude]}${NC}"
+            fi
+        else
+            log_item "fail" "Claude Code" "not installed and install unavailable (missing security.sh)"
+        fi
     else
-        log_item "skip" "Claude Code" "not installed"
+        log_item "skip" "Claude Code" "not installed (use --force to install)"
+    fi
+
+    local bun_bin="$HOME/.bun/bin/bun"
+    if [[ ! -x "$bun_bin" ]]; then
+        log_item "fail" "Bun not installed" "required for Codex/Gemini updates"
+        return 0
     fi
 
     # Codex CLI via bun (--trust allows postinstall scripts)
@@ -672,6 +754,115 @@ run_cmd_claude_update() {
     fi
 }
 
+supabase_release_update_script() {
+    cat <<'EOF'
+set -euo pipefail
+
+CURL_ARGS=(-fsSL)
+if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
+  CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+fi
+
+arch=""
+case "$(uname -m)" in
+  x86_64) arch="amd64" ;;
+  aarch64|arm64) arch="arm64" ;;
+  *)
+    echo "Supabase CLI: unsupported architecture ($(uname -m))" >&2
+    exit 1
+    ;;
+esac
+
+release_url="$(curl "${CURL_ARGS[@]}" -o /dev/null -w '%{url_effective}\n' "https://github.com/supabase/cli/releases/latest" 2>/dev/null | tail -n1)" || true
+tag="${release_url##*/}"
+if [[ -z "$tag" ]] || [[ "$tag" != v* ]]; then
+  echo "Supabase CLI: failed to resolve latest release tag" >&2
+  exit 1
+fi
+
+version="${tag#v}"
+base_url="https://github.com/supabase/cli/releases/download/${tag}"
+tarball="supabase_linux_${arch}.tar.gz"
+checksums="supabase_${version}_checksums.txt"
+
+tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/acfs-supabase.XXXXXX" 2>/dev/null)" || tmp_dir=""
+tmp_tgz="$(mktemp "${TMPDIR:-/tmp}/acfs-supabase.tgz.XXXXXX" 2>/dev/null)" || tmp_tgz=""
+tmp_checksums="$(mktemp "${TMPDIR:-/tmp}/acfs-supabase.sha.XXXXXX" 2>/dev/null)" || tmp_checksums=""
+
+if [[ -z "$tmp_dir" ]] || [[ -z "$tmp_tgz" ]] || [[ -z "$tmp_checksums" ]]; then
+  echo "Supabase CLI: failed to create temp files" >&2
+  exit 1
+fi
+
+if ! curl "${CURL_ARGS[@]}" -o "$tmp_tgz" "${base_url}/${tarball}" 2>/dev/null; then
+  echo "Supabase CLI: failed to download ${tarball}" >&2
+  exit 1
+fi
+if ! curl "${CURL_ARGS[@]}" -o "$tmp_checksums" "${base_url}/${checksums}" 2>/dev/null; then
+  echo "Supabase CLI: failed to download checksums" >&2
+  exit 1
+fi
+
+expected_sha="$(awk -v tb="$tarball" '$2 == tb {print $1; exit}' "$tmp_checksums" 2>/dev/null)"
+if [[ -z "$expected_sha" ]]; then
+  echo "Supabase CLI: checksum entry not found for ${tarball}" >&2
+  exit 1
+fi
+
+actual_sha=""
+if command -v sha256sum &>/dev/null; then
+  actual_sha="$(sha256sum "$tmp_tgz" | awk '{print $1}')"
+elif command -v shasum &>/dev/null; then
+  actual_sha="$(shasum -a 256 "$tmp_tgz" | awk '{print $1}')"
+else
+  echo "Supabase CLI: no SHA256 tool available (need sha256sum or shasum)" >&2
+  exit 1
+fi
+
+if [[ -z "$actual_sha" ]] || [[ "$actual_sha" != "$expected_sha" ]]; then
+  echo "Supabase CLI: checksum mismatch" >&2
+  echo "  Expected: $expected_sha" >&2
+  echo "  Actual:   ${actual_sha:-<missing>}" >&2
+  exit 1
+fi
+
+if ! tar -xzf "$tmp_tgz" -C "$tmp_dir" --no-same-owner --no-same-permissions supabase 2>/dev/null; then
+  tar -xzf "$tmp_tgz" -C "$tmp_dir" --no-same-owner --no-same-permissions 2>/dev/null || {
+    echo "Supabase CLI: failed to extract tarball" >&2
+    exit 1
+  }
+fi
+
+extracted_bin="$tmp_dir/supabase"
+if [[ ! -f "$extracted_bin" ]]; then
+  extracted_bin="$(find "$tmp_dir" -maxdepth 2 -type f -name supabase -print -quit 2>/dev/null || true)"
+fi
+if [[ -z "$extracted_bin" ]] || [[ ! -f "$extracted_bin" ]]; then
+  echo "Supabase CLI: binary not found after extract" >&2
+  exit 1
+fi
+
+mkdir -p "$HOME/.local/bin"
+install -m 0755 "$extracted_bin" "$HOME/.local/bin/supabase"
+
+if command -v timeout &>/dev/null; then
+  timeout 5 "$HOME/.local/bin/supabase" --version >/dev/null 2>&1 || {
+    echo "Supabase CLI: installed but failed to run" >&2
+    exit 1
+  }
+else
+  "$HOME/.local/bin/supabase" --version >/dev/null 2>&1 || {
+    echo "Supabase CLI: installed but failed to run" >&2
+    exit 1
+  }
+fi
+
+# Best-effort cleanup
+rm -f "$tmp_tgz" "$tmp_checksums" "$extracted_bin" 2>/dev/null || true
+rmdir "$tmp_dir" 2>/dev/null || true
+EOF
+}
+
 update_cloud() {
     log_section "Cloud CLIs"
 
@@ -681,29 +872,40 @@ update_cloud() {
     fi
 
     local bun_bin="$HOME/.bun/bin/bun"
-
-    if [[ ! -x "$bun_bin" ]]; then
-        log_item "fail" "Bun not installed" "required for cloud CLI updates"
-        return 0
-    fi
+    local has_bun=false
+    [[ -x "$bun_bin" ]] && has_bun=true
 
     # Wrangler (--trust allows postinstall scripts for native binaries)
     if cmd_exists wrangler || [[ "$FORCE_MODE" == "true" ]]; then
-        run_cmd "Wrangler (Cloudflare)" "$bun_bin" install -g --trust wrangler@latest
+        if [[ "$has_bun" == "true" ]]; then
+            run_cmd "Wrangler (Cloudflare)" "$bun_bin" install -g --trust wrangler@latest
+        else
+            log_item "fail" "Wrangler (Cloudflare)" "bun not installed (required)"
+        fi
     else
         log_item "skip" "Wrangler" "not installed"
     fi
 
-    # Supabase (--trust allows postinstall scripts for native binaries)
+    # Supabase (verified GitHub release binary; installed to ~/.local/bin)
     if cmd_exists supabase || [[ "$FORCE_MODE" == "true" ]]; then
-        run_cmd "Supabase CLI" "$bun_bin" install -g --trust supabase@latest
+        capture_version_before "supabase"
+        run_cmd "Supabase CLI" bash -c "$(supabase_release_update_script)"
+        # Refresh PATH in case ~/.local/bin was created during install.
+        ensure_path
+        if capture_version_after "supabase"; then
+            [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[supabase]} → ${VERSION_AFTER[supabase]}${NC}"
+        fi
     else
         log_item "skip" "Supabase CLI" "not installed"
     fi
 
     # Vercel (--trust allows postinstall scripts for native binaries)
     if cmd_exists vercel || [[ "$FORCE_MODE" == "true" ]]; then
-        run_cmd "Vercel CLI" "$bun_bin" install -g --trust vercel@latest
+        if [[ "$has_bun" == "true" ]]; then
+            run_cmd "Vercel CLI" "$bun_bin" install -g --trust vercel@latest
+        else
+            log_item "fail" "Vercel CLI" "bun not installed (required)"
+        fi
     else
         log_item "skip" "Vercel CLI" "not installed"
     fi
@@ -819,6 +1021,127 @@ update_go() {
     log_to_file "Go version: $go_version (path: $go_path)"
 }
 
+ensure_cass_robot_compat_wrapper() {
+    cmd_exists cass || return 0
+
+    # Nothing to do if cass already supports `robot` subcommand.
+    if cass robot --help >/dev/null 2>&1; then
+        return 0
+    fi
+
+    local cass_path
+    cass_path="$(command -v cass 2>/dev/null || true)"
+    if [[ -z "$cass_path" ]]; then
+        log_item "warn" "CASS robot wrapper" "cass not found"
+        return 0
+    fi
+
+    local cass_dir
+    cass_dir="$(cd "$(dirname "$cass_path")" 2>/dev/null && pwd -P || true)"
+    if [[ -z "$cass_dir" ]]; then
+        log_item "warn" "CASS robot wrapper" "could not resolve cass directory"
+        return 0
+    fi
+
+    local cass_real="${cass_dir}/cass.real"
+
+    # Idempotency: wrapper already installed.
+    if [[ -x "$cass_real" ]] && head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
+        return 0
+    fi
+
+    if [[ ! -f "$cass_path" ]]; then
+        log_item "warn" "CASS robot wrapper" "cass path is not a regular file: $cass_path"
+        return 0
+    fi
+    if [[ ! -w "$cass_path" ]]; then
+        log_item "warn" "CASS robot wrapper" "cannot write to: $cass_path"
+        return 0
+    fi
+
+    # Safety: if cass is already our wrapper but cass.real is missing, do not
+    # "move" the wrapper into place (it would create an infinite exec loop).
+    if [[ ! -e "$cass_real" ]] && head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
+        log_item "warn" "CASS robot wrapper" "cass wrapper present but cass.real missing (skipping)"
+        return 0
+    fi
+
+    # Move the real binary aside, then install the wrapper at the original path.
+    # Handle both fresh install and the case where CASS was updated (replaced wrapper with new binary).
+    if [[ ! -e "$cass_real" ]]; then
+        # First time: move original binary to cass.real
+        if ! mv "$cass_path" "$cass_real" 2>/dev/null; then
+            log_item "warn" "CASS robot wrapper" "failed to move cass to cass.real"
+            return 0
+        fi
+        chmod +x "$cass_real" 2>/dev/null || true
+    elif ! head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
+        # cass.real exists but current cass is NOT our wrapper.
+        # Only update cass.real if cass is a binary (not a script).
+        # Safety: if it's a script (starts with #!), don't overwrite the real binary.
+        if [[ "$(head -c 2 "$cass_path" 2>/dev/null || true)" == "#!" ]]; then
+            log_item "warn" "CASS robot wrapper" "cass is a script but not our wrapper (skipping cass.real update)"
+        else
+            # cass is a binary - safe to update cass.real
+            if ! mv "$cass_path" "$cass_real" 2>/dev/null; then
+                log_item "warn" "CASS robot wrapper" "failed to update cass.real with new binary"
+                return 0
+            fi
+            chmod +x "$cass_real" 2>/dev/null || true
+        fi
+    fi
+
+    cat > "$cass_path" <<'EOF'
+#!/usr/bin/env bash
+# ACFS CASS WRAPPER (compat): adds `cass robot <subcommand>` support for older NTM.
+set -euo pipefail
+
+real="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P)/cass.real"
+if [[ ! -x "$real" ]]; then
+  echo "ERROR: cass.real not found at: $real" >&2
+  exit 127
+fi
+
+if [[ $# -gt 0 && "${1:-}" == "robot" ]]; then
+  shift || true
+
+  if [[ $# -eq 0 || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    cat <<'EOT'
+Usage: cass robot <subcommand> [args...]
+
+Compat wrapper installed by ACFS.
+Translates:
+  cass robot <subcommand> ...  ->  cass <subcommand> ... --robot
+
+Examples:
+  cass robot search "error handling" --limit 10
+  cass search "error handling" --robot --limit 10
+EOT
+    exit 0
+  fi
+
+  for arg in "$@"; do
+    if [[ "$arg" == "--robot" ]]; then
+      exec "$real" "$@"
+    fi
+  done
+
+  exec "$real" "$@" --robot
+fi
+
+exec "$real" "$@"
+EOF
+    chmod +x "$cass_path" 2>/dev/null || true
+
+    if cass robot --help >/dev/null 2>&1; then
+        log_item "ok" "CASS robot wrapper" "installed"
+    else
+        log_item "warn" "CASS robot wrapper" "installed but cass robot still failing"
+    fi
+
+    return 0
+}
+
 update_stack() {
     log_section "Dicklesworthstone Stack"
 
@@ -897,6 +1220,7 @@ update_stack() {
     # CASS
     if cmd_exists cass; then
         run_cmd "CASS" update_run_verified_installer cass --easy-mode --verify
+        ensure_cass_robot_compat_wrapper
     fi
 
     # CASS Memory
@@ -1070,10 +1394,17 @@ update_atuin() {
         else
             # Last resort: no checksum verification available
             if [[ "$YES_MODE" == "true" ]]; then
-                log_item "skip" "Atuin" "checksum verification unavailable, use --force to bypass"
+                log_item "skip" "Atuin" "checksum verification unavailable (missing security.sh/checksums.yaml)"
             else
                 log_item "skip" "Atuin" "no self-update command, manual update recommended"
-                log_to_file "Atuin update: install newer version with: curl -fsSL https://setup.atuin.sh | bash"
+                local curl_cmd="curl -fsSL"
+                if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
+                    curl_cmd="curl --proto '=https' --proto-redir '=https' -fsSL"
+                fi
+                log_to_file "Atuin update (manual; review first):"
+                log_to_file "  ${curl_cmd} https://setup.atuin.sh -o /tmp/atuin.install.sh"
+                log_to_file "  sed -n '1,120p' /tmp/atuin.install.sh"
+                log_to_file "  bash /tmp/atuin.install.sh"
             fi
             return 0
         fi
@@ -1098,8 +1429,15 @@ update_zoxide() {
     if update_require_security; then
         run_cmd "Zoxide (reinstall)" update_run_verified_installer zoxide
     else
-        log_item "skip" "Zoxide" "checksum verification unavailable"
-        log_to_file "Zoxide update: install newer version with: curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash"
+        log_item "skip" "Zoxide" "checksum verification unavailable (missing security.sh/checksums.yaml)"
+        local curl_cmd="curl -fsSL"
+        if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
+            curl_cmd="curl --proto '=https' --proto-redir '=https' -fsSL"
+        fi
+        log_to_file "Zoxide update (manual; review first):"
+        log_to_file "  ${curl_cmd} https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh -o /tmp/zoxide.install.sh"
+        log_to_file "  sed -n '1,120p' /tmp/zoxide.install.sh"
+        log_to_file "  bash /tmp/zoxide.install.sh"
         return 0
     fi
 
@@ -1259,9 +1597,10 @@ WHAT EACH CATEGORY UPDATES:
   shell:    Oh-My-Zsh, Powerlevel10k, zsh plugins (git pull)
             Atuin, Zoxide (reinstall from upstream)
   agents:   Claude Code (claude update)
-            Codex CLI (bun install -g @openai/codex@latest)
-            Gemini CLI (bun install -g @google/gemini-cli@latest)
-  cloud:    Wrangler, Supabase CLI, Vercel CLI (bun install -g @latest)
+            Codex CLI (bun install -g --trust @openai/codex@latest)
+            Gemini CLI (bun install -g --trust @google/gemini-cli@latest)
+  cloud:    Wrangler, Vercel (bun install -g --trust <pkg>@latest)
+            Supabase CLI (verified GitHub release tarball + sha256 checksums)
   runtime:  Bun (bun upgrade), Rust (rustup update), uv (uv self update), Go (apt-managed)
   stack:    NTM, UBS, BV, CASS, CM, CAAM, SLB (re-run upstream installers)
 
@@ -1276,12 +1615,20 @@ ENVIRONMENT VARIABLES:
   ACFS_VERSION       Override version string in logs
 
 TROUBLESHOOTING:
-  - If apt is locked: wait for other package operations or run:
-    sudo rm /var/lib/dpkg/lock-frontend && sudo dpkg --configure -a
+  - If apt is locked: wait for other package operations to finish.
+    To see who holds the lock:
+      sudo fuser -v /var/lib/dpkg/lock-frontend || true
+      sudo systemctl status unattended-upgrades --no-pager || true
+    If unattended-upgrades is running, wait for it to complete (recommended),
+    or temporarily stop it:
+      sudo systemctl stop unattended-upgrades
+    (After the update finishes, re-enable it:)
+      sudo systemctl start unattended-upgrades
 
   - If an agent update fails: try running the update command directly:
     claude update
-    bun install -g @openai/codex@latest
+    bun install -g --trust @openai/codex@latest
+    bun install -g --trust @google/gemini-cli@latest
 
   - If shell tools fail to update: check git remote access:
     git -C ~/.oh-my-zsh remote -v

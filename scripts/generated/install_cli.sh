@@ -9,6 +9,39 @@ set -euo pipefail
 
 # Ensure logging functions available
 ACFS_GENERATED_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# When running a generated installer directly (not sourced by install.sh),
+# set sane defaults and derive ACFS paths from the script location so
+# contract validation passes and local assets are discoverable.
+if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
+    # Match install.sh defaults
+    TARGET_USER="${TARGET_USER:-ubuntu}"
+    MODE="${MODE:-vibe}"
+
+    if [[ -z "${TARGET_HOME:-}" ]]; then
+        if [[ "${TARGET_USER}" == "root" ]]; then
+            TARGET_HOME="/root"
+        elif [[ "$(whoami 2>/dev/null || true)" == "${TARGET_USER}" ]]; then
+            TARGET_HOME="${HOME}"
+        else
+            TARGET_HOME="/home/${TARGET_USER}"
+        fi
+    fi
+
+    # Derive "bootstrap" paths from the repo layout (scripts/generated/.. -> repo root).
+    if [[ -z "${ACFS_BOOTSTRAP_DIR:-}" ]]; then
+        ACFS_BOOTSTRAP_DIR="$(cd "$ACFS_GENERATED_SCRIPT_DIR/../.." && pwd)"
+    fi
+
+    ACFS_LIB_DIR="${ACFS_LIB_DIR:-$ACFS_BOOTSTRAP_DIR/scripts/lib}"
+    ACFS_GENERATED_DIR="${ACFS_GENERATED_DIR:-$ACFS_BOOTSTRAP_DIR/scripts/generated}"
+    ACFS_ASSETS_DIR="${ACFS_ASSETS_DIR:-$ACFS_BOOTSTRAP_DIR/acfs}"
+    ACFS_CHECKSUMS_YAML="${ACFS_CHECKSUMS_YAML:-$ACFS_BOOTSTRAP_DIR/checksums.yaml}"
+    ACFS_MANIFEST_YAML="${ACFS_MANIFEST_YAML:-$ACFS_BOOTSTRAP_DIR/acfs.manifest.yaml}"
+
+    export TARGET_USER TARGET_HOME MODE
+    export ACFS_BOOTSTRAP_DIR ACFS_LIB_DIR ACFS_GENERATED_DIR ACFS_ASSETS_DIR ACFS_CHECKSUMS_YAML ACFS_MANIFEST_YAML
+fi
 if [[ -f "$ACFS_GENERATED_SCRIPT_DIR/../lib/logging.sh" ]]; then
     source "$ACFS_GENERATED_SCRIPT_DIR/../lib/logging.sh"
 else
@@ -36,7 +69,7 @@ fi
 # Scripts that need it should call: acfs_security_init
 ACFS_SECURITY_READY=false
 acfs_security_init() {
-    if [[ "${ACFS_SECURITY_READY}" == "true" ]]; then
+    if [[ "${ACFS_SECURITY_READY}" = "true" ]]; then
         return 0
     fi
 
@@ -68,7 +101,7 @@ install_cli_modern() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing cli.modern"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: apt-get install -y ripgrep tmux fzf direnv jq gh git-lfs lsof dnsutils netcat-openbsd strace rsync (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -79,7 +112,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: apt-get install -y lsd || true (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -90,7 +123,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: apt-get install -y eza || true (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -101,7 +134,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: apt-get install -y bat || apt-get install -y batcat || true (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -112,7 +145,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: apt-get install -y fd-find || true (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -123,7 +156,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: apt-get install -y btop || true (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -134,7 +167,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: apt-get install -y dust || true (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -145,7 +178,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: apt-get install -y neovim || true (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -156,7 +189,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: apt-get install -y docker.io docker-compose-plugin || true (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -167,7 +200,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: apt-get install -y lazygit || true (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -178,7 +211,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: apt-get install -y lazydocker || true (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -191,7 +224,7 @@ INSTALL_CLI_MODERN
     fi
 
     # Verify
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: rg --version (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -202,7 +235,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: tmux -V (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -213,7 +246,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: fzf --version (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -224,7 +257,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: gh --version (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -235,7 +268,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: git-lfs version (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -246,7 +279,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: rsync --version (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -257,7 +290,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: strace --version (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -268,7 +301,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: command -v lsof (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -279,7 +312,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: command -v dig (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -290,7 +323,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: command -v nc (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -301,7 +334,7 @@ INSTALL_CLI_MODERN
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify (optional): command -v lsd || command -v eza (root)"
     else
         if ! run_as_root_shell <<'INSTALL_CLI_MODERN'
@@ -322,6 +355,6 @@ install_cli() {
 }
 
 # Run if executed directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
     install_cli
 fi

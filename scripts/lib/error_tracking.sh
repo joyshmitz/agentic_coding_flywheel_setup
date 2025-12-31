@@ -45,6 +45,9 @@ LAST_ERROR_TIME="${LAST_ERROR_TIME:-}"
 
 # Maximum length of error output to store (prevents huge logs)
 ERROR_OUTPUT_MAX_LENGTH="${ERROR_OUTPUT_MAX_LENGTH:-2000}"
+if [[ ! "$ERROR_OUTPUT_MAX_LENGTH" =~ ^[0-9]+$ ]] || [[ "$ERROR_OUTPUT_MAX_LENGTH" -lt 1 ]]; then
+    ERROR_OUTPUT_MAX_LENGTH=2000
+fi
 
 # Enable/disable verbose error output
 ERROR_VERBOSE="${ERROR_VERBOSE:-false}"
@@ -178,16 +181,21 @@ try_step() {
     LAST_ERROR_CODE=$exit_code
     LAST_ERROR_TIME=$(date -Iseconds)
 
-    # Capture and truncate output
+    # Capture and truncate output without slurping arbitrarily large logs into RAM.
     if [[ -n "$output_file" && -f "$output_file" ]]; then
-        local full_output
-        full_output=$(cat "$output_file" 2>/dev/null || echo "")
+        local max_len
+        max_len="${ERROR_OUTPUT_MAX_LENGTH}"
+        if [[ ! "$max_len" =~ ^[0-9]+$ ]] || [[ "$max_len" -lt 1 ]]; then
+            max_len=2000
+        fi
+        local captured
+        captured="$(head -c "$((max_len + 1))" "$output_file" 2>/dev/null || printf '')"
 
-        # Truncate if too long
-        if [[ ${#full_output} -gt $ERROR_OUTPUT_MAX_LENGTH ]]; then
-            LAST_ERROR_OUTPUT="${full_output:0:$ERROR_OUTPUT_MAX_LENGTH}... [truncated]"
+        if [[ ${#captured} -gt $max_len ]]; then
+            captured="${captured:0:$max_len}"
+            LAST_ERROR_OUTPUT="${captured}... [truncated]"
         else
-            LAST_ERROR_OUTPUT="$full_output"
+            LAST_ERROR_OUTPUT="$captured"
         fi
     else
         LAST_ERROR_OUTPUT="(command output unavailable: mktemp failed)"
@@ -213,6 +221,22 @@ try_step() {
     fi
 
     return "$exit_code"
+}
+
+# Execute a command string with try_step semantics (for pipelines/compound commands)
+# Usage: try_step_eval "description" "command string"
+try_step_eval() {
+    local description="$1"
+    local command_str="${2:-}"
+
+    if [[ -z "$command_str" ]]; then
+        if type -t log_error &>/dev/null; then
+            log_error "try_step_eval: missing command string for: $description"
+        fi
+        return 1
+    fi
+
+    try_step "$description" bash -e -o pipefail -c "$command_str"
 }
 
 # Execute a command that can fail without aborting
@@ -551,8 +575,8 @@ retry_with_backoff() {
     if [[ -z "$stderr_file" || -z "$stdout_file" ]]; then
         use_temp_files="false"
         # Best-effort cleanup if only one temp file was created.
-        [[ -n "$stderr_file" ]] && rm -f "$stderr_file" 2>/dev/null || true
-        [[ -n "$stdout_file" ]] && rm -f "$stdout_file" 2>/dev/null || true
+        [[ -n "$stderr_file" ]] && rm -f -- "$stderr_file" 2>/dev/null || true
+        [[ -n "$stdout_file" ]] && rm -f -- "$stdout_file" 2>/dev/null || true
         stderr_file=""
         stdout_file=""
     fi
@@ -578,7 +602,10 @@ retry_with_backoff() {
             else
                 exit_code=$?
             fi
-            stderr_content=$(cat "$stderr_file" 2>/dev/null || echo "")
+            stderr_content="$(head -c "$((ERROR_OUTPUT_MAX_LENGTH + 1))" "$stderr_file" 2>/dev/null || printf '')"
+            if [[ ${#stderr_content} -gt $ERROR_OUTPUT_MAX_LENGTH ]]; then
+                stderr_content="${stderr_content:0:$ERROR_OUTPUT_MAX_LENGTH}"
+            fi
         else
             # Fallback: capture combined output in-memory.
             #
@@ -613,7 +640,7 @@ retry_with_backoff() {
             fi
             # Output the captured stdout
             cat "$stdout_file"
-            rm -f "$stderr_file" "$stdout_file" 2>/dev/null
+            rm -f -- "$stderr_file" "$stdout_file" 2>/dev/null || true
             return 0
         fi
 
@@ -630,16 +657,23 @@ retry_with_backoff() {
             LAST_ERROR_CODE=$exit_code
             LAST_ERROR_TIME=$(date -Iseconds)
             if [[ "$use_temp_files" == "true" ]]; then
-                LAST_ERROR_OUTPUT=$(head -c "$ERROR_OUTPUT_MAX_LENGTH" "$stderr_file" 2>/dev/null || echo "")
+                local captured
+                captured="$(head -c "$((ERROR_OUTPUT_MAX_LENGTH + 1))" "$stderr_file" 2>/dev/null || printf '')"
+                if [[ ${#captured} -gt $ERROR_OUTPUT_MAX_LENGTH ]]; then
+                    captured="${captured:0:$ERROR_OUTPUT_MAX_LENGTH}"
+                    LAST_ERROR_OUTPUT="${captured}... [truncated]"
+                else
+                    LAST_ERROR_OUTPUT="$captured"
+                fi
             else
-                LAST_ERROR_OUTPUT="${stderr_content:0:$ERROR_OUTPUT_MAX_LENGTH}"
+                LAST_ERROR_OUTPUT="$stderr_content"
             fi
             # Output stderr for debugging
             if [[ -n "$stderr_content" ]]; then
                 echo "$stderr_content" >&2
             fi
             if [[ "$use_temp_files" == "true" ]]; then
-                rm -f "$stderr_file" "$stdout_file" 2>/dev/null
+                rm -f -- "$stderr_file" "$stdout_file" 2>/dev/null || true
             fi
             return "$exit_code"
         fi
@@ -665,13 +699,20 @@ retry_with_backoff() {
     LAST_ERROR_CODE=$exit_code
     LAST_ERROR_TIME=$(date -Iseconds)
     if [[ "$use_temp_files" == "true" ]]; then
-        LAST_ERROR_OUTPUT=$(head -c "$ERROR_OUTPUT_MAX_LENGTH" "$stderr_file" 2>/dev/null || echo "")
+        local captured
+        captured="$(head -c "$((ERROR_OUTPUT_MAX_LENGTH + 1))" "$stderr_file" 2>/dev/null || printf '')"
+        if [[ ${#captured} -gt $ERROR_OUTPUT_MAX_LENGTH ]]; then
+            captured="${captured:0:$ERROR_OUTPUT_MAX_LENGTH}"
+            LAST_ERROR_OUTPUT="${captured}... [truncated]"
+        else
+            LAST_ERROR_OUTPUT="$captured"
+        fi
     else
-        LAST_ERROR_OUTPUT="${stderr_content:0:$ERROR_OUTPUT_MAX_LENGTH}"
+        LAST_ERROR_OUTPUT="$stderr_content"
     fi
 
     if [[ "$use_temp_files" == "true" ]]; then
-        rm -f "$stderr_file" "$stdout_file" 2>/dev/null
+        rm -f -- "$stderr_file" "$stdout_file" 2>/dev/null || true
     fi
     return "$exit_code"
 }
@@ -727,5 +768,10 @@ fetch_with_retry() {
     local url="$1"
     shift
 
-    retry_with_backoff "Fetching $url" curl -fsSL "$@" "$url"
+    local -a curl_args=(-fsSL)
+    if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
+        curl_args=(--proto '=https' --proto-redir '=https' -fsSL)
+    fi
+
+    retry_with_backoff "Fetching $url" curl "${curl_args[@]}" "$@" "$url"
 }

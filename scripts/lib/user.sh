@@ -8,6 +8,15 @@
 #   - $SUDO to be set (empty string for root, "sudo" otherwise)
 # ============================================================
 
+# Prevent multiple sourcing
+if [[ -n "${_ACFS_USER_SH_LOADED:-}" ]]; then
+    if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
+        return 0
+    fi
+    exit 0
+fi
+_ACFS_USER_SH_LOADED=1
+
 # Fallback logging if logging.sh not sourced
 if ! declare -f log_fatal &>/dev/null; then
     log_fatal() { echo "FATAL: $1" >&2; exit 1; }
@@ -18,8 +27,12 @@ if ! declare -f log_fatal &>/dev/null; then
     log_step() { echo "[$1] $2" >&2; }
 fi
 
-# Ensure SUDO is set
-: "${SUDO:=sudo}"
+# Ensure SUDO is set (empty string for root, "sudo" otherwise)
+if [[ $EUID -eq 0 ]]; then
+    SUDO=""
+else
+    : "${SUDO:=sudo}"
+fi
 
 # Target user for ACFS installations
 ACFS_TARGET_USER="${ACFS_TARGET_USER:-ubuntu}"
@@ -130,8 +143,35 @@ migrate_ssh_keys() {
     if [[ -z "$source_keys" ]]; then
         if [[ "${ACFS_CI:-false}" == "true" ]]; then
             log_detail "No SSH keys found to migrate (CI)"
-        else
-            log_warn "No SSH keys found to migrate"
+	        else
+	            log_warn "No SSH keys found to migrate to $target user"
+	            log_warn "You connected with password - SSH key not configured for $target"
+	            echo ""
+	            echo "════════════════════════════════════════════════════════════"
+	            echo "  ⚠  SSH KEY SETUP REQUIRED FOR USER: $target"
+	            echo "════════════════════════════════════════════════════════════"
+	            echo ""
+	            echo "  You connected with a password, so no SSH key was migrated."
+	            echo "  After installation, you'll need to set up SSH access."
+	            echo ""
+	            echo "  EASIEST FIX - from your LOCAL machine, run:"
+	            echo ""
+	            echo "    ssh-copy-id ${target}@YOUR_SERVER_IP"
+	            echo ""
+	            echo "  Or manually: SSH in as root and run these commands:"
+	            echo ""
+	            echo "    mkdir -p ${ACFS_TARGET_HOME}/.ssh"
+	            echo "    cat >> ${ACFS_TARGET_HOME}/.ssh/authorized_keys << 'EOF'"
+	            echo "    YOUR_PUBLIC_KEY_HERE"
+	            echo "    EOF"
+	            echo "    chown -R ${target}:${target} ${ACFS_TARGET_HOME}/.ssh"
+	            echo "    chmod 700 ${ACFS_TARGET_HOME}/.ssh"
+	            echo "    chmod 600 ${ACFS_TARGET_HOME}/.ssh/authorized_keys"
+	            echo ""
+	            echo "════════════════════════════════════════════════════════════"
+	            echo ""
+	            # Set a flag for the final summary
+	            export ACFS_SSH_KEY_WARNING="true"
         fi
         return 0
     fi
@@ -165,6 +205,13 @@ migrate_ssh_keys() {
         if $SUDO grep -Fxq "$line" "$target_keys" 2>/dev/null; then
             continue
         fi
+
+        # Ensure target file ends with a newline before appending.
+        if $SUDO bash -c "[[ -s \"$target_keys\" ]] && [[ -n \"\$(tail -c 1 \"$target_keys\")\" ]]"; then
+            # File has content and last char is not newline
+            printf '\n' | $SUDO tee -a "$target_keys" >/dev/null
+        fi
+
         if ! printf '%s\n' "$line" | $SUDO tee -a "$target_keys" >/dev/null; then
             log_error "Failed to append SSH key to: $target_keys"
             return 1
@@ -172,7 +219,7 @@ migrate_ssh_keys() {
     done < "$source_keys"
 
     # Fix permissions
-    $SUDO chown -R "$target:$target" "$ACFS_TARGET_HOME/.ssh"
+    $SUDO chown -hR "$target:$target" "$ACFS_TARGET_HOME/.ssh"
     $SUDO chmod 700 "$ACFS_TARGET_HOME/.ssh"
     $SUDO chmod 600 "$target_keys"
 
@@ -322,7 +369,13 @@ prompt_ssh_key() {
     # 7. Install the key
     mkdir -p /root/.ssh
     chmod 700 /root/.ssh
-    echo "$pubkey" >> "$authorized_keys"
+
+    # Ensure authorized_keys ends with a newline before appending.
+    if [[ -s "$authorized_keys" ]] && [[ -n "$(tail -c 1 "$authorized_keys")" ]]; then
+        printf '\n' >> "$authorized_keys"
+    fi
+
+    printf '%s\n' "$pubkey" >> "$authorized_keys"
     chmod 600 "$authorized_keys"
 
     log_success "SSH key installed successfully"
@@ -332,17 +385,22 @@ prompt_ssh_key() {
 }
 
 # Full user normalization sequence
-normalize_user() {
-    log_step "1/8" "Normalizing user account..."
+# NOTE: install.sh defines its own normalize_user phase function. This library is
+# sourced by install.sh at runtime, so we must avoid overriding existing
+# definitions (TARGET_USER handling + newer idempotency logic live in install.sh).
+if ! declare -f normalize_user >/dev/null 2>&1; then
+    normalize_user() {
+        log_step "1/8" "Normalizing user account..."
 
-    ensure_user
+        ensure_user
 
-    local mode="${MODE:-${ACFS_MODE:-vibe}}"
-    if [[ "$mode" == "vibe" ]]; then
-        enable_passwordless_sudo
-    fi
+        local mode="${MODE:-${ACFS_MODE:-vibe}}"
+        if [[ "$mode" == "vibe" ]]; then
+            enable_passwordless_sudo
+        fi
 
-    migrate_ssh_keys
+        migrate_ssh_keys
 
-    log_success "User normalization complete"
-}
+        log_success "User normalization complete"
+    }
+fi

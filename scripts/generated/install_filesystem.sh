@@ -9,6 +9,39 @@ set -euo pipefail
 
 # Ensure logging functions available
 ACFS_GENERATED_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# When running a generated installer directly (not sourced by install.sh),
+# set sane defaults and derive ACFS paths from the script location so
+# contract validation passes and local assets are discoverable.
+if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
+    # Match install.sh defaults
+    TARGET_USER="${TARGET_USER:-ubuntu}"
+    MODE="${MODE:-vibe}"
+
+    if [[ -z "${TARGET_HOME:-}" ]]; then
+        if [[ "${TARGET_USER}" == "root" ]]; then
+            TARGET_HOME="/root"
+        elif [[ "$(whoami 2>/dev/null || true)" == "${TARGET_USER}" ]]; then
+            TARGET_HOME="${HOME}"
+        else
+            TARGET_HOME="/home/${TARGET_USER}"
+        fi
+    fi
+
+    # Derive "bootstrap" paths from the repo layout (scripts/generated/.. -> repo root).
+    if [[ -z "${ACFS_BOOTSTRAP_DIR:-}" ]]; then
+        ACFS_BOOTSTRAP_DIR="$(cd "$ACFS_GENERATED_SCRIPT_DIR/../.." && pwd)"
+    fi
+
+    ACFS_LIB_DIR="${ACFS_LIB_DIR:-$ACFS_BOOTSTRAP_DIR/scripts/lib}"
+    ACFS_GENERATED_DIR="${ACFS_GENERATED_DIR:-$ACFS_BOOTSTRAP_DIR/scripts/generated}"
+    ACFS_ASSETS_DIR="${ACFS_ASSETS_DIR:-$ACFS_BOOTSTRAP_DIR/acfs}"
+    ACFS_CHECKSUMS_YAML="${ACFS_CHECKSUMS_YAML:-$ACFS_BOOTSTRAP_DIR/checksums.yaml}"
+    ACFS_MANIFEST_YAML="${ACFS_MANIFEST_YAML:-$ACFS_BOOTSTRAP_DIR/acfs.manifest.yaml}"
+
+    export TARGET_USER TARGET_HOME MODE
+    export ACFS_BOOTSTRAP_DIR ACFS_LIB_DIR ACFS_GENERATED_DIR ACFS_ASSETS_DIR ACFS_CHECKSUMS_YAML ACFS_MANIFEST_YAML
+fi
 if [[ -f "$ACFS_GENERATED_SCRIPT_DIR/../lib/logging.sh" ]]; then
     source "$ACFS_GENERATED_SCRIPT_DIR/../lib/logging.sh"
 else
@@ -36,7 +69,7 @@ fi
 # Scripts that need it should call: acfs_security_init
 ACFS_SECURITY_READY=false
 acfs_security_init() {
-    if [[ "${ACFS_SECURITY_READY}" == "true" ]]; then
+    if [[ "${ACFS_SECURITY_READY}" = "true" ]]; then
         return 0
     fi
 
@@ -68,53 +101,52 @@ install_base_filesystem() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing base.filesystem"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
-        log_info "dry-run: install: mkdir -p /data/projects /data/cache (root)"
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: install: # Hardening: refuse to operate on symlinked workspace paths. (root)"
     else
         if ! run_as_root_shell <<'INSTALL_BASE_FILESYSTEM'
+# Hardening: refuse to operate on symlinked workspace paths.
+# Prevents symlink tricks like /data -> / or /data/projects -> /etc.
+for p in /data /data/projects /data/cache; do
+  if [[ -e "$p" && -L "$p" ]]; then
+    echo "ERROR: Refusing to use symlinked path: $p" >&2
+    exit 1
+  fi
+done
+
 mkdir -p /data/projects /data/cache
+chown -h "${TARGET_USER:-ubuntu}:${TARGET_USER:-ubuntu}" /data /data/projects /data/cache
 INSTALL_BASE_FILESYSTEM
         then
-            log_error "base.filesystem: install command failed: mkdir -p /data/projects /data/cache"
+            log_error "base.filesystem: install command failed: # Hardening: refuse to operate on symlinked workspace paths."
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
-        log_info "dry-run: install: chown -R \"\${TARGET_USER:-ubuntu}:\${TARGET_USER:-ubuntu}\" /data (root)"
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: install: target_home=\"\${TARGET_HOME:-/home/ubuntu}\" (root)"
     else
         if ! run_as_root_shell <<'INSTALL_BASE_FILESYSTEM'
-chown -R "${TARGET_USER:-ubuntu}:${TARGET_USER:-ubuntu}" /data
+target_home="${TARGET_HOME:-/home/ubuntu}"
+if [[ -z "$target_home" || "$target_home" == "/" || "$target_home" != /* ]]; then
+  echo "ERROR: Invalid TARGET_HOME: '${target_home:-<empty>}'" >&2
+  exit 1
+fi
+if [[ -e "$target_home/.acfs" && -L "$target_home/.acfs" ]]; then
+  echo "ERROR: Refusing to use symlinked ACFS dir: $target_home/.acfs" >&2
+  exit 1
+fi
+
+mkdir -p "$target_home/.acfs"
+chown -hR "${TARGET_USER:-ubuntu}:${TARGET_USER:-ubuntu}" "$target_home/.acfs"
 INSTALL_BASE_FILESYSTEM
         then
-            log_error "base.filesystem: install command failed: chown -R \"\${TARGET_USER:-ubuntu}:\${TARGET_USER:-ubuntu}\" /data"
-            return 1
-        fi
-    fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
-        log_info "dry-run: install: mkdir -p \"\${TARGET_HOME:-/home/ubuntu}/.acfs\" (root)"
-    else
-        if ! run_as_root_shell <<'INSTALL_BASE_FILESYSTEM'
-mkdir -p "${TARGET_HOME:-/home/ubuntu}/.acfs"
-INSTALL_BASE_FILESYSTEM
-        then
-            log_error "base.filesystem: install command failed: mkdir -p \"\${TARGET_HOME:-/home/ubuntu}/.acfs\""
-            return 1
-        fi
-    fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
-        log_info "dry-run: install: chown -R \"\${TARGET_USER:-ubuntu}:\${TARGET_USER:-ubuntu}\" \"\${TARGET_HOME:-/home/ubuntu}/.acfs\" (root)"
-    else
-        if ! run_as_root_shell <<'INSTALL_BASE_FILESYSTEM'
-chown -R "${TARGET_USER:-ubuntu}:${TARGET_USER:-ubuntu}" "${TARGET_HOME:-/home/ubuntu}/.acfs"
-INSTALL_BASE_FILESYSTEM
-        then
-            log_error "base.filesystem: install command failed: chown -R \"\${TARGET_USER:-ubuntu}:\${TARGET_USER:-ubuntu}\" \"\${TARGET_HOME:-/home/ubuntu}/.acfs\""
+            log_error "base.filesystem: install command failed: target_home=\"\${TARGET_HOME:-/home/ubuntu}\""
             return 1
         fi
     fi
 
     # Verify
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: test -d /data/projects (root)"
     else
         if ! run_as_root_shell <<'INSTALL_BASE_FILESYSTEM'
@@ -125,7 +157,7 @@ INSTALL_BASE_FILESYSTEM
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: test -d \"\${TARGET_HOME:-/home/ubuntu}/.acfs\" (root)"
     else
         if ! run_as_root_shell <<'INSTALL_BASE_FILESYSTEM'
@@ -147,6 +179,6 @@ install_filesystem() {
 }
 
 # Run if executed directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
     install_filesystem
 fi

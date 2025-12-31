@@ -366,25 +366,35 @@ install_go_latest() {
     esac
 
     # Get latest version
-    local version
-    version=$(curl --proto '=https' --proto-redir '=https' -sL 'https://go.dev/VERSION?m=text' | head -1) || version="go1.23.4"
+    local version="go1.23.4"
+    local version_response=""
+    version_response="$(curl --proto '=https' --proto-redir '=https' -fsSL --max-time 10 'https://go.dev/VERSION?m=text' 2>/dev/null)" || version_response=""
+    local fetched_version="${version_response%%$'\n'*}"
+    fetched_version="${fetched_version%%$'\r'}"
+    if [[ "$fetched_version" =~ ^go[0-9]+(\.[0-9]+)*$ ]]; then
+        version="$fetched_version"
+    fi
 
     # Download and install
     local tmpdir
-    tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/acfs_go.XXXXXX")
+    tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/acfs_go.XXXXXX" 2>/dev/null)" || tmpdir=""
+    if [[ -z "$tmpdir" ]] || [[ ! -d "$tmpdir" ]]; then
+        log_warn "mktemp failed; cannot install Go"
+        return 1
+    fi
     local tarball="${version}.linux-${arch}.tar.gz"
 
     log_detail "Downloading $tarball..."
     if ! curl --proto '=https' --proto-redir '=https' -fsSL -o "$tmpdir/$tarball" "https://go.dev/dl/$tarball"; then
         log_warn "Failed to download Go"
-        rm -rf "$tmpdir"
+        rm -rf -- "$tmpdir"
         return 1
     fi
 
     # Remove old installation and extract new one
-    $sudo_cmd rm -rf /usr/local/go
+    $sudo_cmd rm -rf -- /usr/local/go
     $sudo_cmd tar -C /usr/local -xzf "$tmpdir/$tarball"
-    rm -rf "$tmpdir"
+    rm -rf -- "$tmpdir"
 
     # Create symlinks
     $sudo_cmd ln -sf /usr/local/go/bin/go /usr/local/bin/go

@@ -125,7 +125,7 @@ report_failure() {
     local max_error_lines=5
     if [[ $(echo "$error_output" | wc -l) -gt $max_error_lines ]]; then
         error_output=$(echo "$error_output" | head -n "$max_error_lines")
-        error_output="${error_output}\n... (truncated)"
+        error_output+=$'\n... (truncated)'
     fi
 
     # Get suggested fix from errors.sh if available
@@ -134,8 +134,13 @@ report_failure() {
         suggested_fix=$(get_suggested_fix "$error" 2>/dev/null || get_suggested_fix "$error_output" 2>/dev/null || echo "$suggested_fix")
     fi
 
-    # Build resume command
-    local resume_cmd="curl -fsSL '${ACFS_RAW:-https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main}/install.sh' | bash -s -- --resume"
+    # Build resume command (prefer HTTPS-only curl when supported)
+    local install_url="${ACFS_RAW:-https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main}/install.sh"
+    local curl_cmd="curl -fsSL"
+    if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
+        curl_cmd="curl --proto '=https' --proto-redir '=https' -fsSL"
+    fi
+    local resume_cmd="${curl_cmd} '${install_url}' | bash -s -- --resume"
     if [[ "${MODE:-}" == "vibe" ]]; then
         resume_cmd="$resume_cmd --mode vibe"
     fi

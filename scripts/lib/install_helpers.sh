@@ -268,45 +268,50 @@ acfs_resolve_selection() {
         fi
     done
 
-    local found_dep=""
-    local found_chain=""
-    _acfs_find_skipped_dep() {
-        local current="$1"
-        local path="$2"
-        local deps="${ACFS_MODULE_DEPS["$current"]:-}"
-        [[ -n "$deps" ]] || return 1
-        IFS=',' read -ra _deps <<< "$deps"
-        local dep=""
-        for dep in "${_deps[@]}"; do
-            [[ -n "$dep" ]] || continue
-            if [[ -n "${skip_set[$dep]:-}" ]]; then
-                found_dep="$dep"
-                found_chain="$path -> $dep"
-                return 0
-            fi
-            if [[ -n "${visited[$dep]:-}" ]]; then
-                continue
-            fi
-            visited["$dep"]=1
-            if _acfs_find_skipped_dep "$dep" "$path -> $dep"; then
-                return 0
+    # When --no-deps is enabled, the user is explicitly asking to bypass dependency
+    # closure. In that mode we allow "unsafe" selections (including skipping deps)
+    # and rely on the warning printed below.
+    if [[ "${NO_DEPS:-false}" != "true" ]]; then
+        local found_dep=""
+        local found_chain=""
+        _acfs_find_skipped_dep() {
+            local current="$1"
+            local path="$2"
+            local deps="${ACFS_MODULE_DEPS["$current"]:-}"
+            [[ -n "$deps" ]] || return 1
+            IFS=',' read -ra _deps <<< "$deps"
+            local dep=""
+            for dep in "${_deps[@]}"; do
+                [[ -n "$dep" ]] || continue
+                if [[ -n "${skip_set[$dep]:-}" ]]; then
+                    found_dep="$dep"
+                    found_chain="$path -> $dep"
+                    return 0
+                fi
+                if [[ -n "${visited[$dep]:-}" ]]; then
+                    continue
+                fi
+                visited["$dep"]=1
+                if _acfs_find_skipped_dep "$dep" "$path -> $dep"; then
+                    return 0
+                fi
+            done
+            return 1
+        }
+
+        for module in "${!desired[@]}"; do
+            local -A visited=()
+            visited["$module"]=1
+            found_dep=""
+            found_chain=""
+            if _acfs_find_skipped_dep "$module" "$module"; then
+                log_error "Selection error: $module depends on skipped $found_dep"
+                log_error "Dependency chain: $found_chain"
+                log_error "Remove --skip $found_dep or omit $module."
+                return 1
             fi
         done
-        return 1
-    }
-
-    for module in "${!desired[@]}"; do
-        local -A visited=()
-        visited["$module"]=1
-        found_dep=""
-        found_chain=""
-        if _acfs_find_skipped_dep "$module" "$module"; then
-            log_error "Selection error: $module depends on skipped $found_dep"
-            log_error "Dependency chain: $found_chain"
-            log_error "Remove --skip $found_dep or omit $module."
-            return 1
-        fi
-    done
+    fi
 
     if [[ "${NO_DEPS:-false}" == "true" ]]; then
         log_warn "WARNING: --no-deps disables dependency closure; install may be incomplete."
@@ -433,6 +438,25 @@ _acfs_category_is_migrated() {
 acfs_use_generated_for_category() {
     local category="${1:-}"
     [[ -n "$category" ]] || return 1
+
+    # Users is orchestration-only today: the install.sh orchestrator owns user creation,
+    # SSH key migration, and sudo policy. The manifest module `users.ubuntu` is marked
+    # `generated: false` with an empty install list, so enabling generated users would
+    # effectively skip user creation and fail verification.
+    #
+    # Guardrail: force legacy for users even if someone sets ACFS_USE_GENERATED_USERS=1.
+    if [[ "${category,,}" == "users" ]]; then
+        local users_flag
+        users_flag="$(acfs_flag_bool "ACFS_USE_GENERATED_USERS")"
+        if [[ "$users_flag" == "1" ]]; then
+            if declare -f log_warn >/dev/null 2>&1; then
+                log_warn "ACFS_USE_GENERATED_USERS=1 is not supported yet (users is orchestration-only); using legacy user normalization"
+            else
+                echo "WARN: ACFS_USE_GENERATED_USERS=1 is not supported yet (users is orchestration-only); using legacy user normalization" >&2
+            fi
+        fi
+        return 1
+    fi
 
     # 1) Per-category override
     local category_upper
@@ -710,7 +734,15 @@ command_exists_as_target() {
         return 1
     fi
 
-    run_as_target bash -c "command -v '$cmd' >/dev/null 2>&1"
+    # NOTE: We intentionally avoid embedding $cmd into the shell string.
+    # Passing as $1 avoids quoting bugs when cmd contains special chars.
+    #
+    # Also, extend PATH with common user install locations so we can detect
+    # tools installed under $HOME (bun, cargo, etc.) when running via sudo/runuser.
+    # shellcheck disable=SC2016  # $HOME/$PATH expand inside the target user's bash -c
+    run_as_target bash -c \
+        'export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.bun/bin:$HOME/.atuin/bin:$HOME/go/bin:$PATH"; command -v -- "$1" >/dev/null 2>&1' \
+        _ "$cmd"
 }
 
 # ------------------------------------------------------------

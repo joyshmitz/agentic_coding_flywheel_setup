@@ -68,8 +68,24 @@ declare -A SERVICE_STATUS
 # Helper Functions
 # ============================================================
 
-# Run command as target user
+# Run a command (argv) as target user.
+#
+# Prefer argv mode to avoid quoting pitfalls (paths with spaces, etc.).
 run_as_user() {
+    if [[ $# -lt 1 ]]; then
+        return 0
+    fi
+
+    if [[ "$(whoami)" == "$TARGET_USER" ]]; then
+        "$@"
+        return $?
+    fi
+
+    sudo -u "$TARGET_USER" -H "$@"
+}
+
+# Run a shell string as target user (use for pipelines/redirections).
+run_as_user_shell() {
     local cmd="$1"
     if [[ "$(whoami)" == "$TARGET_USER" ]]; then
         bash -c "$cmd"
@@ -82,7 +98,12 @@ run_as_user() {
 # More robust than checking binary paths directly - respects user's PATH
 user_command_exists() {
     local cmd="$1"
-    run_as_user "command -v '$cmd'" &>/dev/null
+    # Include common user install locations (bun/cargo/etc) even when running
+    # via sudo, which may otherwise provide a restricted PATH.
+    # shellcheck disable=SC2016  # $HOME/$PATH expand inside the target user's bash -c
+    run_as_user bash -c \
+        'export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.bun/bin:$HOME/.atuin/bin:$HOME/go/bin:$PATH"; command -v -- "$1" >/dev/null 2>&1' \
+        _ "$cmd"
 }
 
 # Check if a file exists (from current user perspective)
@@ -98,14 +119,35 @@ user_dir_has_content() {
     [[ -d "$path" && -n "$(ls -A "$path" 2>/dev/null)" ]]
 }
 
+find_user_bin() {
+    local name="$1"
+
+    local candidates=(
+        "$TARGET_HOME/.local/bin/$name"
+        "$TARGET_HOME/.bun/bin/$name"
+        "$TARGET_HOME/.atuin/bin/$name"
+    )
+
+    local candidate
+    for candidate in "${candidates[@]}"; do
+        if [[ -x "$candidate" ]]; then
+            printf '%s' "$candidate"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 # ============================================================
 # Status Check Functions
 # ============================================================
 
 check_claude_status() {
-    local claude_bin="$TARGET_HOME/.bun/bin/claude"
+    local claude_bin
+    claude_bin="$(find_user_bin "claude" 2>/dev/null || true)"
 
-    if [[ ! -x "$claude_bin" ]]; then
+    if [[ -z "$claude_bin" || ! -x "$claude_bin" ]]; then
         SERVICE_STATUS[claude]="not_installed"
         return
     fi
@@ -121,9 +163,10 @@ check_claude_status() {
 }
 
 check_codex_status() {
-    local codex_bin="$TARGET_HOME/.bun/bin/codex"
+    local codex_bin
+    codex_bin="$(find_user_bin "codex" 2>/dev/null || true)"
 
-    if [[ ! -x "$codex_bin" ]]; then
+    if [[ -z "$codex_bin" || ! -x "$codex_bin" ]]; then
         SERVICE_STATUS[codex]="not_installed"
         return
     fi
@@ -139,9 +182,10 @@ check_codex_status() {
 }
 
 check_gemini_status() {
-    local gemini_bin="$TARGET_HOME/.bun/bin/gemini"
+    local gemini_bin
+    gemini_bin="$(find_user_bin "gemini" 2>/dev/null || true)"
 
-    if [[ ! -x "$gemini_bin" ]]; then
+    if [[ -z "$gemini_bin" || ! -x "$gemini_bin" ]]; then
         SERVICE_STATUS[gemini]="not_installed"
         return
     fi
@@ -175,9 +219,10 @@ check_vercel_status() {
 }
 
 check_supabase_status() {
-    local supabase_bin="$TARGET_HOME/.bun/bin/supabase"
+    local supabase_bin
+    supabase_bin="$(find_user_bin "supabase" 2>/dev/null || true)"
 
-    if [[ ! -x "$supabase_bin" ]]; then
+    if [[ -z "$supabase_bin" || ! -x "$supabase_bin" ]]; then
         SERVICE_STATUS[supabase]="not_installed"
         return
     fi
@@ -218,7 +263,7 @@ check_postgres_status() {
     fi
 
     # Check if service is running and user can connect
-    if run_as_user "psql -c 'SELECT 1'" &>/dev/null; then
+    if run_as_user psql -c 'SELECT 1' &>/dev/null; then
         SERVICE_STATUS[postgres]="configured"
     elif systemctl is-active --quiet postgresql 2>/dev/null; then
         SERVICE_STATUS[postgres]="running"
@@ -317,9 +362,10 @@ print_status_table() {
 # ============================================================
 
 setup_claude() {
-    local claude_bin="$TARGET_HOME/.bun/bin/claude"
+    local claude_bin
+    claude_bin="$(find_user_bin "claude" 2>/dev/null || true)"
 
-    if [[ ! -x "$claude_bin" ]]; then
+    if [[ -z "$claude_bin" || ! -x "$claude_bin" ]]; then
         gum_error "Claude Code not installed. Run the main installer first."
         return 1
     fi
@@ -341,7 +387,7 @@ Press Enter to launch Claude Code login..."
     read -r
 
     # Run claude interactively
-    run_as_user "'$claude_bin'" || true
+    run_as_user "$claude_bin" || true
 
     # Re-check status
     check_claude_status
@@ -353,9 +399,10 @@ Press Enter to launch Claude Code login..."
 }
 
 setup_codex() {
-    local codex_bin="$TARGET_HOME/.bun/bin/codex"
+    local codex_bin
+    codex_bin="$(find_user_bin "codex" 2>/dev/null || true)"
 
-    if [[ ! -x "$codex_bin" ]]; then
+    if [[ -z "$codex_bin" || ! -x "$codex_bin" ]]; then
         gum_error "Codex CLI not installed. Run the main installer first."
         return 1
     fi
@@ -370,7 +417,7 @@ setup_codex() {
 We'll launch the login flow in your terminal/browser."
 
     gum_detail "Launching Codex OAuth login..."
-    run_as_user "'$codex_bin' login" || true
+    run_as_user "$codex_bin" login || true
 
     check_codex_status
     if [[ "${SERVICE_STATUS[codex]}" == "configured" ]]; then
@@ -411,19 +458,47 @@ Press Enter to install the guard..."
         gum_detail "Installing Claude Git Safety Guard (noninteractive)"
     fi
 
-    mkdir -p "$hooks_dir"
+    # Safety: refuse to follow symlinks under ~/.claude.
+    # This prevents writing outside $TARGET_HOME when invoked as root.
+    if [[ -L "$settings_dir" ]]; then
+        gum_error "Refusing to operate: $settings_dir is a symlink"
+        return 1
+    fi
+    if [[ -e "$settings_dir" && ! -d "$settings_dir" ]]; then
+        gum_error "Refusing to operate: $settings_dir exists and is not a directory"
+        return 1
+    fi
+    if [[ -L "$hooks_dir" ]]; then
+        gum_error "Refusing to operate: $hooks_dir is a symlink"
+        return 1
+    fi
+    if [[ -e "$hooks_dir" && ! -d "$hooks_dir" ]]; then
+        gum_error "Refusing to operate: $hooks_dir exists and is not a directory"
+        return 1
+    fi
+    if [[ -L "$guard_path_py" || -L "$guard_path_sh" || -L "$settings_file" ]]; then
+        gum_error "Refusing to operate: one or more ~/.claude paths are symlinks"
+        return 1
+    fi
+
+    # If older runs left root-owned files, fix ownership before writing as $TARGET_USER.
+    if [[ "$(whoami)" == "root" ]]; then
+        chown -hR "$TARGET_USER:$TARGET_USER" "$settings_dir" 2>/dev/null || true
+    fi
+
+    run_as_user mkdir -p "$hooks_dir"
 
     # Prefer Python implementation if available
     local installed_guard="$guard_path_sh"
     
     if [[ -f "$source_py" ]] && command -v python3 &>/dev/null; then
         gum_detail "Installing Python implementation..."
-        cp "$source_py" "$guard_path_py"
-        chmod +x "$guard_path_py"
+        run_as_user cp -- "$source_py" "$guard_path_py"
+        run_as_user chmod +x "$guard_path_py"
         installed_guard="$guard_path_py"
     else
         gum_detail "Installing Bash implementation (fallback)..."
-        cat > "$guard_path_sh" << 'EOF'
+        cat << 'EOF' | run_as_user tee "$guard_path_sh" >/dev/null
 #!/usr/bin/env bash
 #
 # git_safety_guard.sh
@@ -451,12 +526,10 @@ SAFE_PATTERNS=(
   'git[[:space:]]+clean[[:space:]]+-n([[:space:]]|$)'
   'git[[:space:]]+clean[[:space:]]+--dry-run([[:space:]]|$)'
   # Allow rm -rf on temp directories (ephemeral by design)
-  'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*[[:space:]]+/tmp/'
-  'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*[[:space:]]+/var/tmp/'
-  'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*[[:space:]]+\\$TMPDIR/'
-  'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*[[:space:]]+\\$\\{TMPDIR'
-  'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*[[:space:]]+\"\\$TMPDIR/'
-  'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*[[:space:]]+\"\\$\\{TMPDIR'
+  'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*([[:space:]]+--)?[[:space:]]+/tmp/'
+  'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*([[:space:]]+--)?[[:space:]]+\"/tmp/'
+  'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*([[:space:]]+--)?[[:space:]]+/var/tmp/'
+  'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*([[:space:]]+--)?[[:space:]]+\"/var/tmp/'
 )
 
 for pat in "${SAFE_PATTERNS[@]}"; do
@@ -533,12 +606,12 @@ fi
 
 exit 0
 EOF
-        chmod +x "$guard_path_sh"
+        run_as_user chmod +x "$guard_path_sh"
     fi
 
     # Create or merge settings.json
     if [[ ! -f "$settings_file" ]]; then
-        cat > "$settings_file" << EOF
+        run_as_user tee "$settings_file" >/dev/null <<EOF
 {
   "hooks": {
     "PreToolUse": [
@@ -552,50 +625,61 @@ EOF
   }
 }
 EOF
-	    else
-	        local tmp
-	        if command -v jq &>/dev/null; then
-	            tmp="$(mktemp "${TMPDIR:-/tmp}/acfs_services.XXXXXX" 2>/dev/null)" || tmp=""
-	            if [[ -z "$tmp" ]]; then
-	                gum_warn "Could not update $settings_file automatically (mktemp failed)"
-	                gum_detail "Manually add this hook command:"
-	                gum_detail "  $installed_guard"
-	            elif jq --arg cmd "$installed_guard" '
-	              .hooks = (.hooks // {}) |
-	              .hooks.PreToolUse = (.hooks.PreToolUse // []) |
-	              if (.hooks.PreToolUse | type) != "array" then
-	                .hooks.PreToolUse = []
-              else .
-              end |
-              if ( [ .hooks.PreToolUse[]? | .hooks[]? | select(.type=="command") | .command ] | index($cmd) ) != null then
-                .
-              else
-                ( [ .hooks.PreToolUse | to_entries[] | select(.value.matcher=="Bash") | .key ] | first ) as $bashKey |
-                if $bashKey == null then
-                  .hooks.PreToolUse += [{ "matcher":"Bash", "hooks":[ { "type":"command", "command":$cmd } ] }]
+    else
+        local tmp
+        if command -v jq &>/dev/null; then
+            # Create temp file in the same directory for atomic replacement (cross-device mv can fail).
+            tmp="$(run_as_user mktemp "${settings_dir}/.acfs_services.XXXXXX" 2>/dev/null || true)"
+            if [[ -z "$tmp" ]]; then
+                gum_warn "Could not update $settings_file automatically (mktemp failed)"
+                gum_detail "Manually add this hook command:"
+                gum_detail "  $installed_guard"
+            else
+                local jq_program
+                jq_program="$(cat <<'JQ'
+.hooks = (.hooks // {}) |
+.hooks.PreToolUse = (.hooks.PreToolUse // []) |
+if (.hooks.PreToolUse | type) != "array" then
+  .hooks.PreToolUse = []
+else .
+end |
+if ( [ .hooks.PreToolUse[]? | .hooks[]? | select(.type=="command") | .command ] | index($cmd) ) != null then
+  .
+else
+  ( [ .hooks.PreToolUse | to_entries[] | select(.value.matcher=="Bash") | (.key | tonumber) ] | first ) as $bashKey |
+  if $bashKey == null then
+    .hooks.PreToolUse += [{ "matcher":"Bash", "hooks":[ { "type":"command", "command":$cmd } ] }]
+  else
+    .hooks.PreToolUse[$bashKey].hooks = ((.hooks.PreToolUse[$bashKey].hooks // []) | if type=="array" then . else [] end) |
+    .hooks.PreToolUse[$bashKey].hooks += [{ "type":"command", "command":$cmd }]
+  end
+end
+JQ
+)"
+                if run_as_user jq --arg cmd "$installed_guard" "$jq_program" "$settings_file" 2>/dev/null | run_as_user tee "$tmp" >/dev/null; then
+                    run_as_user mv -- "$tmp" "$settings_file" 2>/dev/null || {
+                        run_as_user rm -f -- "$tmp" 2>/dev/null || true
+                        gum_warn "Could not update $settings_file automatically (mv failed)"
+                        gum_detail "Manually add this hook command:"
+                        gum_detail "  $installed_guard"
+                    }
                 else
-                  .hooks.PreToolUse[$bashKey].hooks = ((.hooks.PreToolUse[$bashKey].hooks // []) | if type=="array" then . else [] end) |
-                  .hooks.PreToolUse[$bashKey].hooks += [{ "type":"command", "command":$cmd }]
-	                end
-	              end
-	            ' "$settings_file" > "$tmp" 2>/dev/null; then
-	                mv "$tmp" "$settings_file"
-	            else
-	                rm -f "$tmp" 2>/dev/null || true
-	                gum_warn "Could not update $settings_file automatically (invalid JSON?)"
-	                gum_detail "Manually add this hook command:"
-	                gum_detail "  $installed_guard"
-	            fi
-	        else
-	            gum_warn "jq not found; cannot update $settings_file automatically"
-	            gum_detail "Manually add this hook command:"
+                    run_as_user rm -f -- "$tmp" 2>/dev/null || true
+                    gum_warn "Could not update $settings_file automatically (invalid JSON?)"
+                    gum_detail "Manually add this hook command:"
+                    gum_detail "  $installed_guard"
+                fi
+            fi
+        else
+            gum_warn "jq not found; cannot update $settings_file automatically"
+            gum_detail "Manually add this hook command:"
             gum_detail "  $installed_guard"
         fi
     fi
 
     # Ensure ownership if run via sudo/root
     if [[ "$(whoami)" == "root" ]]; then
-        chown -R "$TARGET_USER:$TARGET_USER" "$settings_dir" 2>/dev/null || true
+        chown -hR "$TARGET_USER:$TARGET_USER" "$settings_dir" 2>/dev/null || true
     fi
 
     gum_success "Installed Claude Git Safety Guard"
@@ -651,9 +735,10 @@ maybe_run_cli_action() {
 }
 
 setup_gemini() {
-    local gemini_bin="$TARGET_HOME/.bun/bin/gemini"
+    local gemini_bin
+    gemini_bin="$(find_user_bin "gemini" 2>/dev/null || true)"
 
-    if [[ ! -x "$gemini_bin" ]]; then
+    if [[ -z "$gemini_bin" || ! -x "$gemini_bin" ]]; then
         gum_error "Gemini CLI not installed. Run the main installer first."
         return 1
     fi
@@ -674,7 +759,7 @@ Press Enter to launch Gemini login..."
 
     read -r
 
-    run_as_user "'$gemini_bin'" || true
+    run_as_user "$gemini_bin" || true
 
     check_gemini_status
     if [[ "${SERVICE_STATUS[gemini]}" == "configured" ]]; then
@@ -702,7 +787,7 @@ Press Enter to launch 'vercel login'..."
 
     read -r
 
-    run_as_user "'$vercel_bin' login" || true
+    run_as_user "$vercel_bin" login || true
 
     check_vercel_status
     if [[ "${SERVICE_STATUS[vercel]}" == "configured" ]]; then
@@ -711,9 +796,10 @@ Press Enter to launch 'vercel login'..."
 }
 
 setup_supabase() {
-    local supabase_bin="$TARGET_HOME/.bun/bin/supabase"
+    local supabase_bin
+    supabase_bin="$(find_user_bin "supabase" 2>/dev/null || true)"
 
-    if [[ ! -x "$supabase_bin" ]]; then
+    if [[ -z "$supabase_bin" || ! -x "$supabase_bin" ]]; then
         gum_error "Supabase CLI not installed. Run the main installer first."
         return 1
     fi
@@ -733,7 +819,7 @@ Press Enter to launch 'supabase login'..."
 
     read -r
 
-    run_as_user "'$supabase_bin' login" || true
+    run_as_user "$supabase_bin" login || true
 
     check_supabase_status
     if [[ "${SERVICE_STATUS[supabase]}" == "configured" ]]; then
@@ -761,7 +847,7 @@ Press Enter to launch 'wrangler login'..."
 
     read -r
 
-    run_as_user "'$wrangler_bin' login" || true
+    run_as_user "$wrangler_bin" login || true
 
     check_wrangler_status
     if [[ "${SERVICE_STATUS[wrangler]}" == "configured" ]]; then
@@ -790,11 +876,11 @@ setup_postgres() {
     fi
 
     # Test connection
-    if run_as_user "psql -c 'SELECT version()'" &>/dev/null; then
+    if run_as_user psql -c 'SELECT version()' &>/dev/null; then
         gum_success "Database connection working"
         echo ""
         gum_detail "PostgreSQL version:"
-        run_as_user "psql -c 'SELECT version()'" 2>/dev/null | head -3
+        run_as_user psql -c 'SELECT version()' 2>/dev/null | head -3
     else
         gum_warn "Cannot connect to database as $TARGET_USER"
         gum_detail "This is normal if you haven't created a role yet"

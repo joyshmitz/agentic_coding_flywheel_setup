@@ -9,6 +9,39 @@ set -euo pipefail
 
 # Ensure logging functions available
 ACFS_GENERATED_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# When running a generated installer directly (not sourced by install.sh),
+# set sane defaults and derive ACFS paths from the script location so
+# contract validation passes and local assets are discoverable.
+if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
+    # Match install.sh defaults
+    TARGET_USER="${TARGET_USER:-ubuntu}"
+    MODE="${MODE:-vibe}"
+
+    if [[ -z "${TARGET_HOME:-}" ]]; then
+        if [[ "${TARGET_USER}" == "root" ]]; then
+            TARGET_HOME="/root"
+        elif [[ "$(whoami 2>/dev/null || true)" == "${TARGET_USER}" ]]; then
+            TARGET_HOME="${HOME}"
+        else
+            TARGET_HOME="/home/${TARGET_USER}"
+        fi
+    fi
+
+    # Derive "bootstrap" paths from the repo layout (scripts/generated/.. -> repo root).
+    if [[ -z "${ACFS_BOOTSTRAP_DIR:-}" ]]; then
+        ACFS_BOOTSTRAP_DIR="$(cd "$ACFS_GENERATED_SCRIPT_DIR/../.." && pwd)"
+    fi
+
+    ACFS_LIB_DIR="${ACFS_LIB_DIR:-$ACFS_BOOTSTRAP_DIR/scripts/lib}"
+    ACFS_GENERATED_DIR="${ACFS_GENERATED_DIR:-$ACFS_BOOTSTRAP_DIR/scripts/generated}"
+    ACFS_ASSETS_DIR="${ACFS_ASSETS_DIR:-$ACFS_BOOTSTRAP_DIR/acfs}"
+    ACFS_CHECKSUMS_YAML="${ACFS_CHECKSUMS_YAML:-$ACFS_BOOTSTRAP_DIR/checksums.yaml}"
+    ACFS_MANIFEST_YAML="${ACFS_MANIFEST_YAML:-$ACFS_BOOTSTRAP_DIR/acfs.manifest.yaml}"
+
+    export TARGET_USER TARGET_HOME MODE
+    export ACFS_BOOTSTRAP_DIR ACFS_LIB_DIR ACFS_GENERATED_DIR ACFS_ASSETS_DIR ACFS_CHECKSUMS_YAML ACFS_MANIFEST_YAML
+fi
 if [[ -f "$ACFS_GENERATED_SCRIPT_DIR/../lib/logging.sh" ]]; then
     source "$ACFS_GENERATED_SCRIPT_DIR/../lib/logging.sh"
 else
@@ -36,7 +69,7 @@ fi
 # Scripts that need it should call: acfs_security_init
 ACFS_SECURITY_READY=false
 acfs_security_init() {
-    if [[ "${ACFS_SECURITY_READY}" == "true" ]]; then
+    if [[ "${ACFS_SECURITY_READY}" = "true" ]]; then
         return 0
     fi
 
@@ -113,7 +146,8 @@ declare -a MANIFEST_CHECKS=(
     "stack.ultimate_bug_scanner.1	UBS bug scanning (easy-mode)	ubs --help	required"
     "stack.ultimate_bug_scanner.2	UBS bug scanning (easy-mode)	ubs doctor	optional"
     "stack.beads_viewer	bv TUI for Beads tasks	bv --help || bv --version	required"
-    "stack.cass	Unified search across agent session history	cass --help || cass --version	required"
+    "stack.cass.1	Unified search across agent session history	cass --help || cass --version	required"
+    "stack.cass.2	Unified search across agent session history	cass robot --help	optional"
     "stack.cm.1	Procedural memory for agents (cass-memory)	cm --version	required"
     "stack.cm.2	Procedural memory for agents (cass-memory)	cm doctor --json	optional"
     "stack.caam	Instant auth switching for agent CLIs	caam status || caam --help	required"
@@ -139,7 +173,7 @@ run_manifest_checks() {
         if bash -o pipefail -c "$cmd" &>/dev/null; then
             echo -e "\033[0;32m[ok]\033[0m $id - $desc"
             ((passed += 1))
-        elif [[ "$optional" == "optional" ]]; then
+        elif [[ "$optional" = "optional" ]]; then
             echo -e "\033[0;33m[skip]\033[0m $id - $desc"
             ((skipped += 1))
         else
@@ -154,6 +188,6 @@ run_manifest_checks() {
 }
 
 # Run if executed directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
     run_manifest_checks
 fi

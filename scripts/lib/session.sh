@@ -255,15 +255,6 @@ readonly REDACT_PATTERNS=(
 
     # AWS Access Keys
     'AKIA[A-Z0-9]{16}'
-
-    # Generic password/secret patterns (key=value or key: value)
-    # Using [[:space:]] for portability instead of \s
-    'password["[:space:]:=]+[^[:space:]"'\'']{8,}'
-    'secret["[:space:]:=]+[^[:space:]"'\'']{8,}'
-    'api_key["[:space:]:=]+[^[:space:]"'\'']{8,}'
-    'apikey["[:space:]:=]+[^[:space:]"'\'']{8,}'
-    'auth_token["[:space:]:=]+[^[:space:]"'\'']{8,}'
-    'access_token["[:space:]:=]+[^[:space:]"'\'']{8,}'
 )
 
 # Optional redaction patterns - applied when ACFS_SANITIZE_OPTIONAL=1
@@ -300,6 +291,28 @@ sanitize_content() {
             return 1
         fi
     done
+
+    # Redact common key/value secrets while preserving surrounding structure.
+    #
+    # Examples:
+    #   password="secret"         -> password="[REDACTED]"
+    #   {"password": "secret"}    -> {"password": "[REDACTED]"}
+    #
+    # We intentionally do this as a separate pass because we need capture groups
+    # in the replacement to keep the key/delimiter/quotes.
+    local kv_pattern
+    # Stop before common trailing delimiters so we don't swallow surrounding syntax like `}`, `,`, `;`, etc.
+    #
+    # Note: To include a literal `]` in a bracket expression portably, it must appear first.
+    # Also exclude `[` so we don't partially match already-redacted values like "[REDACTED]".
+    kv_pattern="([\"']?)(password|secret|api_key|apikey|auth_token|access_token)([\"']?)([[:space:]]*[:=][[:space:]]*)([\"']?)[^][[:space:]\"'}),;[]{8,}([\"']?)"
+    local next_kv_result
+    if next_kv_result=$(printf '%s' "$result" | sed -E "s/${kv_pattern}/\\1\\2\\3\\4\\5[REDACTED]\\6/${sed_flags}" 2>/dev/null); then
+        result="$next_kv_result"
+    else
+        log_error "Sanitization failed for key/value secrets"
+        return 1
+    fi
 
     # Apply optional patterns if enabled
     if [[ "${ACFS_SANITIZE_OPTIONAL:-0}" == "1" ]]; then
@@ -348,18 +361,14 @@ sanitize_session_export() {
         return 1
     }
 
-    # Sanitize all string values in the JSON
-    # This processes the transcript content, summary, key_prompts, etc.
-    # Using heredoc to avoid shell quoting issues with jq regex patterns
-    local optional_filters=""
-    if [[ "${ACFS_SANITIZE_OPTIONAL:-0}" == "1" ]]; then
-        optional_filters=' |
-        gsub("\\b[0-9]{1,3}(\\.[0-9]{1,3}){3}\\b"; "[REDACTED]") |
-        gsub("\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b"; "[REDACTED]")'
-    fi
-
-    local jq_filter
-    read -r -d '' jq_filter <<'JQ_EOF' || true
+    # Sanitize all string values in the JSON.
+    # This processes transcript content, summary, key_prompts, etc.
+    #
+    # Keep this as heredocs to avoid shell quoting issues with jq regex patterns.
+    # Note: don't use bash parameter substitution with patterns starting with "#"
+    # (e.g. "##OPTIONAL##"), because `${var/#pattern/...}` is special-cased.
+    local jq_filter_base
+    read -r -d '' jq_filter_base <<'JQ_BASE' || true
 def sanitize_string:
     if type == "string" then
         gsub("sk-[a-zA-Z0-9_-]{20,}"; "[REDACTED]") |
@@ -373,12 +382,25 @@ def sanitize_string:
         gsub("xoxb-[a-zA-Z0-9-]+"; "[REDACTED]") |
         gsub("xoxp-[a-zA-Z0-9-]+"; "[REDACTED]") |
         gsub("AKIA[A-Z0-9]{16}"; "[REDACTED]") |
-        gsub("(?i)password[\"\\s:=]+[^\\s\"']{8,}"; "[REDACTED]") |
-        gsub("(?i)secret[\"\\s:=]+[^\\s\"']{8,}"; "[REDACTED]") |
-        gsub("(?i)api_key[\"\\s:=]+[^\\s\"']{8,}"; "[REDACTED]") |
-        gsub("(?i)apikey[\"\\s:=]+[^\\s\"']{8,}"; "[REDACTED]") |
-        gsub("(?i)auth_token[\"\\s:=]+[^\\s\"']{8,}"; "[REDACTED]") |
-        gsub("(?i)access_token[\"\\s:=]+[^\\s\"']{8,}"; "[REDACTED]")##OPTIONAL##
+        gsub("(?i)password[\"\\s:=]+[\"']?[^\\s\"'\\}\\]\\),;\\[]{8,}[\"']?"; "[REDACTED]") |
+        gsub("(?i)secret[\"\\s:=]+[\"']?[^\\s\"'\\}\\]\\),;\\[]{8,}[\"']?"; "[REDACTED]") |
+        gsub("(?i)api_key[\"\\s:=]+[\"']?[^\\s\"'\\}\\]\\),;\\[]{8,}[\"']?"; "[REDACTED]") |
+        gsub("(?i)apikey[\"\\s:=]+[\"']?[^\\s\"'\\}\\]\\),;\\[]{8,}[\"']?"; "[REDACTED]") |
+        gsub("(?i)auth_token[\"\\s:=]+[\"']?[^\\s\"'\\}\\]\\),;\\[]{8,}[\"']?"; "[REDACTED]") |
+        gsub("(?i)access_token[\"\\s:=]+[\"']?[^\\s\"'\\}\\]\\),;\\[]{8,}[\"']?"; "[REDACTED]")
+JQ_BASE
+
+    local jq_filter_optional=""
+    if [[ "${ACFS_SANITIZE_OPTIONAL:-0}" == "1" ]]; then
+        read -r -d '' jq_filter_optional <<'JQ_OPTIONAL' || true
+        |
+        gsub("\\b[0-9]{1,3}(\\.[0-9]{1,3}){3}\\b"; "[REDACTED]") |
+        gsub("\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b"; "[REDACTED]")
+JQ_OPTIONAL
+    fi
+
+    local jq_filter_tail
+    read -r -d '' jq_filter_tail <<'JQ_TAIL' || true
     elif type == "array" then
         map(sanitize_string)
     elif type == "object" then
@@ -387,18 +409,19 @@ def sanitize_string:
         .
     end;
 sanitize_string
-JQ_EOF
-    jq_filter="${jq_filter/##OPTIONAL##/$optional_filters}"
+JQ_TAIL
+
+    local jq_filter="${jq_filter_base}${jq_filter_optional}${jq_filter_tail}"
 
     if ! jq "$jq_filter" "$file" > "$tmpfile"; then
-        rm -f "$tmpfile" 2>/dev/null || true
+        rm -f -- "$tmpfile" 2>/dev/null || true
         log_error "Failed to sanitize session export"
         return 1
     fi
 
     # Atomic replace
-    if ! mv "$tmpfile" "$file"; then
-        rm -f "$tmpfile" 2>/dev/null || true
+    if ! mv -- "$tmpfile" "$file"; then
+        rm -f -- "$tmpfile" 2>/dev/null || true
         log_error "Failed to write sanitized session export"
         return 1
     fi
@@ -411,8 +434,13 @@ JQ_EOF
 contains_secrets() {
     local content="$1"
 
+    # Match common key/value secrets (preserve case-insensitive detection).
+    if printf '%s' "$content" | grep -qiE '(password|secret|api_key|apikey|auth_token|access_token)[\"[:space:]:=]+[\"'\''"]?[^[:space:]\"'\''"]{8,}[\"'\''"]?' 2>/dev/null; then
+        return 0
+    fi
+
     for pattern in "${REDACT_PATTERNS[@]}"; do
-        if echo "$content" | grep -qE "$pattern" 2>/dev/null; then
+        if printf '%s' "$content" | grep -qE "$pattern" 2>/dev/null; then
             return 0
         fi
     done
@@ -629,10 +657,10 @@ export_session() {
             exported=$(cat "$tmpfile")
         else
             log_error "Sanitization failed; refusing to output unsanitized export"
-            rm -f "$tmpfile" 2>/dev/null || true
+            rm -f -- "$tmpfile" 2>/dev/null || true
             return 1
         fi
-        rm -f "$tmpfile" 2>/dev/null || true
+        rm -f -- "$tmpfile" 2>/dev/null || true
     elif [[ "$sanitize" == "true" && "$format" != "json" ]]; then
         # For non-JSON formats, apply text sanitization
         if ! exported=$(sanitize_content "$exported"); then
@@ -646,7 +674,7 @@ export_session() {
         printf '%s' "$exported" > "$output_file"
         log_success "Exported to: $output_file"
     else
-        echo "$exported"
+        printf '%s\n' "$exported"
     fi
 }
 
@@ -674,22 +702,110 @@ export_recent_session() {
 }
 
 # Convert CASS export JSON to our schema format
-# Usage: convert_to_acfs_schema <cass_json>
+# Usage: convert_to_acfs_schema <cass.json | raw_json>
 # Returns: ACFS-schema JSON to stdout
 convert_to_acfs_schema() {
-    local cass_json="$1"
+    local input="${1:-}"
+    local agent_hint="${2:-}"
+    if [[ -z "$input" ]]; then
+        return 1
+    fi
 
-    echo "$cass_json" | jq '
+    # Normalize agent hint (best-effort). CASS exports don't reliably include
+    # an "agent type" field, so callers can pass a hint (e.g., inferred from path).
+    case "$agent_hint" in
+        claude-code|codex|gemini) ;;
+        "") agent_hint="" ;;
+        *) agent_hint="unknown" ;;
+    esac
+
+    local filter
+    filter="$(
+        cat <<'JQ'
+        def is_claude_export:
+          any(.[]?; (.type == "user" or .type == "assistant") and (.sessionId? | type) == "string");
+
+        def is_codex_export:
+          any(.[]?; .type == "event_msg" and ((.payload.type? // "") == "user_message" or (.payload.type? // "") == "agent_message"));
+
+        def content_to_text:
+          if type == "string" then .
+          elif type == "array" then
+            (
+              [
+                .[]? |
+                if type == "string" then .
+                elif type == "object" then
+                  # Only include user-visible text blocks; exclude "thinking" / tool blocks.
+                  if ((.type? // "") == "text" or (.type? // "") == "input_text" or (.type? // "") == "output_text" or (.type? // "") == "") and (.text? | type) == "string" then .text
+                  else "" end
+                else "" end
+              ] | join("")
+            )
+          else "" end;
+
+        def messages:
+          if is_claude_export then
+            [
+              .[] |
+              select(.type == "user" or .type == "assistant") |
+	              {
+	                role: (.message.role // .type // "unknown"),
+	                content: (.message.content | content_to_text),
+	                timestamp: (.timestamp // ""),
+	                sessionId: (.sessionId? // ""),
+	                model: (.message.model? // "")
+	              }
+	            ]
+          elif is_codex_export then
+            [
+              .[] |
+              select(.type == "event_msg") |
+              select((.payload.type? // "") == "user_message" or (.payload.type? // "") == "agent_message") |
+              {
+                role: (if (.payload.type? // "") == "user_message" then "user" else "assistant" end),
+                content: (.payload.message? // "" | tostring),
+                timestamp: (.timestamp // "")
+              }
+            ]
+          else
+            []
+          end;
+
         {
             schema_version: 1,
-            exported_at: (now | todate),
-            session_id: (.[0].sessionId // "unknown"),
-            agent: (.[0].agentId // "unknown"),
-            model: (.[0].message.model // "unknown"),
+            exported_at: (now | todateiso8601),
+            session_id: (
+              if is_claude_export then
+                messages as $msgs |
+                ([$msgs[] | .sessionId? | select(type == "string" and length > 0)] | .[0] // "unknown")
+              elif is_codex_export then
+                ([.[] | select(.type == "session_meta") | .payload.id? | select(type == "string" and length > 0)] | .[0] // "unknown")
+              else
+                "unknown"
+              end
+            ),
+            agent: (if ($agent_hint | length) > 0 then $agent_hint else "unknown" end),
+            model: (
+              if is_claude_export then
+                (
+	                  [
+	                    messages[] |
+	                    select(.role == "assistant") |
+	                    (.model? // "") |
+	                    select(type == "string" and length > 0)
+	                  ] | .[0] // "unknown"
+	                )
+              elif is_codex_export then
+                ([.[] | select(.type == "turn_context") | .payload.model? | select(type == "string" and length > 0)] | .[0] // "unknown")
+              else
+                "unknown"
+              end
+            ),
             summary: "Exported session",
             duration_minutes: 0,
             stats: {
-                turns: (length // 0),
+                turns: (messages | length),
                 files_created: 0,
                 files_modified: 0,
                 commands_run: 0
@@ -697,14 +813,33 @@ convert_to_acfs_schema() {
             outcomes: [],
             key_prompts: [],
             sanitized_transcript: [
-                .[] | {
-                    role: .message.role,
-                    content: (if .message.content | type == "string" then .message.content else (.message.content[0].text // "") end),
-                    timestamp: .timestamp
+                messages[] |
+                {
+                    role: (.role // "unknown"),
+                    content: (.content // ""),
+                    timestamp: (.timestamp // "")
                 }
+                | select(.content | type == "string")
+                | select((.content | length) > 0)
             ]
         }
-    ' 2>/dev/null
+JQ
+    )"
+
+    # Prefer raw JSON when the argument clearly looks like JSON.
+    if [[ "$input" == "{"* || "$input" == "["* ]]; then
+        jq --arg agent_hint "$agent_hint" "$filter" 2>/dev/null <<<"$input"
+        return $?
+    fi
+
+    # Prefer a readable path (regular file or FIFO like /dev/fd/*).
+    if [[ -r "$input" ]]; then
+        jq --arg agent_hint "$agent_hint" "$filter" "$input" 2>/dev/null
+        return $?
+    fi
+
+    # Fall back to treating the input as raw JSON.
+    jq --arg agent_hint "$agent_hint" "$filter" 2>/dev/null <<<"$input"
 }
 
 # ============================================================
@@ -713,6 +848,44 @@ convert_to_acfs_schema() {
 
 # Default session storage directory
 ACFS_SESSIONS_DIR="${ACFS_SESSIONS_DIR:-${HOME}/.acfs/sessions}"
+
+# Infer agent type from a CASS export JSON file.
+# CASS exports include per-message models (for assistant turns), which is a
+# better signal than the user-chosen export filename/path.
+infer_agent_from_cass_export() {
+    local export_file="${1:-}"
+
+    local originator=""
+    originator="$(jq -r '([.[] | select(.type == "session_meta") | .payload.originator? | select(type == "string" and length > 0)] | .[0] // "")' "$export_file" 2>/dev/null)" || originator=""
+
+    case "${originator,,}" in
+        *claude*|*anthropic*) echo "claude-code"; return 0 ;;
+        *gemini*) echo "gemini"; return 0 ;;
+        *codex*|*openai*) echo "codex"; return 0 ;;
+    esac
+
+    local model=""
+    model="$(jq -r '([.[] | select(.type == "assistant") | .message.model? | select(type == "string" and length > 0)] | .[0] // "")' "$export_file" 2>/dev/null)" || model=""
+    if [[ -z "$model" ]]; then
+        model="$(jq -r '([.[] | select(.type == "turn_context") | .payload.model? | select(type == "string" and length > 0)] | .[0] // "")' "$export_file" 2>/dev/null)" || model=""
+    fi
+
+    case "${model,,}" in
+        *claude*|*anthropic*) echo "claude-code" ;;
+        *gemini*) echo "gemini" ;;
+        *gpt*|*openai*|*codex*) echo "codex" ;;
+        *)
+            # Last-resort heuristic: some users export files into paths that still include
+            # the agent data directory (e.g., ~/.claude/...).
+            case "$export_file" in
+                *"/.claude/"*) echo "claude-code" ;;
+                *"/.codex/"*) echo "codex" ;;
+                *"/.gemini/"*) echo "gemini" ;;
+                *) echo "unknown" ;;
+            esac
+            ;;
+    esac
+}
 
 # Generate a unique session ID
 generate_session_id() {
@@ -759,17 +932,46 @@ import_session() {
 
     # Detect format
     local is_cass=false is_acfs=false
-    jq -e '.[0].sessionId' "$file" >/dev/null 2>&1 && is_cass=true
-    jq -e '.schema_version' "$file" >/dev/null 2>&1 && is_acfs=true
+    if jq -e 'type == "array"' "$file" >/dev/null 2>&1; then
+        # CASS exports can begin with snapshot/event records before conversation messages.
+        # Detect by scanning entries rather than assuming .[0] is a message record.
+        jq -e 'any(.[]?; (.type == "user" or .type == "assistant") and (.sessionId? | type) == "string")' "$file" >/dev/null 2>&1 && is_cass=true
+        jq -e 'any(.[]?; .type == "event_msg" and ((.payload.type? // "") == "user_message" or (.payload.type? // "") == "agent_message"))' "$file" >/dev/null 2>&1 && is_cass=true
+    fi
+    jq -e 'type == "object" and .schema_version' "$file" >/dev/null 2>&1 && is_acfs=true
 
     # Extract metadata
     local session_id agent turn_count first_ts last_ts
     if [[ "$is_cass" == "true" ]]; then
-        session_id=$(jq -r '.[0].sessionId // "unknown"' "$file")
-        agent=$(jq -r '.[0].agentId // "unknown"' "$file")
-        turn_count=$(jq 'length' "$file")
-        first_ts=$(jq -r '.[0].timestamp // ""' "$file")
-        last_ts=$(jq -r '.[-1].timestamp // ""' "$file")
+        session_id=$(jq -r '
+            if any(.[]?; .type == "user" or .type == "assistant") then
+                ([.[] | select(.type == "user" or .type == "assistant") | .sessionId] | map(select(type == "string" and length > 0)) | .[0]) // "unknown"
+            else
+                ([.[] | select(.type == "session_meta") | .payload.id?] | map(select(type == "string" and length > 0)) | .[0]) // "unknown"
+            end
+        ' "$file")
+        agent="$(infer_agent_from_cass_export "$file")"
+        turn_count=$(jq '
+            if any(.[]?; .type == "user" or .type == "assistant") then
+                ([.[] | select(.type == "user" or .type == "assistant")] | length)
+            else
+                ([.[] | select(.type == "event_msg" and ((.payload.type? // "") == "user_message" or (.payload.type? // "") == "agent_message"))] | length)
+            end
+        ' "$file")
+        first_ts=$(jq -r '
+            if any(.[]?; .type == "user" or .type == "assistant") then
+                ([.[] | select(.type == "user" or .type == "assistant") | .timestamp] | map(select(type == "string")) | .[0]) // ""
+            else
+                ([.[] | select(.type == "event_msg" and ((.payload.type? // "") == "user_message" or (.payload.type? // "") == "agent_message")) | .timestamp] | map(select(type == "string")) | .[0]) // ""
+            end
+        ' "$file")
+        last_ts=$(jq -r '
+            if any(.[]?; .type == "user" or .type == "assistant") then
+                ([.[] | select(.type == "user" or .type == "assistant") | .timestamp] | map(select(type == "string")) | .[-1]) // ""
+            else
+                ([.[] | select(.type == "event_msg" and ((.payload.type? // "") == "user_message" or (.payload.type? // "") == "agent_message")) | .timestamp] | map(select(type == "string")) | .[-1]) // ""
+            end
+        ' "$file")
     elif [[ "$is_acfs" == "true" ]]; then
         session_id=$(jq -r '.session_id // "unknown"' "$file")
         agent=$(jq -r '.agent // "unknown"' "$file")
@@ -798,9 +1000,55 @@ import_session() {
     local dest="$ACFS_SESSIONS_DIR/${local_id}.json"
 
     if [[ "$is_cass" == "true" ]]; then
-        convert_to_acfs_schema "$(cat "$file")" > "$dest"
+        local tmp_dest
+        tmp_dest=$(mktemp "${ACFS_SESSIONS_DIR}/.${local_id}.XXXXXX.tmp" 2>/dev/null) || {
+            log_error "Failed to create temp file for import in: $ACFS_SESSIONS_DIR"
+            return 1
+        }
+
+        if ! convert_to_acfs_schema "$file" "$agent" > "$tmp_dest"; then
+            rm -f -- "$tmp_dest" 2>/dev/null || true
+            log_error "Failed to convert CASS export to ACFS schema"
+            return 1
+        fi
+
+        # Always sanitize imported output before persisting.
+        if ! sanitize_session_export "$tmp_dest"; then
+            rm -f -- "$tmp_dest" 2>/dev/null || true
+            log_error "Sanitization failed; refusing to import unsanitized session"
+            return 1
+        fi
+
+        if ! mv -- "$tmp_dest" "$dest"; then
+            rm -f -- "$tmp_dest" 2>/dev/null || true
+            log_error "Failed to write imported session: $dest"
+            return 1
+        fi
     else
-        cp "$file" "$dest"
+        local tmp_dest
+        tmp_dest=$(mktemp "${ACFS_SESSIONS_DIR}/.${local_id}.XXXXXX.tmp" 2>/dev/null) || {
+            log_error "Failed to create temp file for import in: $ACFS_SESSIONS_DIR"
+            return 1
+        }
+
+        if ! cp -- "$file" "$tmp_dest"; then
+            rm -f -- "$tmp_dest" 2>/dev/null || true
+            log_error "Failed to copy session export into staging file"
+            return 1
+        fi
+
+        # Always sanitize imported output before persisting.
+        if ! sanitize_session_export "$tmp_dest"; then
+            rm -f -- "$tmp_dest" 2>/dev/null || true
+            log_error "Sanitization failed; refusing to import unsanitized session"
+            return 1
+        fi
+
+        if ! mv -- "$tmp_dest" "$dest"; then
+            rm -f -- "$tmp_dest" 2>/dev/null || true
+            log_error "Failed to write imported session: $dest"
+            return 1
+        fi
     fi
 
     echo ""

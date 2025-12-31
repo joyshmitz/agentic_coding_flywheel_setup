@@ -9,6 +9,39 @@ set -euo pipefail
 
 # Ensure logging functions available
 ACFS_GENERATED_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# When running a generated installer directly (not sourced by install.sh),
+# set sane defaults and derive ACFS paths from the script location so
+# contract validation passes and local assets are discoverable.
+if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
+    # Match install.sh defaults
+    TARGET_USER="${TARGET_USER:-ubuntu}"
+    MODE="${MODE:-vibe}"
+
+    if [[ -z "${TARGET_HOME:-}" ]]; then
+        if [[ "${TARGET_USER}" == "root" ]]; then
+            TARGET_HOME="/root"
+        elif [[ "$(whoami 2>/dev/null || true)" == "${TARGET_USER}" ]]; then
+            TARGET_HOME="${HOME}"
+        else
+            TARGET_HOME="/home/${TARGET_USER}"
+        fi
+    fi
+
+    # Derive "bootstrap" paths from the repo layout (scripts/generated/.. -> repo root).
+    if [[ -z "${ACFS_BOOTSTRAP_DIR:-}" ]]; then
+        ACFS_BOOTSTRAP_DIR="$(cd "$ACFS_GENERATED_SCRIPT_DIR/../.." && pwd)"
+    fi
+
+    ACFS_LIB_DIR="${ACFS_LIB_DIR:-$ACFS_BOOTSTRAP_DIR/scripts/lib}"
+    ACFS_GENERATED_DIR="${ACFS_GENERATED_DIR:-$ACFS_BOOTSTRAP_DIR/scripts/generated}"
+    ACFS_ASSETS_DIR="${ACFS_ASSETS_DIR:-$ACFS_BOOTSTRAP_DIR/acfs}"
+    ACFS_CHECKSUMS_YAML="${ACFS_CHECKSUMS_YAML:-$ACFS_BOOTSTRAP_DIR/checksums.yaml}"
+    ACFS_MANIFEST_YAML="${ACFS_MANIFEST_YAML:-$ACFS_BOOTSTRAP_DIR/acfs.manifest.yaml}"
+
+    export TARGET_USER TARGET_HOME MODE
+    export ACFS_BOOTSTRAP_DIR ACFS_LIB_DIR ACFS_GENERATED_DIR ACFS_ASSETS_DIR ACFS_CHECKSUMS_YAML ACFS_MANIFEST_YAML
+fi
 if [[ -f "$ACFS_GENERATED_SCRIPT_DIR/../lib/logging.sh" ]]; then
     source "$ACFS_GENERATED_SCRIPT_DIR/../lib/logging.sh"
 else
@@ -36,7 +69,7 @@ fi
 # Scripts that need it should call: acfs_security_init
 ACFS_SECURITY_READY=false
 acfs_security_init() {
-    if [[ "${ACFS_SECURITY_READY}" == "true" ]]; then
+    if [[ "${ACFS_SECURITY_READY}" = "true" ]]; then
         return 0
     fi
 
@@ -68,7 +101,7 @@ install_stack_ntm() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing stack.ntm"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verified installer: stack.ntm"
     else
         if ! {
@@ -112,7 +145,9 @@ install_stack_ntm() {
             fi
 
             # No unverified fallback: verified install is required
-            if [[ "$install_success" != "true" ]]; then
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
                 log_error "Verified install failed for stack.ntm"
                 false
             fi
@@ -123,7 +158,7 @@ install_stack_ntm() {
     fi
 
     # Verify
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: ntm --help (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_STACK_NTM'
@@ -144,7 +179,7 @@ install_stack_mcp_agent_mail() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing stack.mcp_agent_mail"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verified installer: stack.mcp_agent_mail"
     else
         if ! {
@@ -198,7 +233,7 @@ install_stack_mcp_agent_mail() {
             run_as_target tmux kill-session -t "$tmux_session" 2>/dev/null || true
 
             # Create new detached tmux session and run the installer
-            if run_as_target tmux new-session -d -s "$tmux_session" 'bash' "$tmp_install" '--dir' '/home/ubuntu/mcp_agent_mail' '--yes'; then
+            if run_as_target tmux new-session -d -s "$tmux_session" 'bash' "$tmp_install" '--dir' "${TARGET_HOME:-/home/ubuntu}/mcp_agent_mail" '--yes'; then
                     log_success "stack.mcp_agent_mail installing in tmux session '$tmux_session'"
                     log_info "Attach with: tmux attach -t $tmux_session"
                     # Give it a moment to start
@@ -225,7 +260,7 @@ install_stack_ultimate_bug_scanner() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing stack.ultimate_bug_scanner"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verified installer: stack.ultimate_bug_scanner"
     else
         if ! {
@@ -269,7 +304,9 @@ install_stack_ultimate_bug_scanner() {
             fi
 
             # No unverified fallback: verified install is required
-            if [[ "$install_success" != "true" ]]; then
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
                 log_error "Verified install failed for stack.ultimate_bug_scanner"
                 false
             fi
@@ -280,7 +317,7 @@ install_stack_ultimate_bug_scanner() {
     fi
 
     # Verify
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: ubs --help (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_STACK_ULTIMATE_BUG_SCANNER'
@@ -291,7 +328,7 @@ INSTALL_STACK_ULTIMATE_BUG_SCANNER
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify (optional): ubs doctor (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_STACK_ULTIMATE_BUG_SCANNER'
@@ -311,7 +348,7 @@ install_stack_beads_viewer() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing stack.beads_viewer"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verified installer: stack.beads_viewer"
     else
         if ! {
@@ -355,7 +392,9 @@ install_stack_beads_viewer() {
             fi
 
             # No unverified fallback: verified install is required
-            if [[ "$install_success" != "true" ]]; then
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
                 log_error "Verified install failed for stack.beads_viewer"
                 false
             fi
@@ -366,7 +405,7 @@ install_stack_beads_viewer() {
     fi
 
     # Verify
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: bv --help || bv --version (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_STACK_BEADS_VIEWER'
@@ -387,7 +426,7 @@ install_stack_cass() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing stack.cass"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verified installer: stack.cass"
     else
         if ! {
@@ -431,7 +470,9 @@ install_stack_cass() {
             fi
 
             # No unverified fallback: verified install is required
-            if [[ "$install_success" != "true" ]]; then
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
                 log_error "Verified install failed for stack.cass"
                 false
             fi
@@ -440,9 +481,137 @@ install_stack_cass() {
             return 1
         fi
     fi
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: install: # Install a small compatibility wrapper for older tooling (e.g., NTM v1.2.0) (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_CASS'
+# Install a small compatibility wrapper for older tooling (e.g., NTM v1.2.0)
+# that expects `cass robot <subcommand>`. Modern CASS uses `cass <subcommand> --robot`.
+# Best-effort: never fail install if we cannot write the wrapper.
+if cass robot --help >/dev/null 2>&1; then
+  exit 0
+fi
+
+cass_path="$(command -v cass 2>/dev/null || true)"
+if [[ -z "$cass_path" ]]; then
+  echo "WARN: cass not found for wrapper setup" >&2
+  exit 0
+fi
+
+cass_dir="$(cd "$(dirname "$cass_path")" 2>/dev/null && pwd -P || echo "")"
+if [[ -z "$cass_dir" ]]; then
+  echo "WARN: could not resolve cass directory for wrapper setup" >&2
+  exit 0
+fi
+
+cass_real="${cass_dir}/cass.real"
+
+# Idempotency: wrapper already installed.
+if [[ -x "$cass_real" ]] && head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
+  exit 0
+fi
+
+if [[ ! -f "$cass_path" ]]; then
+  echo "WARN: cass path is not a regular file: $cass_path" >&2
+  exit 0
+fi
+if [[ ! -w "$cass_path" ]]; then
+  echo "WARN: cannot write to cass binary path (skipping wrapper): $cass_path" >&2
+  exit 0
+fi
+
+# Safety: if cass is already our wrapper but cass.real is missing, do not
+# "move" the wrapper into place (it would create an infinite exec loop).
+if [[ ! -e "$cass_real" ]] && head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
+  echo "WARN: cass wrapper detected but cass.real is missing; skipping wrapper setup" >&2
+  exit 0
+fi
+
+# Move the real binary aside, then install the wrapper at the original path.
+# Handle both fresh install and the case where CASS was updated (replaced wrapper with new binary).
+if [[ ! -e "$cass_real" ]]; then
+  # First time: move original binary to cass.real
+  if ! mv "$cass_path" "$cass_real" 2>/dev/null; then
+    echo "WARN: failed to move cass to cass.real (skipping wrapper)" >&2
+    exit 0
+  fi
+  chmod +x "$cass_real" 2>/dev/null || true
+elif ! head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
+  # cass.real exists but current cass is NOT our wrapper.
+  # Only update cass.real if cass is a binary (not a script).
+  # Safety: if it's a script (starts with #!), don't overwrite the real binary.
+  if [[ "$(head -c 2 "$cass_path" 2>/dev/null || true)" == "#!" ]]; then
+    echo "WARN: cass is a script but not our wrapper (skipping cass.real update)" >&2
+  else
+    # cass is a binary - safe to update cass.real
+    if ! mv "$cass_path" "$cass_real" 2>/dev/null; then
+      echo "WARN: failed to update cass.real with new binary (skipping wrapper)" >&2
+      exit 0
+    fi
+    chmod +x "$cass_real" 2>/dev/null || true
+  fi
+fi
+
+if ! cat > "$cass_path" <<'EOF'
+#!/usr/bin/env bash
+# ACFS CASS WRAPPER (compat): adds `cass robot <subcommand>` support for older NTM.
+set -euo pipefail
+
+real="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P)/cass.real"
+if [[ ! -x "$real" ]]; then
+  echo "ERROR: cass.real not found at: $real" >&2
+  exit 127
+fi
+
+if [[ $# -gt 0 && "${1:-}" == "robot" ]]; then
+  shift || true
+
+  if [[ $# -eq 0 || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    cat <<'EOT'
+Usage: cass robot <subcommand> [args...]
+
+Compat wrapper installed by ACFS.
+Translates:
+  cass robot <subcommand> ...  ->  cass <subcommand> ... --robot
+
+Examples:
+  cass robot search "error handling" --limit 10
+  cass search "error handling" --robot --limit 10
+EOT
+    exit 0
+  fi
+
+  for arg in "$@"; do
+    if [[ "$arg" == "--robot" ]]; then
+      exec "$real" "$@"
+    fi
+  done
+
+  exec "$real" "$@" --robot
+fi
+
+exec "$real" "$@"
+EOF
+then
+  echo "WARN: failed to write cass wrapper (skipping)" >&2
+  exit 0
+fi
+chmod +x "$cass_path" 2>/dev/null || true
+
+if ! cass robot --help >/dev/null 2>&1; then
+  echo "WARN: cass wrapper installed, but cass robot still failing" >&2
+fi
+
+exit 0
+INSTALL_STACK_CASS
+        then
+            log_error "stack.cass: install command failed: # Install a small compatibility wrapper for older tooling (e.g., NTM v1.2.0)"
+            return 1
+        fi
+    fi
 
     # Verify
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: cass --help || cass --version (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_STACK_CASS'
@@ -451,6 +620,16 @@ INSTALL_STACK_CASS
         then
             log_error "stack.cass: verify failed: cass --help || cass --version"
             return 1
+        fi
+    fi
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify (optional): cass robot --help (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_CASS'
+cass robot --help
+INSTALL_STACK_CASS
+        then
+            log_warn "Optional verify failed: stack.cass"
         fi
     fi
 
@@ -463,7 +642,7 @@ install_stack_cm() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing stack.cm"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verified installer: stack.cm"
     else
         if ! {
@@ -507,7 +686,9 @@ install_stack_cm() {
             fi
 
             # No unverified fallback: verified install is required
-            if [[ "$install_success" != "true" ]]; then
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
                 log_error "Verified install failed for stack.cm"
                 false
             fi
@@ -518,7 +699,7 @@ install_stack_cm() {
     fi
 
     # Verify
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: cm --version (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_STACK_CM'
@@ -529,7 +710,7 @@ INSTALL_STACK_CM
             return 1
         fi
     fi
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify (optional): cm doctor --json (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_STACK_CM'
@@ -549,7 +730,7 @@ install_stack_caam() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing stack.caam"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verified installer: stack.caam"
     else
         if ! {
@@ -593,7 +774,9 @@ install_stack_caam() {
             fi
 
             # No unverified fallback: verified install is required
-            if [[ "$install_success" != "true" ]]; then
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
                 log_error "Verified install failed for stack.caam"
                 false
             fi
@@ -604,7 +787,7 @@ install_stack_caam() {
     fi
 
     # Verify
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: caam status || caam --help (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_STACK_CAAM'
@@ -625,7 +808,7 @@ install_stack_slb() {
     acfs_require_contract "module:${module_id}" || return 1
     log_step "Installing stack.slb"
 
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: install: mkdir -p ~/go/bin (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_STACK_SLB'
@@ -653,7 +836,7 @@ INSTALL_STACK_SLB
     fi
 
     # Verify
-    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
         log_info "dry-run: verify: export PATH=\"\$HOME/go/bin:\$PATH\" && slb >/dev/null 2>&1 || slb --help >/dev/null 2>&1 (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_STACK_SLB'
@@ -687,6 +870,6 @@ install_stack() {
 }
 
 # Run if executed directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
     install_stack
 fi

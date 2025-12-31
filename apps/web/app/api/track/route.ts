@@ -6,28 +6,35 @@ const GA_API_SECRET_RAW = process.env.GA_API_SECRET;
 function sanitizeGaMeasurementId(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
 
-  let trimmed = value.trim();
-  if (!trimmed) return undefined;
+  let cleaned = value.trim();
+  if (!cleaned) return undefined;
 
   // Handle accidental quoting in env var values (common copy/paste mistake).
   if (
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    (cleaned.startsWith('"') && cleaned.endsWith('"')) ||
+    (cleaned.startsWith("'") && cleaned.endsWith("'"))
   ) {
-    trimmed = trimmed.slice(1, -1).trim();
+    cleaned = cleaned.slice(1, -1).trim();
   }
 
-  // GA4 measurement IDs look like: G-XXXXXXXXXX (letters/numbers)
-  if (/^G-[A-Z0-9]+$/i.test(trimmed)) return trimmed;
+  // Remove common trailing garbage (escaped newlines, whitespace sequences)
+  // that can appear from misconfigured env vars or Vercel CLI pulls.
+  cleaned = cleaned.replace(/\\n$/, '').replace(/\s+$/, '');
+
+  // Extract valid GA4 measurement ID (G-XXXXXXXXXX).
+  // Use extraction rather than strict matching to handle edge cases.
+  const match = cleaned.match(/^(G-[A-Z0-9]+)/i);
+  if (match) return match[1];
 
   return undefined;
 }
 
 function sanitizeGaApiSecret(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
-  const trimmed = value.trim();
-  if (!trimmed || trimmed.length > 200) return undefined;
-  return trimmed;
+  // Remove trailing escaped newlines from Vercel CLI pulls
+  const cleaned = value.trim().replace(/\\n$/, '');
+  if (!cleaned || cleaned.length > 200) return undefined;
+  return cleaned;
 }
 
 const GA_MEASUREMENT_ID = sanitizeGaMeasurementId(GA_MEASUREMENT_ID_RAW);
@@ -48,6 +55,48 @@ const MAX_USER_PROPERTIES = 10;
 const MAX_USER_PROPERTY_KEY_LENGTH = 24;
 const MAX_USER_PROPERTY_STRING_LENGTH = 120;
 const GA_FETCH_TIMEOUT_MS = 3000;
+
+class PayloadTooLargeError extends Error {
+  override name = 'PayloadTooLargeError';
+}
+
+async function readJsonBodyWithLimit(request: NextRequest): Promise<unknown> {
+  const reader = request.body?.getReader();
+  if (!reader) {
+    // Fall back to the built-in helper when the body stream isn't available.
+    return request.json();
+  }
+
+  const decoder = new TextDecoder();
+  let bytesRead = 0;
+  let text = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+
+    bytesRead += value.byteLength;
+    if (bytesRead > MAX_REQUEST_BODY_BYTES) {
+      try {
+        await reader.cancel();
+      } catch {
+        // ignore
+      }
+      throw new PayloadTooLargeError();
+    }
+
+    text += decoder.decode(value, { stream: true });
+  }
+
+  text += decoder.decode();
+  try {
+    return JSON.parse(text) as unknown;
+  } catch (error) {
+    // Normalize error handling at the call site (e.g., SyntaxError -> 400).
+    throw error;
+  }
+}
 
 // Simple in-memory rate limiter (resets on server restart)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -285,7 +334,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const rawBody: unknown = await request.json();
+    const rawBody: unknown = await readJsonBodyWithLimit(request);
     if (!isPlainObject(rawBody)) {
       return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
@@ -347,8 +396,12 @@ export async function POST(request: NextRequest) {
       sanitizedEvents.push({ name: event.name, params: sanitizeEventParams(event.params) });
     }
 
-    const rawSessionId = clientId.split('.')[0] || '';
-    const sessionId = /^\d{1,16}$/.test(rawSessionId) ? rawSessionId : Date.now().toString();
+    const rawSessionId = clientId.split('.')[1] || '';
+    const parsedSessionId = Number(rawSessionId);
+    const sessionId =
+      Number.isSafeInteger(parsedSessionId) && parsedSessionId > 0
+        ? parsedSessionId
+        : Math.floor(Date.now() / 1000);
 
     if (sanitizedEvents.length === 0) {
       return NextResponse.json({ error: 'No valid events' }, { status: 400 });
@@ -403,6 +456,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Track API error:', error);
+    if (error instanceof PayloadTooLargeError) {
+      return NextResponse.json({ error: 'Payload too large' }, { status: 413 });
+    }
     if (error instanceof SyntaxError) {
       return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }

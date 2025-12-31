@@ -638,8 +638,21 @@ ubuntu_do_upgrade() {
     # DistUpgradeViewNonInteractive is for fully automated upgrades
     export DEBIAN_FRONTEND=noninteractive
 
+    # Run do-release-upgrade from a world-readable working directory.
+    # Some environments (e.g., running from /root with a restrictive umask) can
+    # trigger _apt permission errors when the upgrader downloads artifacts.
+    local upgrade_work_dir="${ACFS_RESUME_DIR:-/var/lib/acfs}"
+    if ! mkdir -p "$upgrade_work_dir" 2>/dev/null; then
+        upgrade_work_dir="/tmp"
+    fi
+    chmod 755 "$upgrade_work_dir" 2>/dev/null || true
+    log_detail "Running do-release-upgrade from: $upgrade_work_dir"
+
+    # Force a safe umask in the upgrader subprocess. Some environments run with a
+    # restrictive root umask (e.g. 0077), which can cause `_apt` permission
+    # errors while fetching release artifacts.
     local upgrade_result=0
-    if ! do-release-upgrade -f DistUpgradeViewNonInteractive; then
+    if ! (cd "$upgrade_work_dir" && umask 022 && do-release-upgrade -f DistUpgradeViewNonInteractive); then
         log_error "do-release-upgrade failed"
         upgrade_result=1
     fi
@@ -800,6 +813,12 @@ upgrade_update_motd() {
     local message="${1:-Ubuntu upgrade in progress}"
     local motd_file="/etc/update-motd.d/00-acfs-upgrade"
 
+    # Security: This message is embedded into a shell script. Normalize to a
+    # single line and use shell-escaped assignment to prevent injection.
+    message="${message//$'\r'/ }"
+    message="${message//$'\n'/ }"
+    message="${message//$'\t'/ }"
+
     # Box is 64 chars wide. Content area = 62 chars.
     # Status line format: "║  Status: " (11) + message + " ║" (2) = 64
     # So message max = 64 - 11 - 2 = 51 chars
@@ -809,6 +828,8 @@ upgrade_update_motd() {
     fi
     local padded_msg
     padded_msg=$(printf "%-${max_len}s" "$message")
+    local padded_msg_q
+    padded_msg_q=$(printf '%q' "$padded_msg")
 
     # Create MOTD script with embedded ANSI colors
     cat > "$motd_file" << 'MOTD_HEADER'
@@ -830,7 +851,8 @@ MOTD_HEADER
 
     # Add dynamic status line
     cat >> "$motd_file" << MOTD_STATUS
-echo -e "\${C}║\${N}  \${B}Status:\${N} ${padded_msg} \${C}║\${N}"
+STATUS_MSG=${padded_msg_q}
+echo -e "\${C}║\${N}  \${B}Status:\${N} \${STATUS_MSG} \${C}║\${N}"
 MOTD_STATUS
 
     cat >> "$motd_file" << 'MOTD_FOOTER'
@@ -1016,6 +1038,23 @@ upgrade_setup_infrastructure() {
         cp "$state_file" "$dest_state_file"
     fi
 
+    # For normal upgrades, the continuation script should skip Ubuntu upgrade (we just finished it).
+    # For the pre-upgrade reboot stage (kernel updates pending), we must continue WITH the Ubuntu upgrade.
+    local append_skip_upgrade="true"
+    if [[ -f "$dest_state_file" ]]; then
+        local stage=""
+        if command -v jq &>/dev/null; then
+            stage="$(jq -r '.ubuntu_upgrade.current_stage // empty' "$dest_state_file" 2>/dev/null || true)"
+        else
+            # Fallback: best-effort parse (the state file is written by jq and is pretty-printed).
+            stage="$(sed -n 's/.*"current_stage"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$dest_state_file" 2>/dev/null | head -n 1)"
+        fi
+
+        if [[ "$stage" == "pre_upgrade_reboot" ]]; then
+            append_skip_upgrade="false"
+        fi
+    fi
+
     # Create continue_install.sh script
     # This runs after all upgrades complete to resume ACFS installation
     log_detail "Creating continuation script..."
@@ -1029,7 +1068,10 @@ upgrade_setup_infrastructure() {
     install_url="https://raw.githubusercontent.com/${repo_owner}/${repo_name}/${repo_ref}/install.sh"
     install_url_q=$(printf '%q' "$install_url")
 
-    local -a continue_args=("${install_args[@]}" "--skip-ubuntu-upgrade")
+    local -a continue_args=("${install_args[@]}")
+    if [[ "$append_skip_upgrade" == "true" ]]; then
+        continue_args+=("--skip-ubuntu-upgrade")
+    fi
     local rendered_args=""
     local arg=""
     for arg in "${continue_args[@]}"; do
@@ -1505,6 +1547,21 @@ ubuntu_fix_dpkg() {
 # Attempt to recover from failed upgrade
 ubuntu_recover_failed_upgrade() {
     log_warn "Attempting to recover from failed upgrade..."
+
+    # Restore ubuntu.sources if the DEB822 workaround left it disabled
+    local sources_file="/etc/apt/sources.list.d/ubuntu.sources"
+    local disabled_file="${sources_file}.disabled"
+    if [[ -f "$disabled_file" ]]; then
+        log_warn "Restoring ubuntu.sources from backup..."
+        if mv "$disabled_file" "$sources_file"; then
+            log_success "Restored ubuntu.sources"
+        else
+            log_error "Failed to restore ubuntu.sources"
+        fi
+        # Remove the temp legacy file if it exists
+        rm -f "/etc/apt/sources.list.d/ubuntu-acfs-temp.list"
+        apt-get update -qq 2>/dev/null || true
+    fi
 
     # Try fixing dpkg first
     ubuntu_fix_dpkg

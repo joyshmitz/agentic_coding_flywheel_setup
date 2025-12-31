@@ -143,6 +143,26 @@ state_init() {
     # Ensure directory exists
     if [[ ! -d "$state_dir" ]]; then
         mkdir -p "$state_dir" || return 1
+
+        # If running as root but targeting a non-root user, ensure the directory
+        # is owned by the target user so they can access the state file later.
+        # This is critical for `acfs doctor` to work after a failed install.
+        if [[ $EUID -eq 0 ]] && [[ -n "${TARGET_USER:-}" ]] && [[ "$TARGET_USER" != "root" ]]; then
+            local target_home="${TARGET_HOME:-/home/${TARGET_USER}}"
+            if [[ -n "$target_home" ]] && [[ "$target_home" != "/" ]] && [[ "$target_home" == /* ]] && [[ "$state_dir" == "$target_home/"* ]]; then
+                local target_group=""
+                if command -v id &>/dev/null; then
+                    target_group="$(id -gn "$TARGET_USER" 2>/dev/null || true)"
+                fi
+                if [[ -n "$target_group" ]]; then
+                    chown "$TARGET_USER:$target_group" "$state_dir" 2>/dev/null \
+                        || chown "$TARGET_USER:$TARGET_USER" "$state_dir" 2>/dev/null \
+                        || true
+                else
+                    chown "$TARGET_USER" "$state_dir" 2>/dev/null || true
+                fi
+            fi
+        fi
     fi
 
     local now
@@ -221,6 +241,25 @@ state_write_atomic() {
             declare -f log_error &>/dev/null && log_error "state_write_atomic: cannot create directory $target_dir"
             return 2
         fi
+
+        # If running as root but targeting a non-root user, ensure the directory
+        # is owned by the target user so they can access the state file later.
+        if [[ $EUID -eq 0 ]] && [[ -n "${TARGET_USER:-}" ]] && [[ "$TARGET_USER" != "root" ]]; then
+            local target_home="${TARGET_HOME:-/home/${TARGET_USER}}"
+            if [[ -n "$target_home" ]] && [[ "$target_home" != "/" ]] && [[ "$target_home" == /* ]] && [[ "$target_dir" == "$target_home/"* ]]; then
+                local dir_target_group=""
+                if command -v id &>/dev/null; then
+                    dir_target_group="$(id -gn "$TARGET_USER" 2>/dev/null || true)"
+                fi
+                if [[ -n "$dir_target_group" ]]; then
+                    chown "$TARGET_USER:$dir_target_group" "$target_dir" 2>/dev/null \
+                        || chown "$TARGET_USER:$TARGET_USER" "$target_dir" 2>/dev/null \
+                        || true
+                else
+                    chown "$TARGET_USER" "$target_dir" 2>/dev/null || true
+                fi
+            fi
+        fi
     fi
 
     # Check disk space before attempting write (require at least 1MB free)
@@ -266,8 +305,8 @@ state_write_atomic() {
         sync "$temp_file" 2>/dev/null || sync 2>/dev/null || true
     fi
 
-    # Set appropriate permissions before moving (readable by user, readable by group/others)
-    chmod 644 "$temp_file" 2>/dev/null || true
+    # Set appropriate permissions before moving (state may include failure context; keep it owner-only).
+    chmod 600 "$temp_file" 2>/dev/null || true
 
     # Atomic rename: on POSIX filesystems, rename() is guaranteed atomic
     # when source and target are on the same filesystem
@@ -283,6 +322,30 @@ state_write_atomic() {
 
         declare -f log_error &>/dev/null && log_error "state_write_atomic: atomic rename failed (error $mv_err)"
         return 1
+    fi
+
+    # If the installer is running as root but targeting a non-root user,
+    # ensure that user can read the state file. The atomic rename above
+    # replaces the prior file with a root-owned temp file.
+    #
+    # Only do this for state files under TARGET_HOME (per-user state) and
+    # never for system state under /var/lib/acfs.
+    if [[ $EUID -eq 0 ]] && [[ -n "${TARGET_USER:-}" ]] && [[ "$TARGET_USER" != "root" ]]; then
+        local target_home="${TARGET_HOME:-/home/${TARGET_USER}}"
+        if [[ -n "$target_home" ]] && [[ "$target_home" != "/" ]] && [[ "$target_home" == /* ]] && [[ "$file_path" == "$target_home/"* ]]; then
+            local target_group=""
+            if command -v id &>/dev/null; then
+                target_group="$(id -gn "$TARGET_USER" 2>/dev/null || true)"
+            fi
+
+            if [[ -n "$target_group" ]]; then
+                chown "$TARGET_USER:$target_group" "$file_path" 2>/dev/null \
+                    || chown "$TARGET_USER:$TARGET_USER" "$file_path" 2>/dev/null \
+                    || true
+            else
+                chown "$TARGET_USER" "$file_path" 2>/dev/null || true
+            fi
+        fi
     fi
 
     # Optional: sync the directory entry to ensure the rename is durable
@@ -463,33 +526,40 @@ state_step_update() {
 state_phase_complete() {
     local phase_id="$1"
 
-    if command -v jq &>/dev/null; then
-        local state
-        state=$(state_load) || return 1
-
-        # Calculate duration if start time was recorded
-        local start_time duration
-        start_time=$(echo "$state" | jq -r '.phase_start_time // empty')
-        if [[ -n "$start_time" ]]; then
-            duration=$(($(date +%s) - start_time))
-        else
-            duration=0
-        fi
-
-        # Add phase to completed list, record duration, clear current
-        local new_state
-        if ! new_state=$(echo "$state" | jq --arg phase "$phase_id" --argjson dur "$duration" '
-            .completed_phases = ((.completed_phases // []) + [$phase] | unique) |
-            .phase_durations[$phase] = $dur |
-            .current_phase = null |
-            .current_step = null |
-            del(.phase_start_time)
-        '); then
-            return 1
-        fi
-
-        state_save "$new_state"
+    if ! command -v jq &>/dev/null; then
+        return 1
     fi
+
+    local state
+    state=$(state_load) || return 1
+
+    # Calculate duration if start time was recorded
+    local start_time duration
+    start_time=$(echo "$state" | jq -r '.phase_start_time // empty')
+    if [[ -n "$start_time" ]]; then
+        duration=$(($(date +%s) - start_time))
+    else
+        duration=0
+    fi
+
+    # Add phase to completed list, record duration, clear current
+    local new_state
+    if ! new_state=$(echo "$state" | jq --arg phase "$phase_id" --argjson dur "$duration" '
+        # Preserve insertion order for resume UX while preventing duplicates.
+        # NOTE: `unique` sorts arrays, which breaks "last completed phase" reporting.
+        .completed_phases = (
+          (.completed_phases // []) as $phases |
+          if ($phases | index($phase)) == null then $phases + [$phase] else $phases end
+        ) |
+        .phase_durations[$phase] = $dur |
+        .current_phase = null |
+        .current_step = null |
+        del(.phase_start_time)
+    '); then
+        return 1
+    fi
+
+    state_save "$new_state"
 }
 
 # Mark a phase as failed
@@ -499,27 +569,29 @@ state_phase_fail() {
     local step="$2"
     local error="$3"
 
-    if command -v jq &>/dev/null; then
-        # Use jq's --arg for proper JSON escaping (handles quotes, backslashes, newlines)
-        local state
-        state=$(state_load) || return 1
-
-        local new_state
-        if ! new_state=$(echo "$state" | jq \
-            --arg phase "$phase_id" \
-            --arg step "$step" \
-            --arg err "$error" '
-            .failed_phase = $phase |
-            .failed_step = $step |
-            .failed_error = $err |
-            .current_phase = null |
-            .current_step = null
-        '); then
-            return 1
-        fi
-
-        state_save "$new_state"
+    if ! command -v jq &>/dev/null; then
+        return 1
     fi
+
+    # Use jq's --arg for proper JSON escaping (handles quotes, backslashes, newlines)
+    local state
+    state=$(state_load) || return 1
+
+    local new_state
+    if ! new_state=$(echo "$state" | jq \
+        --arg phase "$phase_id" \
+        --arg step "$step" \
+        --arg err "$error" '
+        .failed_phase = $phase |
+        .failed_step = $step |
+        .failed_error = $err |
+        .current_phase = null |
+        .current_step = null
+    '); then
+        return 1
+    fi
+
+    state_save "$new_state"
 }
 
 # Mark a phase as skipped
@@ -527,9 +599,23 @@ state_phase_fail() {
 state_phase_skip() {
     local phase_id="$1"
 
-    if command -v jq &>/dev/null; then
-        state_update ".skipped_phases = ((.skipped_phases // []) + [\"$phase_id\"] | unique)"
-    fi
+    # Best-effort: never abort the installer if we can't persist skip metadata.
+    command -v jq &>/dev/null || return 0
+
+    local state
+    state=$(state_load 2>/dev/null) || return 0
+
+    local new_state
+    new_state=$(echo "$state" | jq --arg phase "$phase_id" '
+        # Preserve insertion order while preventing duplicates.
+        .skipped_phases = (
+          (.skipped_phases // []) as $phases |
+          if ($phases | index($phase)) == null then $phases + [$phase] else $phases end
+        )
+    ' 2>/dev/null) || return 0
+
+    state_save "$new_state" 2>/dev/null || true
+    return 0
 }
 
 # Mark a tool as skipped
@@ -537,9 +623,23 @@ state_phase_skip() {
 state_tool_skip() {
     local tool="$1"
 
-    if command -v jq &>/dev/null; then
-        state_update ".skipped_tools = ((.skipped_tools // []) + [\"$tool\"] | unique)"
-    fi
+    # Best-effort: never abort the installer if we can't persist skip metadata.
+    command -v jq &>/dev/null || return 0
+
+    local state
+    state=$(state_load 2>/dev/null) || return 0
+
+    local new_state
+    new_state=$(echo "$state" | jq --arg tool "$tool" '
+        # Preserve insertion order while preventing duplicates.
+        .skipped_tools = (
+          (.skipped_tools // []) as $tools |
+          if ($tools | index($tool)) == null then $tools + [$tool] else $tools end
+        )
+    ' 2>/dev/null) || return 0
+
+    state_save "$new_state" 2>/dev/null || true
+    return 0
 }
 
 # ============================================================
@@ -1458,8 +1558,8 @@ confirm_resume() {
         _confirm_resume_log_warn "  Previous failure at: $failed_name"
     fi
 
-    # Only prompt if --interactive flag AND stdin is a TTY
-    if [[ "${ACFS_INTERACTIVE:-}" == "true" ]] && [[ -t 0 ]]; then
+    # Only prompt if --interactive was requested and we have a controlling TTY.
+    if [[ "${ACFS_INTERACTIVE:-}" == "true" ]] && (exec 3<>/dev/tty) 2>/dev/null; then
         echo "" >&2
         echo "Options:" >&2
         echo "  [R] Resume from $last_phase_name (default)" >&2
@@ -1469,8 +1569,8 @@ confirm_resume() {
 
         local choice
         if [[ "${HAS_GUM:-false}" == "true" ]] && command -v gum &>/dev/null; then
-            # Use gum for nicer selection
-            choice=$(gum choose "Resume" "Fresh install" "Abort" 2>/dev/null) || choice="Resume"
+            # Use gum for nicer selection (render UI to the controlling TTY; capture selection on stdout).
+            choice=$(gum choose "Resume" "Fresh install" "Abort" < /dev/tty 2> /dev/tty) || choice="Resume"
             case "$choice" in
                 "Fresh install")
                     _confirm_resume_log_info "Starting fresh install..."
@@ -1491,7 +1591,11 @@ confirm_resume() {
             esac
         else
             # Fallback to read prompt
-            read -r -p "Choice [R/f/a]: " choice
+            if [[ -t 0 ]]; then
+                read -r -p "Choice [R/f/a]: " choice
+            else
+                read -r -p "Choice [R/f/a]: " choice < /dev/tty
+            fi
             case "${choice,,}" in
                 f|fresh)
                     _confirm_resume_log_info "Starting fresh install..."
@@ -1579,12 +1683,12 @@ parse_resume_flags() {
 #     "started_at": "2025-01-15T10:00:00Z",
 #     "original_version": "24.04",
 #     "target_version": "25.10",
-#     "upgrade_path": ["24.10", "25.04", "25.10"],
+#     "upgrade_path": ["25.04", "25.10"],
 #     "current_stage": "upgrading",
 #     "completed_upgrades": [
-#       {"from": "24.04", "to": "24.10", "completed_at": "..."}
+#       {"from": "24.04", "to": "25.04", "completed_at": "..."}
 #     ],
-#     "current_upgrade": {"from": "24.10", "to": "25.04", "started_at": "..."},
+#     "current_upgrade": {"from": "25.04", "to": "25.10", "started_at": "..."},
 #     "needs_reboot": false,
 #     "resume_after_reboot": true,
 #     "last_error": null
@@ -1596,7 +1700,7 @@ parse_resume_flags() {
 
 # Initialize upgrade state when starting an upgrade sequence
 # Usage: state_upgrade_init <original_version> <target_version> <upgrade_path_json>
-# Example: state_upgrade_init "24.04" "25.10" '["24.10", "25.04", "25.10"]'
+# Example: state_upgrade_init "24.04" "25.10" '["25.04", "25.10"]'
 state_upgrade_init() {
     local original_version="$1"
     local target_version="$2"

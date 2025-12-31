@@ -17,7 +17,7 @@
 #   --skip-cloud      Skip cloud CLIs (wrangler, supabase, vercel)
 #   --resume          Resume from checkpoint (default when state exists)
 #   --force-reinstall Start fresh, ignore existing state
-#   --reset-state     Delete state file and exit (for debugging)
+#   --reset-state     Move state file aside and exit (for debugging)
 #   --interactive     Enable interactive prompts for resume decisions
 #   --skip-preflight  Skip pre-flight system validation
 #   --skip-ubuntu-upgrade  Skip automatic Ubuntu version upgrade
@@ -28,7 +28,7 @@
 #   --only <module>       Only run a specific module (repeatable)
 #   --only-phase <phase>  Only run modules in a specific phase (repeatable)
 #   --skip <module>       Skip a specific module (repeatable)
-#   --no-deps             Disable dependency closure (expert/debug)
+#   --no-deps             Disable automatic dependency closure (expert/debug)
 # ============================================================
 
 set -euo pipefail
@@ -66,6 +66,10 @@ if [[ -n "${BASH_SOURCE[0]:-}" && -f "${BASH_SOURCE[0]}" ]]; then
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 
+# Early PATH setup: ensure ~/.local/bin is available for native installers (e.g., Claude Code)
+# This is critical because the Claude native installer puts the binary at ~/.local/bin/claude
+export PATH="$HOME/.local/bin:$PATH"
+
 # Default options
 YES_MODE=false
 DRY_RUN=false
@@ -86,7 +90,9 @@ NO_DEPS=false
 # Resume/reinstall options (used by state.sh confirm_resume)
 export ACFS_FORCE_RESUME=false
 export ACFS_FORCE_REINSTALL=false
-export ACFS_INTERACTIVE=false
+# NOTE: When unset/empty, downstream libs default to interactive behavior when a TTY is available.
+# install.sh forces non-interactive behavior in --yes mode.
+export ACFS_INTERACTIVE="${ACFS_INTERACTIVE:-}"
 RESET_STATE_ONLY=false
 
 # Preflight options
@@ -97,9 +103,14 @@ SKIP_UBUNTU_UPGRADE=false
 TARGET_UBUNTU_VERSION="25.10"
 
 # Target user configuration
-# When running as root, we install for ubuntu user, not root
-TARGET_USER="ubuntu"
-TARGET_HOME="/home/$TARGET_USER"
+# Default: install for the "ubuntu" user (typical VPS images).
+# Advanced: override with env vars (see README):
+#   TARGET_USER=myuser TARGET_HOME=/home/myuser ...
+TARGET_USER="${TARGET_USER:-ubuntu}"
+# Leave TARGET_HOME unset by default; init_target_paths will derive it from:
+# - $HOME when running as TARGET_USER
+# - /home/$TARGET_USER otherwise
+TARGET_HOME="${TARGET_HOME:-}"
 
 # Colors
 RED='\033[0;31m'
@@ -121,133 +132,17 @@ fi
 export _ACFS_LOGGING_SH_LOADED=1
 
 # ============================================================
-# Source context tracking library for try_step() wrapper
+# Minimal error-tracking fallbacks
+# These are replaced once scripts/lib/error_tracking.sh is sourced (detect_environment()).
 # ============================================================
-_source_context_lib() {
-    # Already loaded?
-    if [[ -n "${ACFS_CONTEXT_LOADED:-}" ]]; then
-        return 0
-    fi
-
-    # Try local file first (when running from repo)
-    if [[ -n "${SCRIPT_DIR:-}" ]] && [[ -f "$SCRIPT_DIR/scripts/lib/context.sh" ]]; then
-        # shellcheck source=scripts/lib/context.sh
-        source "$SCRIPT_DIR/scripts/lib/context.sh"
-        return 0
-    fi
-
-    # Try relative path (when running from repo root)
-    if [[ -f "./scripts/lib/context.sh" ]]; then
-        source "./scripts/lib/context.sh"
-        return 0
-    fi
-
-    # Download for curl|bash scenario (if curl available)
-    if command -v curl &>/dev/null; then
-        local tmp_context=""
-        if command -v mktemp &>/dev/null; then
-            tmp_context="$(mktemp "${TMPDIR:-/tmp}/acfs-context.XXXXXX" 2>/dev/null)" || tmp_context=""
-        fi
-        if [[ -n "$tmp_context" ]] && curl "${ACFS_EARLY_CURL_ARGS[@]}" "$ACFS_RAW/scripts/lib/context.sh" -o "$tmp_context" 2>/dev/null; then
-            source "$tmp_context"
-            rm -f "$tmp_context"
-            return 0
-        fi
-    fi
-
-    # Fallback: define minimal no-op stubs so install.sh still works
-    set_phase() { :; }
-    try_step() { shift; "$@"; }
-    try_step_eval() { shift; bash -c "$1"; }
-    return 0
-}
-_source_context_lib
+type -t set_phase &>/dev/null || set_phase() { :; }
+type -t try_step &>/dev/null || try_step() { shift; "$@"; }
+type -t try_step_eval &>/dev/null || try_step_eval() { shift; bash -e -o pipefail -c "$1"; }
 
 # ============================================================
-# Source reliability libraries for state tracking & reporting
-# (mjt.5.8: Integrate manifest-driven execution with resume/state)
+# Installer libraries are sourced later in main() via detect_environment(), after
+# bootstrapping the repo archive for curl|bash runs (prevents mixed refs).
 # ============================================================
-_source_reliability_libs() {
-    # Already loaded?
-    if [[ -n "${ACFS_RELIABILITY_LOADED:-}" ]]; then
-        return 0
-    fi
-
-    local loaded_state=false
-    local loaded_report=false
-
-    # Try local files first (when running from repo)
-    if [[ -n "${SCRIPT_DIR:-}" ]]; then
-        local state_lib="$SCRIPT_DIR/scripts/lib/state.sh"
-        local report_lib="$SCRIPT_DIR/scripts/lib/report.sh"
-
-        if [[ -f "$state_lib" ]]; then
-            # shellcheck source=scripts/lib/state.sh
-            source "$state_lib" && loaded_state=true
-        fi
-
-        if [[ -f "$report_lib" ]]; then
-            # shellcheck source=scripts/lib/report.sh
-            source "$report_lib" && loaded_report=true
-        fi
-    fi
-
-    # If local files weren't loaded, try downloading (curl|bash scenario)
-    if [[ "$loaded_state" != "true" || "$loaded_report" != "true" ]]; then
-        if command -v curl &>/dev/null; then
-            local tmp_state=""
-            local tmp_report=""
-
-            if [[ "$loaded_state" != "true" ]]; then
-                if command -v mktemp &>/dev/null; then
-                    tmp_state="$(mktemp "${TMPDIR:-/tmp}/acfs-state.XXXXXX" 2>/dev/null)" || tmp_state=""
-                fi
-                if [[ -n "$tmp_state" ]] && curl "${ACFS_EARLY_CURL_ARGS[@]}" "$ACFS_RAW/scripts/lib/state.sh" -o "$tmp_state" 2>/dev/null; then
-                    source "$tmp_state" && loaded_state=true
-                    rm -f "$tmp_state"
-                fi
-            fi
-
-            if [[ "$loaded_report" != "true" ]]; then
-                if command -v mktemp &>/dev/null; then
-                    tmp_report="$(mktemp "${TMPDIR:-/tmp}/acfs-report.XXXXXX" 2>/dev/null)" || tmp_report=""
-                fi
-                if [[ -n "$tmp_report" ]] && curl "${ACFS_EARLY_CURL_ARGS[@]}" "$ACFS_RAW/scripts/lib/report.sh" -o "$tmp_report" 2>/dev/null; then
-                    source "$tmp_report" && loaded_report=true
-                    rm -f "$tmp_report"
-                fi
-            fi
-        fi
-    fi
-
-    # Define fallback stubs for any functions that weren't loaded
-    # This ensures the installer works even if libs fail to load
-    if ! type -t state_init &>/dev/null; then
-        state_init() { :; }
-    fi
-    if ! type -t state_phase_start &>/dev/null; then
-        state_phase_start() { :; }
-    fi
-    if ! type -t state_phase_complete &>/dev/null; then
-        state_phase_complete() { :; }
-    fi
-    if ! type -t state_phase_fail &>/dev/null; then
-        state_phase_fail() { :; }
-    fi
-    if ! type -t confirm_resume &>/dev/null; then
-        confirm_resume() { return 1; }  # Fresh install
-    fi
-    if ! type -t report_failure &>/dev/null; then
-        report_failure() { echo "Installation failed" >&2; }
-    fi
-    if ! type -t report_success &>/dev/null; then
-        report_success() { echo "Installation complete" >&2; }
-    fi
-
-    export ACFS_RELIABILITY_LOADED=1
-    return 0
-}
-_source_reliability_libs
 
 # ============================================================
 # Source Ubuntu upgrade library for auto-upgrade functionality (nb4)
@@ -255,6 +150,14 @@ _source_reliability_libs
 _source_ubuntu_upgrade_lib() {
     # Already loaded?
     if [[ -n "${ACFS_UBUNTU_UPGRADE_LOADED:-}" ]]; then
+        return 0
+    fi
+
+    # Prefer bootstrapped libs when available (curl|bash mode), to avoid mixed refs.
+    if [[ -n "${ACFS_LIB_DIR:-}" ]] && [[ -f "$ACFS_LIB_DIR/ubuntu_upgrade.sh" ]]; then
+        # shellcheck source=scripts/lib/ubuntu_upgrade.sh
+        source "$ACFS_LIB_DIR/ubuntu_upgrade.sh"
+        export ACFS_UBUNTU_UPGRADE_LOADED=1
         return 0
     fi
 
@@ -341,6 +244,7 @@ fetch_commit_sha() {
 
         if [[ -n "$sha" && ${#sha} -ge 7 ]]; then
             ACFS_COMMIT_SHA="${sha:0:12}"
+            # shellcheck disable=SC2034  # Used by scripts/lib/ubuntu_upgrade.sh to pin resume scripts to a specific commit.
             [[ ${#sha} -ge 40 ]] && ACFS_COMMIT_SHA_FULL="$sha"
         fi
 
@@ -397,6 +301,21 @@ install_gum_early() {
     # Respect dry-run / print-only modes: do not modify the system just to
     # improve UI.
     if [[ "${DRY_RUN:-false}" == "true" ]] || [[ "${PRINT_MODE:-false}" == "true" ]]; then
+        return 0
+    fi
+
+    # Only attempt early gum install on supported Ubuntu systems.
+    # Preflight/ensure_ubuntu will stop execution later, but this prevents
+    # partial modifications (apt repo/key) on unsupported OS versions.
+    if [[ -f /etc/os-release ]]; then
+        # shellcheck disable=SC1091
+        source /etc/os-release
+        local version_id="${VERSION_ID:-}"
+        local version_major="${version_id%%.*}"
+        if [[ "${ID:-}" != "ubuntu" ]] || [[ -z "$version_id" ]] || [[ "$version_major" -lt 22 ]]; then
+            return 0
+        fi
+    else
         return 0
     fi
 
@@ -618,7 +537,8 @@ cleanup() {
         log_error ""
         log_error "To debug:"
         log_error "  1. Check the log: cat $ACFS_LOG_DIR/install.log"
-        log_error "  2. Run: acfs doctor"
+        log_error "  2. If installed, run: acfs doctor (try as $TARGET_USER)"
+        log_error "     (If you ran the installer as root: sudo -u $TARGET_USER -i bash -lc 'acfs doctor')"
         log_error "  3. Re-run this installer (it's safe to run multiple times)"
         log_error ""
     fi
@@ -831,10 +751,29 @@ detect_environment() {
         source "$ACFS_LIB_DIR/state.sh"
     fi
 
+    # Source error pattern matcher (report.sh uses get_suggested_fix when available).
+    if [[ -f "$ACFS_LIB_DIR/errors.sh" ]]; then
+        # shellcheck source=scripts/lib/errors.sh
+        source "$ACFS_LIB_DIR/errors.sh"
+    fi
+
+    # Source structured failure/success reporting (mjt.5.8).
+    if [[ -f "$ACFS_LIB_DIR/report.sh" ]]; then
+        # shellcheck source=scripts/lib/report.sh
+        source "$ACFS_LIB_DIR/report.sh"
+    fi
+
     # Source error tracking for try_step wrappers (mjt.5.8)
     if [[ -f "$ACFS_LIB_DIR/error_tracking.sh" ]]; then
         # shellcheck source=scripts/lib/error_tracking.sh
         source "$ACFS_LIB_DIR/error_tracking.sh"
+    fi
+
+    # Source Ubuntu upgrade library from the same lib dir when available (nb4).
+    if [[ -f "$ACFS_LIB_DIR/ubuntu_upgrade.sh" ]]; then
+        # shellcheck source=scripts/lib/ubuntu_upgrade.sh
+        source "$ACFS_LIB_DIR/ubuntu_upgrade.sh"
+        export ACFS_UBUNTU_UPGRADE_LOADED=1
     fi
 
     # Source tailscale installer (bt5)
@@ -1032,16 +971,21 @@ run_preflight_checks() {
     elif [[ -f "./scripts/preflight.sh" ]]; then
         preflight_script="./scripts/preflight.sh"
     else
-        # Download preflight script for curl | bash scenario
-        log_detail "Downloading preflight script..."
-        if command -v mktemp &>/dev/null; then
-            preflight_tmp="$(mktemp "${TMPDIR:-/tmp}/acfs-preflight.XXXXXX" 2>/dev/null)" || preflight_tmp=""
-        fi
-        if [[ -n "$preflight_tmp" ]] && acfs_curl "$ACFS_RAW/scripts/preflight.sh" -o "$preflight_tmp" 2>/dev/null; then
-            chmod +x "$preflight_tmp"
-            preflight_script="$preflight_tmp"
+        # Download preflight script for curl | bash scenario (if curl available)
+        if command -v curl &>/dev/null; then
+            log_detail "Downloading preflight script..."
+            if command -v mktemp &>/dev/null; then
+                preflight_tmp="$(mktemp "${TMPDIR:-/tmp}/acfs-preflight.XXXXXX" 2>/dev/null)" || preflight_tmp=""
+            fi
+            if [[ -n "$preflight_tmp" ]] && acfs_curl -o "$preflight_tmp" "$ACFS_RAW/scripts/preflight.sh" 2>/dev/null; then
+                chmod +x "$preflight_tmp"
+                preflight_script="$preflight_tmp"
+            else
+                log_warn "Could not download preflight script - skipping checks"
+                return 0
+            fi
         else
-            log_warn "Could not download preflight script - skipping checks"
+            log_warn "curl not available - skipping preflight checks"
             return 0
         fi
     fi
@@ -1073,7 +1017,7 @@ run_preflight_checks() {
 }
 
 ACFS_CURL_BASE_ARGS=(-fsSL)
-if curl --help all 2>/dev/null | grep -q -- '--proto'; then
+if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
     ACFS_CURL_BASE_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
 fi
 
@@ -1145,13 +1089,53 @@ acfs_calculate_file_sha256() {
     return 1
 }
 
+acfs_download_file_and_verify_sha256() {
+    local url="$1"
+    local output_path="$2"
+    local expected_sha256="$3"
+    local label="${4:-download}"
+
+    if [[ -z "$url" || -z "$output_path" || -z "$expected_sha256" ]]; then
+        log_error "acfs_download_file_and_verify_sha256: missing url, output path, or expected sha256"
+        return 1
+    fi
+
+    if [[ "$url" != https://* ]]; then
+        log_error "Security error: upstream URL is not HTTPS: $url"
+        return 1
+    fi
+
+    if ! acfs_curl_with_retry "$url" "$output_path"; then
+        log_error "Failed to download $label"
+        log_detail "URL: $url"
+        return 1
+    fi
+
+    local actual_sha256=""
+    actual_sha256="$(acfs_calculate_file_sha256 "$output_path")" || actual_sha256=""
+
+    if [[ -z "$actual_sha256" ]] || [[ "$actual_sha256" != "$expected_sha256" ]]; then
+        log_error "Security error: checksum mismatch for $label"
+        log_detail "URL: $url"
+        log_detail "Expected: $expected_sha256"
+        log_detail "Actual:   ${actual_sha256:-<missing>}"
+        return 1
+    fi
+
+    return 0
+}
+
 bootstrap_repo_archive() {
     if [[ -n "${SCRIPT_DIR:-}" ]]; then
         return 0
     fi
 
     local ref="$ACFS_REF"
-    local archive_url="https://github.com/${ACFS_REPO_OWNER}/${ACFS_REPO_NAME}/archive/${ref}.tar.gz"
+    # Cache-bust GitHub's CDN to ensure we get the latest archive
+    # GitHub caches archives for up to 5 minutes; this ensures fresh downloads
+    local cache_buster
+    cache_buster="$(date +%s)"
+    local archive_url="https://github.com/${ACFS_REPO_OWNER}/${ACFS_REPO_NAME}/archive/${ref}.tar.gz?cb=${cache_buster}"
     local ref_safe="${ref//[^a-zA-Z0-9._-]/_}"
     local tmp_archive
     local tmp_dir
@@ -1183,9 +1167,7 @@ bootstrap_repo_archive() {
     log_detail "Extracting runtime assets"
     if ! tar -xzf "$tmp_archive" -C "$tmp_dir" --strip-components=1 \
         --wildcards --wildcards-match-slash \
-        "*/scripts/lib/**" \
-        "*/scripts/generated/**" \
-        "*/scripts/preflight.sh" \
+        "*/scripts/**" \
         "*/acfs/**" \
         "*/checksums.yaml" \
         "*/acfs.manifest.yaml" \
@@ -1215,7 +1197,7 @@ bootstrap_repo_archive() {
     done < <(find "$tmp_dir" -type f -name "*.sh" -print0)
 
     if [[ "$shellcheck_failed" == "true" ]]; then
-        log_error "Bootstrap validation failed. Retry or pin to a known-good tag/sha."
+        log_error "Bootstrap validation failed. Retry or pin ACFS_REF to a known-good tag/sha."
         return 1
     fi
 
@@ -1247,6 +1229,42 @@ bootstrap_repo_archive() {
 
     log_success "Bootstrap archive ready"
     return 0
+}
+
+_acfs_install_asset_has_symlink_component_under_prefix() {
+    local prefix="$1"
+    local dest_path="$2"
+
+    case "$dest_path" in
+        "$prefix" | "$prefix"/*) ;;
+        *) return 1 ;; # Not under prefix; no signal
+    esac
+
+    local rel="${dest_path#"$prefix"}"
+    rel="${rel#/}"
+
+    local current="$prefix"
+    if [[ -L "$current" ]]; then
+        return 0
+    fi
+
+    if [[ -z "$rel" ]]; then
+        return 1
+    fi
+
+    local -a parts=()
+    IFS='/' read -r -a parts <<< "$rel"
+    local part=""
+
+    for part in "${parts[@]}"; do
+        [[ -n "$part" ]] || continue
+        current="$current/$part"
+        if [[ -L "$current" ]]; then
+            return 0
+        fi
+    done
+
+    return 1
 }
 
 install_asset() {
@@ -1281,18 +1299,64 @@ install_asset() {
         return 1
     fi
 
+    # If running with elevated privileges, refuse to write through symlink path
+    # components for sensitive destinations (prevents symlink clobber attacks).
+    if [[ $EUID -eq 0 ]]; then
+        if _acfs_install_asset_has_symlink_component_under_prefix "$ACFS_HOME" "$dest_path" || \
+           _acfs_install_asset_has_symlink_component_under_prefix "$TARGET_HOME" "$dest_path" || \
+           _acfs_install_asset_has_symlink_component_under_prefix "/usr/local/bin" "$dest_path"; then
+            log_error "install_asset: Refusing to write through symlink path component: $dest_path"
+            return 1
+        fi
+    fi
+
+    local dest_dir
+    dest_dir="$(dirname "$dest_path")"
+
+    local sudo_cmd="${SUDO:-}"
+    if [[ -z "$sudo_cmd" ]] && [[ $EUID -ne 0 ]] && command -v sudo &>/dev/null; then
+        sudo_cmd="sudo"
+    fi
+
+    local need_sudo=false
+    if [[ -e "$dest_path" ]]; then
+        [[ -w "$dest_path" ]] || need_sudo=true
+    else
+        [[ -w "$dest_dir" ]] || need_sudo=true
+    fi
+
+    if [[ "$need_sudo" == "true" ]] && [[ -z "$sudo_cmd" ]]; then
+        log_error "install_asset: Destination not writable and sudo not available: $dest_path"
+        return 1
+    fi
+
     if [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]] && [[ -f "$ACFS_BOOTSTRAP_DIR/$rel_path" ]]; then
-        if ! cp "$ACFS_BOOTSTRAP_DIR/$rel_path" "$dest_path"; then
+        if [[ "$need_sudo" == "true" ]]; then
+            if ! $sudo_cmd cp "$ACFS_BOOTSTRAP_DIR/$rel_path" "$dest_path"; then
+                log_error "install_asset: Failed to copy from bootstrap: $rel_path"
+                return 1
+            fi
+        elif ! cp "$ACFS_BOOTSTRAP_DIR/$rel_path" "$dest_path"; then
             log_error "install_asset: Failed to copy from bootstrap: $rel_path"
             return 1
         fi
     elif [[ -n "${SCRIPT_DIR:-}" ]] && [[ -f "$SCRIPT_DIR/$rel_path" ]]; then
-        if ! cp "$SCRIPT_DIR/$rel_path" "$dest_path"; then
+        if [[ "$need_sudo" == "true" ]]; then
+            if ! $sudo_cmd cp "$SCRIPT_DIR/$rel_path" "$dest_path"; then
+                log_error "install_asset: Failed to copy from script dir: $rel_path"
+                return 1
+            fi
+        elif ! cp "$SCRIPT_DIR/$rel_path" "$dest_path"; then
             log_error "install_asset: Failed to copy from script dir: $rel_path"
             return 1
         fi
     else
-        if ! acfs_curl -o "$dest_path" "$ACFS_RAW/$rel_path"; then
+        if [[ "$need_sudo" == "true" ]]; then
+            if ! $sudo_cmd curl "${ACFS_CURL_BASE_ARGS[@]}" -o "$dest_path" "$ACFS_RAW/$rel_path"; then
+                log_error "install_asset: Failed to download: $rel_path"
+                return 1
+            fi
+        elif ! acfs_curl -o "$dest_path" "$ACFS_RAW/$rel_path"; then
             log_error "install_asset: Failed to download: $rel_path"
             return 1
         fi
@@ -1371,6 +1435,7 @@ run_as_target() {
 declare -A ACFS_UPSTREAM_URLS=()
 declare -A ACFS_UPSTREAM_SHA256=()
 ACFS_UPSTREAM_LOADED=false
+ACFS_CHECKSUMS_SOURCE=""  # Tracks where checksums were loaded from (bootstrap, local, github-api, raw-cdn)
 
 acfs_calculate_sha256() {
     if command_exists sha256sum; then
@@ -1431,32 +1496,46 @@ acfs_fetch_url_content() {
     return 1
 }
 
-acfs_load_upstream_checksums() {
-    if [[ "$ACFS_UPSTREAM_LOADED" == "true" ]]; then
-        return 0
+# Fetch checksums.yaml directly via GitHub API (bypasses CDN caching entirely).
+# This is used as a fallback when cached checksums don't match upstream.
+# Uses the raw content header to get the file directly without base64 encoding.
+acfs_fetch_fresh_checksums_via_api() {
+    local api_url="https://api.github.com/repos/${ACFS_REPO_OWNER}/${ACFS_REPO_NAME}/contents/checksums.yaml?ref=${ACFS_REF}"
+
+    # Use application/vnd.github.raw to get raw file content directly (no base64)
+    local content
+    content="$(curl -fsSL \
+        -H "Accept: application/vnd.github.raw" \
+        -H "X-GitHub-Api-Version: 2022-11-28" \
+        "$api_url" 2>/dev/null)" || {
+        log_detail "GitHub API request failed for checksums.yaml"
+        return 1
+    }
+
+    if [[ -z "$content" ]]; then
+        log_detail "Empty content from GitHub API"
+        return 1
     fi
 
-    local content=""
-    local checksums_file=""
-    if [[ -n "${ACFS_CHECKSUMS_YAML:-}" ]] && [[ -r "$ACFS_CHECKSUMS_YAML" ]]; then
-        checksums_file="$ACFS_CHECKSUMS_YAML"
-    elif [[ -n "${SCRIPT_DIR:-}" ]] && [[ -r "$SCRIPT_DIR/checksums.yaml" ]]; then
-        checksums_file="$SCRIPT_DIR/checksums.yaml"
-    elif [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]] && [[ -r "$ACFS_BOOTSTRAP_DIR/checksums.yaml" ]]; then
-        checksums_file="$ACFS_BOOTSTRAP_DIR/checksums.yaml"
+    # Verify it looks like valid checksums.yaml (should start with a comment or "installers:")
+    if [[ ! "$content" =~ ^[[:space:]]*(#|installers:) ]]; then
+        log_detail "GitHub API returned unexpected content format"
+        return 1
     fi
 
-    if [[ -n "$checksums_file" ]]; then
-        content="$(cat "$checksums_file")"
-    else
-        content="$(acfs_fetch_url_content "$ACFS_RAW/checksums.yaml")" || {
-            log_error "Failed to fetch checksums.yaml from $ACFS_RAW"
-            return 1
-        }
-    fi
+    printf '%s' "$content"
+}
 
+# Parse checksums.yaml content into associative arrays.
+# Takes YAML content as argument, populates ACFS_UPSTREAM_URLS and ACFS_UPSTREAM_SHA256.
+acfs_parse_checksums_content() {
+    local content="$1"
     local in_installers=false
     local current_tool=""
+
+    # Clear existing entries for fresh parse
+    ACFS_UPSTREAM_URLS=()
+    ACFS_UPSTREAM_SHA256=()
 
     while IFS= read -r line; do
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
@@ -1487,6 +1566,50 @@ acfs_load_upstream_checksums() {
             continue
         fi
     done <<< "$content"
+}
+
+acfs_load_upstream_checksums() {
+    if [[ "$ACFS_UPSTREAM_LOADED" == "true" ]]; then
+        return 0
+    fi
+
+    local content=""
+    local checksums_file=""
+    local checksums_source="unknown"
+
+    if [[ -n "${ACFS_CHECKSUMS_YAML:-}" ]] && [[ -r "$ACFS_CHECKSUMS_YAML" ]]; then
+        checksums_file="$ACFS_CHECKSUMS_YAML"
+        checksums_source="bootstrap"
+    elif [[ -n "${SCRIPT_DIR:-}" ]] && [[ -r "$SCRIPT_DIR/checksums.yaml" ]]; then
+        checksums_file="$SCRIPT_DIR/checksums.yaml"
+        checksums_source="local"
+    elif [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]] && [[ -r "$ACFS_BOOTSTRAP_DIR/checksums.yaml" ]]; then
+        checksums_file="$ACFS_BOOTSTRAP_DIR/checksums.yaml"
+        checksums_source="bootstrap"
+    fi
+
+    if [[ -n "$checksums_file" ]]; then
+        content="$(cat "$checksums_file")"
+    else
+        # Fetch via GitHub API (bypasses CDN caching entirely)
+        content="$(acfs_fetch_fresh_checksums_via_api)" || {
+            # Fallback to raw.githubusercontent.com with cache-bust
+            local cb
+            cb="$(date +%s)"
+            content="$(acfs_fetch_url_content "$ACFS_RAW/checksums.yaml?cb=${cb}")" || {
+                log_error "Failed to fetch checksums.yaml from any source"
+                return 1
+            }
+            checksums_source="raw-cdn"
+        }
+        # If we didn't fall back to raw-cdn, the API succeeded
+        [[ "$checksums_source" == "unknown" ]] && checksums_source="github-api"
+    fi
+
+    # Store source for debugging
+    ACFS_CHECKSUMS_SOURCE="$checksums_source"
+
+    acfs_parse_checksums_content "$content"
 
     local required_tools=(
         atuin bun bv caam cass claude cm mcp_agent_mail ntm ohmyzsh rust slb ubs uv zoxide
@@ -1509,7 +1632,8 @@ acfs_load_upstream_checksums() {
 
 #
 # Upstream installers are pinned by checksums.yaml.
-# On checksum mismatch we fail closed (never execute unverified scripts).
+# On checksum mismatch, we attempt a fresh fetch via GitHub API to handle CDN caching.
+# If still mismatched after fresh fetch, we fail closed (never execute unverified scripts).
 
 acfs_run_verified_upstream_script_as_target() {
     local tool="$1"
@@ -1547,18 +1671,52 @@ acfs_run_verified_upstream_script_as_target() {
     actual_sha256="$(printf '%s' "$content" | acfs_calculate_sha256)" || return 1
 
     if [[ "$actual_sha256" != "$expected_sha256" ]]; then
-        log_error "Security error: checksum mismatch for '$tool'"
-        log_detail "URL: $url"
-        log_detail "Expected: $expected_sha256"
-        log_detail "Actual:   $actual_sha256"
-        log_error "Refusing to execute unverified installer script."
-        log_error "Fix: update checksums.yaml in the ACFS repo and re-run."
+        # Checksum mismatch - but this might be due to CDN caching of our checksums.yaml.
+        # Try fetching FRESH checksums directly via GitHub API (bypasses all CDN caching).
+        log_detail "Checksum mismatch for '$tool' - fetching fresh checksums via GitHub API..."
 
-        if [[ "${ACFS_STRICT_MODE:-false}" == "true" ]]; then
-            log_fatal "Strict mode: aborting due to checksum mismatch for '$tool'"
+        local fresh_content
+        fresh_content="$(acfs_fetch_fresh_checksums_via_api)" || {
+            log_detail "GitHub API fallback failed, cannot verify with fresh checksums"
+            log_error "Security error: checksum mismatch for '$tool'"
+            log_detail "URL: $url"
+            log_detail "Expected: $expected_sha256"
+            log_detail "Actual:   $actual_sha256"
+            log_error "Refusing to execute unverified installer script."
+            return 1
+        }
+
+        # Parse fresh checksums and get the updated expected hash
+        acfs_parse_checksums_content "$fresh_content"
+        local fresh_expected_sha256="${ACFS_UPSTREAM_SHA256[$tool]:-}"
+
+        if [[ -z "$fresh_expected_sha256" ]]; then
+            log_error "Fresh checksums.yaml missing entry for '$tool'"
+            return 1
         fi
 
-        return 1
+        # Re-verify with fresh checksum
+        if [[ "$actual_sha256" == "$fresh_expected_sha256" ]]; then
+            log_success "Verified '$tool' with fresh checksums from GitHub API"
+            # Note: ACFS_UPSTREAM_SHA256 already updated by acfs_parse_checksums_content above
+        else
+            # Still doesn't match even with fresh checksums - this is a real problem
+            log_error "Security error: checksum mismatch for '$tool' (verified with fresh checksums)"
+            log_detail "URL: $url"
+            log_detail "Expected (fresh): $fresh_expected_sha256"
+            log_detail "Actual:           $actual_sha256"
+            log_error "Refusing to execute unverified installer script."
+            log_error "This could indicate:"
+            log_error "  1. Upstream changed their installer very recently (wait and retry)"
+            log_error "  2. Potential tampering (investigate before proceeding)"
+            log_error "  3. Network issue corrupting downloads (retry on different network)"
+
+            if [[ "${ACFS_STRICT_MODE:-false}" == "true" ]]; then
+                log_fatal "Strict mode: aborting due to checksum mismatch for '$tool'"
+            fi
+
+            return 1
+        fi
     fi
 
     printf '%s' "$content" | run_as_target "$runner" -s -- "$@"
@@ -1578,6 +1736,59 @@ ensure_root() {
     else
         SUDO=""
     fi
+}
+
+acfs_chown_tree() {
+    local owner_group="$1"
+    local path="$2"
+
+    if [[ -z "$owner_group" ]]; then
+        log_error "acfs_chown_tree: owner/group is required"
+        return 1
+    fi
+    if [[ -z "$path" ]]; then
+        log_error "acfs_chown_tree: path is required"
+        return 1
+    fi
+    if [[ "$path" == "/" ]]; then
+        log_error "acfs_chown_tree: refusing to chown '/'"
+        return 1
+    fi
+
+    # SECURITY: Prevent recursive chown from dereferencing symlinks under the tree.
+    # For top-level symlinks (e.g., symlinked /data), resolve to the real path so
+    # ownership is applied to the intended directory.
+    local resolved="$path"
+    if [[ -L "$path" ]]; then
+        if ! command_exists readlink; then
+            log_error "acfs_chown_tree: readlink is required to resolve symlink: $path"
+            return 1
+        fi
+        resolved="$(readlink -f "$path" 2>/dev/null || true)"
+        if [[ -z "$resolved" ]] || [[ "$resolved" == "/" ]]; then
+            log_error "acfs_chown_tree: refusing to chown unresolved/unsafe symlink: $path"
+            return 1
+        fi
+    fi
+
+    # Guardrail: prevent catastrophic recursive chown if a caller misconfigures
+    # TARGET_HOME (or other paths) to a system directory.
+    #
+    # If you *really* need to chown one of these paths, you can override with:
+    #   ACFS_ALLOW_UNSAFE_CHOWN=1
+    if [[ "${ACFS_ALLOW_UNSAFE_CHOWN:-0}" != "1" ]]; then
+        local unsafe_prefix=""
+        for unsafe_prefix in /etc /usr /bin /sbin /lib /lib64 /boot /proc /sys /dev /run /var /opt; do
+            if [[ "$resolved" == "$unsafe_prefix" || "$resolved" == "$unsafe_prefix/"* ]]; then
+                log_error "acfs_chown_tree: refusing to chown unsafe system path: $resolved"
+                log_error "If you intended this (rare), re-run with ACFS_ALLOW_UNSAFE_CHOWN=1"
+                return 1
+            fi
+        done
+    fi
+
+    # GNU coreutils: -h = do not dereference symlinks; -R = recursive.
+    $SUDO chown -hR "$owner_group" "$resolved"
 }
 
 confirm_or_exit() {
@@ -1610,14 +1821,28 @@ init_target_paths() {
     # If running as ubuntu, use ubuntu's home
     # If running as root, install for ubuntu user
     if [[ "$(whoami)" == "$TARGET_USER" ]]; then
-        TARGET_HOME="$HOME"
+        TARGET_HOME="${TARGET_HOME:-$HOME}"
     else
-        TARGET_HOME="/home/$TARGET_USER"
+        # Respect an explicit TARGET_HOME env override (default is /home/$TARGET_USER).
+        TARGET_HOME="${TARGET_HOME:-/home/$TARGET_USER}"
+    fi
+
+    if [[ -z "$TARGET_HOME" ]] || [[ "$TARGET_HOME" == "/" ]]; then
+        log_fatal "Invalid TARGET_HOME: '${TARGET_HOME:-<empty>}'"
+    fi
+    if [[ "$TARGET_HOME" != /* ]]; then
+        log_fatal "TARGET_HOME must be an absolute path (got: $TARGET_HOME)"
     fi
 
     # ACFS directories for target user
     ACFS_HOME="$TARGET_HOME/.acfs"
     ACFS_STATE_FILE="$ACFS_HOME/state.json"
+
+    # Basic hardening: refuse to use a symlinked ACFS_HOME when running with
+    # elevated privileges (prevents clobbering arbitrary paths via symlink tricks).
+    if [[ -e "$ACFS_HOME" ]] && [[ -L "$ACFS_HOME" ]]; then
+        log_fatal "Refusing to use ACFS_HOME because it is a symlink: $ACFS_HOME"
+    fi
 
     log_detail "Target user: $TARGET_USER"
     log_detail "Target home: $TARGET_HOME"
@@ -1643,23 +1868,31 @@ validate_target_user() {
 
 ensure_ubuntu() {
     if [[ ! -f /etc/os-release ]]; then
-        log_fatal "Cannot detect OS. This script requires Ubuntu 24.04+ or 25.x"
+        log_fatal "Cannot detect OS. ACFS supports Ubuntu 22.04+ only."
     fi
 
     # shellcheck disable=SC1091
     source /etc/os-release
 
-    if [[ "$ID" != "ubuntu" ]]; then
-        log_warn "This script is designed for Ubuntu but detected: $ID"
-        log_warn "Proceeding anyway, but some things may not work."
+    if [[ "${ID:-}" != "ubuntu" ]]; then
+        log_fatal "Unsupported OS: ${PRETTY_NAME:-${ID:-unknown}}. ACFS supports Ubuntu 22.04+ only."
     fi
 
-    VERSION_MAJOR="${VERSION_ID%%.*}"
+    local version_id="${VERSION_ID:-}"
+    if [[ -z "$version_id" ]]; then
+        log_fatal "Cannot detect Ubuntu version (VERSION_ID missing)"
+    fi
+
+    VERSION_MAJOR="${version_id%%.*}"
+    if [[ "$VERSION_MAJOR" -lt 22 ]]; then
+        log_fatal "Unsupported Ubuntu version: ${version_id}. ACFS supports Ubuntu 22.04+ only."
+    fi
+
     if [[ "$VERSION_MAJOR" -lt 24 ]]; then
-        log_warn "Ubuntu $VERSION_ID detected. Recommended: Ubuntu 24.04+ or 25.x"
+        log_warn "Ubuntu $version_id detected. Recommended: Ubuntu 24.04+ or 25.x"
     fi
 
-    log_detail "OS: Ubuntu $VERSION_ID"
+    log_detail "OS: Ubuntu $version_id"
 }
 
 # ============================================================
@@ -1746,7 +1979,7 @@ run_ubuntu_upgrade_phase() {
             log_success "Pre-upgrade reboot complete. Continuing with upgrade..."
             # Clear the stage so we proceed normally
             if type -t state_update &>/dev/null; then
-                state_update ".ubuntu_upgrade.current_stage = \"not_started\" | .ubuntu_upgrade.enabled = false"
+                state_update ".ubuntu_upgrade.current_stage = \"not_started\" | .ubuntu_upgrade.enabled = false" || true
             fi
             # Set flag to skip redundant warning (user already confirmed before reboot)
             local skip_upgrade_warning=true
@@ -1758,7 +1991,7 @@ run_ubuntu_upgrade_phase() {
             log_info "  journalctl -u acfs-upgrade-resume"
             log_info "  tail -100 /var/log/acfs/upgrade_resume.log"
             log_error "To reset and retry upgrade:"
-            log_info "  sudo rm -f ${upgrade_state_file}"
+            log_info "  sudo mv -- '${upgrade_state_file}' '${upgrade_state_file}.backup.\$(date +%Y%m%d_%H%M%S)'"
             log_error "To proceed without upgrading:"
             log_info "  Re-run with --skip-ubuntu-upgrade (not recommended)"
             return 1
@@ -1769,6 +2002,15 @@ run_ubuntu_upgrade_phase() {
     if ubuntu_version_gte "$current_version_num" "$target_version_num"; then
         log_detail "Ubuntu $current_version_str meets target ($TARGET_UBUNTU_VERSION)"
         return 0
+    fi
+
+    # Ubuntu distribution upgrades require root (do-release-upgrade, systemd units,
+    # /var/lib/acfs state). If the installer is being run as a sudo-capable user,
+    # abort with clear guidance rather than failing mid-upgrade.
+    if [[ $EUID -ne 0 ]]; then
+        log_error "Ubuntu auto-upgrade requires running the installer as root"
+        log_info "Re-run as root (e.g., run 'sudo -i' then run the install command again), or use --skip-ubuntu-upgrade."
+        return 1
     fi
 
     # Calculate upgrade path (function takes target version NUMBER, determines current internally)
@@ -1837,7 +2079,15 @@ run_ubuntu_upgrade_phase() {
 
             # Set stage so we know to continue after reboot
             if type -t state_update &>/dev/null; then
-                state_update ".ubuntu_upgrade.enabled = true | .ubuntu_upgrade.current_stage = \"pre_upgrade_reboot\" | .ubuntu_upgrade.original_version = \"$current_version_str\" | .ubuntu_upgrade.target_version = \"$TARGET_UBUNTU_VERSION\""
+                if ! state_update ".ubuntu_upgrade.enabled = true | .ubuntu_upgrade.current_stage = \"pre_upgrade_reboot\" | .ubuntu_upgrade.original_version = \"$current_version_str\" | .ubuntu_upgrade.target_version = \"$TARGET_UBUNTU_VERSION\""; then
+                    log_error "Failed to record upgrade stage; cannot safely auto-reboot."
+                    log_info "Please reboot manually and re-run the installer."
+                    return 1
+                fi
+            else
+                log_error "State tracking is unavailable; cannot safely auto-reboot."
+                log_info "Please reboot manually and re-run the installer."
+                return 1
             fi
 
             # Set up resume infrastructure
@@ -1855,72 +2105,15 @@ run_ubuntu_upgrade_phase() {
                     return 1
                 fi
 
-                # IMPORTANT: For pre_upgrade_reboot, we need to continue WITH Ubuntu upgrade
-                # The default continue script has --skip-ubuntu-upgrade, so override it
-                local continue_script="${ACFS_RESUME_DIR:-/var/lib/acfs}/continue_install.sh"
-                if [[ -f "$continue_script" ]]; then
-                    # Build args without --skip-ubuntu-upgrade
-                    local repo_owner repo_name repo_ref install_url
-                    repo_owner="${ACFS_REPO_OWNER:-Dicklesworthstone}"
-                    repo_name="${ACFS_REPO_NAME:-agentic_coding_flywheel_setup}"
-                    repo_ref="${ACFS_COMMIT_SHA_FULL:-${ACFS_REF:-main}}"
-                    install_url="https://raw.githubusercontent.com/${repo_owner}/${repo_name}/${repo_ref}/install.sh"
-
-                    # Preserve the original installer argv so the post-reboot run
-                    # behaves exactly like the initial invocation (e.g. --skip-* flags,
-                    # --target-ubuntu, --strict, selection flags, etc.).
-                    local -a continue_args=("$@")
-
-                    # Ensure this pre-upgrade reboot path continues WITH the Ubuntu upgrade.
-                    # The resume infrastructure script typically appends --skip-ubuntu-upgrade,
-                    # but for this stage we must not include it.
-                    local -a filtered_args=()
-                    local raw_arg=""
-                    for raw_arg in "${continue_args[@]}"; do
-                        [[ "$raw_arg" == "--skip-ubuntu-upgrade" ]] && continue
-                        filtered_args+=("$raw_arg")
-                    done
-                    continue_args=("${filtered_args[@]}")
-
-                    # Shell-escape values we embed into the generated script.
-                    local repo_ref_q
-                    repo_ref_q=$(printf '%q' "$repo_ref")
-                    local install_url_q
-                    install_url_q=$(printf '%q' "$install_url")
-                    local continue_args_q=""
-                    local arg=""
-                    for arg in "${continue_args[@]}"; do
-                        continue_args_q+=" $(printf '%q' "$arg")"
-                    done
-                    continue_args_q="${continue_args_q# }"
-
-                    cat > "$continue_script" << CONTINUE_SCRIPT
-#!/usr/bin/env bash
-# Continue ACFS installation after pre-upgrade reboot (kernel updates applied)
-set -euo pipefail
-
-echo "Pre-upgrade reboot complete. Continuing with ACFS installation..."
-
-# Fetch and run installer (will proceed with Ubuntu upgrade if needed)
-export ACFS_REF=${repo_ref_q}
-INSTALL_URL=${install_url_q}
-INSTALL_ARGS=(${continue_args_q})
-
-echo "Fetching installer: \${INSTALL_URL}"
-CURL_ARGS=(-fsSL)
-if curl --help all 2>/dev/null | grep -q -- '--proto'; then
-    CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
-fi
-
-curl "\${CURL_ARGS[@]}" "\${INSTALL_URL}" | bash -s -- "\${INSTALL_ARGS[@]}"
-
-echo "ACFS installation complete!"
-CONTINUE_SCRIPT
-                    chmod +x "$continue_script"
-                fi
+                # upgrade_setup_infrastructure generates the correct continue_install.sh for both:
+                # - pre-upgrade reboot (continue WITH upgrade)
+                # - post-upgrade continuation (skip upgrade)
             else
                 log_warn "Resume infrastructure not available. After reboot, re-run installer manually."
             fi
+
+            # Update MOTD before reboot
+            upgrade_update_motd "Rebooting for upgrade to ${UBUNTU_TARGET_VERSION:-Ubuntu}..."
 
             # Trigger reboot
             log_warn "Rebooting in 10 seconds..."
@@ -2054,15 +2247,38 @@ normalize_user() {
     # Create target user if it doesn't exist
     if ! id "$TARGET_USER" &>/dev/null; then
         log_detail "Creating user: $TARGET_USER"
-        try_step "Creating user $TARGET_USER" $SUDO useradd -m -s /bin/bash "$TARGET_USER" || true
-        try_step "Adding $TARGET_USER to sudo group" $SUDO usermod -aG sudo "$TARGET_USER" || return 1
+
+        # We intentionally do NOT use try_step here because user creation can be
+        # a recoverable race (e.g., another process creates the user between the
+        # id check and useradd). Using try_step would record state_phase_fail and
+        # poison resume state even if we recover.
+        local useradd_exit=0
+        local useradd_output=""
+        useradd_output="$($SUDO useradd -m -s /bin/bash "$TARGET_USER" 2>&1)" || useradd_exit=$?
+        if [[ $useradd_exit -ne 0 ]]; then
+            if id "$TARGET_USER" &>/dev/null; then
+                log_warn "useradd exited ${useradd_exit}, but user '$TARGET_USER' exists; continuing"
+            else
+                log_error "Failed to create user '$TARGET_USER' (useradd exit ${useradd_exit})."
+                if [[ -n "$useradd_output" ]]; then
+                    local first_line=""
+                    first_line="$(printf '%s\n' "$useradd_output" | head -n 1)"
+                    [[ -n "$first_line" ]] && log_detail "useradd: $first_line"
+                fi
+                return 1
+            fi
+        fi
     fi
+    # Ensure the target user has sudo-group membership even on reruns.
+    # If user creation succeeded but the first `usermod` attempt failed,
+    # reruns should still apply the group change (idempotent).
+    try_step "Ensuring $TARGET_USER is in sudo group" $SUDO usermod -aG sudo "$TARGET_USER" || return 1
 
     # Ensure home directory has correct ownership
     # CRITICAL: useradd -m does NOT change ownership of existing directories (common on VPS)
     # Cloud images often pre-create /home/ubuntu owned by root:root
     if [[ -d "$TARGET_HOME" ]]; then
-        try_step "Setting home directory ownership" $SUDO chown -R "$TARGET_USER:$TARGET_USER" "$TARGET_HOME" || return 1
+        try_step "Setting home directory ownership" acfs_chown_tree "$TARGET_USER:$TARGET_USER" "$TARGET_HOME" || return 1
     fi
 
     # Set up passwordless sudo in vibe mode
@@ -2102,10 +2318,14 @@ normalize_user() {
                 if grep -Fxq "$line" "$dst" 2>/dev/null; then
                     continue
                 fi
+                # Ensure destination file ends with newline before appending
+                if [[ -s "$dst" ]] && [[ -n "$(tail -c 1 "$dst")" ]]; then
+                    echo "" >> "$dst"
+                fi
                 printf "%s\n" "$line" >> "$dst"
             done < "$src"
         ' -- "$TARGET_HOME/.ssh/authorized_keys" || return 1
-        try_step "Setting SSH directory ownership" $SUDO chown -R "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.ssh" || return 1
+        try_step "Setting SSH directory ownership" acfs_chown_tree "$TARGET_USER:$TARGET_USER" "$TARGET_HOME/.ssh" || return 1
         try_step "Setting SSH directory permissions" $SUDO chmod 700 "$TARGET_HOME/.ssh" || return 1
         try_step "Setting authorized_keys permissions" $SUDO chmod 600 "$TARGET_HOME/.ssh/authorized_keys" || return 1
     fi
@@ -2132,6 +2352,16 @@ setup_filesystem() {
         return 0
     fi
 
+    # Basic hardening: refuse to follow symlinks as root.
+    # Prevents symlink tricks like /data -> / or /data/projects -> /etc.
+    local fs_path=""
+    for fs_path in /data /data/projects /data/cache; do
+        if [[ -e "$fs_path" && -L "$fs_path" ]]; then
+            log_error "Refusing to set up filesystem: $fs_path is a symlink"
+            return 1
+        fi
+    done
+
     # System directories
     local sys_dirs=("/data/projects" "/data/cache")
     for dir in "${sys_dirs[@]}"; do
@@ -2141,13 +2371,13 @@ setup_filesystem() {
         fi
     done
 
-    # Ensure /data is owned by target user
-    try_step "Setting /data ownership" $SUDO chown -R "$TARGET_USER:$TARGET_USER" /data || true
+    # Ensure workspace directories are owned by target user (avoid over-broad recursive chown).
+    try_step "Setting /data ownership" $SUDO chown -h "$TARGET_USER:$TARGET_USER" /data /data/projects /data/cache || true
 
     # CRITICAL: Fix home directory ownership FIRST, before any run_as_target calls
     # Some cloud images (e.g., Hetzner) have /home/ubuntu owned by root after user creation
     # If we don't fix this first, all run_as_target mkdir calls below will fail
-    try_step "Fixing home directory ownership" $SUDO chown -R "$TARGET_USER:$TARGET_USER" "$TARGET_HOME" || true
+    try_step "Fixing home directory ownership" acfs_chown_tree "$TARGET_USER:$TARGET_USER" "$TARGET_HOME" || true
 
     # User directories (in TARGET_HOME, not $HOME)
     # CRITICAL: Create these as target user to ensure correct ownership
@@ -2161,9 +2391,20 @@ setup_filesystem() {
     done
 
     # Create ACFS directories (as root, then chown)
-    try_step "Creating ACFS directories" $SUDO mkdir -p "$ACFS_HOME"/{zsh,tmux,bin,docs,logs} || return 1
-    try_step "Setting ACFS directory ownership" $SUDO chown -R "$TARGET_USER:$TARGET_USER" "$ACFS_HOME" || return 1
+    try_step "Creating ACFS directories" $SUDO mkdir -p "$ACFS_HOME"/{zsh,tmux,bin,docs,logs,scripts/lib} || return 1
+    try_step "Setting ACFS directory ownership" acfs_chown_tree "$TARGET_USER:$TARGET_USER" "$ACFS_HOME" || return 1
     try_step "Creating ACFS log directory" $SUDO mkdir -p "$ACFS_LOG_DIR" || return 1
+
+    # Install essential ACFS scripts early so `acfs doctor` works even after early failures.
+    # This is critical for debugging failed installs - users need `acfs doctor` to work
+    # even if the install failed in Phase 3 (languages) before finalization.
+    log_detail "Installing essential ACFS scripts for early debugging"
+    try_step "Installing logging.sh (early)" install_asset "scripts/lib/logging.sh" "$ACFS_HOME/scripts/lib/logging.sh" || true
+    try_step "Installing gum_ui.sh (early)" install_asset "scripts/lib/gum_ui.sh" "$ACFS_HOME/scripts/lib/gum_ui.sh" || true
+    try_step "Installing doctor.sh (early)" install_asset "scripts/lib/doctor.sh" "$ACFS_HOME/scripts/lib/doctor.sh" || true
+    # Set permissions and ownership so target user can run doctor
+    $SUDO chmod 755 "$ACFS_HOME/scripts/lib/"*.sh 2>/dev/null || true
+    acfs_chown_tree "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/scripts" 2>/dev/null || true
 
     # Create user's .local/bin and .bun directories early - many installers need them
     # This prevents NTM, UBS, CASS, Bun, etc. from creating them as root via sudo
@@ -2206,7 +2447,7 @@ setup_shell() {
         # Use -rL to dereference symlinks (avoids broken symlinks pointing to /root/)
         log_detail "Oh My Zsh found in /root, copying to $TARGET_USER"
         $SUDO cp -rL /root/.oh-my-zsh "$omz_dir"
-        $SUDO chown -R "$TARGET_USER:$TARGET_USER" "$omz_dir"
+        acfs_chown_tree "$TARGET_USER:$TARGET_USER" "$omz_dir"
         omz_installed=true
     elif [[ -f "$TARGET_HOME/.zshrc" ]] && grep -q "oh-my-zsh" "$TARGET_HOME/.zshrc" 2>/dev/null; then
         # oh-my-zsh referenced in .zshrc but directory missing - unusual state
@@ -2397,7 +2638,7 @@ install_cli_tools() {
     else
         log_detail "Installing gum for glamorous shell scripts"
         try_step "Creating apt keyrings directory" $SUDO mkdir -p /etc/apt/keyrings || true
-        try_step_eval "Adding Charm apt key" "set -o pipefail; curl -fsSL https://repo.charm.sh/apt/gpg.key | $SUDO gpg --batch --yes --dearmor -o /etc/apt/keyrings/charm.gpg 2>/dev/null" || true
+        try_step_eval "Adding Charm apt key" "set -o pipefail; if curl --help all 2>/dev/null | grep -q -- '--proto'; then curl --proto '=https' --proto-redir '=https' -fsSL https://repo.charm.sh/apt/gpg.key; else curl -fsSL https://repo.charm.sh/apt/gpg.key; fi | $SUDO gpg --batch --yes --dearmor -o /etc/apt/keyrings/charm.gpg 2>/dev/null" || true
         try_step_eval "Adding Charm apt repo" "printf 'Types: deb\nURIs: https://repo.charm.sh/apt/\nSuites: *\nComponents: *\nSigned-By: /etc/apt/keyrings/charm.gpg\n' | $SUDO tee /etc/apt/sources.list.d/charm.sources > /dev/null" || true
         try_step "Updating apt cache" $SUDO apt-get update -y || true
         if try_step "Installing gum" $SUDO apt-get install -y gum 2>/dev/null; then
@@ -2447,13 +2688,29 @@ install_cli_tools() {
             if [[ -n "$arch" ]]; then
                 local lg_ver="0.44.1"
                 local lg_url="https://github.com/jesseduffield/lazygit/releases/download/v${lg_ver}/lazygit_${lg_ver}_Linux_${arch}.tar.gz"
+                local lg_sha256=""
+                case "$arch" in
+                    x86_64) lg_sha256="84682f4ad5a449d0a3ffbc8332200fe8651aee9dd91dcd8d87197ba6c2450dbc" ;;
+                    arm64) lg_sha256="26a435f47b691325c086dad2f84daa6556df5af8efc52b6ed624fa657605c976" ;;
+                esac
                 local lg_tmp=""
                 if command -v mktemp &>/dev/null; then
                     lg_tmp="$(mktemp "${TMPDIR:-/tmp}/acfs-lazygit.XXXXXX" 2>/dev/null)" || lg_tmp=""
                 fi
-                if [[ -n "$lg_tmp" ]] && acfs_curl "$lg_url" -o "$lg_tmp" 2>/dev/null; then
-                    $SUDO tar -xzf "$lg_tmp" -C /usr/local/bin lazygit
-                    rm -f "$lg_tmp"
+                if [[ -n "$lg_tmp" ]]; then
+                    if acfs_download_file_and_verify_sha256 "$lg_url" "$lg_tmp" "$lg_sha256" "lazygit ${lg_ver} (${arch})"; then
+                        if $SUDO tar -xzf "$lg_tmp" -C /usr/local/bin --no-same-owner --no-same-permissions lazygit 2>/dev/null; then
+                            $SUDO chmod 0755 /usr/local/bin/lazygit 2>/dev/null || true
+                            if command_exists lazygit; then
+                                log_detail "lazygit installed from GitHub release"
+                            else
+                                log_warn "lazygit: extracted but binary not found in PATH (skipping)"
+                            fi
+                        else
+                            log_warn "lazygit: failed to extract tarball (skipping)"
+                        fi
+                    fi
+                    rm -f "$lg_tmp" 2>/dev/null || true
                 fi
             fi
         fi
@@ -2470,13 +2727,29 @@ install_cli_tools() {
         if [[ -n "$arch" ]]; then
             local ld_ver="0.23.3"
             local ld_url="https://github.com/jesseduffield/lazydocker/releases/download/v${ld_ver}/lazydocker_${ld_ver}_Linux_${arch}.tar.gz"
+            local ld_sha256=""
+            case "$arch" in
+                x86_64) ld_sha256="1f3c7037326973b85cb85447b2574595103185f8ed067b605dd43cc201bc8786" ;;
+                arm64) ld_sha256="ae7bed0309289396d396b8502b2d78d153a4f8ce8add042f655332241e7eac31" ;;
+            esac
             local ld_tmp=""
             if command -v mktemp &>/dev/null; then
                 ld_tmp="$(mktemp "${TMPDIR:-/tmp}/acfs-lazydocker.XXXXXX" 2>/dev/null)" || ld_tmp=""
             fi
-            if [[ -n "$ld_tmp" ]] && acfs_curl "$ld_url" -o "$ld_tmp" 2>/dev/null; then
-                $SUDO tar -xzf "$ld_tmp" -C /usr/local/bin lazydocker
-                rm -f "$ld_tmp"
+            if [[ -n "$ld_tmp" ]]; then
+                if acfs_download_file_and_verify_sha256 "$ld_url" "$ld_tmp" "$ld_sha256" "lazydocker ${ld_ver} (${arch})"; then
+                    if $SUDO tar -xzf "$ld_tmp" -C /usr/local/bin --no-same-owner --no-same-permissions lazydocker 2>/dev/null; then
+                        $SUDO chmod 0755 /usr/local/bin/lazydocker 2>/dev/null || true
+                        if command_exists lazydocker; then
+                            log_detail "lazydocker installed from GitHub release"
+                        else
+                            log_warn "lazydocker: extracted but binary not found in PATH (skipping)"
+                        fi
+                    else
+                        log_warn "lazydocker: failed to extract tarball (skipping)"
+                    fi
+                fi
+                rm -f "$ld_tmp" 2>/dev/null || true
             fi
         fi
     fi
@@ -2765,9 +3038,35 @@ install_agents_phase() {
     log_detail "Installing Codex CLI for $TARGET_USER"
     try_step "Installing Codex CLI" run_as_target "$bun_bin" install -g --trust @openai/codex@latest || true
 
+    # Create wrapper script that uses bun as runtime (avoids node PATH issues)
+    local codex_bin_local="$TARGET_HOME/.local/bin/codex"
+    if [[ -x "$TARGET_HOME/.bun/bin/codex" ]] && [[ ! -x "$codex_bin_local" ]]; then
+        run_as_target mkdir -p "$TARGET_HOME/.local/bin" 2>/dev/null || true
+        # shellcheck disable=SC2016  # Variables expand inside the bash -c script, not here.
+        try_step "Creating Codex bun wrapper" run_as_target bash -c '
+            set -euo pipefail
+            wrapper_path="$1"
+            printf "%s\n" "#!/bin/bash" "exec ~/.bun/bin/bun ~/.bun/bin/codex \"\$@\"" > "$wrapper_path"
+            chmod +x "$wrapper_path"
+        ' _ "$codex_bin_local" || true
+    fi
+
     # Gemini CLI (install as target user)
     log_detail "Installing Gemini CLI for $TARGET_USER"
     try_step "Installing Gemini CLI" run_as_target "$bun_bin" install -g --trust @google/gemini-cli@latest || true
+
+    # Create wrapper script that uses bun as runtime (avoids node PATH issues)
+    local gemini_bin_local="$TARGET_HOME/.local/bin/gemini"
+    if [[ -x "$TARGET_HOME/.bun/bin/gemini" ]] && [[ ! -x "$gemini_bin_local" ]]; then
+        run_as_target mkdir -p "$TARGET_HOME/.local/bin" 2>/dev/null || true
+        # shellcheck disable=SC2016  # Variables expand inside the bash -c script, not here.
+        try_step "Creating Gemini bun wrapper" run_as_target bash -c '
+            set -euo pipefail
+            wrapper_path="$1"
+            printf "%s\n" "#!/bin/bash" "exec ~/.bun/bin/bun ~/.bun/bin/gemini \"\$@\"" > "$wrapper_path"
+            chmod +x "$wrapper_path"
+        ' _ "$gemini_bin_local" || true
+    fi
 
     log_success "Coding agents installed"
 }
@@ -2784,13 +3083,20 @@ install_cloud_db_legacy_db() {
     elif command_exists psql; then
         log_detail "PostgreSQL already installed ($(psql --version 2>/dev/null | head -1 || echo 'psql'))"
     else
-        log_detail "Installing PostgreSQL 18 (PGDG repo, codename=$codename)"
+        # PGDG may lag behind new Ubuntu codenames (e.g. 25.10) - fall back to noble (24.04 LTS) when needed.
+        local pgdg_codename="$codename"
+        if command_exists curl && ! curl -sfI "https://apt.postgresql.org/pub/repos/apt/dists/${codename}-pgdg/Release" >/dev/null 2>&1; then
+            pgdg_codename="noble"
+            log_detail "PGDG repo unavailable for $codename, using $pgdg_codename"
+        fi
+
+        log_detail "Installing PostgreSQL 18 (PGDG repo, codename=$pgdg_codename)"
         try_step "Creating apt keyrings for PostgreSQL" $SUDO mkdir -p /etc/apt/keyrings || true
 
-        if ! try_step_eval "Adding PostgreSQL apt key" "set -o pipefail; curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | $SUDO gpg --batch --yes --dearmor -o /etc/apt/keyrings/postgresql.gpg 2>/dev/null"; then
+        if ! try_step_eval "Adding PostgreSQL apt key" "set -o pipefail; if curl --help all 2>/dev/null | grep -q -- '--proto'; then curl --proto '=https' --proto-redir '=https' -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc; else curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc; fi | $SUDO gpg --batch --yes --dearmor -o /etc/apt/keyrings/postgresql.gpg 2>/dev/null"; then
             log_warn "PostgreSQL: failed to install signing key (skipping)"
         else
-            try_step_eval "Adding PostgreSQL apt repo" "echo 'deb [signed-by=/etc/apt/keyrings/postgresql.gpg] https://apt.postgresql.org/pub/repos/apt ${codename}-pgdg main' | $SUDO tee /etc/apt/sources.list.d/pgdg.list > /dev/null" || true
+            try_step_eval "Adding PostgreSQL apt repo" "echo 'deb [signed-by=/etc/apt/keyrings/postgresql.gpg] https://apt.postgresql.org/pub/repos/apt ${pgdg_codename}-pgdg main' | $SUDO tee /etc/apt/sources.list.d/pgdg.list > /dev/null" || true
 
             try_step "Updating apt cache for PostgreSQL" $SUDO apt-get update -y || log_warn "PostgreSQL: apt-get update failed (continuing)"
 
@@ -2847,7 +3153,7 @@ install_cloud_db_legacy_tools() {
         log_detail "Installing Vault (HashiCorp repo, codename=$vault_codename)"
         try_step "Creating apt keyrings for Vault" $SUDO mkdir -p /etc/apt/keyrings || true
 
-        if ! try_step_eval "Adding HashiCorp apt key" "set -o pipefail; curl -fsSL https://apt.releases.hashicorp.com/gpg | $SUDO gpg --batch --yes --dearmor -o /etc/apt/keyrings/hashicorp.gpg 2>/dev/null"; then
+        if ! try_step_eval "Adding HashiCorp apt key" "set -o pipefail; if curl --help all 2>/dev/null | grep -q -- '--proto'; then curl --proto '=https' --proto-redir '=https' -fsSL https://apt.releases.hashicorp.com/gpg; else curl -fsSL https://apt.releases.hashicorp.com/gpg; fi | $SUDO gpg --batch --yes --dearmor -o /etc/apt/keyrings/hashicorp.gpg 2>/dev/null"; then
             log_warn "Vault: failed to install signing key (skipping)"
         else
             try_step_eval "Adding HashiCorp apt repo" "echo 'deb [signed-by=/etc/apt/keyrings/hashicorp.gpg] https://apt.releases.hashicorp.com ${vault_codename} main' | $SUDO tee /etc/apt/sources.list.d/hashicorp.list > /dev/null" || true
@@ -2917,7 +3223,7 @@ install_supabase_cli_release() {
     fi
 
     local actual_sha=""
-    actual_sha="$(calculate_sha256 < "$tmp_tgz" 2>/dev/null)" || actual_sha=""
+    actual_sha="$(acfs_calculate_file_sha256 "$tmp_tgz" 2>/dev/null)" || actual_sha=""
     if [[ -z "$actual_sha" ]] || [[ "$actual_sha" != "$expected_sha" ]]; then
         log_error "Supabase CLI: checksum mismatch"
         log_error "  Expected: $expected_sha"
@@ -2963,6 +3269,52 @@ install_supabase_cli_release() {
 }
 
 install_cloud_db_legacy_cloud() {
+    # Cloud CLIs (bun global installs)
+    if [[ "$SKIP_CLOUD" == "true" ]]; then
+        log_detail "Skipping cloud CLIs (--skip-cloud)"
+    else
+        local bun_bin="$TARGET_HOME/.bun/bin/bun"
+        if [[ ! -x "$bun_bin" ]]; then
+            log_warn "Cloud CLIs: bun not found at $bun_bin (skipping)"
+        else
+            local cli
+            for cli in wrangler supabase vercel; do
+                if [[ "$cli" == "supabase" ]]; then
+                    if [[ -x "$TARGET_HOME/.local/bin/supabase" ]] || [[ -x "$TARGET_HOME/.bun/bin/supabase" ]]; then
+                        log_detail "supabase already installed"
+                        continue
+                    fi
+
+                    log_detail "Installing supabase (direct binary)"
+                    if try_step "Installing supabase" install_supabase_cli_release; then
+                        log_success "supabase installed"
+                    else
+                        log_warn "supabase installation failed (optional)"
+                    fi
+                    continue
+                fi
+
+                if [[ -x "$TARGET_HOME/.bun/bin/$cli" ]]; then
+                    log_detail "$cli already installed"
+                    continue
+                fi
+
+                log_detail "Installing $cli via bun"
+                if try_step "Installing $cli via bun" run_as_target "$bun_bin" install -g --trust "${cli}@latest"; then
+                    if [[ -x "$TARGET_HOME/.bun/bin/$cli" ]]; then
+                        log_success "$cli installed"
+                    else
+                        log_warn "$cli: install finished but binary not found"
+                    fi
+                else
+                    log_warn "$cli installation failed (optional)"
+                fi
+            done
+        fi
+    fi
+}
+
+install_cloud_db_legacy() {
     # Cloud CLIs (bun global installs)
     if [[ "$SKIP_CLOUD" == "true" ]]; then
         log_detail "Skipping cloud CLIs (--skip-cloud)"
@@ -3119,9 +3471,7 @@ install_stack_phase() {
                 local tmp_install
                 tmp_install="$(mktemp "${TMPDIR:-/tmp}/acfs-install-${tool}.XXXXXX" 2>/dev/null)" || tmp_install=""
 
-                if [[ -z "$tmp_install" ]]; then
-                    log_warn "MCP Agent Mail: failed to create temp installer file"
-                elif verify_checksum "$url" "$expected_sha256" "$tool" > "$tmp_install"; then
+                if [[ -n "$tmp_install" ]] && verify_checksum "$url" "$expected_sha256" "$tool" > "$tmp_install"; then
                     chmod 755 "$tmp_install" 2>/dev/null || true
 
                     # Kill existing session if any (clean slate)
@@ -3168,6 +3518,129 @@ install_stack_phase() {
     else
         log_detail "Installing CASS"
         try_step "Installing CASS" acfs_run_verified_upstream_script_as_target "cass" "bash" --easy-mode --verify || log_warn "CASS installation may have failed"
+    fi
+
+    # NTM↔CASS compatibility:
+    # NTM v1.2.0 calls `cass robot search ...`, but modern CASS uses `cass search ... --robot`.
+    # Install a small, idempotent wrapper so `cass robot <subcommand>` works.
+    if binary_installed "cass"; then
+        log_detail "Ensuring CASS 'robot' compatibility wrapper"
+        # Best-effort: do not fail the full install if we cannot write a wrapper.
+        run_as_target_shell <<'ACFS_CASS_ROBOT_COMPAT' || log_warn "CASS 'robot' wrapper setup failed (ntm send may still fail)"
+if cass robot --help >/dev/null 2>&1; then
+  exit 0
+fi
+
+cass_path="$(command -v cass 2>/dev/null || true)"
+if [[ -z "$cass_path" ]]; then
+  echo "WARN: cass not found for wrapper setup" >&2
+  exit 0
+fi
+
+cass_dir="$(cd "$(dirname "$cass_path")" 2>/dev/null && pwd -P || echo "")"
+if [[ -z "$cass_dir" ]]; then
+  echo "WARN: could not resolve cass directory for wrapper setup" >&2
+  exit 0
+fi
+
+cass_real="${cass_dir}/cass.real"
+
+# Idempotency: if wrapper is already installed, do nothing.
+if [[ -x "$cass_real" ]] && head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
+  exit 0
+fi
+
+# Only wrap when we can write to the installed binary location.
+if [[ ! -f "$cass_path" ]]; then
+  echo "WARN: cass path is not a regular file: $cass_path" >&2
+  exit 0
+fi
+if [[ ! -w "$cass_path" ]]; then
+  echo "WARN: cannot write to cass binary path (skipping wrapper): $cass_path" >&2
+  exit 0
+fi
+
+# Safety: if cass is already our wrapper but cass.real is missing, do not try
+# to "move" the wrapper into place (it would create an infinite exec loop).
+if [[ ! -e "$cass_real" ]] && head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
+  echo "WARN: cass wrapper detected but cass.real is missing; skipping wrapper setup" >&2
+  exit 0
+fi
+
+# Move the real binary aside, then install the wrapper at the original path.
+# Handle both fresh install and the case where CASS was updated (replaced wrapper with new binary).
+if [[ ! -e "$cass_real" ]]; then
+  # First time: move original binary to cass.real
+  if ! mv "$cass_path" "$cass_real" 2>/dev/null; then
+    echo "WARN: failed to move cass to cass.real (skipping wrapper)" >&2
+    exit 0
+  fi
+  chmod +x "$cass_real" 2>/dev/null || true
+elif ! head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
+  # cass.real exists but current cass is NOT our wrapper.
+  # Only update cass.real if cass is a binary (not a script).
+  # Safety: if it's a script (starts with #!), don't overwrite the real binary.
+  if [[ "$(head -c 2 "$cass_path" 2>/dev/null || true)" == "#!" ]]; then
+    echo "WARN: cass is a script but not our wrapper (skipping cass.real update)" >&2
+  else
+    # cass is a binary - safe to update cass.real
+    if ! mv "$cass_path" "$cass_real" 2>/dev/null; then
+      echo "WARN: failed to update cass.real with new binary (skipping wrapper)" >&2
+      exit 0
+    fi
+    chmod +x "$cass_real" 2>/dev/null || true
+  fi
+fi
+
+cat > "$cass_path" <<'EOF'
+#!/usr/bin/env bash
+# ACFS CASS WRAPPER (compat): adds `cass robot <subcommand>` support for older NTM.
+set -euo pipefail
+
+real="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P)/cass.real"
+if [[ ! -x "$real" ]]; then
+  echo "ERROR: cass.real not found at: $real" >&2
+  exit 127
+fi
+
+if [[ $# -gt 0 && "${1:-}" == "robot" ]]; then
+  shift || true
+
+  if [[ $# -eq 0 || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    cat <<'EOT'
+Usage: cass robot <subcommand> [args...]
+
+Compat wrapper installed by ACFS.
+Translates:
+  cass robot <subcommand> ...  ->  cass <subcommand> ... --robot
+
+Examples:
+  cass robot search "error handling" --limit 10
+  cass search "error handling" --robot --limit 10
+EOT
+    exit 0
+  fi
+
+  for arg in "$@"; do
+    if [[ "$arg" == "--robot" ]]; then
+      exec "$real" "$@"
+    fi
+  done
+
+  exec "$real" "$@" --robot
+fi
+
+exec "$real" "$@"
+EOF
+chmod +x "$cass_path" 2>/dev/null || true
+
+# Smoke check; do not fail if it still errors (wrapper is best-effort).
+if ! cass robot --help >/dev/null 2>&1; then
+  echo "WARN: cass wrapper installed, but cass robot still failing" >&2
+fi
+
+exit 0
+ACFS_CASS_ROBOT_COMPAT
     fi
 
     # CASS Memory System
@@ -3233,16 +3706,17 @@ finalize() {
         "05_ntm_core.md"
         "06_ntm_command_palette.md"
         "07_flywheel_loop.md"
+        "08_keeping_updated.md"
     )
     local lesson
     for lesson in "${lesson_files[@]}"; do
-        install_asset "acfs/onboard/lessons/$lesson" "$ACFS_HOME/onboard/lessons/$lesson"
+        try_step "Installing onboard lesson: $lesson" install_asset "acfs/onboard/lessons/$lesson" "$ACFS_HOME/onboard/lessons/$lesson" || return 1
     done
 
     log_detail "Installing onboard command"
     try_step "Installing onboard script" install_asset "packages/onboard/onboard.sh" "$ACFS_HOME/onboard/onboard.sh" || return 1
     try_step "Setting onboard permissions" $SUDO chmod 755 "$ACFS_HOME/onboard/onboard.sh" || return 1
-    try_step "Setting onboard ownership" $SUDO chown -R "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/onboard" || return 1
+    try_step "Setting onboard ownership" acfs_chown_tree "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/onboard" || return 1
 
     try_step "Creating .local/bin directory" run_as_target mkdir -p "$TARGET_HOME/.local/bin" || return 1
     try_step "Linking onboard command" run_as_target ln -sf "$ACFS_HOME/onboard/onboard.sh" "$TARGET_HOME/.local/bin/onboard" || return 1
@@ -3277,7 +3751,7 @@ finalize() {
     try_step "Installing services-setup.sh" install_asset "scripts/services-setup.sh" "$ACFS_HOME/scripts/services-setup.sh" || return 1
     try_step "Setting scripts permissions" $SUDO chmod 755 "$ACFS_HOME/scripts/services-setup.sh" || return 1
     try_step "Setting lib scripts permissions" $SUDO chmod 755 "$ACFS_HOME/scripts/lib/"*.sh || return 1
-    try_step "Setting scripts ownership" $SUDO chown -R "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/scripts" || return 1
+    try_step "Setting scripts ownership" acfs_chown_tree "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/scripts" || return 1
 
     # Install checksums + version metadata so `acfs update --stack` can verify upstream scripts.
     try_step "Installing checksums.yaml" install_asset "checksums.yaml" "$ACFS_HOME/checksums.yaml" || return 1
@@ -3351,13 +3825,13 @@ run_smoke_test() {
     echo "" >&2
     echo "[Smoke Test]" >&2
 
-    # 1) User is ubuntu
-    if [[ "$TARGET_USER" == "ubuntu" ]] && id "$TARGET_USER" &>/dev/null; then
-        echo "✅ User: ubuntu" >&2
+    # 1) Target user exists
+    if id "$TARGET_USER" &>/dev/null; then
+        echo "✅ User: $TARGET_USER" >&2
         ((critical_passed += 1))
     else
-        echo "✖ User: expected ubuntu (TARGET_USER=$TARGET_USER)" >&2
-        echo "    Fix: set TARGET_USER=ubuntu and ensure the user exists" >&2
+        echo "✖ User: missing (TARGET_USER=$TARGET_USER)" >&2
+        echo "    Fix: set TARGET_USER=<user> and ensure the user exists" >&2
         ((critical_failed += 1))
     fi
 
@@ -3598,9 +4072,9 @@ $tailscale_section
 
 }Next steps:
 
-  1. If you logged in as root, reconnect as ubuntu:
+  1. If you logged in as root, reconnect as $TARGET_USER:
      exit
-     ssh ubuntu@YOUR_SERVER_IP
+     ssh $TARGET_USER@YOUR_SERVER_IP
 
   2. Run the onboarding tutorial:
      onboard
@@ -3648,19 +4122,49 @@ $summary_content"
                 fi
                 echo ""
             fi
+            # Show SSH key warning if password-only connection was detected
+            if [[ "${ACFS_SSH_KEY_WARNING:-false}" == "true" ]]; then
+                echo -e "${RED}════════════════════════════════════════════════════════════${NC}"
+                echo -e "${RED}  ⚠  SSH KEY SETUP REQUIRED FOR TARGET USER${NC}"
+                echo -e "${RED}════════════════════════════════════════════════════════════${NC}"
+                echo ""
+                echo -e "  You connected with a password, so no SSH key was copied"
+                echo -e "  to the $TARGET_USER user. You won't be able to SSH as $TARGET_USER"
+                echo -e "  until you set up SSH key access."
+                echo ""
+                echo -e "  ${YELLOW}FROM YOUR LOCAL MACHINE, run:${NC}"
+                echo ""
+                echo -e "    ${BLUE}ssh-copy-id ${TARGET_USER}@YOUR_SERVER_IP${NC}"
+                echo ""
+                echo -e "  Or see the instructions printed earlier for manual setup."
+                echo -e "${RED}════════════════════════════════════════════════════════════${NC}"
+                echo ""
+            fi
             echo -e "${YELLOW}Next steps:${NC}"
             echo ""
-            echo "  1. If you logged in as root, reconnect as ubuntu:"
+            if [[ "${ACFS_SSH_KEY_WARNING:-false}" == "true" ]]; then
+                echo "  1. Set up SSH key for $TARGET_USER user (see warning above)"
+                echo ""
+                echo "  2. Then reconnect as $TARGET_USER:"
+            else
+                echo "  1. If you logged in as root, reconnect as $TARGET_USER:"
+            fi
             echo -e "     ${GRAY}exit${NC}"
-            echo -e "     ${GRAY}ssh ubuntu@YOUR_SERVER_IP${NC}"
+            echo -e "     ${GRAY}ssh ${TARGET_USER}@YOUR_SERVER_IP${NC}"
             echo ""
-            echo "  2. Run the onboarding tutorial:"
+            local step_num=2
+            if [[ "${ACFS_SSH_KEY_WARNING:-false}" == "true" ]]; then
+                step_num=3
+            fi
+            echo "  $step_num. Run the onboarding tutorial:"
             echo -e "     ${BLUE}onboard${NC}"
             echo ""
-            echo "  3. Check everything is working:"
+            ((step_num++))
+            echo "  $step_num. Check everything is working:"
             echo -e "     ${BLUE}acfs doctor${NC}"
             echo ""
-            echo "  4. Start your agent cockpit:"
+            ((step_num++))
+            echo "  $step_num. Start your agent cockpit:"
             echo -e "     ${BLUE}ntm${NC}"
             echo ""
             echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
@@ -3675,7 +4179,21 @@ $summary_content"
 main() {
     parse_args "$@"
 
+    # --yes should always behave non-interactively (skip prompts), regardless of flag order.
+    if [[ "$YES_MODE" == "true" ]]; then
+        export ACFS_INTERACTIVE=false
+    fi
+
     if [[ -z "${SCRIPT_DIR:-}" ]]; then
+        # Resolve ACFS_REF to a specific commit SHA early to prevent mixed-ref installs.
+        # Without this, we could download a tarball for one commit and later fetch commit metadata
+        # (or resume scripts) from a newer commit if the branch/tag moves mid-install.
+        fetch_commit_sha
+        if [[ -n "${ACFS_COMMIT_SHA_FULL:-}" ]]; then
+            ACFS_REF="$ACFS_COMMIT_SHA_FULL"
+            ACFS_RAW="https://raw.githubusercontent.com/${ACFS_REPO_OWNER}/${ACFS_REPO_NAME}/${ACFS_REF}"
+            export ACFS_REF ACFS_RAW
+        fi
         bootstrap_repo_archive
     fi
 
@@ -3715,7 +4233,30 @@ main() {
     # Handle --reset-state: move state file aside and exit
     if [[ "$RESET_STATE_ONLY" == "true" ]]; then
         echo "Resetting ACFS state..." >&2
-        local state_file="${ACFS_HOME:-/home/${TARGET_USER}/.acfs}/state.json"
+        local state_file=""
+        if [[ -n "${ACFS_HOME:-}" ]]; then
+            state_file="${ACFS_HOME}/state.json"
+        else
+            local base_home=""
+            if [[ -n "${TARGET_HOME:-}" ]]; then
+                base_home="$TARGET_HOME"
+            elif [[ "${TARGET_USER:-}" == "root" ]]; then
+                base_home="/root"
+            else
+                base_home="/home/${TARGET_USER}"
+            fi
+
+            if [[ -z "$base_home" ]] || [[ "$base_home" == "/" ]]; then
+                echo "ERROR: Invalid TARGET_HOME: '${base_home:-<empty>}'" >&2
+                exit 1
+            fi
+            if [[ "$base_home" != /* ]]; then
+                echo "ERROR: TARGET_HOME must be an absolute path (got: $base_home)" >&2
+                exit 1
+            fi
+
+            state_file="${base_home}/.acfs/state.json"
+        fi
         if [[ -f "$state_file" ]]; then
             if type -t state_backup_and_remove &>/dev/null; then
                 local state_dir
@@ -3759,6 +4300,14 @@ main() {
         run_preflight_checks
     fi
 
+    # Dry-run mode should be truly non-destructive. Print the plan/summary and exit
+    # before any system-modifying steps (apt/user/upgrade) can run.
+    if [[ "$DRY_RUN" == "true" ]]; then
+        print_execution_plan || true
+        print_summary
+        exit 0
+    fi
+
     if [[ "$PRINT_MODE" == "true" ]]; then
         echo "The following tools will be installed from upstream:"
         echo ""
@@ -3767,8 +4316,6 @@ main() {
         echo "  - Bun: https://bun.sh"
         echo "  - Rust: https://rustup.rs"
         echo "  - uv: https://astral.sh/uv"
-        echo "  - Atuin: https://atuin.sh"
-        echo "  - Zoxide: https://github.com/ajeetdsouza/zoxide"
         echo "  - Claude Code (native): https://claude.ai/install.sh"
         echo "  - NTM: https://github.com/Dicklesworthstone/ntm"
         echo "  - MCP Agent Mail: https://github.com/Dicklesworthstone/mcp_agent_mail"
@@ -3856,7 +4403,8 @@ main() {
             local phase_display="$2"
             local phase_func="$3"
             local phase_num="${phase_display%%/*}"
-            local phase_name="${phase_display#*/[0-9] }"  # Extract name after "X/Y "
+            # Extract name after the leading "X/Y " prefix (robust to multi-digit totals).
+            local phase_name="${phase_display#* }"
 
             # Show progress header before running phase
             if type -t show_progress_header &>/dev/null; then

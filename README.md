@@ -232,7 +232,7 @@ flowchart TB
 ┌───────────────────────────────────────────────────────────────────────────┐
 │                            INSTALLER                                       │
 │  install.sh + scripts/lib/*.sh + checksums.yaml (SHA256 verification)     │
-│  (scripts/generated/* are not invoked by install.sh yet)                   │
+│  (scripts/generated/* are sourced; execution is feature-flagged)            │
 └───────────────────────────────────────────────────────────────────────────┘
                     │
                     ▼
@@ -265,7 +265,7 @@ flowchart TB
 | **Website** | `apps/web/` | Next.js 16 + Tailwind 4 | Step-by-step wizard for beginners |
 | **Installer** | `install.sh` | Bash | One-liner bootstrap script |
 | **Lib Scripts** | `scripts/lib/` | Bash | Modular installer functions |
-| **Generated Scripts** | `scripts/generated/` | Bash | Auto-generated category installers (not wired into `install.sh` yet) |
+| **Generated Scripts** | `scripts/generated/` | Bash | Auto-generated category installers (sourced by `install.sh`; execution is feature-flagged) |
 | **Configs** | `acfs/` | Shell/Tmux configs | Files deployed to `~/.acfs/` |
 | **Onboarding** | `acfs/onboard/` | Bash + Markdown | Interactive tutorial system |
 | **Checksums** | `checksums.yaml` | YAML | SHA256 hashes for upstream installers |
@@ -331,7 +331,7 @@ The TypeScript generator (`packages/manifest/src/generate.ts`) reads the manifes
    - Runs them in dependency order
    - Single entry point for running the generated installers
 
-> Note: The production one-liner installer (`install.sh`) does not invoke `scripts/generated/*` yet.
+> Note: The production one-liner installer (`install.sh`) defaults to the legacy implementations; generated installers are sourced and can be enabled per-category via feature flags during migration.
 
 To regenerate after manifest changes:
 
@@ -593,7 +593,8 @@ acfs-update --yes --quiet    # Automated/CI mode with minimal output
 | **Runtime** | Go | `apt upgrade` (if apt-managed) |
 | **Agents** | Claude Code | `claude update` |
 | **Agents** | Codex, Gemini | `bun install -g @latest` |
-| **Cloud** | Wrangler, Supabase, Vercel | `bun install -g @latest` |
+| **Cloud** | Wrangler, Vercel | `bun install -g @latest` |
+| **Cloud** | Supabase | GitHub release tarball (sha256 checksums) |
 | **Stack** | ntm, slb, ubs, etc. | Re-run upstream installers |
 
 ### Options
@@ -763,7 +764,7 @@ alias gmi='gemini --yolo'
 
 **Installation & Updates:**
 Claude Code should be installed and updated using its native mechanisms:
-- **Install:** ACFS uses `bun install -g @anthropic-ai/claude-code` (official package)
+- **Install:** ACFS uses the official native installer (`claude.ai/install.sh`), checksum-verified via `checksums.yaml` (installs to `~/.local/bin/claude`)
 - **Update:** Use `claude update` (built-in) or run `acfs update --agents-only`
 
 This ensures proper authentication handling and avoids issues with alternative package manager builds. For Codex and Gemini, ACFS uses standard bun global package updates.
@@ -1087,7 +1088,7 @@ Component update logic with version tracking and logging:
 update_apt()       # apt update/upgrade with lock detection
 update_bun()       # bun upgrade with version tracking
 update_agents()    # Claude, Codex, Gemini (version before/after)
-update_cloud()     # Wrangler, Supabase, Vercel
+update_cloud()     # Wrangler, Supabase, Vercel (Supabase uses verified release tarball)
 update_rust()      # rustup update stable
 update_uv()        # uv self update
 update_go()        # Go toolchain update
@@ -1805,7 +1806,7 @@ Vibe:        Describe → Generate → Verify → Ship → Iterate
 
 The magic of vibe coding happens on **ephemeral VPS instances**. When your environment is disposable:
 - You can experiment without fear
-- Catastrophic failures are just `rm -rf / && create new VPS`
+- Catastrophic failures are just "rebuild the VPS"
 - Agents can have dangerous permissions (they can't break what's disposable)
 - You focus on output, not on protecting your setup
 
@@ -2233,11 +2234,14 @@ When all else fails, the nuclear option:
 ```bash
 # Save any important files first!
 
-# Remove ACFS state
-rm -rf ~/.acfs
+# Backup ACFS state (recommended)
+ts="$(date +%Y%m%d_%H%M%S)"
+[ -d ~/.acfs ] && mv ~/.acfs ~/.acfs.backup."$ts"
 
-# Remove installed configs
-rm -f ~/.zshrc ~/.tmux.conf ~/.p10k.zsh
+# Backup installed configs (optional)
+for f in ~/.zshrc ~/.tmux.conf ~/.p10k.zsh; do
+  [ -f "$f" ] && mv "$f" "$f".backup."$ts"
+done
 
 # Re-run installer fresh
 curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/install.sh?$(date +%s)" | bash -s -- --yes --mode vibe --force-reinstall

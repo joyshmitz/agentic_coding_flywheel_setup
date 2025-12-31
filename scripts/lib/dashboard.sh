@@ -19,7 +19,7 @@ dashboard_usage() {
     echo ""
     echo "Commands:"
     echo "  generate [--force]   Generate ~/.acfs/dashboard/index.html"
-    echo "  serve [--port PORT]  Start a temporary HTTP server for the dashboard"
+    echo "  serve [--port PORT] [--host HOST] [--public]  Start a temporary HTTP server for the dashboard"
     echo "  help                 Show this help"
 }
 
@@ -35,10 +35,6 @@ find_info_script() {
     # Dev / local checkout fallbacks
     if [[ -f "$script_dir/info.sh" ]]; then
         echo "$script_dir/info.sh"
-        return 0
-    fi
-    if [[ -f "$script_dir/../scripts/lib/info.sh" ]]; then
-        echo "$script_dir/../scripts/lib/info.sh"
         return 0
     fi
 
@@ -104,6 +100,7 @@ dashboard_generate() {
 
 dashboard_serve() {
     local port=8080
+    local host="127.0.0.1"
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -116,11 +113,28 @@ dashboard_serve() {
                     return 1
                 fi
                 ;;
+            --host)
+                if [[ -n "${2:-}" ]]; then
+                    host="$2"
+                    shift
+                else
+                    echo "Error: --host requires a host/address (e.g. 127.0.0.1 or 0.0.0.0)" >&2
+                    return 1
+                fi
+                ;;
+            --public)
+                host="0.0.0.0"
+                ;;
             --help|-h)
-                echo "Usage: acfs dashboard serve [--port PORT]"
+                echo "Usage: acfs dashboard serve [--port PORT] [--host HOST] [--public]"
                 echo ""
                 echo "Starts a temporary HTTP server to view the dashboard."
                 echo "Default port: 8080"
+                echo "Default host: 127.0.0.1 (local only)"
+                echo ""
+                echo "Notes:"
+                echo "  - Local-only is safer on VPS (prevents accidental internet exposure)."
+                echo "  - Use --public to bind 0.0.0.0 (all interfaces)."
                 return 0
                 ;;
             *)
@@ -155,6 +169,15 @@ dashboard_serve() {
     # Fallback if hostname -I returned empty
     [[ -z "$ip" ]] && ip="<your-server-ip>"
 
+    # Prefer the invoking user for SSH tunnel instructions (handles `sudo acfs ...`).
+    # Avoid hard-coding "ubuntu" so TARGET_USER installs aren't confusing.
+    local ssh_user=""
+    if [[ -n "${SUDO_USER:-}" ]] && [[ "${SUDO_USER}" != "root" ]]; then
+        ssh_user="$SUDO_USER"
+    else
+        ssh_user="$(whoami 2>/dev/null || echo "ubuntu")"
+    fi
+
     # Check if port is in use
     if command -v lsof &>/dev/null && lsof -i :"$port" &>/dev/null; then
         echo "Warning: Port $port appears to be in use." >&2
@@ -163,7 +186,27 @@ dashboard_serve() {
     fi
 
     # Show banner
-    cat <<EOF
+    if [[ "$host" == "127.0.0.1" || "$host" == "localhost" ]]; then
+        cat <<EOF
+
+╭─────────────────────────────────────────────────────────────╮
+│  📊 ACFS Dashboard Server                                   │
+├─────────────────────────────────────────────────────────────┤
+│  Local URL:   http://localhost:${port} (server-side only)      │
+│                                                             │
+│  Press Ctrl+C to stop                                       │
+│                                                             │
+│  ⚠️  This is a temporary server.                            │
+│  It stops when you close this terminal.                     │
+│                                                             │
+│  To view from your laptop (recommended):                     │
+│    ssh -L ${port}:localhost:${port} ${ssh_user}@${ip}                │
+│    then open: http://localhost:${port}                         │
+╰─────────────────────────────────────────────────────────────╯
+
+EOF
+    else
+        cat <<EOF
 
 ╭─────────────────────────────────────────────────────────────╮
 │  📊 ACFS Dashboard Server                                   │
@@ -178,6 +221,7 @@ dashboard_serve() {
 ╰─────────────────────────────────────────────────────────────╯
 
 EOF
+    fi
 
     # Start server
     cd "$dashboard_dir" || {
@@ -186,9 +230,9 @@ EOF
     }
 
     if command -v python3 &>/dev/null; then
-        python3 -m http.server "$port"
+        python3 -m http.server --bind "$host" "$port"
     elif command -v python &>/dev/null; then
-        python -m http.server "$port"
+        python -m http.server --bind "$host" "$port"
     else
         echo "Error: Python not found. Cannot start HTTP server." >&2
         echo "Install Python or open the dashboard directly: $html_file" >&2

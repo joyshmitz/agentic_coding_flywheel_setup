@@ -138,7 +138,7 @@ is_critical_tool() {
 
     # Normalize tool name (lowercase, strip common suffixes)
     # Using tr for portability (works in bash 3.x and zsh)
-    tool="$(echo "$tool" | tr '[:upper:]' '[:lower:]')"
+    tool="$(printf '%s' "$tool" | tr '[:upper:]' '[:lower:]')"
     tool="${tool%-cli}"  # strip -cli suffix
     tool="${tool%_cli}"  # strip _cli suffix
 
@@ -166,7 +166,7 @@ is_recommended_tool() {
 
     # Normalize tool name (lowercase, strip common suffixes)
     # Using tr for portability (works in bash 3.x and zsh)
-    tool="$(echo "$tool" | tr '[:upper:]' '[:lower:]')"
+    tool="$(printf '%s' "$tool" | tr '[:upper:]' '[:lower:]')"
     tool="${tool%-cli}"
     tool="${tool%_cli}"
 
@@ -424,14 +424,27 @@ report_skipped_tools() {
     echo "" >&2
     echo "------------------------------------------------------------" >&2
     echo "" >&2
-    echo "You can install these tools manually:" >&2
+    echo "You can install these tools manually (bypasses checksum verification):" >&2
+    echo "  - Prefer: update checksums and re-run ACFS where possible." >&2
+    echo "  - If you must install manually: download, review, then run." >&2
     echo "" >&2
+
+    local curl_cmd="curl -fsSL"
+    if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
+        curl_cmd="curl --proto '=https' --proto-redir '=https' -fsSL"
+    fi
 
     for tool in "${SKIPPED_TOOLS[@]}"; do
         url="$(get_skip_url "$tool")"
         if [[ -n "$url" ]]; then
-            echo "  # Install $tool" >&2
-            echo "  curl -fsSL \"$url\" | bash" >&2
+            local safe_tool tmp
+            safe_tool="${tool//[^a-zA-Z0-9._-]/_}"
+            tmp="/tmp/${safe_tool}.install.sh"
+
+            echo "  # Install $tool (manual; review first)" >&2
+            echo "  ${curl_cmd} \"$url\" -o \"$tmp\"" >&2
+            echo "  sed -n '1,120p' \"$tmp\"" >&2
+            echo "  bash \"$tmp\"" >&2
             echo "" >&2
         else
             echo "  # $tool - check documentation for install command" >&2

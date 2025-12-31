@@ -133,6 +133,15 @@ export function NtmCoreLesson() {
             description="This sends the same prompt to ALL agents in the session!"
           />
 
+          <TipBox variant="warning">
+            If <Highlight>ntm send</Highlight> fails with a CASS error (for example:
+            “unrecognized subcommand &apos;robot&apos;”), bypass duplicate-checking:
+            <div className="mt-4 space-y-3">
+              <CodeBlock code='ntm send myproject --no-cass-check "Analyze this codebase and summarize what it does"' />
+              <CodeBlock code='ntm --robot-send myproject --msg "Analyze this codebase and summarize what it does" --all' />
+            </div>
+          </TipBox>
+
           <CommandSection
             title="Send to Specific Agent Type"
             icon={<Bot className="h-4 w-4" />}
