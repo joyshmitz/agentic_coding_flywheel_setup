@@ -21,6 +21,14 @@ export { ubsLessonMessages } from './ubs-messages';
 export { githubCliLessonMessages } from './github-cli-messages';
 export { gitBasicsLessonMessages } from './git-basics-messages';
 
+// Wave 4 lessons (advanced)
+export { beadsLessonMessages } from './beads.en';
+export { beadsLessonMessagesUk } from './beads.uk';
+export { keepingUpdatedLessonMessages } from './keeping-updated.en';
+export { keepingUpdatedLessonMessagesUk } from './keeping-updated.uk';
+export { agentMailLessonMessages } from './agent-mail.en';
+export { agentMailLessonMessagesUk } from './agent-mail.uk';
+
 // Wave 5 lessons (deep dive)
 export { cmLessonMessages } from './cm';
 export { cmLessonMessagesUk } from './cm.uk';

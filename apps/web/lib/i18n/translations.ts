@@ -27,6 +27,10 @@ import { beadsLessonMessagesUk } from "../lessons/beads.uk";
 import { keepingUpdatedLessonMessages } from "../lessons/keeping-updated.en";
 import { keepingUpdatedLessonMessagesUk } from "../lessons/keeping-updated.uk";
 
+// Agent Mail Lesson
+import { agentMailLessonMessages } from "../lessons/agent-mail.en";
+import { agentMailLessonMessagesUk } from "../lessons/agent-mail.uk";
+
 // Core Lesson Messages
 import { welcomeLessonMessages } from "../lessons/welcome-messages";
 import { welcomeLessonMessagesUk } from "../lessons/welcome-messages.uk";
@@ -350,6 +354,13 @@ export function getBeadsLessonMessages(locale: Locale) {
  */
 export function getKeepingUpdatedLessonMessages(locale: Locale) {
   return locale === "uk" ? keepingUpdatedLessonMessagesUk : keepingUpdatedLessonMessages;
+}
+
+/**
+ * Get agent mail lesson messages for the specified locale
+ */
+export function getAgentMailLessonMessages(locale: Locale) {
+  return locale === "uk" ? agentMailLessonMessagesUk : agentMailLessonMessages;
 }
 
 /**

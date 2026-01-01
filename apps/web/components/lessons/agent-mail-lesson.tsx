@@ -26,55 +26,56 @@ import {
   FeatureCard,
   FeatureGrid,
 } from "./lesson-components";
+import { useLocale } from "@/lib/i18n";
+import { getAgentMailLessonMessages } from "@/lib/i18n/translations";
 
 export function AgentMailLesson() {
+  const { locale } = useLocale();
+  const messages = getAgentMailLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Coordinate multiple agents without conflicts using Agent Mail.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* What Is Agent Mail */}
       <Section
-        title="What Is Agent Mail?"
+        title={messages.whatIsAgentMail.title}
         icon={<Mail className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>MCP Agent Mail</Highlight> is a coordination system that
-          lets multiple AI agents work on the same project without stepping on
-          each other&apos;s toes.
+          <Highlight>MCP Agent Mail</Highlight> {messages.whatIsAgentMail.mcpDescription}
         </Paragraph>
         <Paragraph>
-          Think of it as email + file locking for agents. Agents can send
-          messages, claim files they&apos;re working on, and stay in sync—all
-          persisted in git.
+          {messages.whatIsAgentMail.thinkOfIt}
         </Paragraph>
 
         <div className="mt-8">
           <FeatureGrid>
             <FeatureCard
               icon={<MessageSquare className="h-5 w-5" />}
-              title="Messaging"
-              description="Agents send and receive messages with context"
+              title={messages.whatIsAgentMail.features.messaging.title}
+              description={messages.whatIsAgentMail.features.messaging.description}
               gradient="from-primary/20 to-violet-500/20"
             />
             <FeatureCard
               icon={<Lock className="h-5 w-5" />}
-              title="File Reservations"
-              description="Advisory locks prevent edit conflicts"
+              title={messages.whatIsAgentMail.features.fileReservations.title}
+              description={messages.whatIsAgentMail.features.fileReservations.description}
               gradient="from-amber-500/20 to-orange-500/20"
             />
             <FeatureCard
               icon={<Search className="h-5 w-5" />}
-              title="Searchable Threads"
-              description="Find past decisions and discussions"
+              title={messages.whatIsAgentMail.features.searchableThreads.title}
+              description={messages.whatIsAgentMail.features.searchableThreads.description}
               gradient="from-emerald-500/20 to-teal-500/20"
             />
             <FeatureCard
               icon={<FileText className="h-5 w-5" />}
-              title="Git Persistence"
-              description="All artifacts are human-auditable in git"
+              title={messages.whatIsAgentMail.features.gitPersistence.title}
+              description={messages.whatIsAgentMail.features.gitPersistence.description}
               gradient="from-blue-500/20 to-indigo-500/20"
             />
           </FeatureGrid>
@@ -85,34 +86,27 @@ export function AgentMailLesson() {
 
       {/* Why Coordination Matters */}
       <Section
-        title="Why Coordination Matters"
+        title={messages.whyCoordination.title}
         icon={<Users className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          Without coordination, multiple agents working on the same codebase
-          can:
+          {messages.whyCoordination.intro}
         </Paragraph>
 
         <div className="mt-6 space-y-4">
-          <ProblemCard
-            problem="Overwrite each other's changes"
-            solution="File reservations prevent conflicts"
-          />
-          <ProblemCard
-            problem="Duplicate work on the same task"
-            solution="Message threads track who's doing what"
-          />
-          <ProblemCard
-            problem="Make conflicting architectural decisions"
-            solution="Shared context via searchable threads"
-          />
+          {messages.whyCoordination.problems.map((item, index) => (
+            <ProblemCard
+              key={index}
+              problem={item.problem}
+              solution={item.solution}
+            />
+          ))}
         </div>
 
         <div className="mt-6">
           <TipBox variant="info">
-            Agent Mail is available as an MCP server. Your agents can use it
-            automatically when configured!
+            {messages.whyCoordination.tipBox.content}
           </TipBox>
         </div>
       </Section>
@@ -121,7 +115,7 @@ export function AgentMailLesson() {
 
       {/* Core Concepts */}
       <Section
-        title="Core Concepts"
+        title={messages.coreConcepts.title}
         icon={<Workflow className="h-5 w-5" />}
         delay={0.2}
       >
@@ -129,20 +123,11 @@ export function AgentMailLesson() {
           {/* Project & Agents */}
           <ConceptCard
             icon={<Bot className="h-5 w-5" />}
-            title="Projects & Agents"
-            description="Each project has registered agents with unique names"
+            title={messages.coreConcepts.projectsAndAgents.title}
+            description={messages.coreConcepts.projectsAndAgents.description}
           >
             <CodeBlock
-              code={`# Agent names are adjective+noun combinations
-# Examples: "BlueLake", "GreenCastle", "RedStone"
-
-# Register an agent
-ensure_project(human_key="/data/projects/my-app")
-register_agent(
-  project_key="/data/projects/my-app",
-  program="claude-code",
-  model="opus-4.5"
-)`}
+              code={messages.coreConcepts.projectsAndAgents.codeComment}
               language="python"
             />
           </ConceptCard>
@@ -150,17 +135,11 @@ register_agent(
           {/* Messages */}
           <ConceptCard
             icon={<Send className="h-5 w-5" />}
-            title="Sending Messages"
-            description="Agents communicate via structured messages"
+            title={messages.coreConcepts.sendingMessages.title}
+            description={messages.coreConcepts.sendingMessages.description}
           >
             <CodeBlock
-              code={`send_message(
-  project_key="/data/projects/my-app",
-  sender_name="BlueLake",
-  to=["GreenCastle"],
-  subject="API design question",
-  body_md="Should we use REST or GraphQL for the new endpoint?"
-)`}
+              code={messages.coreConcepts.sendingMessages.code}
               language="python"
             />
           </ConceptCard>
@@ -168,24 +147,11 @@ register_agent(
           {/* File Reservations */}
           <ConceptCard
             icon={<Lock className="h-5 w-5" />}
-            title="File Reservations"
-            description="Claim files before editing to prevent conflicts"
+            title={messages.coreConcepts.fileReservations.title}
+            description={messages.coreConcepts.fileReservations.description}
           >
             <CodeBlock
-              code={`# Reserve files before editing
-file_reservation_paths(
-  project_key="/data/projects/my-app",
-  agent_name="BlueLake",
-  paths=["src/api/*.py", "src/routes/*.py"],
-  ttl_seconds=3600,  # 1 hour lease
-  exclusive=true     # No one else can edit
-)
-
-# Release when done
-release_file_reservations(
-  project_key="/data/projects/my-app",
-  agent_name="BlueLake"
-)`}
+              code={messages.coreConcepts.fileReservations.code}
               language="python"
             />
           </ConceptCard>
@@ -193,24 +159,11 @@ release_file_reservations(
           {/* Inbox */}
           <ConceptCard
             icon={<Inbox className="h-5 w-5" />}
-            title="Checking Your Inbox"
-            description="Fetch messages addressed to you"
+            title={messages.coreConcepts.checkingInbox.title}
+            description={messages.coreConcepts.checkingInbox.description}
           >
             <CodeBlock
-              code={`# Check for new messages
-fetch_inbox(
-  project_key="/data/projects/my-app",
-  agent_name="BlueLake",
-  since_ts="2025-01-15T10:00:00Z",
-  include_bodies=true
-)
-
-# Acknowledge important messages
-acknowledge_message(
-  project_key="/data/projects/my-app",
-  agent_name="BlueLake",
-  message_id=1234
-)`}
+              code={messages.coreConcepts.checkingInbox.code}
               language="python"
             />
           </ConceptCard>
@@ -221,41 +174,27 @@ acknowledge_message(
 
       {/* Common Patterns */}
       <Section
-        title="Common Patterns"
+        title={messages.commonPatterns.title}
         icon={<Workflow className="h-5 w-5" />}
         delay={0.25}
       >
         <div className="space-y-6">
           <PatternCard
-            title="Starting a Session"
-            description="Use the macro for quick setup"
-            code={`macro_start_session(
-  human_key="/data/projects/my-app",
-  program="claude-code",
-  model="opus-4.5",
-  task_description="Implementing auth"
-)`}
+            title={messages.commonPatterns.startingSession.title}
+            description={messages.commonPatterns.startingSession.description}
+            code={messages.commonPatterns.startingSession.code}
           />
 
           <PatternCard
-            title="Replying to a Thread"
-            description="Keep discussions organized"
-            code={`reply_message(
-  project_key="/data/projects/my-app",
-  message_id=1234,
-  sender_name="GreenCastle",
-  body_md="I agree, let's use GraphQL. Starting work now."
-)`}
+            title={messages.commonPatterns.replyingToThread.title}
+            description={messages.commonPatterns.replyingToThread.description}
+            code={messages.commonPatterns.replyingToThread.code}
           />
 
           <PatternCard
-            title="Searching Past Discussions"
-            description="Find relevant context"
-            code={`search_messages(
-  project_key="/data/projects/my-app",
-  query="authentication AND JWT",
-  limit=10
-)`}
+            title={messages.commonPatterns.searchingDiscussions.title}
+            description={messages.commonPatterns.searchingDiscussions.description}
+            code={messages.commonPatterns.searchingDiscussions.code}
           />
         </div>
       </Section>
@@ -264,49 +203,34 @@ acknowledge_message(
 
       {/* The Coordination Flow */}
       <Section
-        title="The Coordination Flow"
+        title={messages.coordinationFlow.title}
         icon={<Workflow className="h-5 w-5" />}
         delay={0.3}
       >
-        <CoordinationFlow />
+        <CoordinationFlow messages={messages} />
       </Section>
 
       <Divider />
 
       {/* Best Practices */}
       <Section
-        title="Best Practices"
+        title={messages.bestPractices.title}
         icon={<CheckCircle className="h-5 w-5" />}
         delay={0.35}
       >
         <div className="space-y-4">
-          <BestPractice
-            title="Reserve before editing"
-            description="Always claim files before making changes to prevent conflicts"
-          />
-          <BestPractice
-            title="Keep subjects specific"
-            description="Use descriptive subjects (≤80 chars) for easy searching"
-          />
-          <BestPractice
-            title="Use thread_id consistently"
-            description="Keep related discussions in the same thread"
-          />
-          <BestPractice
-            title="Set realistic TTLs"
-            description="Don't hold file reservations longer than needed"
-          />
-          <BestPractice
-            title="Acknowledge when required"
-            description="Use acknowledge_message for ack_required messages"
-          />
+          {messages.bestPractices.practices.map((practice, index) => (
+            <BestPractice
+              key={index}
+              title={practice.title}
+              description={practice.description}
+            />
+          ))}
         </div>
 
         <div className="mt-6">
           <TipBox variant="warning">
-            If you see <code>FILE_RESERVATION_CONFLICT</code>, another agent
-            has the file. Wait for expiry, adjust your patterns, or use
-            non-exclusive reservations.
+            {messages.bestPractices.warningTip.content}
           </TipBox>
         </div>
       </Section>
@@ -315,25 +239,22 @@ acknowledge_message(
 
       {/* Quick Reference */}
       <Section
-        title="Quick Reference"
+        title={messages.quickReference.title}
         icon={<FileText className="h-5 w-5" />}
         delay={0.4}
       >
         <div className="mt-6 rounded-2xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-xl overflow-hidden">
           <div className="p-5 border-b border-white/[0.06] bg-gradient-to-r from-primary/10 to-violet-500/10">
-            <span className="font-bold text-white text-lg">Key Functions</span>
+            <span className="font-bold text-white text-lg">{messages.quickReference.keyFunctionsTitle}</span>
           </div>
           <div className="divide-y divide-white/[0.06]">
-            <FunctionRow name="ensure_project" purpose="Initialize a project" />
-            <FunctionRow name="register_agent" purpose="Register your identity" />
-            <FunctionRow name="send_message" purpose="Send a message" />
-            <FunctionRow name="reply_message" purpose="Reply to a thread" />
-            <FunctionRow name="fetch_inbox" purpose="Get your messages" />
-            <FunctionRow name="acknowledge_message" purpose="Confirm receipt" />
-            <FunctionRow name="file_reservation_paths" purpose="Claim files" />
-            <FunctionRow name="release_file_reservations" purpose="Release files" />
-            <FunctionRow name="search_messages" purpose="Search threads" />
-            <FunctionRow name="macro_start_session" purpose="Quick session setup" />
+            {messages.quickReference.functions.map((func, index) => (
+              <FunctionRow
+                key={index}
+                name={func.name}
+                purpose={func.purpose}
+              />
+            ))}
           </div>
         </div>
       </Section>
@@ -448,40 +369,40 @@ function PatternCard({
 // =============================================================================
 // COORDINATION FLOW
 // =============================================================================
-function CoordinationFlow() {
+function CoordinationFlow({ messages }: { messages: any }) {
   const steps = [
     {
       icon: <Bot className="h-5 w-5" />,
-      title: "Register",
-      desc: "Agent joins the project with a unique name",
+      title: messages.coordinationFlow.steps[0].title,
+      desc: messages.coordinationFlow.steps[0].description,
       color: "from-blue-500/20 to-indigo-500/20",
       borderColor: "border-blue-500/30",
     },
     {
       icon: <Lock className="h-5 w-5" />,
-      title: "Reserve",
-      desc: "Claim files before editing",
+      title: messages.coordinationFlow.steps[1].title,
+      desc: messages.coordinationFlow.steps[1].description,
       color: "from-amber-500/20 to-orange-500/20",
       borderColor: "border-amber-500/30",
     },
     {
       icon: <Send className="h-5 w-5" />,
-      title: "Communicate",
-      desc: "Send messages to coordinate",
+      title: messages.coordinationFlow.steps[2].title,
+      desc: messages.coordinationFlow.steps[2].description,
       color: "from-primary/20 to-violet-500/20",
       borderColor: "border-primary/30",
     },
     {
       icon: <Clock className="h-5 w-5" />,
-      title: "Work",
-      desc: "Make changes within your reservation",
+      title: messages.coordinationFlow.steps[3].title,
+      desc: messages.coordinationFlow.steps[3].description,
       color: "from-sky-500/20 to-cyan-500/20",
       borderColor: "border-sky-500/30",
     },
     {
       icon: <CheckCircle className="h-5 w-5" />,
-      title: "Release",
-      desc: "Free files for other agents",
+      title: messages.coordinationFlow.steps[4].title,
+      desc: messages.coordinationFlow.steps[4].description,
       color: "from-emerald-500/20 to-teal-500/20",
       borderColor: "border-emerald-500/30",
     },
