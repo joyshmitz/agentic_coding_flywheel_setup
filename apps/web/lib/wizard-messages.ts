@@ -33,6 +33,483 @@ export const commonMessages = {
   },
 };
 
+// create-vps page
+export const createVpsMessages = {
+  title: "Create your VPS instance",
+  timeEstimate: "~5 min",
+  description: "You have an account with your VPS provider. Now let's create the actual server (the VPS instance) that will run your development environment.",
+
+  checklist: {
+    title: "Setup checklist",
+    subtitle: "Check each item as you complete it to unlock the next step",
+    progress: "{done} of {total}",
+    items: {
+      ubuntu: "Selected Ubuntu 24.04+ (25.10 preferred)",
+      region: "Picked a region close to me",
+      password: "Set a root password (or received one via email)",
+      created: "Created the VPS and waited for it to start",
+      copiedIp: "Copied the IP address",
+    },
+  },
+
+  regionTip: {
+    title: "Why region matters",
+    content: "Closer servers = faster response times. When you type, commands reach your VPS faster. When AI generates code, it appears on your screen faster.",
+    regions: {
+      usa: { label: "USA:", hint: "Pick US-West (California) or US-East (Virginia)" },
+      europe: { label: "Europe:", hint: "Pick Germany, France, or Finland" },
+      asiaPacific: { label: "Asia-Pacific:", hint: "Pick Singapore, Sydney, or Tokyo" },
+      unsure: { label: "Unsure?", hint: "Any region works fine—pick one!" },
+    },
+  },
+
+  providerHelp: {
+    title: "Need help with your provider?",
+    specificSteps: "{name} specific steps",
+    contabo: {
+      steps: [
+        "Go to contabo.com/en-us/vps and select Cloud VPS 50 (64GB RAM, ~$56/month) or Cloud VPS 40 (48GB, ~$36/month)",
+        "Click \"Configure\" and select your preferred region (US recommended for best latency)",
+        "Under \"Image\", select Ubuntu 25.10 (or newest available; 24.04 LTS is fine too)",
+        "Set a root password when prompted (save it - you'll need it once)",
+        "Complete checkout (servers activate within minutes, occasionally up to 1 hour)",
+        "Go to \"Your services\" > \"VPS control\" to find your IP address",
+      ],
+      screenshotCaption: "Contabo order page — select region + Ubuntu image here.",
+    },
+    ovh: {
+      steps: [
+        "Click \"Order\" on VPS-5 (64GB RAM, ~$40/month) or VPS-4 (48GB, ~$26/month)",
+        "Under \"Image\", select Ubuntu 25.10 (or latest available)",
+        "Pick the data center/region closest to you (US-East, US-West, or EU)",
+        "Choose \"Password\" authentication (skip SSH key section for now)",
+        "Set a strong root password and save it somewhere safe",
+        "Complete the order (activation is usually instant)",
+        "Copy the IP address from your control panel",
+      ],
+      screenshotCaption: "OVH order flow — select Ubuntu + region during configuration.",
+    },
+  },
+
+  guide: {
+    ipAddress: {
+      term: "an IP Address",
+      content: "An IP address is like a phone number for computers. It's a series of numbers (like 192.168.1.100) that identifies your VPS on the internet.",
+      purpose: "You'll need this address to connect to your VPS from your computer. It's like knowing someone's phone number so you can call them.",
+    },
+    whyPassword: {
+      title: "Why password first?",
+      content: "Adding SSH keys in the provider website is confusing and easy to mess up. Instead, we connect once with a password, then the installer sets up your SSH key the right way.",
+    },
+    detailedSteps: {
+      title: "Detailed Steps for Creating Your VPS",
+      step1: { title: "Log into your VPS provider", content: "Go to the website where you created your account (OVH or Contabo) and sign in with the email and password you created earlier." },
+      step2: { title: "Find the 'Create Server' or 'Add VPS' button", ovh: "OVH: Click \"Create an instance\" or \"Order\"", contabo: "Contabo: Go to \"Your services\" → click the VPS you ordered" },
+      step3: { title: "Choose your server location", content: "Pick a data center close to you for faster speeds. The closer the server, the faster your typing appears and AI responses stream back." },
+      step4: { title: "Select Ubuntu as the operating system", content: "You'll see a list of \"images\" or \"operating systems\".", lookFor: "Look for: Ubuntu 25.10 (or newest available)", fallback: "If only Ubuntu 24.04 LTS is offered, that's fine. The installer automatically upgrades to 25.10 before ACFS installs." },
+      step5: { title: "Set a root password", skipSsh: "If asked about SSH keys, skip that section", choosePassword: "Choose \"Password\" authentication", setPassword: "Set a strong root password", saveIt: "Save this password! You'll need it once to connect", emailNote: "Some providers email you a password instead - that's fine too!" },
+      step6: { title: "Choose your plan size", specs: "12-16 vCPU, 48-64 GB RAM, 250GB+ NVMe storage, ~$40-56/month", recommendation: "64GB is strongly recommended. You're investing $400+/month in AI subscriptions, so don't bottleneck that with insufficient RAM." },
+      step7: { title: "Create and wait", content: "Click the \"Create\", \"Deploy\", or \"Order\" button.", waitTime: "Your VPS will take 1-5 minutes to start up. You'll see a status like \"Running\" or a green indicator when it's ready." },
+      step8: { title: "Find and copy the IP address", content: "Once your VPS is running, look for the IP address.", locations: ["On the main server overview page", "In a \"Network\" or \"IP Addresses\" section"], example: "It looks like: 123.45.67.89", action: "Copy this number and paste it in the box below!" },
+    },
+    ipTip: "The IP address should be 4 groups of numbers separated by periods, like 192.168.1.100. Don't include any letters or extra characters!",
+    passwordCaution: "Save your password! You'll need it once to connect for the first time. After that, the installer will set up SSH key access so you won't need the password anymore.",
+  },
+
+  ipInput: {
+    title: "Your VPS IP address",
+    subtitle: "Enter the IP address of your new VPS. You'll find this in your provider's control panel after the VPS is created.",
+    privacy: {
+      title: "Your data stays on your device",
+      content: "This IP address is stored only in your browser's local storage. It's never sent to our servers or any third party.",
+      openSource: "entire codebase is open source",
+      verifySuffix: "so you can verify this yourself.",
+    },
+    placeholder: "e.g., 192.168.1.100",
+    validation: {
+      invalid: "Please enter a valid IP address (e.g., 192.168.1.1)",
+      required: "Please enter your VPS IP address",
+      valid: "Valid IP address",
+    },
+    checklistHint: "Complete the checklist above to continue",
+  },
+
+  buttons: {
+    continue: "Continue to SSH",
+    loading: "Loading...",
+  },
+};
+
+// windows-terminal-setup page
+export const windowsTerminalSetupMessages = {
+  title: "Windows Terminal: One-Click VPS Access",
+  timeEstimate: "~3 min (optional but very helpful)",
+  description: "Set up a custom profile in Windows Terminal so you can connect to your VPS with a single click.",
+
+  whySetup: {
+    title: "Why set this up?",
+    intro: "Instead of opening PowerShell and typing your SSH command every time, you can:",
+    benefits: [
+      "Click a tab in Windows Terminal to instantly connect to your VPS",
+      "Give it a custom name like \"My VPS\" or \"ACFS Server\"",
+      "Optionally set it as your default profile",
+    ],
+  },
+
+  steps: {
+    title: "Step-by-Step Setup",
+    step1: {
+      title: "Open Windows Terminal Settings",
+      content: "Open Windows Terminal, then press Ctrl + , (comma) to open Settings.",
+      alt: "Or click the dropdown arrow (▼) next to the tab bar and select \"Settings\".",
+    },
+    step2: {
+      title: "Add a New Profile",
+      content: "In the left sidebar, scroll down and click",
+      addProfile: "Add a new profile",
+      then: "Then click \"New empty profile\".",
+    },
+    step3: {
+      title: "Configure the Profile",
+      name: {
+        label: "Name:",
+        value: "My VPS",
+        hint: "(or whatever name you prefer, like \"ACFS Server\" or \"Ubuntu VPS\")",
+      },
+      commandLine: {
+        label: "Command line:",
+        hint: "This is your personalized SSH command with your VPS IP ({ip}).",
+      },
+      startingDir: {
+        label: "Starting directory (optional):",
+      },
+      icon: {
+        label: "Icon (optional):",
+        hint: "You can pick any icon. The \"penguin\" emoji (🐧) or a cloud (☁️) work nicely for a Linux server.",
+      },
+    },
+    step4: {
+      title: "Save and Test",
+      save: "Click Save at the bottom of the page.",
+      test: "Now click the dropdown arrow (▼) next to your tabs — you should see your new \"My VPS\" profile! Click it to connect.",
+    },
+  },
+
+  preview: {
+    title: "When you click your new profile:",
+    connecting: "Connecting to ubuntu@{ip}...",
+    welcome: "Welcome to Ubuntu 25.10",
+    prompt: "ubuntu@vps:~$",
+  },
+
+  makeDefault: {
+    title: "Optional: Make it your default profile",
+    intro: "If you want Windows Terminal to open directly to your VPS:",
+    steps: [
+      "Go to Settings → Startup",
+      "Under \"Default profile\", select your new \"My VPS\" profile",
+      "Click Save",
+    ],
+    result: "Now every time you open Windows Terminal, it will connect to your VPS automatically!",
+  },
+
+  guide: {
+    whatIs: {
+      term: "What is Windows Terminal?",
+      content: "Windows Terminal is Microsoft's modern terminal app. It's better than the old Command Prompt because it supports tabs, colors, and customization.",
+      getIt: "If you don't have it installed, you can get it free from the Microsoft Store.",
+    },
+    troubleshooting: {
+      title: "Troubleshooting",
+      permissionDenied: {
+        title: "\"Permission denied\" error",
+        content: "Make sure your SSH key file exists at %USERPROFILE%\\.ssh\\acfs_ed25519. If you used a different key name, update the command line accordingly.",
+      },
+      connectionRefused: {
+        title: "\"Connection refused\" error",
+        content: "Double-check that your VPS IP ({ip}) is correct and the server is running.",
+      },
+      hostKeyFailed: {
+        title: "\"Host key verification failed\"",
+        content: "This can happen if you rebuilt your VPS. You may need to remove the old key from %USERPROFILE%\\.ssh\\known_hosts.",
+      },
+    },
+    tip: "You can create multiple profiles for different servers! Just repeat these steps with different names and IP addresses.",
+  },
+
+  buttons: {
+    back: "Back to previous page",
+    copy: "Copy",
+    copied: "Copied!",
+    save: "Save",
+  },
+};
+
+// install-terminal page
+export const installTerminalMessages = {
+  title: "Install a terminal you'll love",
+  timeEstimate: "~2 min",
+  description: "A good terminal makes everything easier.",
+
+  mac: {
+    intro: "Install **Ghostty** or **WezTerm**. Either is a great choice. Open it once after installing to make sure it works.",
+    terminals: {
+      ghostty: {
+        name: "Ghostty",
+        description: "Fast, native terminal",
+      },
+      wezterm: {
+        name: "WezTerm",
+        description: "GPU-accelerated terminal",
+      },
+    },
+    sshReady: {
+      title: "SSH is already installed",
+      content: "macOS includes SSH by default, so you're ready to connect to your VPS.",
+    },
+    guide: {
+      terminal: {
+        term: "a Terminal",
+        content: "A terminal is a program that lets you type commands to control your computer. Instead of clicking buttons and icons, you type text commands. It's like having a conversation with your computer!",
+        analogy: "Think of it like texting your computer instead of tapping on apps. You type a command, press Enter, and the computer does what you asked.",
+        purpose: "We'll be using the terminal to connect to your remote server (VPS) and run programs on it.",
+      },
+      quickDownload: {
+        title: "Quick Download (Click to Start)",
+        intro: "Click one of these buttons to immediately download the installer. We recommend **Ghostty**; it's fast and simple.",
+        ghostty: {
+          label: "Download Ghostty",
+          sublabel: "Recommended • Fast & Simple",
+        },
+        wezterm: {
+          label: "Download WezTerm",
+          sublabel: "Alternative • More Features",
+        },
+      },
+      stepByStep: {
+        title: "Step-by-Step Installation",
+        step1: {
+          title: "Find the downloaded file",
+          content: "Look at the bottom of your web browser. You should see \"Ghostty.dmg\" or \"WezTerm.dmg\". Click on it to open it.",
+          fallback: "If you don't see it, open Finder, then click \"Downloads\" in the left sidebar. Double-click the .dmg file.",
+        },
+        step2: {
+          title: "Install the app",
+          content: "A new window will open showing the app icon and an \"Applications\" folder. **Drag the app icon onto the Applications folder.**",
+          wait: "This copies the app to your computer. Wait for the copy to finish (you'll see a progress bar).",
+        },
+        step3: {
+          title: "Open the app",
+          spotlight: "Press ⌘ + Space to open Spotlight (the search)",
+          type: "Type \"Ghostty\" or \"WezTerm\"",
+          enter: "Press Enter to open it",
+        },
+        step4: {
+          title: "Allow the app to run (if asked)",
+          intro: "Mac might say the app is from an \"unidentified developer\". This is normal for apps downloaded outside the App Store.",
+          ifHappens: "If this happens:",
+          steps: [
+            "Click \"Cancel\" on the popup",
+            "Open **System Settings** (click the Apple menu → System Settings)",
+            "Click \"Privacy & Security\"",
+            "Scroll down and click \"Open Anyway\" next to the app name",
+          ],
+        },
+      },
+      tip: "You'll know it worked when you see a window with a blinking cursor and some text (usually your username and a $ symbol). That's your terminal! You can close it for now; we'll use it in the next steps.",
+      caution: "If you see an error or the app won't open, try the other terminal option (if you downloaded Ghostty, try WezTerm instead). Both work great!",
+    },
+  },
+
+  windows: {
+    intro: "Install **Windows Terminal** from the Microsoft Store. Open it once after installing.",
+    terminal: {
+      name: "Windows Terminal",
+      description: "Microsoft Store (free)",
+    },
+    verifySsh: {
+      title: "Verify SSH is available",
+      content: "Open Windows Terminal and run this command. You should see a version number.",
+      commandDesc: "Check SSH version",
+    },
+    guide: {
+      terminal: {
+        term: "a Terminal",
+        content: "A terminal is a program that lets you type commands to control your computer. Instead of clicking buttons and icons, you type text commands. It's like having a conversation with your computer!",
+        analogy: "Think of it like texting your computer instead of tapping on apps. You type a command, press Enter, and the computer does what you asked.",
+        windowsNote: "Windows Terminal is Microsoft's modern terminal app. It's free and works great for what we need.",
+      },
+      stepByStep: {
+        title: "Step-by-Step Installation",
+        step1: {
+          title: "Open the Microsoft Store",
+          steps: [
+            "Click the **Start button** (Windows icon in the bottom-left corner, or press the Windows key on your keyboard)",
+            "Type **\"Microsoft Store\"**",
+            "Click on the Microsoft Store app to open it",
+          ],
+        },
+        step2: {
+          title: "Search for Windows Terminal",
+          steps: [
+            "In the Microsoft Store, click the **Search box** at the top",
+            "Type **\"Windows Terminal\"**",
+            "Press Enter",
+            "Click on **\"Windows Terminal\"** by Microsoft Corporation",
+          ],
+        },
+        step3: {
+          title: "Install the app",
+          steps: [
+            "Click the **blue \"Get\" or \"Install\" button**",
+            "Wait for it to download and install (this takes 1-2 minutes)",
+            "When done, the button will change to \"Open\"",
+          ],
+        },
+        step4: {
+          title: "Open Windows Terminal",
+          steps: [
+            "Click the **\"Open\" button** in the Microsoft Store, OR",
+            "Click Start, type \"Terminal\", and click on Windows Terminal",
+          ],
+        },
+      },
+      checkSsh: {
+        title: "Check that SSH works",
+        intro: "Windows 10 and 11 come with SSH already installed. Let's verify it works:",
+        step1: {
+          title: "Type the command",
+          content: "In the Windows Terminal window, type exactly:",
+          note: "That's \"ssh\" (lowercase), a space, a dash, and a capital \"V\"",
+        },
+        step2: {
+          title: "Press Enter",
+          content: "Press the Enter key on your keyboard.",
+        },
+        step3: {
+          title: "Check the result",
+          intro: "You should see something like:",
+          example: "OpenSSH_for_Windows_8.6p1, LibreSSL 3.4.3",
+          note: "The exact numbers don't matter; as long as you see \"OpenSSH\", you're good!",
+        },
+      },
+      tip: "If SSH isn't installed, you may need to enable it. Go to Settings → Apps → Optional Features → Add a feature → search for \"OpenSSH Client\" and install it. Then try the ssh -V command again.",
+      caution: "Make sure you're typing commands in the Windows Terminal window, not in the search bar or a web browser. The terminal has a black background with white or colored text.",
+    },
+  },
+
+  terminalBasics: {
+    title: "Try Your First Commands",
+    intro: "Before we continue, let's make sure you can use the terminal. This takes 2 minutes and will make everything easier!",
+    prompt: {
+      title: "1. Understanding the Prompt",
+      content: "When you open your terminal, you'll see a blinking cursor after some text. That text is called the **prompt**. It tells you the terminal is ready for your command.",
+      examples: "Common prompts look like:",
+      meaning: "The **$**, **%**, or **>** symbol means \"type here\". You type after it, then press Enter.",
+    },
+    copyPaste: {
+      title: "2. Copy & Paste in Terminal",
+      intro: "Copying and pasting in terminals works a bit differently than in regular apps.",
+      mac: {
+        title: "Mac Terminal Copy/Paste",
+        copy: "**Copy from wizard:** Click the copy button on any command (or use ⌘+C)",
+        paste: "**Paste into terminal:** Press ⌘ + V",
+        alt: "**Alternative:** Right-click → Paste",
+      },
+      windows: {
+        title: "Windows Terminal Copy/Paste",
+        copy: "**Copy from wizard:** Click the copy button on any command (or Ctrl+C)",
+        paste: "**Paste into terminal:** **Right-click** anywhere in the terminal, OR press Ctrl + Shift + V",
+        note: "**Note:** Ctrl+C in terminal means \"cancel\", not copy!",
+      },
+      linux: {
+        title: "Linux Terminal Copy/Paste",
+        copy: "**Copy from wizard:** Click the copy button on any command (or Ctrl+C)",
+        paste: "**Paste into terminal:** Press Ctrl + Shift + V (common), or try right-click",
+        tip: "**Tip:** If Ctrl+Shift+V doesn't work in your terminal app, look for a \"Paste\" option in the right-click menu",
+      },
+    },
+    firstCommand: {
+      title: "3. Type Your First Command",
+      intro: "Let's verify everything works. Type this command in your terminal and press Enter:",
+      commandDesc: "Print 'hello' to the screen",
+      expected: "You should see:",
+      success: "If you see \"hello\" printed below your command, your terminal is working!",
+    },
+    ready: {
+      title: "You're ready!",
+      content: "If you can type commands and see output, you've got the basics! In the next steps, we'll use these same skills to connect to your VPS.",
+    },
+  },
+
+  buttons: {
+    loading: "Loading...",
+    continue: "I installed it, continue",
+  },
+};
+
+// os-selection page
+export const osSelectionMessages = {
+  title: "What computer are you using?",
+  timeEstimate: "~30 sec",
+  description: "This helps us show you the right commands and instructions.",
+
+  badges: {
+    selected: "Selected",
+    detected: "Detected",
+  },
+
+  osCards: {
+    mac: {
+      title: "Mac",
+      description: "macOS, MacBook, iMac, Mac Mini, Mac Studio",
+    },
+    windows: {
+      title: "Windows",
+      description: "Windows 10, Windows 11",
+    },
+    linux: {
+      title: "Linux",
+      description: "Ubuntu, Debian, Fedora, Arch, etc.",
+    },
+  },
+
+  tip: {
+    label: "Tip",
+    detected: "We guessed your OS from your browser. If that's wrong, pick the other option. Otherwise just hit Continue.",
+    notDetected: "If you're on a phone/tablet, pick the computer you'll use for the next steps (Mac, Windows, or Linux).",
+  },
+
+  guide: {
+    whatIsAsking: {
+      title: "What is this asking?",
+      content: "We need to know what type of computer you're using so we can show you the right instructions. Different computers need slightly different steps.",
+    },
+    operatingSystem: {
+      term: "an Operating System",
+      intro: "An operating system (or \"OS\") is the main software that runs your computer. It's like the foundation that everything else runs on top of.",
+      mac: "Mac = Apple computers (MacBook, iMac, Mac Mini, Mac Studio). If you see an Apple logo when your computer starts, you have a Mac.",
+      windows: "Windows = Most non-Apple computers (Dell, HP, Lenovo, etc.). If you see a Windows logo (four colored squares) when your computer starts, you have Windows.",
+      linux: "Linux = If you're already using Ubuntu, Debian, Fedora, Arch, or another Linux distribution. You probably already know if you're running Linux! Selecting Linux will skip the terminal installation step since you already have one.",
+    },
+    howToKnow: {
+      title: "How do I know which one I have?",
+      mac: "Mac: Look at the top-left corner of your screen. Do you see the Apple menu (top-left Apple logo)? Click it and select \"About This Mac\" and it will say something like \"macOS Sonoma\" or \"macOS Ventura\".",
+      windows: "Windows: Look at the bottom-left corner of your screen. Do you see a Windows icon (four blue squares)? That means you have Windows. You can also press the Windows key on your keyboard (between Ctrl and Alt).",
+      linux: "Linux: If you installed Linux yourself (Ubuntu, Fedora, Arch, etc.), you already know! Open a terminal and type `uname -a` to confirm. You'll see \"Linux\" in the output.",
+    },
+    guideTip: {
+      detected: "We tried to detect your computer type automatically. If it looks right, you can just click \"Continue\". If it looks wrong, click the other option first.",
+      notDetected: "If you're reading this on your phone, choose the computer you'll use next, then click \"Continue\".",
+    },
+  },
+
+  buttons: {
+    continue: "Continue",
+    loading: "Loading...",
+  },
+};
+
 // rent-vps page
 export const rentVpsMessages = {
   title: "Rent a VPS",

@@ -76,12 +76,20 @@ export function getAllJargonTerms(locale: Locale): JargonTerm[] {
 // Wizard messages
 import {
   commonMessages,
+  createVpsMessages,
+  windowsTerminalSetupMessages,
+  installTerminalMessages,
+  osSelectionMessages,
   rentVpsMessages,
   sshConnectMessages,
   accountsMessages,
 } from "../wizard-messages";
 import {
   commonMessagesUk,
+  createVpsMessagesUk,
+  windowsTerminalSetupMessagesUk,
+  installTerminalMessagesUk,
+  osSelectionMessagesUk,
   rentVpsMessagesUk,
   sshConnectMessagesUk,
   accountsMessagesUk,
@@ -92,6 +100,34 @@ import {
  */
 export function getCommonMessages(locale: Locale) {
   return locale === "uk" ? commonMessagesUk : commonMessages;
+}
+
+/**
+ * Get create-vps page messages for the specified locale
+ */
+export function getCreateVpsMessages(locale: Locale) {
+  return locale === "uk" ? createVpsMessagesUk : createVpsMessages;
+}
+
+/**
+ * Get windows-terminal-setup page messages for the specified locale
+ */
+export function getWindowsTerminalSetupMessages(locale: Locale) {
+  return locale === "uk" ? windowsTerminalSetupMessagesUk : windowsTerminalSetupMessages;
+}
+
+/**
+ * Get install-terminal page messages for the specified locale
+ */
+export function getInstallTerminalMessages(locale: Locale) {
+  return locale === "uk" ? installTerminalMessagesUk : installTerminalMessages;
+}
+
+/**
+ * Get os-selection page messages for the specified locale
+ */
+export function getOsSelectionMessages(locale: Locale) {
+  return locale === "uk" ? osSelectionMessagesUk : osSelectionMessages;
 }
 
 /**

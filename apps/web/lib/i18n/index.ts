@@ -15,6 +15,10 @@ export {
   getAllJargonTerms,
   // Wizard messages
   getCommonMessages,
+  getCreateVpsMessages,
+  getWindowsTerminalSetupMessages,
+  getInstallTerminalMessages,
+  getOsSelectionMessages,
   getRentVpsMessages,
   getSshConnectMessages,
   getAccountsMessages,
