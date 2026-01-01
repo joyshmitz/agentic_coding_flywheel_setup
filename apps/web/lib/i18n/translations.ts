@@ -72,3 +72,45 @@ export function getJargonTerm(key: string, locale: Locale): JargonTerm | undefin
 export function getAllJargonTerms(locale: Locale): JargonTerm[] {
   return Object.values(getJargonDictionary(locale));
 }
+
+// Wizard messages
+import {
+  commonMessages,
+  rentVpsMessages,
+  sshConnectMessages,
+  accountsMessages,
+} from "../wizard-messages";
+import {
+  commonMessagesUk,
+  rentVpsMessagesUk,
+  sshConnectMessagesUk,
+  accountsMessagesUk,
+} from "../wizard-messages.uk";
+
+/**
+ * Get common wizard messages for the specified locale
+ */
+export function getCommonMessages(locale: Locale) {
+  return locale === "uk" ? commonMessagesUk : commonMessages;
+}
+
+/**
+ * Get rent-vps page messages for the specified locale
+ */
+export function getRentVpsMessages(locale: Locale) {
+  return locale === "uk" ? rentVpsMessagesUk : rentVpsMessages;
+}
+
+/**
+ * Get ssh-connect page messages for the specified locale
+ */
+export function getSshConnectMessages(locale: Locale) {
+  return locale === "uk" ? sshConnectMessagesUk : sshConnectMessages;
+}
+
+/**
+ * Get accounts page messages for the specified locale
+ */
+export function getAccountsMessages(locale: Locale) {
+  return locale === "uk" ? accountsMessagesUk : accountsMessages;
+}

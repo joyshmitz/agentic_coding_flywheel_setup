@@ -13,4 +13,9 @@ export {
   getJargonDictionary,
   getJargonTerm,
   getAllJargonTerms,
+  // Wizard messages
+  getCommonMessages,
+  getRentVpsMessages,
+  getSshConnectMessages,
+  getAccountsMessages,
 } from "./translations";
