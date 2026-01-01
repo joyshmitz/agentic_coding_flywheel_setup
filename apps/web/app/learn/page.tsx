@@ -31,6 +31,7 @@ import { springs } from "@/lib/design-tokens";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import { sendEvent, initLessonFunnel, getLessonFunnelData } from "@/lib/analytics";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { useLocale, getLessons } from "@/lib/i18n";
 
 type LessonStatus = "completed" | "current" | "locked";
 
@@ -164,9 +165,13 @@ function LessonCard({
 }
 
 export default function LearnDashboard() {
+  const { locale } = useLocale();
+  const localizedLessons = getLessons(locale);
   const [completedLessons] = useCompletedLessons();
   const completionPercentage = getCompletionPercentage(completedLessons);
   const nextLesson = getNextUncompletedLesson(completedLessons);
+  // Get localized next lesson
+  const nextLessonLocalized = nextLesson ? localizedLessons.find(l => l.id === nextLesson.id) : null;
   const router = useRouter();
   const prefersReducedMotion = useReducedMotion();
   const hasTrackedPageView = useRef(false);
@@ -192,7 +197,7 @@ export default function LearnDashboard() {
 
   // Keyboard navigation state
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const accessibleLessons = LESSONS.filter((_, i) => {
+  const accessibleLessons = localizedLessons.filter((_, i) => {
     const status = getLessonStatus(i, completedLessons);
     return status !== "locked";
   });
@@ -340,8 +345,8 @@ export default function LearnDashboard() {
                 <p className="text-sm text-muted-foreground/80 sm:text-base">
                   {completedLessons.length === TOTAL_LESSONS
                     ? "🎉 Congratulations! You've mastered all lessons."
-                    : nextLesson
-                      ? `Up next: ${nextLesson.title}`
+                    : nextLessonLocalized
+                      ? `Up next: ${nextLessonLocalized.title}`
                       : "Begin your learning journey"}
                 </p>
               </div>
@@ -443,7 +448,7 @@ export default function LearnDashboard() {
         >
           <h2 className="mb-5 text-xl font-semibold lg:mb-6 lg:text-2xl">All Lessons</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
-            {LESSONS.map((lesson, index) => {
+            {localizedLessons.map((lesson, index) => {
               const status = getLessonStatus(lesson.id, completedLessons);
               const accessibleIndex = accessibleLessons.findIndex(
                 (l) => l.id === lesson.id
@@ -549,7 +554,7 @@ export default function LearnDashboard() {
       </div>
 
       {/* Mobile fixed bottom bar - glassmorphic */}
-      {nextLesson && (
+      {nextLessonLocalized && (
         <motion.div
           className="fixed inset-x-0 bottom-0 z-50 border-t border-white/[0.08] bg-black/80 p-4 pb-safe backdrop-blur-xl sm:hidden"
           initial={prefersReducedMotion ? false : { y: 100 }}
@@ -562,10 +567,10 @@ export default function LearnDashboard() {
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs text-muted-foreground/60">Up next</p>
-              <p className="truncate text-sm font-medium">{nextLesson.title}</p>
+              <p className="truncate text-sm font-medium">{nextLessonLocalized.title}</p>
             </div>
             <Button asChild size="lg" className="shrink-0 gap-1.5">
-              <Link href={`/learn/${nextLesson.slug}`}>
+              <Link href={`/learn/${nextLessonLocalized.slug}`}>
                 Continue
                 <ChevronRight className="h-4 w-4" />
               </Link>
