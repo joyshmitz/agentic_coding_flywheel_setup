@@ -15,6 +15,7 @@ export {
   getAllJargonTerms,
   // Wizard messages
   getCommonMessages,
+  getGenerateSshKeyMessages,
   getCreateVpsMessages,
   getWindowsTerminalSetupMessages,
   getInstallTerminalMessages,
@@ -22,4 +23,10 @@ export {
   getRentVpsMessages,
   getSshConnectMessages,
   getAccountsMessages,
+  getVerifyKeyConnectionMessages,
+  getReconnectUbuntuMessages,
+  getPreflightCheckMessages,
+  getRunInstallerMessages,
+  getStatusCheckMessages,
+  getLaunchOnboardingMessages,
 } from "./translations";

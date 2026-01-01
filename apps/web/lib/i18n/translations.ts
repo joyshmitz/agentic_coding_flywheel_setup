@@ -76,6 +76,7 @@ export function getAllJargonTerms(locale: Locale): JargonTerm[] {
 // Wizard messages
 import {
   commonMessages,
+  generateSshKeyMessages,
   createVpsMessages,
   windowsTerminalSetupMessages,
   installTerminalMessages,
@@ -83,9 +84,16 @@ import {
   rentVpsMessages,
   sshConnectMessages,
   accountsMessages,
+  verifyKeyConnectionMessages,
+  reconnectUbuntuMessages,
+  preflightCheckMessages,
+  runInstallerMessages,
+  statusCheckMessages,
+  launchOnboardingMessages,
 } from "../wizard-messages";
 import {
   commonMessagesUk,
+  generateSshKeyMessagesUk,
   createVpsMessagesUk,
   windowsTerminalSetupMessagesUk,
   installTerminalMessagesUk,
@@ -93,6 +101,12 @@ import {
   rentVpsMessagesUk,
   sshConnectMessagesUk,
   accountsMessagesUk,
+  verifyKeyConnectionMessagesUk,
+  reconnectUbuntuMessagesUk,
+  preflightCheckMessagesUk,
+  runInstallerMessagesUk,
+  statusCheckMessagesUk,
+  launchOnboardingMessagesUk,
 } from "../wizard-messages.uk";
 
 /**
@@ -100,6 +114,13 @@ import {
  */
 export function getCommonMessages(locale: Locale) {
   return locale === "uk" ? commonMessagesUk : commonMessages;
+}
+
+/**
+ * Get generate-ssh-key page messages for the specified locale
+ */
+export function getGenerateSshKeyMessages(locale: Locale) {
+  return locale === "uk" ? generateSshKeyMessagesUk : generateSshKeyMessages;
 }
 
 /**
@@ -149,4 +170,46 @@ export function getSshConnectMessages(locale: Locale) {
  */
 export function getAccountsMessages(locale: Locale) {
   return locale === "uk" ? accountsMessagesUk : accountsMessages;
+}
+
+/**
+ * Get verify-key-connection page messages for the specified locale
+ */
+export function getVerifyKeyConnectionMessages(locale: Locale) {
+  return locale === "uk" ? verifyKeyConnectionMessagesUk : verifyKeyConnectionMessages;
+}
+
+/**
+ * Get reconnect-ubuntu page messages for the specified locale
+ */
+export function getReconnectUbuntuMessages(locale: Locale) {
+  return locale === "uk" ? reconnectUbuntuMessagesUk : reconnectUbuntuMessages;
+}
+
+/**
+ * Get preflight-check page messages for the specified locale
+ */
+export function getPreflightCheckMessages(locale: Locale) {
+  return locale === "uk" ? preflightCheckMessagesUk : preflightCheckMessages;
+}
+
+/**
+ * Get run-installer page messages for the specified locale
+ */
+export function getRunInstallerMessages(locale: Locale) {
+  return locale === "uk" ? runInstallerMessagesUk : runInstallerMessages;
+}
+
+/**
+ * Get status-check page messages for the specified locale
+ */
+export function getStatusCheckMessages(locale: Locale) {
+  return locale === "uk" ? statusCheckMessagesUk : statusCheckMessages;
+}
+
+/**
+ * Get launch-onboarding page messages for the specified locale
+ */
+export function getLaunchOnboardingMessages(locale: Locale) {
+  return locale === "uk" ? launchOnboardingMessagesUk : launchOnboardingMessages;
 }

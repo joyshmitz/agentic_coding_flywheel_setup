@@ -33,6 +33,183 @@ export const commonMessages = {
   },
 };
 
+// generate-ssh-key page
+export const generateSshKeyMessages = {
+  title: "Create your SSH key",
+  timeEstimate: "~2 min",
+  description: "This is your secure \"login key\" for connecting to your VPS.",
+
+  howItWorks: {
+    title: "How SSH keys work",
+    content: "You're creating a **key pair**: a private key (stays on your computer) and a public key (you'll paste during installation). Think of it like a lock and key: you share the lock, but only you have the key.",
+  },
+
+  sshLocation: {
+    title: "Where are SSH keys stored?",
+    intro: "SSH keys are stored in a special folder called ~/.ssh on your computer.",
+    locations: {
+      mac: "/Users/yourname/.ssh/",
+      linux: "/home/yourname/.ssh/",
+      windows: "C:\\Users\\yourname\\.ssh\\",
+    },
+    tildeNote: "The ~ symbol is shorthand for your home folder.",
+    dotNote: "The . prefix makes it a hidden folder (that's normal for config files).",
+  },
+
+  privacy: {
+    title: "Your keys never leave your computer",
+    content: "These commands run **entirely on your machine**. This website cannot see, access, or store your SSH keys. We're just showing you what to type.",
+    openSource: "entire codebase is open source",
+  },
+
+  step1: {
+    title: "Step 1: Generate the key",
+    intro: "Run this command in your terminal. You'll be asked 3 questions—here's how to answer:",
+    prompts: {
+      fileLocation: { label: "1. File location:", action: "Press Enter to accept the default" },
+      passphrase: { label: "2. Passphrase:", action: "Press Enter (leave empty)" },
+      confirmPassphrase: { label: "3. Confirm passphrase:", action: "Press Enter again" },
+    },
+  },
+
+  step2: {
+    title: "Step 2: Copy your public key",
+    intro: "Run this command and copy the entire output. It starts with ssh-ed25519.",
+  },
+
+  saveWarning: {
+    title: "Save your public key for later",
+    content: "You'll paste this **during installation**, not when creating the VPS. Save it somewhere safe like a notes app—you'll need it later!",
+  },
+
+  troubleshooting: {
+    title: "Having trouble? Click for common fixes",
+    noSuchFile: {
+      title: "\"No such file or directory\" error",
+      fix: "Create the .ssh folder first: mkdir -p ~/.ssh",
+    },
+    permissionDenied: {
+      title: "\"Permission denied\" error",
+      fix: "Fix folder permissions: chmod 700 ~/.ssh",
+    },
+    fileExists: {
+      title: "Key file already exists",
+      fix: "If you already have a key, you can use that one. Just copy the .pub file content.",
+    },
+  },
+
+  guide: {
+    sshKey: {
+      term: "an SSH Key",
+      intro: "An SSH key is like a special password that lets you securely connect to another computer over the internet.",
+      twoFiles: "Unlike regular passwords that you type, SSH keys are files stored on your computer. There are always **two files**:",
+      privateKey: "**1. Private key:** This is your secret key. It stays on YOUR computer and you never share it with anyone. It's like the key to your house.",
+      publicKey: "**2. Public key:** This is the one you share. You'll give this to your VPS provider. It's like giving someone a copy of your lock so they know it's really you when you connect.",
+    },
+    detailedSteps: {
+      title: "Detailed Step-by-Step Instructions",
+      step1: {
+        title: "Open your terminal",
+        mac: "Open the terminal app you installed (Ghostty or WezTerm). You can press ⌘ + Space, type the name, and press Enter.",
+        linux: "Open your terminal emulator. On most Linux distributions, press Ctrl + Alt + T, or find Terminal in your applications menu.",
+        windows: "Open Windows Terminal. Click Start, type \"Terminal\", and click on Windows Terminal.",
+      },
+      step2: {
+        title: "Copy the command",
+        content: "Look at the gray box above that shows the ssh-keygen command. Click the **copy button** (it looks like two overlapping squares) on the right side of the box. This copies the command to your clipboard.",
+      },
+      step3: {
+        title: "Paste and run the command",
+        intro: "Click inside the terminal window to make sure it's active. Then paste the command:",
+        mac: "Press ⌘ + V",
+        linux: "Press Ctrl + Shift + V",
+        windows: "Right-click inside the terminal OR press Ctrl + V",
+        run: "Then press Enter to run it.",
+      },
+      step4: {
+        title: "Answer the prompts",
+        intro: "The terminal will ask you a few questions. Here's exactly what you'll see:",
+        fileLocation: {
+          label: "First: File location",
+          prompt: "Enter file in which to save the key (/Users/you/.ssh/acfs_ed25519):",
+          action: "→ Just press Enter! The path is already set by our command.",
+          explanation: "The path shown is where your key files will be saved. The .ssh folder is a standard location for SSH keys on all computers. Our command already specifies this path, so just press Enter to confirm it.",
+        },
+        passphrase: {
+          label: "Second: Passphrase",
+          prompt: "Enter passphrase (empty for no passphrase):",
+          action: "→ Press Enter without typing anything. Leave it empty.",
+          explanation: "A passphrase would add an extra password you'd have to type every time you connect. For a development VPS that you control, this extra security isn't necessary and would slow you down. Your private key file itself is already secure because it never leaves your computer.",
+        },
+        confirmPassphrase: {
+          label: "Third: Confirm passphrase",
+          prompt: "Enter same passphrase again:",
+          action: "→ Press Enter again. That's it!",
+        },
+        summary: "**Summary:** Press Enter three times total. The command we provided handles all the important settings.",
+      },
+      step5: {
+        title: "Success!",
+        intro: "When the key is created, you'll see a confirmation:",
+        saved: "Your identification has been saved in /Users/you/.ssh/acfs_ed25519",
+        publicSaved: "Your public key has been saved in /Users/you/.ssh/acfs_ed25519.pub",
+        fingerprint: "The key fingerprint is:",
+        randomart: "The key's randomart image is:",
+        success: "**The randomart pattern means it worked!** You now have SSH keys.",
+      },
+    },
+    verify: {
+      title: "Verify Your Key Was Created",
+      intro: "Let's make sure your keys were created correctly:",
+      checkFiles: {
+        title: "Check the files exist",
+        description: "List your new key files",
+        result: "You should see two files:",
+        privateKey: "acfs_ed25519 — Your **private key** (keep this secret!)",
+        publicKey: "acfs_ed25519.pub — Your **public key** (this gets shared)",
+      },
+      analogy: "Think of it like a mailbox: the **public key** is your address (you share it so people can send you mail), and the **private key** is your mailbox key (only you have it to open your mail).",
+    },
+    copyPublicKey: {
+      title: "Now Copy Your Public Key",
+      step1: {
+        title: "Run the second command",
+        content: "Now look at the second gray command box (the \"cat\" or \"type\" command). Click its copy button and paste it into the terminal, then press Enter.",
+      },
+      step2: {
+        title: "Select and copy the output",
+        intro: "You'll see a long string of text that starts with ssh-ed25519. This is your public key!",
+        howToCopy: "**To copy it:**",
+        mac: "Triple-click to select the whole line, then ⌘ + C",
+        linux: "Triple-click to select the whole line, then Ctrl + Shift + C",
+        windows: "Triple-click to select, then right-click to copy",
+      },
+      step3: {
+        title: "Save it somewhere safe",
+        content: "Open a notes app and paste your public key there. You'll need it later when running the installer (not when creating the VPS—we'll use a password for that).",
+      },
+    },
+    publicKeyExample: {
+      intro: "Your public key looks something like this:",
+      example: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGx... acfs",
+      reminder: "Make sure you copy the WHOLE thing, from \"ssh-ed25519\" to \"acfs\"!",
+    },
+    privateKeyCaution: "**Never share your private key!** The private key is the file WITHOUT \".pub\" at the end. Only share the public key (the one that ends in \".pub\"). If anyone asks for your private key, that's a scam.",
+    troubleshootingGuide: {
+      title: "What if something went wrong?",
+      commandNotFound: "**\"Command not found\":** Make sure you're in the terminal, not in a web browser or text editor.",
+      permissionDenied: "**\"Permission denied\":** Try this command first, then run the ssh-keygen command again:",
+      permissionFix: "mkdir -p ~/.ssh && chmod 700 ~/.ssh",
+      fileExists: "**\"File already exists\":** You already have a key! You can use your existing key, or type \"y\" and press Enter to overwrite it.",
+    },
+  },
+
+  buttons: {
+    continue: "I saved my public key",
+    loading: "Loading...",
+  },
+};
+
 // create-vps page
 export const createVpsMessages = {
   title: "Create your VPS instance",
@@ -980,10 +1157,919 @@ export const accountsMessages = {
   },
 };
 
+// verify-key-connection page
+export const verifyKeyConnectionMessages = {
+  title: "Verify key-based connection",
+  timeEstimate: "~1 min",
+  description: "Make sure your SSH key works so you never need the password again.",
+
+  whyMatters: {
+    title: "Why this matters",
+    content: "This confirms the installer set up your key correctly and that future logins are fast and secure.",
+  },
+
+  step1: {
+    title: "Step 1: Disconnect",
+    description: "Exit your current SSH session to return to your local terminal.",
+    commandDesc: "Close the current session",
+  },
+
+  step2: {
+    title: "Step 2: Reconnect using your SSH key",
+    description: "Connect without a password prompt using the key you generated earlier.",
+    commandDesc: "Key-based login (no password)",
+  },
+
+  success: {
+    title: "Success looks like:",
+    noPassword: "You were not asked for a password",
+    prompt: "Your prompt shows: ubuntu@vps:~$",
+  },
+
+  windowsTip: {
+    title: "Windows User? Set up one-click VPS access",
+    content: "Create a Windows Terminal profile to connect to your VPS with a single click →",
+  },
+
+  troubleshooting: {
+    title: "Troubleshooting",
+    password: {
+      title: "Still asks for a password?",
+      content: "The key might not have been pasted correctly during the installer prompt. Re-run the installer and paste your public key again when asked.",
+    },
+    permissionDenied: {
+      title: "Permission denied (publickey)",
+      content: "Your key file permissions may be too open. Fix with:",
+    },
+    connectionRefused: {
+      title: "Connection refused",
+      content: "Your VPS might still be rebooting. Wait 1-2 minutes and try again.",
+    },
+  },
+
+  guide: {
+    keyBasedAuth: {
+      term: "Key-based authentication",
+      content: "Instead of typing a password, your computer proves it has a secret key that matches the public key stored on your VPS. It's faster and more secure than passwords.",
+    },
+    stepByStep: {
+      title: "Step-by-step verification",
+      step1: {
+        title: "Exit the current session",
+        content: "Type exit and press Enter to return to your local terminal.",
+      },
+      step2: {
+        title: "Reconnect with your key",
+        content: "Paste the SSH command above (with -i) and press Enter. You should NOT be asked for a password.",
+      },
+      step3: {
+        title: "Confirm the prompt",
+        content: "Look for ubuntu@ and a $ at the end.",
+      },
+    },
+    tip: "If you see a password prompt, stop and fix it now—this step prevents future login headaches.",
+    caution: "Using a different key? Make sure you're pointing to the same key you created earlier: ~/.ssh/acfs_ed25519.",
+  },
+
+  buttons: {
+    continue: "My key works, continue",
+    loading: "Loading...",
+  },
+};
+
+// reconnect-ubuntu page
+export const reconnectUbuntuMessages = {
+  title: "Reconnect as ubuntu",
+  timeEstimate: "~1 min",
+  description: "If you ran the installer as root, reconnect as the ubuntu user to get the full shell experience.",
+
+  alreadyUbuntu: {
+    title: "Already connected as ubuntu?",
+    content: "If your prompt shows ubuntu@, you can skip this step.",
+    skipButton: "Skip, I'm already ubuntu",
+  },
+
+  ifRoot: {
+    title: "If you connected as root:",
+    step1: "1. Type exit to close the current session",
+    step1CommandDesc: "Close root session",
+    step2: "2. Reconnect as ubuntu:",
+    noticeDifferent: "Notice something different?",
+    keyExplanation: "This SSH command uses your SSH key (the -i ~/.ssh/acfs_ed25519 part — or on Windows -i $HOME\\.ssh\\acfs_ed25519) instead of a password. The installer set this up for you.",
+    noPassword: {
+      title: "No password needed!",
+      content: "When you run this command, you should connect immediately without typing a password. SSH keys are more secure and more convenient.",
+    },
+    commandDesc: "Reconnect as ubuntu user",
+  },
+
+  permissionDenied: {
+    title: "Getting 'Permission denied' or asked for password?",
+    intro: "This means one of two things:",
+    reason1: "SSH key wasn't set up correctly — the installer needs to complete successfully for this to work",
+    reason2: "You're using the wrong credentials — the ubuntu user uses your SSH key, NOT the root password",
+    tryRoot: "If you're being asked for a password, try connecting as root instead:",
+    usePassword: "Use the VPS root password (the one from your provider), then re-run the installer.",
+  },
+
+  verification: {
+    title: "You'll know it worked when:",
+    items: [
+      "Your prompt shows ubuntu@ (not root@)",
+      "You see the colorful powerlevel10k prompt",
+      "The shell feels more responsive",
+    ],
+  },
+
+  p10kWizard: {
+    title: "Prompt customization wizard?",
+    intro: "The first time you connect, you might see a \"Powerlevel10k configuration wizard\" asking about fonts and prompt style.",
+    quitOption: "Press q to quit and use defaults (recommended for now)",
+    goThrough: "Or go through it if you want to customize how your prompt looks",
+    runLater: "You can always run p10k configure later to customize.",
+  },
+
+  guide: {
+    whyReconnect: {
+      term: "Why reconnect as ubuntu?",
+      intro: "During installation, you may have connected as \"root\", the super-admin account. Now we want you to use the \"ubuntu\" account instead because:",
+      safety: "Safety: The root account can accidentally break things. The ubuntu account is safer for everyday use.",
+      betterExperience: "Better experience: The installer set up special features (like the colorful prompt) for the ubuntu user.",
+    },
+    howToKnow: {
+      title: "How do I know which user I am?",
+      intro: "Look at your terminal prompt:",
+      root: "root@vps:~# means you're logged in as root (note the # symbol)",
+      ubuntu: "ubuntu@vps:~$ means you're logged in as ubuntu (note the $ symbol)",
+    },
+    stepByStep: {
+      title: "Step-by-Step: Switching to Ubuntu",
+      step1: {
+        title: "Disconnect from the current session",
+        content: "Type exit and press Enter. This closes your connection to the VPS.",
+      },
+      step2: {
+        title: "Connect as ubuntu",
+        content: "Copy and paste the SSH command shown above (the one with ubuntu@) and press Enter.",
+      },
+      step3: {
+        title: "Verify you're ubuntu",
+        content: "Your prompt should now show \"ubuntu@\" at the beginning. You might also see a fancy colorful prompt!",
+      },
+    },
+    tip: "If you were already connected as ubuntu (skip button above applies to you), just click \"Skip\" or \"Continue\"; you don't need to do anything!",
+    linuxBasics: {
+      title: "New to Linux?",
+      content: "Learn the basics of navigating the filesystem →",
+    },
+  },
+
+  buttons: {
+    continue: "I'm connected as ubuntu",
+    loading: "Loading...",
+  },
+};
+
+// preflight-check page
+export const preflightCheckMessages = {
+  title: "Pre-flight check your VPS",
+  timeEstimate: "~1 min",
+  description: "Before installing, let's confirm your VPS is ready.",
+
+  fastSafetyCheck: {
+    title: "Fast safety check",
+    content: "This quick scan validates OS, disk space, network access, and APT locks. Warnings are okay — you can still continue.",
+  },
+
+  windowsWarning: {
+    title: "Windows users: Common mistake!",
+    intro: "If you paste this command and see errors like 'bash' is not recognized or Get-Date : Cannot bind parameter:",
+    mistake: "You're running this on your Windows computer, NOT on the VPS!",
+    fix: "Go back to your terminal, type ssh root@YOUR_VPS_IP, enter your VPS password, and THEN paste the preflight command.",
+  },
+
+  runCommand: {
+    title: "Run this command",
+    desc: "ACFS pre-flight validation",
+  },
+
+  expectedOutput: {
+    title: "Expected output (example)",
+    lines: {
+      header: "ACFS Pre-Flight Check",
+      separator: "=====================",
+      os: "[✓] Operating System: Ubuntu 25.10 (or 24.04 before upgrade)",
+      arch: "[✓] Architecture: x86_64",
+      disk: "[✓] Disk Space: 45GB free",
+      warning: "[!] Warning: Cannot reach https://claude.ai",
+      result: "Result: 0 errors, 1 warning",
+    },
+  },
+
+  acknowledgement: {
+    title: "Before you continue",
+    passed: "Pre-flight passed (all green, or only warnings)",
+    failed: "I understand some checks failed and I'm choosing to continue",
+  },
+
+  troubleshooting: {
+    title: "Troubleshooting common failures",
+    bashNotRecognized: {
+      title: "'bash' is not recognized / Get-Date error (Windows)",
+      fixes: [
+        "You're running this on your Windows computer, not on the VPS!",
+        "First, connect to your VPS with: ssh root@YOUR_VPS_IP",
+        "Wait until you see 'root@vps:~#' or similar",
+        "THEN paste the preflight command",
+        "The preflight command only works on the Linux VPS, not on Windows",
+      ],
+    },
+    aptLocked: {
+      title: "APT is locked by another process",
+      fixes: [
+        "Wait 1-2 minutes (auto updates often finish quickly)",
+        "If it keeps failing: sudo killall apt apt-get",
+        "Optional: sudo systemctl stop unattended-upgrades",
+      ],
+    },
+    networkIssue: {
+      title: "Cannot reach github.com (network/firewall)",
+      fixes: [
+        "Check that your VPS has outbound internet access",
+        "Retry in a minute (provider networking sometimes lags)",
+        "If on a corporate network, check firewall rules",
+      ],
+    },
+    diskSpace: {
+      title: "Insufficient disk space",
+      fixes: [
+        "Upgrade your VPS storage plan (recommended 20GB+ free)",
+        "If you just created the VPS, choose a larger disk size",
+      ],
+    },
+    unsupportedArch: {
+      title: "Unsupported architecture",
+      fixes: [
+        "Use x86_64 or aarch64 VPS images",
+        "Most providers default to x86_64 if not specified",
+      ],
+    },
+  },
+
+  redErrors: {
+    title: "Seeing red errors?",
+    content: "Fix the red errors before installing. The installer will likely fail otherwise.",
+  },
+
+  guide: {
+    whatIsPreflight: {
+      term: "What is a pre-flight check?",
+      content: "A quick diagnostic that confirms your VPS meets the requirements before the full install.",
+    },
+    stepByStep: {
+      title: "Step-by-Step",
+      step1: {
+        title: "Copy the command",
+        content: "Click the copy button in the command box above.",
+      },
+      step2: {
+        title: "Paste and run",
+        content: "Paste into your terminal (make sure you're connected to your VPS).",
+      },
+      step3: {
+        title: "Read the results",
+        content: "Green lines are good. Yellow warnings are okay. Red errors should be fixed.",
+      },
+    },
+    caution: "Warnings are okay: Warnings mean something might be imperfect but not critical. If you see errors, fix those first or use a larger VPS plan.",
+  },
+
+  buttons: {
+    continue: "Continue to installer",
+    skip: "Skip pre-flight (advanced)",
+  },
+};
+
+// run-installer page
+export const runInstallerMessages = {
+  title: "Run the Agent Flywheel installer",
+  timeEstimate: "~15 min",
+  subtitle: "This is the magic moment. One command sets everything up.",
+
+  dontClose: {
+    title: "Don't close the terminal",
+    content: "Stay connected during installation. If disconnected, SSH back in and check if it's still running.",
+  },
+
+  sshKeyPrompt: {
+    title: "WATCH FOR: SSH Key Prompt",
+    intro: "Early in the installation, you'll see a prompt asking for your SSH public key:",
+    promptExample: "Paste your public key:",
+    pasteNow: "This is when you paste the key you saved earlier!",
+    keyFormat: "It's the one that starts with ssh-ed25519 AAAA...",
+    missedPrompt: "If you miss this prompt or press Enter without pasting, you won't be able to connect as the ubuntu user with your SSH key later. (You can fix this manually if needed.)",
+  },
+
+  command: {
+    title: "Paste this command in your SSH session",
+    desc: "Agent Flywheel installer one-liner",
+  },
+
+  connectionDrop: {
+    title: "What if my connection drops?",
+    dontPanic: "Don't panic!",
+    intro: "If your SSH connection drops during installation:",
+    steps: [
+      "The installer keeps running on the VPS",
+      "Just SSH back in using the same command",
+      "Run the installer command again — it will resume where it left off",
+    ],
+    note: "The installer is designed to be run multiple times safely. If anything fails, you can always re-run it.",
+  },
+
+  transparency: {
+    title: "Fully transparent & open source",
+    intro: "This script only runs on your VPS, not your local computer. You can inspect every line before running it:",
+    viewSource: "View install.sh source",
+    fullRepo: "Full repository",
+  },
+
+  timeEstimateNote: "Takes about 10-15 minutes depending on your VPS speed",
+
+  commandBreakdown: {
+    title: "What does this command actually do? (technical breakdown)",
+    intro: "Here's what each part of the command means:",
+    curl: "Downloads the script from GitHub. -f = fail on HTTP errors, -s = silent mode, -S = show errors, -L = follow redirects.",
+    pipe: "Pipes the downloaded script to bash (the shell) to run it.",
+    yes: "Passes --yes to the script, meaning \"don't ask for confirmation, just install.\"",
+    mode: "Tells the installer to use \"vibe\" mode — installs all the recommended tools for the agentic coding workflow.",
+    curlBashSafe: {
+      title: "Is curl | bash safe?",
+      content: "You're right to be cautious! Piping scripts directly to bash is only safe when you trust the source. This script is fully open source — you can read every line before running it. It only runs on your VPS, not your local computer.",
+    },
+  },
+
+  whatItInstalls: {
+    title: "What this command installs",
+    categories: {
+      shellTerminal: "Shell & Terminal UX",
+      languages: "Languages & Package Managers",
+      devTools: "Dev Tools",
+      codingAgents: "Coding Agents",
+      cloudDatabase: "Cloud & Database",
+      dicklesworthstoneStack: "Dicklesworthstone Stack",
+    },
+  },
+
+  viewSourceInline: "Want to see exactly what it does?",
+
+  installationOutput: {
+    title: "Understanding the installation output",
+    intro: "You'll see lots of text scrolling by. Here's what to look for:",
+    green: "Green checkmarks = Step completed successfully",
+    yellow: "Yellow warnings = Non-critical issue, installer continues",
+    red: "Red X = Something failed, but installer will retry or skip",
+    note: "Just wait for the final \"Installation complete\" message. If you see errors, you can always re-run the installer—it will retry failed steps.",
+  },
+
+  successSigns: {
+    title: "You'll know it's done when you see:",
+    complete: "✔ Agent Flywheel installation complete!",
+    reconnect: "Please reconnect as: ssh ubuntu@YOUR_IP",
+  },
+
+  guide: {
+    whatIsCommand: {
+      term: "What is this command doing?",
+      content: "This command downloads and runs a setup script that automatically installs everything you need on your VPS. Think of it like running an installer on your computer, but this one installs dozens of tools at once!",
+      idempotent: "The script is \"idempotent\" which means it's safe to run multiple times. If something fails, you can just run it again.",
+    },
+    stepByStep: {
+      title: "Step-by-Step",
+      step1: {
+        title: "Make sure you're connected to your VPS",
+        content: "Your terminal should show something like ubuntu@vps:~$ or root@vps:~#.",
+        notConnected: "If it shows your regular computer name, you need to SSH in first!",
+      },
+      step2: {
+        title: "Copy the install command",
+        content: "Click the copy button on the purple command box above. The command is quite long, so make sure you copy the whole thing!",
+      },
+      step3: {
+        title: "Paste and run",
+        content: "In your SSH terminal (where you're connected to the VPS), paste the command and press Enter.",
+        normal: "You'll see lots of text scrolling by. This is normal!",
+      },
+      step4: {
+        title: "Wait patiently (10-15 minutes)",
+        intro: "The installation takes time because it's downloading and installing many tools. You'll see progress messages scroll by:",
+        dontClose: "Don't close the terminal! Let it run until you see the green \"Installation complete\" message.",
+      },
+    },
+    whatGetsInstalled: {
+      title: "What gets installed?",
+      intro: "The installer sets up a complete development environment including:",
+      shell: "Modern shell (zsh): A better terminal experience with colors and suggestions",
+      languages: "Programming languages: JavaScript/TypeScript, Python, Rust, and Go",
+      aiAssistants: "AI coding assistants: Claude Code, Codex, and Gemini CLI",
+      devTools: "Developer tools: Git interface, file searchers, and more",
+    },
+    tip: "If your internet connection drops during installation, just SSH back in and run the command again. The installer will pick up where it left off!",
+    caution: "Don't close the terminal window while the installation is running. If you accidentally close it, SSH back in and run the command again. It will resume from where it stopped.",
+    ifStuck: {
+      title: "If Installation Seems Stuck",
+      intro: "Installation can look \"stuck\" at certain points. Here's what's actually happening:",
+      rust: "Stuck on \"Installing Rust...\" — Rust is a large download (~300MB). This step can take 2-5 minutes depending on your VPS speed. Just wait.",
+      ohmyzsh: "Stuck on \"Setting up oh-my-zsh...\" — This step downloads plugins from GitHub. If GitHub is slow, it can take a minute. Wait it out.",
+      noOutput: "No output for 2+ minutes — Some steps don't show progress. If the terminal cursor is still blinking, it's still running. Wait.",
+      actualError: "Actual error message appears — If you see red error text or \"Failed\", SSH back in and run the install command again. The installer will skip completed steps and retry the failed one.",
+      timeLimit: "The entire installation rarely takes more than 20 minutes. If it's been 30+ minutes with no progress at all, SSH back in and check if the script is still running. If not, just run the install command again.",
+    },
+  },
+
+  buttons: {
+    continue: "Installation finished",
+    loading: "Loading...",
+  },
+};
+
+// status-check page
+export const statusCheckMessages = {
+  title: "Agent Flywheel status check",
+  timeEstimate: "~1 min",
+  description: "Let's verify everything installed correctly on your VPS.",
+
+  reconnectionReminder: {
+    title: "Before running these commands",
+    intro: "Make sure you're connected to your VPS, not running commands on your laptop!",
+    sshFirst: "If you're in PowerShell or Terminal on your laptop, first run your SSH command:",
+    readyWhen: "Once you see ubuntu@ in your prompt, you're ready.",
+  },
+
+  commonMistake: {
+    title: "Common Mistake: Claude Desktop vs Claude Code",
+    notDesktop: "Claude Code is NOT the Claude Desktop app you download to your computer.",
+    howToUse: "Claude Code is a command-line tool that's already installed on your VPS. To use it:",
+    steps: [
+      "SSH into your VPS first (using the command above)",
+      "Then run claude or cc commands",
+    ],
+    wrongPlace: "If you're seeing \"command not found\" in PowerShell or Terminal on your laptop, you're in the wrong place!",
+  },
+
+  doctorCommand: {
+    title: "Run the doctor command",
+    description: "This checks all installed tools and reports any issues:",
+    commandDesc: "Run Agent Flywheel health check",
+  },
+
+  expectedOutput: {
+    title: "Expected output",
+    header: "Agent Flywheel Doctor - System Health Check",
+    separator: "================================",
+    shell: "✔ Shell: zsh with oh-my-zsh",
+    languages: "✔ Languages: bun, uv, rust, go",
+    tools: "✔ Tools: tmux, ripgrep, lazygit",
+    agents: "✔ Agents: claude-code, codex",
+    allPassed: "All checks passed!",
+  },
+
+  quickChecks: {
+    title: "Quick spot checks",
+    intro: "Try a few commands to verify key tools:",
+    checks: [
+      { command: "cc --version", description: "Check Claude Code is installed" },
+      { command: "bun --version", description: "Check bun is installed" },
+      { command: "which tmux", description: "Check tmux is installed" },
+    ],
+  },
+
+  authenticateServices: {
+    title: "Authenticate your services",
+    subtitle: "Log in to the tools you plan to use now (you can do the rest later)",
+  },
+
+  headlessAuth: {
+    title: "Authentication on a Headless Server",
+    intro: "Your VPS doesn't have a web browser, so authentication works differently:",
+    steps: [
+      "Run a login command below (like claude)",
+      "The terminal will display a URL and possibly a code",
+      "Copy that URL and open it in your laptop's browser",
+      "Complete the login in your browser",
+      "Return to your terminal — it should confirm success",
+    ],
+    note: "If you see \"Opening browser...\" but nothing happens, that's normal! Just copy the URL shown and open it manually on your laptop.",
+  },
+
+  dontNeedAll: {
+    title: "You don't need to log into everything right now",
+    intro: "Most people start with one coding agent and add the rest later.",
+    recommendedNow: "Recommended now: Claude Code (so you can start coding immediately)",
+    optionalNow: "Optional now: Codex, Gemini (only if you plan to use them)",
+    optionalLater: "Optional later: Cloud tools (Wrangler / Supabase / Vercel) and anything else you don't need yet",
+    note: "If you skip a login, the tool is still installed — it just won't work until you authenticate.",
+  },
+
+  troubleshooting: {
+    title: "Something not working?",
+    content: "Try running source ~/.zshrc to reload your shell config, then try the doctor again.",
+  },
+
+  guide: {
+    whatIsDoctor: {
+      term: "What is the 'doctor' command?",
+      content: "The \"doctor\" command is like a health checkup for your VPS. Just like a doctor checks your heart, lungs, and reflexes, this command checks that all the software tools were installed correctly.",
+      purpose: "It goes through a list of tools (programming languages, coding assistants, utilities) and reports which ones are working and which ones might have problems.",
+    },
+    stepByStep: {
+      title: "Step-by-Step: Running the Doctor",
+      step1: {
+        title: "Make sure you're connected to your VPS",
+        content: "Your terminal should show ubuntu@ at the beginning of your prompt. If it shows your laptop's name, you need to SSH in first!",
+      },
+      step2: {
+        title: "Copy the doctor command",
+        content: "Click the copy button on the acfs doctor command box above.",
+      },
+      step3: {
+        title: "Paste and run",
+        content: "Paste the command in your terminal and press Enter.",
+      },
+      step4: {
+        title: "Read the results",
+        intro: "You'll see a list with checkmarks (✔) or X marks (✘):",
+        green: "Green checkmarks = Working correctly!",
+        red: "Red X marks = Something needs attention",
+      },
+    },
+    spotChecks: {
+      title: "Understanding the Quick Spot Checks",
+      intro: "We also show some simple commands you can run to double-check specific tools:",
+      ccVersion: "This checks Claude Code, the AI coding assistant. You should see a version number like \"1.0.3\".",
+      bunVersion: "This checks Bun, a fast JavaScript runtime. You should see something like \"1.1.38\".",
+      whichTmux: "This checks if tmux is installed. You should see a path like \"/usr/bin/tmux\".",
+    },
+    whatIfFailed: {
+      title: "What If Something Failed?",
+      intro: "Don't panic! Here are some common fixes:",
+      commandNotFound: {
+        title: "\"Command not found\" error",
+        content: "This usually means your shell config hasn't loaded yet. Run this command to reload it:",
+        command: "source ~/.zshrc",
+        after: "Then try the doctor command again.",
+      },
+      specificToolFailed: {
+        title: "A specific tool shows ✘",
+        content: "You can try re-running the installer. It's safe to run multiple times:",
+      },
+      nothingWorks: {
+        title: "Nothing works at all",
+        content: "Make sure you're connected as the \"ubuntu\" user (not root). The installer set up tools for the ubuntu user specifically.",
+      },
+    },
+    authenticating: {
+      title: "Authenticating Your Services",
+      intro: "The services you signed up for need to be connected to your VPS. Each command displays a URL to open in your laptop's browser:",
+      step1: {
+        title: "Run the login command",
+        content: "Copy and run a command like claude or vercel login.",
+      },
+      step2: {
+        title: "Complete browser login",
+        content: "A URL will appear in your terminal. Open it in your browser and sign in with the account you created earlier.",
+      },
+      step3: {
+        title: "Return to terminal",
+        content: "Once you've logged in, the terminal will confirm the connection. Check the box next to each command as you complete it.",
+      },
+    },
+    tip: "If most things show green checkmarks (✔), you're good to go! Don't worry about one or two yellow warnings; those are usually optional tools. Click \"Everything looks good!\" to continue.",
+    caution: "If you see many red X marks: Don't continue yet. Try the troubleshooting steps above, or re-run the installer. If problems persist, you can ask for help in the project's GitHub issues.",
+    learnMore: {
+      welcome: {
+        title: "New to this environment?",
+        content: "Start with the Welcome lesson to understand what you now have →",
+      },
+      flywheel: {
+        title: "Ready for the full workflow?",
+        content: "See the Flywheel Loop lesson to connect all the tools →",
+      },
+    },
+  },
+
+  buttons: {
+    continue: "Everything looks good!",
+    loading: "Loading...",
+  },
+};
+
+// launch-onboarding page
+export const launchOnboardingMessages = {
+  congratulations: "Congratulations! You're all set up!",
+  subtitle: "Your VPS is now a powerful coding environment ready for AI-assisted development.",
+
+  p10kWarning: {
+    title: "First login: You may see a configuration wizard",
+    intro: "When you first connect to your VPS after installation, you might see the Powerlevel10k configuration wizard — a colorful terminal setup screen.",
+    optional: "Don't worry, this is optional! You can press q to skip it, or follow the prompts to customize your terminal appearance. ACFS already configured sensible defaults, so skipping is perfectly fine.",
+  },
+
+  authenticateTools: {
+    title: "First: Authenticate Your AI Tools",
+    intro: "Before using AI coding assistants, you need to authenticate them. This is a one-time setup that links your subscriptions:",
+    claudeCode: {
+      title: "Claude Code",
+      desc: "Follow the prompts. If it prints a URL, open it on your laptop to log in.",
+      howItWorks: "How the authentication works:",
+      steps: [
+        "The terminal shows a URL like https://claude.ai/oauth/...",
+        "Copy that URL and paste it into your web browser (on your laptop)",
+        "Log in to Claude in your browser",
+        "The browser shows a code (like \"ABCD-1234\")",
+        "Copy that code and paste it back into your terminal window (the same one running Claude)",
+      ],
+      note: "When your browser says \"Paste this into Claude Code\" — that means paste the code into the terminal window where you typed claude.",
+    },
+    codex: {
+      title: "Codex CLI (if using OpenAI)",
+      desc: "Starts the login flow. If it prints a URL, open it on your laptop to authenticate.",
+    },
+    gemini: {
+      title: "Gemini CLI (optional)",
+      desc: "Follow the prompts to authenticate (Google account).",
+    },
+    vibeShortcuts: "After authenticating, you can use the shortcuts (vibe mode): cc (Claude), cod (Codex), gmi (Gemini).",
+  },
+
+  learningHub: {
+    title: "Continue Your Learning Journey",
+    content: "Master your new environment with 9 guided lessons covering Linux basics, tmux sessions, AI agents, and advanced workflows.",
+    startButton: "Start Learning Hub",
+    terminalNote: "Prefer the terminal? Run onboard for the CLI version.",
+  },
+
+  dailyWorkflow: {
+    title: "Your Daily Workflow",
+    intro: "Here's what working with your VPS looks like day-to-day:",
+    step1: {
+      title: "Connect to your VPS",
+      note: "Open your terminal and SSH in.",
+    },
+    step2: {
+      title: "Resume or create a session",
+      listDesc: "See existing sessions",
+      attachDesc: "Resume a session",
+      newDesc: "Or create new",
+    },
+    step3: {
+      title: "Start coding with AI",
+      desc: "Launch Claude Code",
+    },
+    step4: {
+      title: "When you're done for the day",
+      detach: "Detach from session:",
+      disconnect: "Disconnect from VPS",
+      keepRunning: "Your session keeps running! Come back tomorrow and everything is exactly where you left it.",
+    },
+    remember: "Remember: Connect → Session → Code → Detach",
+  },
+
+  startingProject: {
+    title: "Starting a New Project",
+    intro: "Ready to build something? Here's the pattern:",
+    step1: {
+      title: "1. Create a session for your project",
+      note: "This creates a persistent workspace named \"my-awesome-app\".",
+    },
+    step2: {
+      title: "2. Create and navigate to a project folder",
+    },
+    step3: {
+      title: "3. Start Claude and describe your project",
+      note: "Tell Claude what you want to build. For example:",
+      example: "\"Create a React app with TypeScript that shows a todo list\"",
+    },
+    tip: "Claude will set up the project structure, install dependencies, and start building. You can guide it step by step or give it the whole vision at once.",
+  },
+
+  findingAround: {
+    title: "Finding Your Way Around",
+    homeFolder: {
+      title: "Your home folder",
+      content: "Everything you create lives in /home/ubuntu (or just ~).",
+      desc: "Go to your home folder",
+    },
+    seeHere: {
+      title: "See what's here",
+      desc: "List files (with icons!)",
+      note: "We installed lsd — a prettier version of ls.",
+    },
+    navigate: {
+      title: "Navigate into a folder",
+      enterDesc: "Enter a folder",
+      backDesc: "Go back up",
+    },
+    findFast: {
+      title: "Find files fast",
+      searchDesc: "Search file contents",
+      findDesc: "Find files by name",
+    },
+    tip: "Pro tip: Use z (zoxide) to jump to folders you've visited before. Just type z proj to jump to your projects folder!",
+  },
+
+  first5Minutes: {
+    title: "Your First 5 Minutes",
+    intro: "Let's make sure everything works with a quick test run.",
+    step1: {
+      title: "Create a project folder",
+    },
+    step2: {
+      title: "Authenticate Claude",
+      note: "The terminal will display a URL. Copy it and open in your laptop's browser to log in, then return to your terminal.",
+    },
+    step3: {
+      title: "Start Claude Code",
+      note: "After authenticating, this launches Claude Code.",
+    },
+    step4: {
+      title: "Your first prompt",
+      note: "In the Claude prompt, type:",
+      example: "Create a simple Python script that prints \"Hello from AI!\" and run it",
+    },
+    step5: {
+      title: "Watch the magic!",
+      intro: "Claude will:",
+      results: [
+        "Create a file called hello.py",
+        "Write the Python code",
+        "Run the script for you",
+        "Show \"Hello from AI!\" in the output",
+      ],
+    },
+    success: "Congratulations! You just used AI to write and run code!",
+  },
+
+  gettingBackIn: {
+    title: "Getting Back In",
+    intro: "Closed your terminal? Here's how to reconnect:",
+    step1: {
+      title: "1. Open your terminal app",
+      note: "Ghostty, WezTerm, or Windows Terminal",
+    },
+    step2: {
+      title: "2. Connect to your VPS",
+    },
+    step3: {
+      title: "3. Resume your session (if using NTM)",
+      listDesc: "See your sessions",
+      attachDesc: "Resume a session",
+      note: "This brings back exactly where you left off — including any running Claude sessions!",
+    },
+    sshConfigTip: {
+      title: "Pro tip: Set up SSH config for easier access",
+      intro: "Add this to your local ~/.ssh/config file:",
+      after: "Then just type: ssh myserver",
+    },
+    windowsTip: {
+      title: "Windows User? Set up one-click VPS access",
+      content: "Create a Windows Terminal profile to connect to your VPS with a single click →",
+    },
+  },
+
+  whatYouCanDo: {
+    title: "What you can do now",
+    claudeCode: {
+      title: "Start Claude Code",
+      desc: "Launch your AI coding assistant",
+    },
+    ntm: {
+      title: "Use tmux with ntm",
+      desc: "Manage terminal sessions",
+    },
+    ripgrep: {
+      title: "Search with ripgrep",
+      desc: "Fast code search",
+    },
+    lazygit: {
+      title: "Git with lazygit",
+      desc: "Visual git interface",
+    },
+  },
+
+  manualEditing: {
+    title: "How to edit files manually (when AI gets something wrong)",
+    nano: {
+      title: "Quick edits with nano",
+      intro: "For simple fixes, nano is already installed on your VPS:",
+      desc: "Open a file in nano",
+      shortcuts: "Nano shortcuts:",
+      save: "Ctrl + O, then Enter — Save",
+      exit: "Ctrl + X — Exit",
+      search: "Ctrl + W — Search",
+    },
+    cursor: {
+      title: "Full IDE with Cursor (recommended)",
+      intro: "Cursor is an AI-native code editor with great remote editing support (like VS Code Remote SSH).",
+      steps: [
+        "Download Cursor from cursor.com",
+        "Open the command palette: Cmd/Ctrl + Shift + P",
+        "Search: Remote-SSH: Connect to Host",
+        "Connect to ubuntu@YOUR_VPS_IP (it will use your SSH key)",
+      ],
+      tip: "Cursor is built on VS Code, so extensions work the same way — including Remote SSH. You get a full IDE experience (syntax highlighting, file explorer, extensions) while editing files directly on your VPS.",
+    },
+  },
+
+  resources: {
+    title: "Learn more",
+    links: {
+      github: "Agent Flywheel GitHub Repository",
+      claudeDocs: "Claude Code Documentation",
+    },
+  },
+
+  guide: {
+    whatJustHappened: {
+      term: "What just happened?",
+      intro: "You've just finished setting up a professional-grade cloud development environment! Your VPS now has:",
+      shell: "A powerful shell (zsh): A modern command-line interface with auto-suggestions and beautiful colors",
+      aiAssistants: "AI coding assistants: Claude Code, Codex, and Gemini CLI are ready to help you write code",
+      devTools: "Development tools: Fast search (ripgrep), git interface (lazygit), and more",
+      languages: "Programming languages: JavaScript/TypeScript (bun), Python (uv), Rust, and Go",
+    },
+    tmuxNtm: {
+      term: "What is tmux and ntm?",
+      problem: "The problem: When you SSH into your VPS and then close your laptop or lose internet, your terminal session dies. Any running commands stop.",
+      solution: "The solution: tmux creates \"sessions\" that keep running on the VPS even when you disconnect. Your processes continue regardless of your connection state.",
+      ntmExplain: "NTM (Named Tmux Manager) makes tmux easier. Instead of cryptic commands, you get simple ones:",
+      commands: {
+        new: "ntm new myproject — Start a new session",
+        attach: "ntm attach myproject — Resume a session",
+        list: "ntm list — See all your sessions",
+      },
+      example: "This is why you can start a Claude task, close your laptop, go to bed, and come back to find it completed. The session keeps running on the VPS.",
+    },
+    understandingTools: {
+      title: "Understanding the Tools",
+      cc: {
+        title: "cc (Claude Code)",
+        content: "This is your primary AI coding assistant. Type cc in any project folder and Claude will help you write, debug, and improve your code. It can read your files, make changes, run tests, and more.",
+      },
+      ntm: {
+        title: "ntm (Named Tmux Manager)",
+        content: "This manages your terminal \"sessions\". When you run ntm new myproject, it creates a persistent workspace that stays running even if you disconnect. Perfect for long-running tasks!",
+      },
+      rg: {
+        title: "rg (ripgrep)",
+        content: "Ultra-fast code search. Type rg \"searchterm\" to find any text across all your files in milliseconds. Essential for navigating large codebases.",
+      },
+      lazygit: {
+        title: "lazygit",
+        content: "A visual interface for Git. Much easier than remembering git commands! Type lazygit in any git repository to stage, commit, push, and manage branches visually.",
+      },
+    },
+    firstSteps: {
+      title: "Your First Steps",
+      step1: {
+        title: "Run the onboarding tutorial",
+        content: "Type onboard and press Enter. This interactive tutorial teaches you the basics of your new environment.",
+      },
+      step2: {
+        title: "Create your first project session",
+        content: "Type ntm new hello-world to create a dedicated workspace for a test project.",
+      },
+      step3: {
+        title: "Try Claude Code",
+        content: "In your project folder, type cc and ask it to \"create a simple hello world script in Python\". Watch the magic happen!",
+      },
+    },
+    tip: "Bookmark this page! You can always come back here to review the basic commands. Once you're comfortable with these basics, continue to Part Two to learn the advanced multi-agent workflow that makes this setup truly powerful.",
+  },
+
+  advancedWorkflow: {
+    title: "Ready for the Advanced Workflow?",
+    content: "After completing the Learning Hub basics, dive into the powerful multi-agent workflow that lets you build production-ready software at incredible speed. You'll learn how to orchestrate multiple AI agents working in parallel, use the \"best of all worlds\" planning technique, and run agent swarms that build features while you sleep.",
+    startWithBasics: "Start with Basics",
+    skipToAdvanced: "Skip to Advanced",
+  },
+
+  finalMessage: {
+    title: "Happy coding!",
+    subtitle: "Your agentic coding flywheel is ready to spin.",
+  },
+};
+
 // Type definitions for wizard messages
 export type WizardMessages = {
   common: typeof commonMessages;
   rentVps: typeof rentVpsMessages;
   sshConnect: typeof sshConnectMessages;
   accounts: typeof accountsMessages;
+  verifyKeyConnection: typeof verifyKeyConnectionMessages;
+  reconnectUbuntu: typeof reconnectUbuntuMessages;
+  preflightCheck: typeof preflightCheckMessages;
+  runInstaller: typeof runInstallerMessages;
+  statusCheck: typeof statusCheckMessages;
+  launchOnboarding: typeof launchOnboardingMessages;
 };
