@@ -32,6 +32,7 @@ import { springs, fadeUp, staggerContainer, fadeScale } from "@/components/motio
 import { useScrollReveal, staggerDelay } from "@/lib/hooks/useScrollReveal";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import { useLocale, getHomeMessages } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 // Animated terminal lines
 const TERMINAL_LINES = [
@@ -974,6 +975,7 @@ export default function HomePage() {
             <BookOpen className="h-4 w-4" />
             {messages.nav.learn}
           </Link>
+          <LanguageSwitcher />
           <Button asChild size="sm" variant="outline" className="border-primary/30 hover:bg-primary/10">
             <Link href="/wizard/os-selection">
               {messages.nav.getStarted}
