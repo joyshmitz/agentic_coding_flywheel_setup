@@ -960,6 +960,7 @@ export default function HomePage() {
           <span className="font-mono text-lg font-bold tracking-tight">Agent Flywheel</span>
         </div>
         <div className="flex items-center gap-4">
+          <LanguageSwitcher />
           <a
             href="https://github.com/Dicklesworthstone/agentic_coding_flywheel_setup"
             target="_blank"
@@ -975,7 +976,6 @@ export default function HomePage() {
             <BookOpen className="h-4 w-4" />
             {messages.nav.learn}
           </Link>
-          <LanguageSwitcher />
           <Button asChild size="sm" variant="outline" className="border-primary/30 hover:bg-primary/10">
             <Link href="/wizard/os-selection">
               {messages.nav.getStarted}
