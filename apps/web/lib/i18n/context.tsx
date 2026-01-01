@@ -9,11 +9,13 @@ import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY, type Locale } from "./config";
 interface LocaleContextValue {
   locale: Locale;
   setLocale: (locale: Locale) => void;
+  mounted: boolean;
 }
 
 const LocaleContext = createContext<LocaleContextValue>({
   locale: DEFAULT_LOCALE,
   setLocale: () => {},
+  mounted: false,
 });
 
 interface LocaleProviderProps {
@@ -22,9 +24,11 @@ interface LocaleProviderProps {
 
 export function LocaleProvider({ children }: LocaleProviderProps) {
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
+  const [mounted, setMounted] = useState(false);
 
   // Load saved locale from localStorage on mount
   useEffect(() => {
+    setMounted(true);
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(LOCALE_STORAGE_KEY);
       if (saved && (saved === "en" || saved === "uk")) {
@@ -42,7 +46,7 @@ export function LocaleProvider({ children }: LocaleProviderProps) {
   };
 
   return (
-    <LocaleContext.Provider value={{ locale, setLocale }}>
+    <LocaleContext.Provider value={{ locale, setLocale, mounted }}>
       {children}
     </LocaleContext.Provider>
   );
