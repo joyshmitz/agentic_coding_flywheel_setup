@@ -213,3 +213,71 @@ export function getStatusCheckMessages(locale: Locale) {
 export function getLaunchOnboardingMessages(locale: Locale) {
   return locale === "uk" ? launchOnboardingMessagesUk : launchOnboardingMessages;
 }
+
+// Page messages
+import { learnMessages } from "../learn-messages";
+import { learnMessagesUk } from "../learn-messages.uk";
+import { flywheelMessages } from "../flywheel-messages";
+import { flywheelMessagesUk } from "../flywheel-messages.uk";
+import { troubleshootingMessages } from "../troubleshooting-messages";
+import { troubleshootingMessagesUk } from "../troubleshooting-messages.uk";
+import { workflowMessages } from "../workflow-messages";
+import { workflowMessagesUk } from "../workflow-messages.uk";
+import { commandsUiMessages } from "../commands-ui-messages";
+import { commandsUiMessagesUk } from "../commands-ui-messages.uk";
+import { glossaryUiMessages } from "../glossary-ui-messages";
+import { glossaryUiMessagesUk } from "../glossary-ui-messages.uk";
+import { securityMessages, type ChecklistItem } from "../security-messages";
+import { securityMessagesUk } from "../security-messages.uk";
+
+// Re-export type for consumers
+export type { ChecklistItem };
+
+/**
+ * Get learn page messages for the specified locale
+ */
+export function getLearnMessages(locale: Locale) {
+  return locale === "uk" ? learnMessagesUk : learnMessages;
+}
+
+/**
+ * Get flywheel page messages for the specified locale
+ */
+export function getFlywheelMessages(locale: Locale) {
+  return locale === "uk" ? flywheelMessagesUk : flywheelMessages;
+}
+
+/**
+ * Get troubleshooting page messages for the specified locale
+ */
+export function getTroubleshootingMessages(locale: Locale) {
+  return locale === "uk" ? troubleshootingMessagesUk : troubleshootingMessages;
+}
+
+/**
+ * Get workflow page messages for the specified locale
+ */
+export function getWorkflowMessages(locale: Locale) {
+  return locale === "uk" ? workflowMessagesUk : workflowMessages;
+}
+
+/**
+ * Get commands UI messages for the specified locale
+ */
+export function getCommandsUiMessages(locale: Locale) {
+  return locale === "uk" ? commandsUiMessagesUk : commandsUiMessages;
+}
+
+/**
+ * Get glossary UI messages for the specified locale
+ */
+export function getGlossaryUiMessages(locale: Locale) {
+  return locale === "uk" ? glossaryUiMessagesUk : glossaryUiMessages;
+}
+
+/**
+ * Get security page messages for the specified locale
+ */
+export function getSecurityMessages(locale: Locale) {
+  return locale === "uk" ? securityMessagesUk : securityMessages;
+}
