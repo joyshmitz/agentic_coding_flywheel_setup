@@ -26,31 +26,34 @@ import {
   FeatureGrid,
   FeatureCard,
 } from "./lesson-components";
+import { useLocale, getSshBasicsLessonMessages } from "@/lib/i18n";
 
 export function SSHBasicsLesson() {
+  const { locale } = useLocale();
+  const messages = getSshBasicsLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Understand how to stay connected to your VPS.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* What Is SSH */}
       <Section
-        title="What Is SSH?"
+        title={messages.whatIsSSH.title}
         icon={<Lock className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>SSH (Secure Shell)</Highlight> is how you&apos;re connected to
-          this VPS right now.
+          <Highlight>{messages.whatIsSSH.highlight}</Highlight> {messages.whatIsSSH.description}
         </Paragraph>
         <Paragraph>
-          It&apos;s an encrypted tunnel between your laptop and this server.
+          {messages.whatIsSSH.tunnelDescription}
         </Paragraph>
 
         {/* Visual Connection Diagram */}
         <div className="mt-8">
-          <ConnectionDiagram />
+          <ConnectionDiagram messages={messages} />
         </div>
       </Section>
 
@@ -58,52 +61,57 @@ export function SSHBasicsLesson() {
 
       {/* How You Got Here */}
       <Section
-        title="How You Got Here"
+        title={messages.howYouGotHere.title}
         icon={<Key className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          Your VPS connection happened in two stages:
+          {messages.howYouGotHere.description}
         </Paragraph>
 
         {/* Stage Cards */}
         <div className="mt-8 grid gap-6 md:grid-cols-2">
           <StageCard
-            number={1}
-            title="Password Login"
-            subtitle="During Setup"
-            description="When you first created your VPS, you connected as root with a password"
+            number={messages.howYouGotHere.stages.passwordLogin.number}
+            title={messages.howYouGotHere.stages.passwordLogin.title}
+            subtitle={messages.howYouGotHere.stages.passwordLogin.subtitle}
+            description={messages.howYouGotHere.stages.passwordLogin.description}
             code="ssh root@YOUR_SERVER_IP"
             gradient="from-amber-500/20 to-orange-500/20"
+            messages={messages}
           />
           <StageCard
-            number={2}
-            title="Key-Based Login"
-            subtitle="Now"
-            description="The installer copied your SSH key, so now you connect securely"
+            number={messages.howYouGotHere.stages.keyBasedLogin.number}
+            title={messages.howYouGotHere.stages.keyBasedLogin.title}
+            subtitle={messages.howYouGotHere.stages.keyBasedLogin.subtitle}
+            description={messages.howYouGotHere.stages.keyBasedLogin.description}
             code="ssh -i ~/.ssh/acfs_ed25519 ubuntu@YOUR_SERVER_IP"
             gradient="from-emerald-500/20 to-teal-500/20"
+            messages={messages}
           />
         </div>
 
         {/* Command Breakdown */}
         <div className="mt-8">
           <h4 className="text-lg font-semibold text-white mb-4">
-            Breaking down the command:
+            {messages.howYouGotHere.breakdownTitle}
           </h4>
           <div className="grid gap-3 sm:grid-cols-2">
-            <CommandPart label="ssh" description="The command" />
             <CommandPart
-              label="-i ~/.ssh/acfs_ed25519"
-              description="Your private key"
+              label={messages.howYouGotHere.commandParts.ssh.label}
+              description={messages.howYouGotHere.commandParts.ssh.description}
             />
             <CommandPart
-              label="ubuntu"
-              description="Your regular user (safer than root)"
+              label={messages.howYouGotHere.commandParts.privateKey.label}
+              description={messages.howYouGotHere.commandParts.privateKey.description}
             />
             <CommandPart
-              label="@YOUR_SERVER_IP"
-              description="The server address"
+              label={messages.howYouGotHere.commandParts.user.label}
+              description={messages.howYouGotHere.commandParts.user.description}
+            />
+            <CommandPart
+              label={messages.howYouGotHere.commandParts.serverAddress.label}
+              description={messages.howYouGotHere.commandParts.serverAddress.description}
             />
           </div>
         </div>
@@ -113,13 +121,12 @@ export function SSHBasicsLesson() {
 
       {/* If Connection Drops */}
       <Section
-        title="If Your Connection Drops"
+        title={messages.connectionDrops.title}
         icon={<RefreshCw className="h-5 w-5" />}
         delay={0.2}
       >
         <TipBox variant="info">
-          No worries! SSH connections drop sometimes. Just reconnect—your work
-          is safe in tmux (next lesson).
+          {messages.connectionDrops.tipBox.content}
         </TipBox>
       </Section>
 
@@ -127,26 +134,26 @@ export function SSHBasicsLesson() {
 
       {/* SSH Keys vs Passwords */}
       <Section
-        title="SSH Keys vs Passwords"
+        title={messages.sshKeysVsPasswords.title}
         icon={<Shield className="h-5 w-5" />}
         delay={0.25}
       >
         <Paragraph>
-          You&apos;re now using <Highlight>key-based authentication</Highlight>:
+          {messages.sshKeysVsPasswords.description}
         </Paragraph>
 
         <div className="mt-6">
           <FeatureGrid>
             <FeatureCard
               icon={<Key className="h-5 w-5" />}
-              title="Private Key"
-              description="Stays on your laptop at ~/.ssh/acfs_ed25519"
+              title={messages.sshKeysVsPasswords.keyTypes.privateKey.title}
+              description={messages.sshKeysVsPasswords.keyTypes.privateKey.description}
               gradient="from-violet-500/20 to-purple-500/20"
             />
             <FeatureCard
               icon={<Lock className="h-5 w-5" />}
-              title="Public Key"
-              description="Lives on the VPS at ~/.ssh/authorized_keys"
+              title={messages.sshKeysVsPasswords.keyTypes.publicKey.title}
+              description={messages.sshKeysVsPasswords.keyTypes.publicKey.description}
               gradient="from-sky-500/20 to-blue-500/20"
             />
           </FeatureGrid>
@@ -154,8 +161,7 @@ export function SSHBasicsLesson() {
 
         <div className="mt-6">
           <Paragraph>
-            This is more secure than passwords and lets you connect without
-            typing anything.
+            {messages.sshKeysVsPasswords.securityNote}
           </Paragraph>
         </div>
       </Section>
@@ -164,12 +170,12 @@ export function SSHBasicsLesson() {
 
       {/* Keeping Connections Alive */}
       <Section
-        title="Keeping Connections Alive"
+        title={messages.keepingConnectionsAlive.title}
         icon={<Wifi className="h-5 w-5" />}
         delay={0.3}
       >
         <Paragraph>
-          Add this to your laptop&apos;s <InlineCode>~/.ssh/config</InlineCode>:
+          {messages.keepingConnectionsAlive.description}
         </Paragraph>
 
         <div className="mt-6">
@@ -182,20 +188,19 @@ export function SSHBasicsLesson() {
           />
         </div>
 
-        <Paragraph>This sends keepalive packets every 60 seconds.</Paragraph>
+        <Paragraph>{messages.keepingConnectionsAlive.keepaliveNote}</Paragraph>
       </Section>
 
       <Divider />
 
       {/* Quick Connect Alias */}
       <Section
-        title="Quick Connect Alias"
+        title={messages.quickConnectAlias.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.35}
       >
         <Paragraph>
-          On your laptop, add to <InlineCode>~/.zshrc</InlineCode> or{" "}
-          <InlineCode>~/.bashrc</InlineCode>:
+          {messages.quickConnectAlias.description}
         </Paragraph>
 
         <div className="mt-6">
@@ -206,7 +211,7 @@ export function SSHBasicsLesson() {
         </div>
 
         <Paragraph>
-          Then just type <InlineCode>vps</InlineCode> to connect!
+          {messages.quickConnectAlias.usage}
         </Paragraph>
       </Section>
 
@@ -214,23 +219,23 @@ export function SSHBasicsLesson() {
 
       {/* Verify Section */}
       <Section
-        title="Verify Your Understanding"
+        title={messages.verifyUnderstanding.title}
         icon={<HelpCircle className="h-5 w-5" />}
         delay={0.4}
       >
-        <QuizCards />
+        <QuizCards messages={messages} />
       </Section>
 
       <Divider />
 
       {/* Practice Commands */}
       <Section
-        title="Practice This Now"
+        title={messages.practiceNow.title}
         icon={<CheckCircle2 className="h-5 w-5" />}
         delay={0.45}
       >
         <Paragraph>
-          Try these commands to confirm your SSH setup is working:
+          {messages.practiceNow.description}
         </Paragraph>
 
         <div className="mt-6">
@@ -249,8 +254,7 @@ $ cat ~/.ssh/authorized_keys`}
 
         <div className="mt-6">
           <TipBox variant="tip">
-            When you see your public key (starts with{" "}
-            <InlineCode>ssh-ed25519</InlineCode>), you know the setup worked!
+            {messages.practiceNow.tipBox.content}
           </TipBox>
         </div>
       </Section>
@@ -261,7 +265,7 @@ $ cat ~/.ssh/authorized_keys`}
 // =============================================================================
 // CONNECTION DIAGRAM - Visual SSH connection
 // =============================================================================
-function ConnectionDiagram() {
+function ConnectionDiagram({ messages }: { messages: any }) {
   return (
     <div className="relative p-6 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl">
       <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">

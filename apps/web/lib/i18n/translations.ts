@@ -19,6 +19,53 @@ import { COMMANDS_UK, COMMAND_CATEGORIES_UK } from "../commands.uk";
 import { jargonDictionary, type JargonTerm } from "../jargon";
 import { jargonDictionaryUk } from "../jargon.uk";
 
+// Beads Lesson
+import { beadsLessonMessages } from "../lessons/beads.en";
+import { beadsLessonMessagesUk } from "../lessons/beads.uk";
+
+// Keeping Updated Lesson
+import { keepingUpdatedLessonMessages } from "../lessons/keeping-updated.en";
+import { keepingUpdatedLessonMessagesUk } from "../lessons/keeping-updated.uk";
+
+// Core Lesson Messages
+import { welcomeLessonMessages } from "../lessons/welcome-messages";
+import { welcomeLessonMessagesUk } from "../lessons/welcome-messages.uk";
+import { linuxBasicsLessonMessages } from "../lessons/linux-basics-messages";
+import { linuxBasicsLessonMessagesUk } from "../lessons/linux-basics-messages.uk";
+import { tmuxBasicsLessonMessages } from "../lessons/tmux-basics-messages";
+import { tmuxBasicsLessonMessagesUk } from "../lessons/tmux-basics-messages.uk";
+import { sshBasicsLessonMessages } from "../lessons/ssh-basics-messages";
+import { sshBasicsLessonMessagesUk } from "../lessons/ssh-basics-messages.uk";
+import { flywheelLoopMessages } from "../lessons/flywheel-loop";
+import { flywheelLoopMessagesUk } from "../lessons/flywheel-loop.uk";
+import { safetyToolsLessonMessages } from "../lessons/safety-tools";
+import { safetyToolsLessonMessagesUk } from "../lessons/safety-tools.uk";
+import { cmLessonMessages } from "../lessons/cm";
+import { cmLessonMessagesUk } from "../lessons/cm.uk";
+
+// Wave 2 Tools Lessons
+import { ntmPaletteLessonMessages } from "../lessons/ntm-palette-messages";
+import { ntmPaletteLessonMessagesUk } from "../lessons/ntm-palette-messages.uk";
+import { ntmCoreLessonMessages } from "../lessons/ntm-core-messages";
+import { ntmCoreLessonMessagesUk } from "../lessons/ntm-core-messages.uk";
+import { agentsLoginLessonMessages } from "../lessons/agents-login-messages";
+import { agentsLoginLessonMessagesUk } from "../lessons/agents-login-messages.uk";
+import { cassLessonMessages } from "../lessons/cass-messages";
+import { cassLessonMessagesUk } from "../lessons/cass-messages.uk";
+
+// Wave 3 Development Lessons
+import { ubsLessonMessages } from "../lessons/ubs-messages";
+import { ubsLessonMessagesUk } from "../lessons/ubs-messages.uk";
+import { githubCliLessonMessages } from "../lessons/github-cli-messages";
+import { githubCliLessonMessagesUk } from "../lessons/github-cli-messages.uk";
+import { gitBasicsLessonMessages } from "../lessons/git-basics-messages";
+import { gitBasicsLessonMessagesUk } from "../lessons/git-basics-messages.uk";
+
+// Wave 6 Case Study Lessons
+import { slbCaseStudyLessonMessagesUk } from "../lessons/slb-case-study-messages.uk";
+import { promptEngineeringLessonMessagesUk } from "../lessons/prompt-engineering-messages.uk";
+import { realWorldCaseStudyLessonMessagesUk } from "../lessons/real-world-case-study-messages.uk";
+
 /**
  * Get lessons for the specified locale
  */
@@ -289,4 +336,137 @@ export function getSecurityMessages(locale: Locale) {
  */
 export function getHomeMessages(locale: Locale) {
   return locale === "uk" ? homeMessagesUk : homeMessages;
+}
+
+/**
+ * Get beads lesson messages for the specified locale
+ */
+export function getBeadsLessonMessages(locale: Locale) {
+  return locale === "uk" ? beadsLessonMessagesUk : beadsLessonMessages;
+}
+
+/**
+ * Get keeping updated lesson messages for the specified locale
+ */
+export function getKeepingUpdatedLessonMessages(locale: Locale) {
+  return locale === "uk" ? keepingUpdatedLessonMessagesUk : keepingUpdatedLessonMessages;
+}
+
+/**
+ * Get welcome lesson messages for the specified locale
+ */
+export function getWelcomeLessonMessages(locale: Locale) {
+  return locale === "uk" ? welcomeLessonMessagesUk : welcomeLessonMessages;
+}
+
+/**
+ * Get linux-basics lesson messages for the specified locale
+ */
+export function getLinuxBasicsLessonMessages(locale: Locale) {
+  return locale === "uk" ? linuxBasicsLessonMessagesUk : linuxBasicsLessonMessages;
+}
+
+/**
+ * Get tmux-basics lesson messages for the specified locale
+ */
+export function getTmuxBasicsLessonMessages(locale: Locale) {
+  return locale === "uk" ? tmuxBasicsLessonMessagesUk : tmuxBasicsLessonMessages;
+}
+
+/**
+ * Get ssh-basics lesson messages for the specified locale
+ */
+export function getSshBasicsLessonMessages(locale: Locale) {
+  return locale === "uk" ? sshBasicsLessonMessagesUk : sshBasicsLessonMessages;
+}
+
+/**
+ * Get safety-tools lesson messages for the specified locale
+ */
+export function getSafetyToolsLessonMessages(locale: Locale) {
+  return locale === "uk" ? safetyToolsLessonMessagesUk : safetyToolsLessonMessages;
+}
+
+/**
+ * Get flywheel-loop lesson messages for the specified locale
+ */
+export function getFlywheelLoopMessages(locale: Locale) {
+  return locale === "uk" ? flywheelLoopMessagesUk : flywheelLoopMessages;
+}
+
+/**
+ * Get CM lesson messages for the specified locale
+ */
+export function getCmLessonMessages(locale: Locale) {
+  return locale === "uk" ? cmLessonMessagesUk : cmLessonMessages;
+}
+
+/**
+ * Get NTM Palette lesson messages for the specified locale
+ */
+export function getNtmPaletteLessonMessages(locale: Locale) {
+  return locale === "uk" ? ntmPaletteLessonMessagesUk : ntmPaletteLessonMessages;
+}
+
+/**
+ * Get NTM Core lesson messages for the specified locale
+ */
+export function getNtmCoreLessonMessages(locale: Locale) {
+  return locale === "uk" ? ntmCoreLessonMessagesUk : ntmCoreLessonMessages;
+}
+
+/**
+ * Get Agents Login lesson messages for the specified locale
+ */
+export function getAgentsLoginLessonMessages(locale: Locale) {
+  return locale === "uk" ? agentsLoginLessonMessagesUk : agentsLoginLessonMessages;
+}
+
+/**
+ * Get CASS lesson messages for the specified locale
+ */
+export function getCassLessonMessages(locale: Locale) {
+  return locale === "uk" ? cassLessonMessagesUk : cassLessonMessages;
+}
+
+/**
+ * Get UBS lesson messages for the specified locale
+ */
+export function getUbsLessonMessages(locale: Locale) {
+  return locale === "uk" ? ubsLessonMessagesUk : ubsLessonMessages;
+}
+
+/**
+ * Get GitHub CLI lesson messages for the specified locale
+ */
+export function getGithubCliLessonMessages(locale: Locale) {
+  return locale === "uk" ? githubCliLessonMessagesUk : githubCliLessonMessages;
+}
+
+/**
+ * Get Git Basics lesson messages for the specified locale
+ */
+export function getGitBasicsLessonMessages(locale: Locale) {
+  return locale === "uk" ? gitBasicsLessonMessagesUk : gitBasicsLessonMessages;
+}
+
+/**
+ * Get SLB Case Study lesson messages for the specified locale
+ */
+export function getSlbCaseStudyLessonMessages(locale: Locale) {
+  return slbCaseStudyLessonMessagesUk;
+}
+
+/**
+ * Get Prompt Engineering lesson messages for the specified locale
+ */
+export function getPromptEngineeringLessonMessages(locale: Locale) {
+  return promptEngineeringLessonMessagesUk;
+}
+
+/**
+ * Get Real World Case Study lesson messages for the specified locale
+ */
+export function getRealWorldCaseStudyLessonMessages(locale: Locale) {
+  return realWorldCaseStudyLessonMessagesUk;
 }

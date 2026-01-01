@@ -27,54 +27,55 @@ import {
   FeatureCard,
   FeatureGrid,
 } from "./lesson-components";
+import { useLocale, getCmLessonMessages } from "@/lib/i18n";
 
 export function CmLesson() {
+  const { locale } = useLocale();
+  const messages = getCmLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Build procedural memory for agents that improves over time.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* What Is CM */}
       <Section
-        title="What Is CM?"
+        title={messages.whatIsCm.title}
         icon={<Brain className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>CM (CASS Memory System)</Highlight> gives AI agents
-          effective memory by extracting lessons from past sessions and making
-          them retrievable for future work.
+          <Highlight>{messages.whatIsCm.highlight}</Highlight> {messages.whatIsCm.description}
         </Paragraph>
         <Paragraph>
-          Think of it like how humans learn: you encounter a problem, solve it,
-          and remember the solution. CM does this for your agents automatically.
+          {messages.whatIsCm.humanLearning}
         </Paragraph>
 
         <div className="mt-8">
           <FeatureGrid>
             <FeatureCard
               icon={<BookOpen className="h-5 w-5" />}
-              title="Lesson Extraction"
-              description="Automatically extract rules from past sessions"
+              title={messages.whatIsCm.features.lessonExtraction.title}
+              description={messages.whatIsCm.features.lessonExtraction.description}
               gradient="from-primary/20 to-violet-500/20"
             />
             <FeatureCard
               icon={<Target className="h-5 w-5" />}
-              title="Context Retrieval"
-              description="Get relevant rules before starting tasks"
+              title={messages.whatIsCm.features.contextRetrieval.title}
+              description={messages.whatIsCm.features.contextRetrieval.description}
               gradient="from-emerald-500/20 to-teal-500/20"
             />
             <FeatureCard
               icon={<AlertCircle className="h-5 w-5" />}
-              title="Anti-Patterns"
-              description="Learn what NOT to do from past mistakes"
+              title={messages.whatIsCm.features.antiPatterns.title}
+              description={messages.whatIsCm.features.antiPatterns.description}
               gradient="from-red-500/20 to-rose-500/20"
             />
             <FeatureCard
               icon={<RefreshCw className="h-5 w-5" />}
-              title="Continuous Learning"
-              description="Memory improves with every session"
+              title={messages.whatIsCm.features.continuousLearning.title}
+              description={messages.whatIsCm.features.continuousLearning.description}
               gradient="from-amber-500/20 to-orange-500/20"
             />
           </FeatureGrid>
@@ -85,16 +86,15 @@ export function CmLesson() {
 
       {/* How It Works */}
       <Section
-        title="How It Works"
+        title={messages.howItWorks.title}
         icon={<Sparkles className="h-5 w-5" />}
         delay={0.15}
       >
-        <MemoryDiagram />
+        <MemoryDiagram messages={messages.howItWorks.memoryDiagram} />
 
         <div className="mt-8">
           <TipBox variant="info">
-            CM builds a &quot;playbook&quot; of rules over time. The more
-            sessions you analyze, the smarter your agents become!
+            {messages.howItWorks.tipBox}
           </TipBox>
         </div>
       </Section>
@@ -103,17 +103,16 @@ export function CmLesson() {
 
       {/* The Onboarding Flow */}
       <Section
-        title="Onboarding: Building Your Playbook"
+        title={messages.onboarding.title}
         icon={<BookOpen className="h-5 w-5" />}
         delay={0.2}
       >
         <Paragraph>
-          The <code>cm onboard</code> command guides you through analyzing past
-          sessions and extracting valuable rules:
+          {messages.onboarding.intro}
         </Paragraph>
 
         <div className="mt-6">
-          <OnboardingSteps />
+          <OnboardingSteps steps={messages.onboarding.steps} />
         </div>
       </Section>
 
@@ -121,37 +120,12 @@ export function CmLesson() {
 
       {/* Essential Commands */}
       <Section
-        title="Essential Commands"
+        title={messages.essentialCommands.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.25}
       >
         <CommandList
-          commands={[
-            {
-              command: "cm onboard status",
-              description: "Check playbook status and recommendations",
-            },
-            {
-              command: "cm onboard sample --fill-gaps",
-              description: "Get sessions to analyze (filtered by gaps)",
-            },
-            {
-              command: "cm onboard read /path/session.jsonl --template",
-              description: "Read a session with rich context",
-            },
-            {
-              command: 'cm playbook add "rule" --category "debugging"',
-              description: "Add an extracted rule",
-            },
-            {
-              command: "cm onboard mark-done /path/session.jsonl",
-              description: "Mark session as processed",
-            },
-            {
-              command: 'cm context "task description" --json',
-              description: "Get relevant context for a task",
-            },
-          ]}
+          commands={messages.essentialCommands.commands}
         />
       </Section>
 
@@ -159,13 +133,12 @@ export function CmLesson() {
 
       {/* Using Context */}
       <Section
-        title="Using Context Before Tasks"
+        title={messages.usingContext.title}
         icon={<Target className="h-5 w-5" />}
         delay={0.3}
       >
         <Paragraph>
-          Before starting complex tasks, retrieve relevant context from your
-          playbook:
+          {messages.usingContext.intro}
         </Paragraph>
 
         <div className="mt-6">
@@ -209,8 +182,7 @@ export function CmLesson() {
 
         <div className="mt-6">
           <TipBox variant="tip">
-            Reference rule IDs in your work. For example: &quot;Following
-            b-8f3a2c, using bcrypt with cost 12...&quot;
+            {messages.usingContext.tipBox}
           </TipBox>
         </div>
       </Section>
@@ -219,31 +191,19 @@ export function CmLesson() {
 
       {/* The Protocol */}
       <Section
-        title="The Memory Protocol"
+        title={messages.memoryProtocol.title}
         icon={<Zap className="h-5 w-5" />}
         delay={0.35}
       >
         <div className="space-y-6">
-          <ProtocolStep
-            number={1}
-            title="START"
-            description='Run cm context "<task>" --json before non-trivial work'
-          />
-          <ProtocolStep
-            number={2}
-            title="WORK"
-            description='Reference rule IDs when following them (e.g., "Following b-8f3a2c...")'
-          />
-          <ProtocolStep
-            number={3}
-            title="FEEDBACK"
-            description="Leave inline comments when rules help or hurt"
-          />
-          <ProtocolStep
-            number={4}
-            title="END"
-            description="Just finish your work. Learning happens automatically."
-          />
+          {messages.memoryProtocol.steps.map((step, index) => (
+            <ProtocolStep
+              key={index}
+              number={step.number}
+              title={step.title}
+              description={step.description}
+            />
+          ))}
         </div>
 
         <div className="mt-6">
@@ -260,41 +220,19 @@ export function CmLesson() {
 
       {/* Rule Categories */}
       <Section
-        title="Rule Categories"
+        title={messages.ruleCategories.title}
         icon={<FileText className="h-5 w-5" />}
         delay={0.4}
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <CategoryCard
-            name="debugging"
-            description="Problem-solving techniques"
-            color="from-red-500/20 to-rose-500/20"
-          />
-          <CategoryCard
-            name="security"
-            description="Security best practices"
-            color="from-amber-500/20 to-orange-500/20"
-          />
-          <CategoryCard
-            name="performance"
-            description="Optimization patterns"
-            color="from-emerald-500/20 to-teal-500/20"
-          />
-          <CategoryCard
-            name="architecture"
-            description="Design decisions"
-            color="from-primary/20 to-violet-500/20"
-          />
-          <CategoryCard
-            name="testing"
-            description="Test strategies"
-            color="from-blue-500/20 to-indigo-500/20"
-          />
-          <CategoryCard
-            name="tooling"
-            description="Tool-specific knowledge"
-            color="from-pink-500/20 to-rose-500/20"
-          />
+          {messages.ruleCategories.categories.map((category, index) => (
+            <CategoryCard
+              key={index}
+              name={category.name}
+              description={category.description}
+              color={category.color}
+            />
+          ))}
         </div>
       </Section>
 
@@ -302,31 +240,18 @@ export function CmLesson() {
 
       {/* Best Practices */}
       <Section
-        title="Best Practices"
+        title={messages.bestPractices.title}
         icon={<CheckCircle className="h-5 w-5" />}
         delay={0.45}
       >
         <div className="space-y-4">
-          <BestPractice
-            title="Run cm context before complex tasks"
-            description="Don't reinvent the wheel—check what you've learned"
-          />
-          <BestPractice
-            title="Extract specific, actionable rules"
-            description="'Use bcrypt cost ≥12' is better than 'be secure'"
-          />
-          <BestPractice
-            title="Include anti-patterns"
-            description="What NOT to do is as valuable as what to do"
-          />
-          <BestPractice
-            title="Categorize rules properly"
-            description="Makes retrieval more accurate"
-          />
-          <BestPractice
-            title="Provide feedback on rules"
-            description="Helps the system learn which rules are actually useful"
-          />
+          {messages.bestPractices.practices.map((practice, index) => (
+            <BestPractice
+              key={index}
+              title={practice.title}
+              description={practice.description}
+            />
+          ))}
         </div>
       </Section>
 
@@ -334,7 +259,7 @@ export function CmLesson() {
 
       {/* Try It Now */}
       <Section
-        title="Try It Now"
+        title={messages.tryItNow.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.5}
       >
@@ -357,7 +282,7 @@ $ cm onboard sample --fill-gaps`}
 // =============================================================================
 // MEMORY DIAGRAM
 // =============================================================================
-function MemoryDiagram() {
+function MemoryDiagram({ messages }: { messages: any }) {
   return (
     <div className="relative p-8 rounded-3xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
       {/* Background glow effects */}
@@ -375,8 +300,8 @@ function MemoryDiagram() {
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/30 shadow-lg shadow-blue-500/10 group-hover:shadow-xl group-hover:shadow-blue-500/20 transition-all duration-300">
             <Database className="h-10 w-10 text-blue-400" />
           </div>
-          <span className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">Past Sessions</span>
-          <span className="text-xs text-white/40">Raw conversations</span>
+          <span className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">{messages.pastSessions.label}</span>
+          <span className="text-xs text-white/40">{messages.pastSessions.sublabel}</span>
         </motion.div>
 
         {/* Arrow */}
@@ -408,8 +333,8 @@ function MemoryDiagram() {
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-violet-500/20 border border-primary/30 shadow-lg shadow-primary/10 group-hover:shadow-xl group-hover:shadow-primary/20 transition-all duration-300">
             <Brain className="h-10 w-10 text-primary" />
           </div>
-          <span className="text-sm font-semibold text-white group-hover:text-primary transition-colors">CM Analysis</span>
-          <span className="text-xs text-white/40">Extract lessons</span>
+          <span className="text-sm font-semibold text-white group-hover:text-primary transition-colors">{messages.cmAnalysis.label}</span>
+          <span className="text-xs text-white/40">{messages.cmAnalysis.sublabel}</span>
         </motion.div>
 
         {/* Arrow */}
@@ -441,8 +366,8 @@ function MemoryDiagram() {
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 shadow-lg shadow-emerald-500/10 group-hover:shadow-xl group-hover:shadow-emerald-500/20 transition-all duration-300">
             <BookOpen className="h-10 w-10 text-emerald-400" />
           </div>
-          <span className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">Playbook</span>
-          <span className="text-xs text-white/40">Actionable rules</span>
+          <span className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">{messages.playbook.label}</span>
+          <span className="text-xs text-white/40">{messages.playbook.sublabel}</span>
         </motion.div>
       </div>
     </div>
@@ -452,29 +377,7 @@ function MemoryDiagram() {
 // =============================================================================
 // ONBOARDING STEPS
 // =============================================================================
-function OnboardingSteps() {
-  const steps = [
-    {
-      cmd: "cm onboard status",
-      desc: "Check status and see recommendations",
-    },
-    {
-      cmd: "cm onboard sample --fill-gaps",
-      desc: "Get sessions filtered by playbook gaps",
-    },
-    {
-      cmd: "cm onboard read /path/session.jsonl --template",
-      desc: "Read session with rich context",
-    },
-    {
-      cmd: 'cm playbook add "rule" --category "category"',
-      desc: "Add extracted rules",
-    },
-    {
-      cmd: "cm onboard mark-done /path/session.jsonl",
-      desc: "Mark session as processed",
-    },
-  ];
+function OnboardingSteps({ steps }: { steps: Array<{ cmd: string; desc: string }> }) {
 
   return (
     <div className="space-y-4">

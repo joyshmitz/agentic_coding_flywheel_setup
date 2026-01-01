@@ -24,34 +24,38 @@ import {
   InlineCode,
   BulletList,
 } from "./lesson-components";
+import { useLocale, getNtmPaletteLessonMessages } from "@/lib/i18n";
 
 export function NtmPaletteLesson() {
+  const { locale } = useLocale();
+  const messages = getNtmPaletteLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Discover the pre-built prompts that supercharge your agents.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* What Is The Command Palette */}
       <Section
-        title="What Is The Command Palette?"
+        title={messages.whatIsCommandPalette.title}
         icon={<Palette className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          NTM ships with a <Highlight>command palette</Highlight> - a collection
-          of battle-tested prompts for common development tasks.
+          {messages.whatIsCommandPalette.description1.split(messages.whatIsCommandPalette.highlight1)[0]}
+          <Highlight>{messages.whatIsCommandPalette.highlight1}</Highlight>
+          {messages.whatIsCommandPalette.description1.split(messages.whatIsCommandPalette.highlight1)[1]}
         </Paragraph>
         <Paragraph>
-          These aren&apos;t just prompts. They&apos;re carefully crafted
-          instructions that get the best results from coding agents.
+          {messages.whatIsCommandPalette.description2}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock code="ntm palette" />
         </div>
         <Paragraph>
-          This opens an interactive browser of all available prompts.
+          {messages.whatIsCommandPalette.browserDescription}
         </Paragraph>
       </Section>
 
@@ -59,65 +63,45 @@ export function NtmPaletteLesson() {
 
       {/* Palette Categories */}
       <Section
-        title="Palette Categories"
+        title={messages.paletteCategories.title}
         icon={<Layers className="h-5 w-5" />}
         delay={0.15}
       >
-        <Paragraph>The prompts are organized into categories:</Paragraph>
+        <Paragraph>{messages.paletteCategories.intro}</Paragraph>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <CategoryCard
             icon={<Layers className="h-5 w-5" />}
-            title="Architecture & Design"
-            items={[
-              "System design analysis",
-              "Architecture review",
-              "API design patterns",
-            ]}
+            title={messages.paletteCategories.categories.architectureDesign.title}
+            items={messages.paletteCategories.categories.architectureDesign.items}
             gradient="from-violet-500/20 to-purple-500/20"
             delay={0.1}
           />
           <CategoryCard
             icon={<Code2 className="h-5 w-5" />}
-            title="Code Quality"
-            items={[
-              "Code review prompts",
-              "Refactoring suggestions",
-              "Bug hunting strategies",
-            ]}
+            title={messages.paletteCategories.categories.codeQuality.title}
+            items={messages.paletteCategories.categories.codeQuality.items}
             gradient="from-sky-500/20 to-blue-500/20"
             delay={0.2}
           />
           <CategoryCard
             icon={<TestTube className="h-5 w-5" />}
-            title="Testing"
-            items={[
-              "Test generation",
-              "Coverage analysis",
-              "Edge case discovery",
-            ]}
+            title={messages.paletteCategories.categories.testing.title}
+            items={messages.paletteCategories.categories.testing.items}
             gradient="from-emerald-500/20 to-teal-500/20"
             delay={0.3}
           />
           <CategoryCard
             icon={<FileText className="h-5 w-5" />}
-            title="Documentation"
-            items={[
-              "README generation",
-              "API documentation",
-              "Inline comment review",
-            ]}
+            title={messages.paletteCategories.categories.documentation.title}
+            items={messages.paletteCategories.categories.documentation.items}
             gradient="from-amber-500/20 to-orange-500/20"
             delay={0.4}
           />
           <CategoryCard
             icon={<Bug className="h-5 w-5" />}
-            title="Debugging"
-            items={[
-              "Error analysis",
-              "Performance profiling",
-              "Memory leak detection",
-            ]}
+            title={messages.paletteCategories.categories.debugging.title}
+            items={messages.paletteCategories.categories.debugging.items}
             gradient="from-red-500/20 to-rose-500/20"
             delay={0.5}
           />

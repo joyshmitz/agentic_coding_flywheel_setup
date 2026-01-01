@@ -17,6 +17,7 @@ import {
   ArrowRight,
   CheckCircle2,
 } from "lucide-react";
+import { useLocale, getFlywheelLoopMessages } from "@/lib/i18n";
 import {
   Section,
   Paragraph,
@@ -28,30 +29,33 @@ import {
 } from "./lesson-components";
 
 export function FlywheelLoopLesson() {
+  const { locale } = useLocale();
+  const messages = getFlywheelLoopMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Understand how all the tools work together.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* The ACFS Flywheel */}
       <Section
         {...{
-          title: "The ACFS Flywheel",
+          title: messages.flywheelSection.title,
           icon: <RefreshCw className="h-5 w-5" />,
           delay: 0.1,
         }}
       >
         <Paragraph>
-          This isn&apos;t just a collection of tools. It&apos;s a{" "}
-          <Highlight>compounding loop</Highlight>:
+          {messages.flywheelSection.intro}{" "}
+          <Highlight>{messages.flywheelSection.highlight}</Highlight>:
         </Paragraph>
 
         <div className="mt-8">
-          <FlywheelDiagram />
+          <FlywheelDiagram messages={messages} />
         </div>
 
-        <Paragraph>Each cycle makes the next one better.</Paragraph>
+        <Paragraph>{messages.flywheelSection.cycleEffect}</Paragraph>
       </Section>
 
       <Divider />
@@ -59,7 +63,7 @@ export function FlywheelLoopLesson() {
       {/* The Eight Tools */}
       <Section
         {...{
-          title: "The Eight Tools (And When To Use Them)",
+          title: messages.toolsSection.title,
           icon: <Zap className="h-5 w-5" />,
           delay: 0.15,
         }}
@@ -68,135 +72,109 @@ export function FlywheelLoopLesson() {
           <ToolCard
             {...{
               number: 1,
-              name: "NTM",
-              subtitle: "Your Cockpit",
-              command: "ntm",
+              name: messages.toolsSection.tools.ntm.name,
+              subtitle: messages.toolsSection.tools.ntm.subtitle,
+              command: messages.toolsSection.tools.ntm.command,
               icon: <Cpu className="h-5 w-5" />,
               gradient: "from-violet-500/20 to-purple-500/20",
-              useCases: [
-                "Spawn agent sessions",
-                "Send prompts to multiple agents",
-                "Orchestrate parallel work",
-              ],
+              useCases: messages.toolsSection.tools.ntm.useCases,
+              useCasesLabel: messages.toolsSection.useCasesLabel,
             }}
           />
 
           <ToolCard
             {...{
               number: 2,
-              name: "MCP Agent Mail",
-              subtitle: "Coordination",
-              command: "am",
+              name: messages.toolsSection.tools.agentMail.name,
+              subtitle: messages.toolsSection.tools.agentMail.subtitle,
+              command: messages.toolsSection.tools.agentMail.command,
               icon: <Mail className="h-5 w-5" />,
               gradient: "from-sky-500/20 to-blue-500/20",
-              useCases: [
-                "Multiple agents need to share context",
-                'You want agents to "talk" to each other',
-                "Coordinating complex multi-agent workflows",
-              ],
+              useCases: messages.toolsSection.tools.agentMail.useCases,
+              useCasesLabel: messages.toolsSection.useCasesLabel,
             }}
           />
 
           <ToolCard
             {...{
               number: 3,
-              name: "UBS",
-              subtitle: "Quality Guardrails",
-              command: "ubs",
+              name: messages.toolsSection.tools.ubs.name,
+              subtitle: messages.toolsSection.tools.ubs.subtitle,
+              command: messages.toolsSection.tools.ubs.command,
               icon: <Shield className="h-5 w-5" />,
               gradient: "from-emerald-500/20 to-teal-500/20",
-              useCases: [
-                "Scan code for bugs before committing",
-                "Run comprehensive static analysis",
-                "Catch issues early",
-              ],
-              example: "ubs .  # Scan current directory",
+              useCases: messages.toolsSection.tools.ubs.useCases,
+              example: messages.toolsSection.tools.ubs.example,
+              useCasesLabel: messages.toolsSection.useCasesLabel,
             }}
           />
 
           <ToolCard
             {...{
               number: 4,
-              name: "CASS",
-              subtitle: "Session Search",
-              command: "cass",
+              name: messages.toolsSection.tools.cass.name,
+              subtitle: messages.toolsSection.tools.cass.subtitle,
+              command: messages.toolsSection.tools.cass.command,
               icon: <Search className="h-5 w-5" />,
               gradient: "from-amber-500/20 to-orange-500/20",
-              useCases: [
-                "Search across all agent session history",
-                "Find previous solutions",
-                "Review what agents have done",
-              ],
-              example: 'cass search "authentication error" --robot --limit 5',
+              useCases: messages.toolsSection.tools.cass.useCases,
+              example: messages.toolsSection.tools.cass.example,
+              useCasesLabel: messages.toolsSection.useCasesLabel,
             }}
           />
 
           <ToolCard
             {...{
               number: 5,
-              name: "CASS Memory (CM)",
-              subtitle: "Procedural Memory",
-              command: "cm",
+              name: messages.toolsSection.tools.cassMemory.name,
+              subtitle: messages.toolsSection.tools.cassMemory.subtitle,
+              command: messages.toolsSection.tools.cassMemory.command,
               icon: <Brain className="h-5 w-5" />,
               gradient: "from-rose-500/20 to-pink-500/20",
-              useCases: [
-                "Build persistent agent memory",
-                "Distill learnings from sessions",
-                "Give agents context from past work",
-              ],
-              example: `cm context "Building an API"  # Get relevant memories
-cm reflect                     # Update procedural memory`,
+              useCases: messages.toolsSection.tools.cassMemory.useCases,
+              example: messages.toolsSection.tools.cassMemory.example,
+              useCasesLabel: messages.toolsSection.useCasesLabel,
             }}
           />
 
           <ToolCard
             {...{
               number: 6,
-              name: "Beads Viewer",
-              subtitle: "Task Management",
-              command: "bv",
+              name: messages.toolsSection.tools.beadsViewer.name,
+              subtitle: messages.toolsSection.tools.beadsViewer.subtitle,
+              command: messages.toolsSection.tools.beadsViewer.command,
               icon: <LayoutDashboard className="h-5 w-5" />,
               gradient: "from-indigo-500/20 to-violet-500/20",
-              useCases: [
-                "Track tasks and issues",
-                "Kanban view of work",
-                "Keep agents focused on goals",
-              ],
-              example: "bv --robot-triage  # Deterministic triage output",
+              useCases: messages.toolsSection.tools.beadsViewer.useCases,
+              example: messages.toolsSection.tools.beadsViewer.example,
+              useCasesLabel: messages.toolsSection.useCasesLabel,
             }}
           />
 
           <ToolCard
             {...{
               number: 7,
-              name: "CAAM",
-              subtitle: "Account Switching",
-              command: "caam",
+              name: messages.toolsSection.tools.caam.name,
+              subtitle: messages.toolsSection.tools.caam.subtitle,
+              command: messages.toolsSection.tools.caam.command,
               icon: <Users className="h-5 w-5" />,
               gradient: "from-teal-500/20 to-cyan-500/20",
-              useCases: [
-                "You hit rate limits",
-                "You want to switch between accounts",
-                "Testing with different credentials",
-              ],
-              example: `caam status         # See current accounts
-caam activate claude backup-account`,
+              useCases: messages.toolsSection.tools.caam.useCases,
+              example: messages.toolsSection.tools.caam.example,
+              useCasesLabel: messages.toolsSection.useCasesLabel,
             }}
           />
 
           <ToolCard
             {...{
               number: 8,
-              name: "SLB",
-              subtitle: "Safety Guardrails",
-              command: "slb",
+              name: messages.toolsSection.tools.slb.name,
+              subtitle: messages.toolsSection.tools.slb.subtitle,
+              command: messages.toolsSection.tools.slb.command,
               icon: <Shield className="h-5 w-5" />,
               gradient: "from-red-500/20 to-rose-500/20",
-              useCases: [
-                "Dangerous commands (when you want them reviewed)",
-                "Two-person rule for destructive operations",
-                "Optional safety layer",
-              ],
+              useCases: messages.toolsSection.tools.slb.useCases,
+              useCasesLabel: messages.toolsSection.useCasesLabel,
             }}
           />
         </div>
@@ -207,40 +185,39 @@ caam activate claude backup-account`,
       {/* A Complete Workflow */}
       <Section
         {...{
-          title: "A Complete Workflow",
+          title: messages.workflowSection.title,
           icon: <Terminal className="h-5 w-5" />,
           delay: 0.2,
         }}
       >
-        <Paragraph>Here&apos;s how a real session might look:</Paragraph>
+        <Paragraph>{messages.workflowSection.intro}</Paragraph>
 
         <div className="mt-6">
           <CodeBlock
             {...{
-              code: `# 1. Plan your work
-bv --robot-triage                # Check tasks
-bd ready                        # See what's ready to work on
+              code: `${messages.workflowSection.codeComments.planWork}
+bv --robot-triage                ${messages.workflowSection.codeComments.checkTasks}
+bd ready                        ${messages.workflowSection.codeComments.seeReady}
 
-# 2. Start your agents
+${messages.workflowSection.codeComments.startAgents}
 ntm spawn myproject --cc=2 --cod=1
 
-# 3. Set context
+${messages.workflowSection.codeComments.setContext}
 cm context "Implementing user authentication" --json
 
-# 4. Send initial prompt
-ntm send myproject "Let's implement user authentication.
-Here's the context: [paste cm output]"
+${messages.workflowSection.codeComments.sendPrompt}
+ntm send myproject "${messages.workflowSection.codeComments.contextPrompt}"
 
-# 5. Monitor and guide
-ntm attach myproject            # Watch progress
+${messages.workflowSection.codeComments.monitorGuide}
+ntm attach myproject            ${messages.workflowSection.codeComments.watchProgress}
 
-# 6. Scan before committing
-ubs .                           # Check for bugs
+${messages.workflowSection.codeComments.scanCommit}
+ubs .                           ${messages.workflowSection.codeComments.checkBugs}
 
-# 7. Update memory
-cm reflect                      # Distill learnings
+${messages.workflowSection.codeComments.updateMemoryStep}
+cm reflect                      ${messages.workflowSection.codeComments.distillLearnings}
 
-# 8. Close the task
+${messages.workflowSection.codeComments.closeTask}
 bd close <task-id>`,
               showLineNumbers: true,
             }}
@@ -253,21 +230,22 @@ bd close <task-id>`,
       {/* The Flywheel Effect */}
       <Section
         {...{
-          title: "The Flywheel Effect",
+          title: messages.flywheelEffectSection.title,
           icon: <Sparkles className="h-5 w-5" />,
           delay: 0.25,
         }}
       >
-        <Paragraph>With each cycle:</Paragraph>
+        <Paragraph>{messages.flywheelEffectSection.intro}</Paragraph>
 
         <div className="mt-6">
-          <FlywheelEffectList />
+          <FlywheelEffectList effects={messages.flywheelEffectSection.effects} />
         </div>
 
         <div className="mt-6">
           <TipBox variant="info">
-            This is why it&apos;s called a <strong>flywheel</strong> - it gets
-            better the more you use it.
+            {messages.flywheelEffectSection.tipBox.content.split(messages.flywheelEffectSection.tipBox.strongText).map((part, index) => (
+              index === 1 ? <strong key={index}>{messages.flywheelEffectSection.tipBox.strongText}</strong> : part
+            ))}
           </TipBox>
         </div>
       </Section>
@@ -277,40 +255,39 @@ bd close <task-id>`,
       {/* Your First Real Task */}
       <Section
         {...{
-          title: "Your First Real Task",
+          title: messages.firstTaskSection.title,
           icon: <Play className="h-5 w-5" />,
           delay: 0.3,
         }}
       >
         <Paragraph>
-          You&apos;re ready! Here&apos;s how to start your first project:
+          {messages.firstTaskSection.intro}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
             {...{
-              code: `# 1. Create a project directory
+              code: `${messages.firstTaskSection.codeComments.createProject}
 mkcd /data/projects/my-first-project
 
-# 2. Initialize git
+${messages.firstTaskSection.codeComments.initGit}
 git init
 
-# 3. Initialize beads for task tracking
+${messages.firstTaskSection.codeComments.initBeads}
 bd init
 
-# (Recommended) Create a dedicated Beads sync branch
-# Beads uses git worktrees for syncing; syncing to your current branch (often \`main\`)
-# can cause worktree conflicts. Once you have a \`main\` branch and a remote, run:
+${messages.firstTaskSection.codeComments.recommended}
+${messages.firstTaskSection.codeComments.beadsExplanation}
+${messages.firstTaskSection.codeComments.conflictWarning}
 git branch beads-sync main
 git push -u origin beads-sync
 bd config set sync.branch beads-sync
 
-# 4. Spawn your agents
+${messages.firstTaskSection.codeComments.spawnAgents}
 ntm spawn my-first-project --cc=2 --cod=1 --gmi=1
 
-# 5. Start building!
-ntm send my-first-project "Let's build something awesome.
-What kind of project should we create?"`,
+${messages.firstTaskSection.codeComments.startBuilding}
+ntm send my-first-project "${messages.firstTaskSection.codeComments.buildPrompt}"`,
               showLineNumbers: true,
             }}
           />
@@ -322,7 +299,7 @@ What kind of project should we create?"`,
       {/* Getting Help */}
       <Section
         {...{
-          title: "Getting Help",
+          title: messages.helpSection.title,
           icon: <Zap className="h-5 w-5" />,
           delay: 0.35,
         }}
@@ -330,22 +307,22 @@ What kind of project should we create?"`,
         <div className="grid gap-4 sm:grid-cols-3">
           <HelpCard
             {...{
-              command: "acfs doctor",
-              description: "Check everything is working",
+              command: messages.helpSection.commands.doctor.command,
+              description: messages.helpSection.commands.doctor.description,
               gradient: "from-emerald-500/20 to-teal-500/20",
             }}
           />
           <HelpCard
             {...{
-              command: "ntm --help",
-              description: "NTM help",
+              command: messages.helpSection.commands.ntmHelp.command,
+              description: messages.helpSection.commands.ntmHelp.description,
               gradient: "from-violet-500/20 to-purple-500/20",
             }}
           />
           <HelpCard
             {...{
-              command: "onboard",
-              description: "Re-run this tutorial anytime",
+              command: messages.helpSection.commands.onboard.command,
+              description: messages.helpSection.commands.onboard.description,
               gradient: "from-amber-500/20 to-orange-500/20",
             }}
           />
@@ -358,7 +335,7 @@ What kind of project should we create?"`,
 // =============================================================================
 // FLYWHEEL DIAGRAM - Visual representation of the flywheel
 // =============================================================================
-function FlywheelDiagram() {
+function FlywheelDiagram({ messages }: { messages: any }) {
   return (
     <div className="relative p-8 rounded-3xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
       {/* Background glow effects */}
@@ -370,8 +347,8 @@ function FlywheelDiagram() {
         <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 flex-wrap">
           <FlywheelNode
             {...{
-              label: "Plan",
-              sublabel: "Beads",
+              label: messages.diagram.nodes.plan.label,
+              sublabel: messages.diagram.nodes.plan.sublabel,
               icon: <LayoutDashboard className="h-5 w-5" />,
               color: "from-violet-500 to-purple-500",
               delay: 0.1,
@@ -380,8 +357,8 @@ function FlywheelDiagram() {
           <ArrowRight className="h-5 w-5 text-white/30 hidden md:block" />
           <FlywheelNode
             {...{
-              label: "Coordinate",
-              sublabel: "Agent Mail",
+              label: messages.diagram.nodes.coordinate.label,
+              sublabel: messages.diagram.nodes.coordinate.sublabel,
               icon: <Mail className="h-5 w-5" />,
               color: "from-sky-500 to-blue-500",
               delay: 0.2,
@@ -390,8 +367,8 @@ function FlywheelDiagram() {
           <ArrowRight className="h-5 w-5 text-white/30 hidden md:block" />
           <FlywheelNode
             {...{
-              label: "Execute",
-              sublabel: "NTM + Agents",
+              label: messages.diagram.nodes.execute.label,
+              sublabel: messages.diagram.nodes.execute.sublabel,
               icon: <Cpu className="h-5 w-5" />,
               color: "from-emerald-500 to-teal-500",
               delay: 0.3,
@@ -403,8 +380,8 @@ function FlywheelDiagram() {
         <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 mt-6 flex-wrap">
           <FlywheelNode
             {...{
-              label: "Remember",
-              sublabel: "CASS Memory",
+              label: messages.diagram.nodes.remember.label,
+              sublabel: messages.diagram.nodes.remember.sublabel,
               icon: <Brain className="h-5 w-5" />,
               color: "from-rose-500 to-pink-500",
               delay: 0.4,
@@ -413,8 +390,8 @@ function FlywheelDiagram() {
           <ArrowRight className="h-5 w-5 text-white/30 rotate-180 hidden md:block" />
           <FlywheelNode
             {...{
-              label: "Scan",
-              sublabel: "UBS",
+              label: messages.diagram.nodes.scan.label,
+              sublabel: messages.diagram.nodes.scan.sublabel,
               icon: <Shield className="h-5 w-5" />,
               color: "from-amber-500 to-orange-500",
               delay: 0.5,
@@ -482,6 +459,7 @@ function ToolCard({
   icon,
   gradient,
   useCases,
+  useCasesLabel,
   example,
 }: {
   number: number;
@@ -491,6 +469,7 @@ function ToolCard({
   icon: React.ReactNode;
   gradient: string;
   useCases: string[];
+  useCasesLabel: string;
   example?: string;
 }) {
   return (
@@ -518,7 +497,7 @@ function ToolCard({
             {command}
           </code>
 
-          <p className="text-sm text-white/60 mb-3">Use it to:</p>
+          <p className="text-sm text-white/60 mb-3">{useCasesLabel}</p>
           <ul className="space-y-1">
             {useCases.map((useCase, i) => (
               <li key={i} className="text-sm text-white/50 flex items-center gap-2">
@@ -544,14 +523,7 @@ function ToolCard({
 // =============================================================================
 // FLYWHEEL EFFECT LIST
 // =============================================================================
-function FlywheelEffectList() {
-  const effects = [
-    { tool: "CASS", effect: "remembers what worked" },
-    { tool: "CM", effect: "distills reusable patterns" },
-    { tool: "UBS", effect: "catches more issues" },
-    { tool: "Agent Mail", effect: "improves coordination" },
-    { tool: "NTM", effect: "sessions become more effective" },
-  ];
+function FlywheelEffectList({ effects }: { effects: Array<{ tool: string; effect: string }> }) {
 
   return (
     <div className="space-y-3">

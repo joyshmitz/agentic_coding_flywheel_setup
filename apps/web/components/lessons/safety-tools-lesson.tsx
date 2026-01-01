@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { motion } from "@/components/motion";
+import { useLocale, getSafetyToolsLessonMessages } from "@/lib/i18n";
 import {
   Shield,
   Key,
@@ -30,35 +31,37 @@ import {
 } from "./lesson-components";
 
 export function SafetyToolsLesson() {
+  const { locale } = useLocale();
+  const messages = getSafetyToolsLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Use SLB and CAAM for safety and account management.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* Introduction */}
       <Section
-        title="Safety First"
+        title={messages.introduction.title}
         icon={<Shield className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          AI agents are powerful but can cause damage if misused. The
-          Dicklesworthstone stack includes two safety tools:
+          {messages.introduction.intro}
         </Paragraph>
 
         <div className="mt-8">
           <FeatureGrid>
             <FeatureCard
               icon={<Users className="h-5 w-5" />}
-              title="SLB"
-              description="Two-person rule for dangerous commands"
+              title={messages.introduction.slb.title}
+              description={messages.introduction.slb.description}
               gradient="from-red-500/20 to-rose-500/20"
             />
             <FeatureCard
               icon={<Key className="h-5 w-5" />}
-              title="CAAM"
-              description="Agent authentication switching"
+              title={messages.introduction.caam.title}
+              description={messages.introduction.caam.description}
               gradient="from-primary/20 to-violet-500/20"
             />
           </FeatureGrid>
@@ -69,85 +72,83 @@ export function SafetyToolsLesson() {
 
       {/* SLB Section */}
       <Section
-        title="SLB: Simultaneous Launch Button"
+        title={messages.slbSection.title}
         icon={<Users className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          <Highlight>SLB</Highlight> implements a &quot;two-person rule&quot;
-          for dangerous commands. Just like nuclear launch codes require two
-          keys, SLB requires two approvals before executing risky operations.
+          <Highlight>{messages.slbSection.intro.highlight}</Highlight>
+          {messages.slbSection.intro.text}
         </Paragraph>
 
         <div className="mt-8">
-          <SlbDiagram />
+          <SlbDiagram messages={messages} />
         </div>
       </Section>
 
       {/* When to Use SLB */}
       <Section
-        title="When to Use SLB"
+        title={messages.whenToUseSlb.title}
         icon={<AlertTriangle className="h-5 w-5" />}
         delay={0.2}
       >
         <div className="space-y-4">
           <DangerCard
-            command="rm -rf /"
-            risk="Deletes entire filesystem"
-            slb="Requires confirmation from two agents"
+            command={messages.whenToUseSlb.dangerCards.rmRf.command}
+            risk={messages.whenToUseSlb.dangerCards.rmRf.risk}
+            slb={messages.whenToUseSlb.dangerCards.rmRf.slb}
           />
           <DangerCard
-            command="git push --force origin main"
-            risk="Overwrites shared history"
-            slb="Requires explicit approval"
+            command={messages.whenToUseSlb.dangerCards.forcePush.command}
+            risk={messages.whenToUseSlb.dangerCards.forcePush.risk}
+            slb={messages.whenToUseSlb.dangerCards.forcePush.slb}
           />
           <DangerCard
-            command="DROP DATABASE production"
-            risk="Destroys production data"
-            slb="Two-person verification"
+            command={messages.whenToUseSlb.dangerCards.dropDatabase.command}
+            risk={messages.whenToUseSlb.dangerCards.dropDatabase.risk}
+            slb={messages.whenToUseSlb.dangerCards.dropDatabase.slb}
           />
           <DangerCard
-            command="kubectl delete namespace prod"
-            risk="Takes down production services"
-            slb="Mandatory review"
+            command={messages.whenToUseSlb.dangerCards.deleteNamespace.command}
+            risk={messages.whenToUseSlb.dangerCards.deleteNamespace.risk}
+            slb={messages.whenToUseSlb.dangerCards.deleteNamespace.slb}
           />
         </div>
 
         <div className="mt-6">
           <TipBox variant="warning">
-            Never bypass SLB protections. If a command requires two approvals,
-            there&apos;s a reason. Get a second opinion.
+            {messages.whenToUseSlb.tipBox.content}
           </TipBox>
         </div>
       </Section>
 
       {/* SLB Commands */}
       <Section
-        title="SLB Commands"
+        title={messages.slbCommands.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.25}
       >
         <CommandList
           commands={[
             {
-              command: "slb pending",
-              description: "Show pending requests",
+              command: messages.slbCommands.commands.pending.command,
+              description: messages.slbCommands.commands.pending.description,
             },
             {
-              command: 'slb run "rm -rf /tmp" --reason "Clean build"',
-              description: "Request approval and execute when approved",
+              command: messages.slbCommands.commands.run.command,
+              description: messages.slbCommands.commands.run.description,
             },
             {
-              command: "slb approve <id> --session-id <sid>",
-              description: "Approve a pending request",
+              command: messages.slbCommands.commands.approve.command,
+              description: messages.slbCommands.commands.approve.description,
             },
             {
-              command: 'slb reject <id> --session-id <sid> --reason "..."',
-              description: "Reject a pending request",
+              command: messages.slbCommands.commands.reject.command,
+              description: messages.slbCommands.commands.reject.description,
             },
             {
-              command: "slb status <request-id>",
-              description: "Check status of a specific request",
+              command: messages.slbCommands.commands.status.command,
+              description: messages.slbCommands.commands.status.description,
             },
           ]}
         />
@@ -157,93 +158,92 @@ export function SafetyToolsLesson() {
 
       {/* CAAM Section */}
       <Section
-        title="CAAM: Coding Agent Account Manager"
+        title={messages.caamSection.title}
         icon={<Key className="h-5 w-5" />}
         delay={0.3}
       >
         <Paragraph>
-          <Highlight>CAAM</Highlight> enables sub-100ms account switching for
-          subscription-based AI services (Claude Max, Codex CLI, Gemini Ultra).
-          Swap OAuth tokens instantly without re-authenticating.
+          <Highlight>{messages.caamSection.intro.highlight}</Highlight>
+          {messages.caamSection.intro.text}
         </Paragraph>
 
         <div className="mt-6 space-y-4">
           <CaamFeature
             icon={<Key className="h-5 w-5" />}
-            title="Token Management"
-            description="Backup and restore OAuth tokens for each tool"
+            title={messages.caamSection.features.tokenManagement.title}
+            description={messages.caamSection.features.tokenManagement.description}
           />
           <CaamFeature
             icon={<RefreshCw className="h-5 w-5" />}
-            title="Instant Switching"
-            description="Switch accounts in under 100ms via symlink swap"
+            title={messages.caamSection.features.instantSwitching.title}
+            description={messages.caamSection.features.instantSwitching.description}
           />
           <CaamFeature
             icon={<Eye className="h-5 w-5" />}
-            title="Multi-Tool Support"
-            description="Works with Claude, Codex, and Gemini CLIs"
+            title={messages.caamSection.features.multiTool.title}
+            description={messages.caamSection.features.multiTool.description}
           />
           <CaamFeature
             icon={<Lock className="h-5 w-5" />}
-            title="Profile Backup"
-            description="Save profiles by email for easy restoration"
+            title={messages.caamSection.features.profileBackup.title}
+            description={messages.caamSection.features.profileBackup.description}
           />
         </div>
       </Section>
 
       {/* CAAM Use Cases */}
       <Section
-        title="CAAM Use Cases"
+        title={messages.caamUseCases.title}
         icon={<UserCheck className="h-5 w-5" />}
         delay={0.35}
       >
         <div className="space-y-4">
           <UseCase
-            scenario="Personal vs Work"
-            description="Switch between personal and work subscriptions"
+            scenario={messages.caamUseCases.useCases.personalVsWork.scenario}
+            description={messages.caamUseCases.useCases.personalVsWork.description}
           />
           <UseCase
-            scenario="Rate Limits"
-            description="Rotate to a fresh account when hitting usage caps"
+            scenario={messages.caamUseCases.useCases.rateLimits.scenario}
+            description={messages.caamUseCases.useCases.rateLimits.description}
           />
           <UseCase
-            scenario="Cost Separation"
-            description="Use different subscriptions for different projects"
+            scenario={messages.caamUseCases.useCases.costSeparation.scenario}
+            description={messages.caamUseCases.useCases.costSeparation.description}
           />
           <UseCase
-            scenario="Multi-Account"
-            description="Manage multiple Claude Max / Codex accounts"
+            scenario={messages.caamUseCases.useCases.multiAccount.scenario}
+            description={messages.caamUseCases.useCases.multiAccount.description}
           />
         </div>
       </Section>
 
       {/* CAAM Commands */}
       <Section
-        title="CAAM Commands"
+        title={messages.caamCommands.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.4}
       >
         <CommandList
           commands={[
             {
-              command: "caam ls [tool]",
-              description: "List saved profiles (claude, codex, gemini)",
+              command: messages.caamCommands.commands.list.command,
+              description: messages.caamCommands.commands.list.description,
             },
             {
-              command: "caam backup <tool> <email>",
-              description: "Save current auth as a named profile",
+              command: messages.caamCommands.commands.backup.command,
+              description: messages.caamCommands.commands.backup.description,
             },
             {
-              command: "caam activate <tool> <email>",
-              description: "Activate a saved profile",
+              command: messages.caamCommands.commands.activate.command,
+              description: messages.caamCommands.commands.activate.description,
             },
             {
-              command: "caam status [tool]",
-              description: "Show currently active profile",
+              command: messages.caamCommands.commands.status.command,
+              description: messages.caamCommands.commands.status.description,
             },
             {
-              command: "caam delete <tool> <email>",
-              description: "Remove a saved profile",
+              command: messages.caamCommands.commands.delete.command,
+              description: messages.caamCommands.commands.delete.description,
             },
           ]}
         />
@@ -253,29 +253,17 @@ export function SafetyToolsLesson() {
 
       {/* Integration with Agents */}
       <Section
-        title="Integration with Agents"
+        title={messages.integration.title}
         icon={<Zap className="h-5 w-5" />}
         delay={0.45}
       >
         <Paragraph>
-          Both SLB and CAAM integrate with Claude Code, Codex, and Gemini:
+          {messages.integration.intro}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Example: Dangerous command triggers SLB
-$ claude "delete all test files"
-> SLB: This command requires approval
-> Waiting for second approval...
-> Run 'slb approve req-123 --session-id <sid>' from another session
-
-# Example: Switch Claude accounts for a project
-$ caam activate claude work@company.com
-> Activated profile 'work@company.com' for claude
-> Symlink updated in 47ms
-
-$ claude "continue the project"
-> Using profile: work@company.com`}
+            code={messages.integration.codeExample}
             language="bash"
           />
         </div>
@@ -285,7 +273,7 @@ $ claude "continue the project"
 
       {/* Best Practices */}
       <Section
-        title="Best Practices"
+        title={messages.bestPractices.title}
         icon={<CheckCircle className="h-5 w-5" />}
         delay={0.5}
       >
@@ -294,13 +282,13 @@ $ claude "continue the project"
           <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-5">
             <h4 className="font-bold text-white flex items-center gap-2 mb-4">
               <Users className="h-5 w-5 text-red-400" />
-              SLB Best Practices
+              {messages.bestPractices.slbSection.title}
             </h4>
             <div className="space-y-3">
-              <BestPractice text="Never bypass approval requirements" />
-              <BestPractice text="Review commands before approving" />
-              <BestPractice text="Use descriptive request messages" />
-              <BestPractice text="Set up notifications for pending requests" />
+              <BestPractice text={messages.bestPractices.slbSection.practices.neverBypass} />
+              <BestPractice text={messages.bestPractices.slbSection.practices.reviewCommands} />
+              <BestPractice text={messages.bestPractices.slbSection.practices.useDescriptive} />
+              <BestPractice text={messages.bestPractices.slbSection.practices.setupNotifications} />
             </div>
           </div>
 
@@ -308,13 +296,13 @@ $ claude "continue the project"
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
             <h4 className="font-bold text-white flex items-center gap-2 mb-4">
               <Key className="h-5 w-5 text-primary" />
-              CAAM Best Practices
+              {messages.bestPractices.caamSection.title}
             </h4>
             <div className="space-y-3">
-              <BestPractice text="Backup profiles before switching" />
-              <BestPractice text="Use email as profile identifier" />
-              <BestPractice text="Verify active profile with caam status" />
-              <BestPractice text="Delete old profiles when no longer needed" />
+              <BestPractice text={messages.bestPractices.caamSection.practices.backupProfiles} />
+              <BestPractice text={messages.bestPractices.caamSection.practices.useEmail} />
+              <BestPractice text={messages.bestPractices.caamSection.practices.verifyActive} />
+              <BestPractice text={messages.bestPractices.caamSection.practices.deleteOld} />
             </div>
           </div>
         </div>
@@ -324,29 +312,19 @@ $ claude "continue the project"
 
       {/* Quick Reference */}
       <Section
-        title="Quick Reference"
+        title={messages.quickReference.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.55}
       >
         <div className="grid gap-4 md:grid-cols-2">
           <QuickRefCard
-            title="SLB"
-            commands={[
-              "slb pending",
-              "slb run <cmd> --reason ...",
-              "slb approve <id> --session-id ...",
-              "slb status <id>",
-            ]}
+            title={messages.introduction.slb.title}
+            commands={messages.quickReference.slbCommands}
             color="from-red-500/20 to-rose-500/20"
           />
           <QuickRefCard
-            title="CAAM"
-            commands={[
-              "caam ls [tool]",
-              "caam backup <tool> <email>",
-              "caam activate <tool> <email>",
-              "caam status [tool]",
-            ]}
+            title={messages.introduction.caam.title}
+            commands={messages.quickReference.caamCommands}
             color="from-primary/20 to-violet-500/20"
           />
         </div>
@@ -358,7 +336,7 @@ $ claude "continue the project"
 // =============================================================================
 // SLB DIAGRAM
 // =============================================================================
-function SlbDiagram() {
+function SlbDiagram({ messages }: { messages: any }) {
   return (
     <div className="relative p-8 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
       {/* Decorative glows */}
@@ -376,7 +354,7 @@ function SlbDiagram() {
           <AlertTriangle className="h-6 w-6 text-red-400" />
           <div>
             <span className="font-mono text-white text-sm">rm -rf /</span>
-            <span className="text-xs text-white/50 block">Dangerous Command</span>
+            <span className="text-xs text-white/50 block">{messages.slbDiagram.dangerousCommand}</span>
           </div>
         </motion.div>
 
@@ -402,7 +380,7 @@ function SlbDiagram() {
             <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-500/20 border border-emerald-500/30 shadow-lg shadow-emerald-500/10 group-hover:shadow-xl group-hover:shadow-emerald-500/20 transition-all duration-300">
               <CheckCircle className="h-7 w-7 text-emerald-400" />
             </div>
-            <span className="text-xs text-white/50 font-medium group-hover:text-emerald-400 transition-colors">Agent 1</span>
+            <span className="text-xs text-white/50 font-medium group-hover:text-emerald-400 transition-colors">{messages.slbDiagram.agent1}</span>
           </motion.div>
 
           <span className="text-white/30 text-xl">+</span>
@@ -417,7 +395,7 @@ function SlbDiagram() {
             <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-emerald-500/20 border border-emerald-500/30 shadow-lg shadow-emerald-500/10 group-hover:shadow-xl group-hover:shadow-emerald-500/20 transition-all duration-300">
               <CheckCircle className="h-7 w-7 text-emerald-400" />
             </div>
-            <span className="text-xs text-white/50 font-medium group-hover:text-emerald-400 transition-colors">Agent 2</span>
+            <span className="text-xs text-white/50 font-medium group-hover:text-emerald-400 transition-colors">{messages.slbDiagram.agent2}</span>
           </motion.div>
         </div>
 
@@ -441,8 +419,8 @@ function SlbDiagram() {
         >
           <Shield className="h-6 w-6 text-emerald-400" />
           <div>
-            <span className="font-bold text-white">Safe to Execute</span>
-            <span className="text-xs text-white/50 block">Two approvals received</span>
+            <span className="font-bold text-white">{messages.slbDiagram.safeToExecute}</span>
+            <span className="text-xs text-white/50 block">{messages.slbDiagram.twoApprovalsReceived}</span>
           </div>
         </motion.div>
       </div>

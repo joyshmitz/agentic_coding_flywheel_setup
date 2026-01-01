@@ -24,36 +24,37 @@ import {
   GoalBanner,
   BulletList,
 } from "./lesson-components";
+import { useLocale } from "@/lib/i18n";
+import { getKeepingUpdatedLessonMessages } from "@/lib/i18n/translations";
 
 export function KeepingUpdatedLesson() {
+  const { locale } = useLocale();
+  const messages = getKeepingUpdatedLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Learn how to keep your ACFS tools current.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* Why Updates Matter */}
       <Section
-        title="Why Updates Matter"
+        title={messages.whyUpdatesMatter.title}
         icon={<Zap className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          Your VPS has 30+ tools installed. Each one gets improvements:
+          {messages.whyUpdatesMatter.intro}
         </Paragraph>
 
         <div className="mt-6">
           <BulletList
-            items={[
-              "Bug fixes and security patches",
-              "New features and capabilities",
-              "Better performance",
-            ]}
+            items={messages.whyUpdatesMatter.benefits}
           />
         </div>
 
         <div className="mt-6">
-          <UpdateBenefitsCard />
+          <UpdateBenefitsCard messages={messages.whyUpdatesMatter.updateBenefitsCard} />
         </div>
       </Section>
 
@@ -61,41 +62,32 @@ export function KeepingUpdatedLesson() {
 
       {/* The Update Command */}
       <Section
-        title="The Update Command"
+        title={messages.updateCommand.title}
         icon={<RefreshCw className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          ACFS provides a single command to update everything:
+          {messages.updateCommand.intro}
         </Paragraph>
 
         <div className="mt-6">
-          <CodeBlock code="acfs-update" />
+          <CodeBlock code={messages.updateCommand.command} />
         </div>
 
-        <Paragraph>That&apos;s it! This updates:</Paragraph>
+        <Paragraph>{messages.updateCommand.description}</Paragraph>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <UpdateItem
-            icon={<Package className="h-4 w-4" />}
-            label="System packages"
-            description="apt"
-          />
-          <UpdateItem
-            icon={<Terminal className="h-4 w-4" />}
-            label="Shell tools"
-            description="OMZ, P10K, plugins"
-          />
-          <UpdateItem
-            icon={<Bot className="h-4 w-4" />}
-            label="Coding agents"
-            description="Claude, Codex, Gemini"
-          />
-          <UpdateItem
-            icon={<Settings className="h-4 w-4" />}
-            label="Cloud CLIs"
-            description="Wrangler, Supabase, Vercel"
-          />
+          {messages.updateCommand.updateItems.map((item, index) => (
+            <UpdateItem
+              key={index}
+              icon={index === 0 ? <Package className="h-4 w-4" /> :
+                     index === 1 ? <Terminal className="h-4 w-4" /> :
+                     index === 2 ? <Bot className="h-4 w-4" /> :
+                     <Settings className="h-4 w-4" />}
+              label={item.label}
+              description={item.description}
+            />
+          ))}
         </div>
       </Section>
 
@@ -103,34 +95,19 @@ export function KeepingUpdatedLesson() {
 
       {/* Common Update Patterns */}
       <Section
-        title="Common Update Patterns"
+        title={messages.commonPatterns.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.2}
       >
         <div className="space-y-6">
-          <UpdatePattern
-            title="Quick Agent Update"
-            description="If you just want the latest agent versions:"
-            command="acfs-update --agents-only"
-          />
-
-          <UpdatePattern
-            title="Skip System Packages"
-            description="apt updates can be slow. Skip them when you're in a hurry:"
-            command="acfs-update --no-apt"
-          />
-
-          <UpdatePattern
-            title="Preview Changes"
-            description="See what would be updated without changing anything:"
-            command="acfs-update --dry-run"
-          />
-
-          <UpdatePattern
-            title="Include Stack Tools"
-            description="The Dicklesworthstone stack (ntm, slb, ubs, etc.) is skipped by default because it takes longer. Include it with:"
-            command="acfs-update --stack"
-          />
+          {messages.commonPatterns.patterns.map((pattern, index) => (
+            <UpdatePattern
+              key={index}
+              title={pattern.title}
+              description={pattern.description}
+              command={pattern.command}
+            />
+          ))}
         </div>
       </Section>
 
@@ -138,33 +115,33 @@ export function KeepingUpdatedLesson() {
 
       {/* Automated Updates */}
       <Section
-        title="Automated Updates"
+        title={messages.automatedUpdates.title}
         icon={<Clock className="h-5 w-5" />}
         delay={0.25}
       >
-        <Paragraph>For hands-off maintenance, use quiet mode:</Paragraph>
+        <Paragraph>{messages.automatedUpdates.intro}</Paragraph>
 
         <div className="mt-6">
-          <CodeBlock code="acfs-update --yes --quiet" />
+          <CodeBlock code={messages.automatedUpdates.command} />
         </div>
 
         <Paragraph>
-          This runs without prompts and only shows errors.
+          {messages.automatedUpdates.description}
         </Paragraph>
 
         <div className="mt-6">
           <TipBox variant="tip">
-            You can add this to a cron job for weekly updates!
+            {messages.automatedUpdates.tip}
           </TipBox>
         </div>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Edit crontab
-crontab -e
+            code={`${messages.automatedUpdates.cronExample.comment1}
+${messages.automatedUpdates.cronExample.command1}
 
-# Add this line for weekly Sunday 3am updates
-0 3 * * 0 $HOME/.local/bin/acfs-update --yes --quiet >> $HOME/.acfs/logs/cron-update.log 2>&1`}
+${messages.automatedUpdates.cronExample.comment2}
+${messages.automatedUpdates.cronExample.cronLine}`}
           />
         </div>
       </Section>
@@ -173,22 +150,17 @@ crontab -e
 
       {/* Checking Update Logs */}
       <Section
-        title="Checking Update Logs"
+        title={messages.checkingLogs.title}
         icon={<FileText className="h-5 w-5" />}
         delay={0.3}
       >
-        <Paragraph>Every update is logged:</Paragraph>
+        <Paragraph>{messages.checkingLogs.intro}</Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# List recent logs
-ls -lt ~/.acfs/logs/updates/ | head -5
-
-# View the most recent log
-cat ~/.acfs/logs/updates/$(ls -1t ~/.acfs/logs/updates | head -1)
-
-# Watch a running update
-tail -f ~/.acfs/logs/updates/$(ls -1t ~/.acfs/logs/updates | head -1)`}
+            code={messages.checkingLogs.commands.map((cmd) =>
+              `${cmd.comment}\n${cmd.command}`
+            ).join('\n\n')}
             showLineNumbers
           />
         </div>
@@ -198,37 +170,19 @@ tail -f ~/.acfs/logs/updates/$(ls -1t ~/.acfs/logs/updates | head -1)`}
 
       {/* Troubleshooting */}
       <Section
-        title="Troubleshooting"
+        title={messages.troubleshooting.title}
         icon={<AlertTriangle className="h-5 w-5" />}
         delay={0.35}
       >
         <div className="space-y-6">
-          <TroubleshootingCard
-            title="apt is locked"
-            description='If you see "apt is locked by another process":'
-            solution={`# Wait for other apt operations to finish, or:
-sudo rm /var/lib/dpkg/lock-frontend
-sudo dpkg --configure -a`}
-          />
-
-          <TroubleshootingCard
-            title="Agent update failed"
-            description="Try updating directly:"
-            solution={`# Claude
-claude update
-
-# Codex
-bun install -g --trust @openai/codex@latest
-
-# Gemini
-bun install -g --trust @google/gemini-cli@latest`}
-          />
-
-          <TroubleshootingCard
-            title="Shell tools won't update"
-            description="Check git remote access:"
-            solution="git -C ~/.oh-my-zsh remote -v"
-          />
+          {messages.troubleshooting.issues.map((issue, index) => (
+            <TroubleshootingCard
+              key={index}
+              title={issue.title}
+              description={issue.description}
+              solution={issue.solution}
+            />
+          ))}
         </div>
       </Section>
 
@@ -236,36 +190,31 @@ bun install -g --trust @google/gemini-cli@latest`}
 
       {/* Quick Reference */}
       <Section
-        title="Quick Reference"
+        title={messages.quickReference.title}
         icon={<Sparkles className="h-5 w-5" />}
         delay={0.4}
       >
-        <QuickReferenceTable />
+        <QuickReferenceTable messages={messages.quickReference} />
       </Section>
 
       <Divider />
 
       {/* How Often to Update */}
       <Section
-        title="How Often to Update?"
+        title={messages.howOften.title}
         icon={<Clock className="h-5 w-5" />}
         delay={0.45}
       >
-        <Paragraph>Recommendations:</Paragraph>
+        <Paragraph>{messages.howOften.intro}</Paragraph>
 
         <div className="mt-6 space-y-3">
-          <FrequencyItem
-            frequency="Weekly"
-            recommendation="Full update including stack"
-          />
-          <FrequencyItem
-            frequency="After issues"
-            recommendation="If something breaks, update first"
-          />
-          <FrequencyItem
-            frequency="Before major work"
-            recommendation="Get latest agent versions"
-          />
+          {messages.howOften.frequencies.map((freq, index) => (
+            <FrequencyItem
+              key={index}
+              frequency={freq.frequency}
+              recommendation={freq.recommendation}
+            />
+          ))}
         </div>
       </Section>
 
@@ -273,11 +222,11 @@ bun install -g --trust @google/gemini-cli@latest`}
 
       {/* Congratulations */}
       <Section
-        title="Congratulations!"
+        title={messages.congratulations.title}
         icon={<PartyPopper className="h-5 w-5" />}
         delay={0.5}
       >
-        <CongratulationsCard />
+        <CongratulationsCard messages={messages.congratulations} />
       </Section>
     </div>
   );
@@ -286,7 +235,7 @@ bun install -g --trust @google/gemini-cli@latest`}
 // =============================================================================
 // UPDATE BENEFITS CARD
 // =============================================================================
-function UpdateBenefitsCard() {
+function UpdateBenefitsCard({ messages }: { messages: { title: string; benefits: string[] } }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -294,11 +243,11 @@ function UpdateBenefitsCard() {
       whileHover={{ y: -2 }}
       className="relative rounded-2xl border border-white/[0.08] bg-gradient-to-br from-emerald-500/10 to-teal-500/10 p-6 backdrop-blur-xl overflow-hidden transition-all duration-300 hover:border-emerald-500/30"
     >
-      <h4 className="font-bold text-white mb-4">Keeping things updated means:</h4>
+      <h4 className="font-bold text-white mb-4">{messages.title}</h4>
       <div className="space-y-3">
-        <BenefitRow icon={<CheckCircle2 />} text="Fewer mysterious errors" />
-        <BenefitRow icon={<CheckCircle2 />} text="Better security" />
-        <BenefitRow icon={<CheckCircle2 />} text="Access to new agent features" />
+        {messages.benefits.map((benefit, index) => (
+          <BenefitRow key={index} icon={<CheckCircle2 />} text={benefit} />
+        ))}
       </div>
     </motion.div>
   );

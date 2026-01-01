@@ -30,26 +30,27 @@ import {
   BulletList,
   StepList,
 } from "./lesson-components";
+import { useLocale, getSlbCaseStudyLessonMessages } from "@/lib/i18n";
 
 export function SlbCaseStudyLesson() {
+  const { locale } = useLocale();
+  const messages = getSlbCaseStudyLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        See how a tweet becomes working code in one evening: 76 beads, 268
-        commits, from idea to ~70% complete in hours.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* The Spark */}
       <Section
-        title="The Spark: From Tweet to Tool"
+        title={messages.theSpark.title}
         icon={<Lightbulb className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          On December 13, 2025, a conversation on X about AI agents
-          accidentally deleting Kubernetes nodes sparked an idea: what if
-          dangerous commands required{" "}
-          <Highlight>peer review from another agent</Highlight>?
+          {messages.theSpark.tweetContext}{" "}
+          <Highlight>{messages.theSpark.peerReview}</Highlight>?
         </Paragraph>
 
         <div className="mt-8">
@@ -57,10 +58,8 @@ export function SlbCaseStudyLesson() {
         </div>
 
         <Paragraph>
-          The idea was simple: like the &quot;two-person rule&quot; for nuclear
-          launch codes, agents should need a second opinion before running
-          destructive commands like <InlineCode>rm -rf</InlineCode>,{" "}
-          <InlineCode>kubectl delete</InlineCode>, or{" "}
+          {messages.theSpark.twoPersonRule} <InlineCode>rm -rf</InlineCode>,{" "}
+          <InlineCode>kubectl delete</InlineCode>, або{" "}
           <InlineCode>DROP TABLE</InlineCode>.
         </Paragraph>
       </Section>

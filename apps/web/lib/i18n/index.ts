@@ -38,5 +38,26 @@ export {
   getGlossaryUiMessages,
   getSecurityMessages,
   getHomeMessages,
+  // Lesson messages
+  getWelcomeLessonMessages,
+  getLinuxBasicsLessonMessages,
+  getTmuxBasicsLessonMessages,
+  getSshBasicsLessonMessages,
+  getSafetyToolsLessonMessages,
+  getFlywheelLoopMessages,
+  getCmLessonMessages,
+  // Wave 2 Tools Lesson messages
+  getNtmPaletteLessonMessages,
+  getNtmCoreLessonMessages,
+  getAgentsLoginLessonMessages,
+  getCassLessonMessages,
+  // Wave 3 Development Lesson messages
+  getUbsLessonMessages,
+  getGithubCliLessonMessages,
+  getGitBasicsLessonMessages,
+  // Wave 6 Case Study Lesson messages
+  getSlbCaseStudyLessonMessages,
+  getPromptEngineeringLessonMessages,
+  getRealWorldCaseStudyLessonMessages,
   type ChecklistItem,
 } from "./translations";

@@ -25,54 +25,58 @@ import {
   FeatureCard,
   FeatureGrid,
 } from "./lesson-components";
-import { T } from "@/components/translatable-text";
+import { useLocale } from "@/lib/i18n";
+import { getBeadsLessonMessages } from "@/lib/i18n/translations";
 
 export function BeadsLesson() {
+  const { locale } = useLocale();
+  const messages = getBeadsLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        <T>Track issues with dependencies and let graph analysis guide your work.</T>
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* What Is Beads */}
       <Section
-        title={<T>What Is Beads?</T>}
+        title={messages.whatIsBeads.title}
         icon={<ListTodo className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
           <Highlight>Beads</Highlight>{" "}
-          <T>is a graph-aware issue tracking system designed for agent workflows. It tracks dependencies between tasks and uses graph algorithms to tell you what to work on next.</T>
+          {messages.whatIsBeads.beadsDescription}
         </Paragraph>
         <Paragraph>
           <Highlight>BV (Beads Viewer)</Highlight>{" "}
-          <T>is the TUI and CLI for working with Beads. It provides both interactive views and machine-readable outputs for agents.</T>
+          {messages.whatIsBeads.bvDescription}
         </Paragraph>
 
         <div className="mt-8">
           <FeatureGrid>
             <FeatureCard
               icon={<GitBranch className="h-5 w-5" />}
-              title={<T>Dependency Tracking</T>}
-              description={<T>Issues can block other issues</T>}
+              title={messages.whatIsBeads.features.dependencyTracking.title}
+              description={messages.whatIsBeads.features.dependencyTracking.description}
               gradient="from-primary/20 to-violet-500/20"
             />
             <FeatureCard
               icon={<BarChart className="h-5 w-5" />}
-              title={<T>Graph Metrics</T>}
-              description="PageRank, betweenness, critical path"
+              title={messages.whatIsBeads.features.graphMetrics.title}
+              description={messages.whatIsBeads.features.graphMetrics.description}
               gradient="from-emerald-500/20 to-teal-500/20"
             />
             <FeatureCard
               icon={<Target className="h-5 w-5" />}
-              title={<T>Smart Triage</T>}
-              description={<T>Know what to work on next</T>}
+              title={messages.whatIsBeads.features.smartTriage.title}
+              description={messages.whatIsBeads.features.smartTriage.description}
               gradient="from-amber-500/20 to-orange-500/20"
             />
             <FeatureCard
               icon={<Network className="h-5 w-5" />}
-              title={<T>Git Integration</T>}
-              description={<T>All data lives in .beads/</T>}
+              title={messages.whatIsBeads.features.gitIntegration.title}
+              description={messages.whatIsBeads.features.gitIntegration.description}
               gradient="from-blue-500/20 to-indigo-500/20"
             />
           </FeatureGrid>
@@ -83,59 +87,24 @@ export function BeadsLesson() {
 
       {/* Core Commands */}
       <Section
-        title={<T>Core bd Commands</T>}
+        title={messages.coreCommands.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          <code>bd</code> <T>is the CLI for managing Beads issues:</T>
+          <code>bd</code> {messages.coreCommands.intro}
         </Paragraph>
 
         <div className="mt-6">
-          <CommandList
-            commands={[
-              {
-                command: "bd ready",
-                description: "Show issues ready to work (no blockers)",
-              },
-              {
-                command: "bd list --status=open",
-                description: "All open issues",
-              },
-              {
-                command: "bd show <id>",
-                description: "Detailed view with dependencies",
-              },
-              {
-                command: 'bd create "..." -t task -p 2',
-                description: "Create a new issue",
-              },
-              {
-                command: "bd update <id> --status=in_progress",
-                description: "Claim work",
-              },
-              {
-                command: "bd close <id>",
-                description: "Mark complete",
-              },
-              {
-                command: "bd dep add <issue> <depends-on>",
-                description: "Add a dependency",
-              },
-              {
-                command: "bd sync",
-                description: "Sync with git remote",
-              },
-            ]}
-            />
+          <CommandList commands={messages.coreCommands.commands} />
         </div>
 
         <div className="mt-6">
           <TipBox variant="warning">
-            <strong><T>Important:</T></strong>{" "}
-            <T>Never run bare</T> <code>bv</code>—
-            <T>it launches a TUI. Use</T> <code>bv --robot-*</code>{" "}
-            <T>flags for agent output.</T>
+            <strong>{messages.coreCommands.warning.important}</strong>{" "}
+            {messages.coreCommands.warning.neverRunBare} <code>bv</code>—
+            {messages.coreCommands.warning.explanation} <code>bv --robot-*</code>{" "}
+            {messages.coreCommands.warning.flagsNote}
           </TipBox>
         </div>
       </Section>
@@ -144,39 +113,24 @@ export function BeadsLesson() {
 
       {/* BV Robot Commands */}
       <Section
-        title={<T>BV Robot Commands</T>}
+        title={messages.robotCommands.title}
         icon={<Zap className="h-5 w-5" />}
         delay={0.2}
       >
         <Paragraph>
-          <T>BV provides machine-readable outputs with precomputed graph metrics:</T>
+          {messages.robotCommands.intro}
         </Paragraph>
 
         <div className="mt-6 space-y-6">
-          <RobotCommand
-            command="bv --robot-triage"
-            description="THE mega-command: recommendations, quick wins, blockers to clear"
-            output={["quick_ref", "recommendations", "quick_wins", "blockers_to_clear", "project_health"]}
-            primary
-          />
-
-          <RobotCommand
-            command="bv --robot-next"
-            description="Just the single top pick + claim command"
-            output={["next_item", "claim_command"]}
-          />
-
-          <RobotCommand
-            command="bv --robot-plan"
-            description="Parallel execution tracks with unblocks lists"
-            output={["tracks", "dependencies", "critical_path"]}
-          />
-
-          <RobotCommand
-            command="bv --robot-insights"
-            description="Full graph metrics"
-            output={["PageRank", "betweenness", "HITS", "eigenvector", "critical_path", "cycles", "k-core"]}
-          />
+          {messages.robotCommands.commands.map((cmd, index) => (
+            <RobotCommand
+              key={index}
+              command={cmd.command}
+              description={cmd.description}
+              output={cmd.output}
+              primary={cmd.primary}
+            />
+          ))}
         </div>
       </Section>
 
@@ -184,32 +138,45 @@ export function BeadsLesson() {
 
       {/* Issue Types & Priorities */}
       <Section
-        title={<T>Issue Types & Priorities</T>}
+        title={messages.issueTypes.title}
         icon={<ListTodo className="h-5 w-5" />}
         delay={0.25}
       >
         <div className="grid gap-6 md:grid-cols-2">
           {/* Types */}
           <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
-            <h4 className="font-bold text-white mb-4">Types</h4>
+            <h4 className="font-bold text-white mb-4">{messages.issueTypes.types.title}</h4>
             <div className="space-y-2">
-              <TypeRow type="bug" description="Something broken" color="text-red-400" />
-              <TypeRow type="feature" description="New functionality" color="text-emerald-400" />
-              <TypeRow type="task" description="Work to do" color="text-primary" />
-              <TypeRow type="epic" description="Large initiative" color="text-violet-400" />
-              <TypeRow type="chore" description="Maintenance" color="text-white/60" />
+              {messages.issueTypes.types.list.map((item, index) => {
+                const colors = ["text-red-400", "text-emerald-400", "text-primary", "text-violet-400", "text-white/60"];
+                return (
+                  <TypeRow
+                    key={index}
+                    type={item.type}
+                    description={item.description}
+                    color={colors[index] || "text-white/60"}
+                  />
+                );
+              })}
             </div>
           </div>
 
           {/* Priorities */}
           <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5">
-            <h4 className="font-bold text-white mb-4">Priorities (0-4)</h4>
+            <h4 className="font-bold text-white mb-4">{messages.issueTypes.priorities.title}</h4>
             <div className="space-y-2">
-              <PriorityRow priority="0" label="Critical" description="Security, data loss, broken builds" color="text-red-400" />
-              <PriorityRow priority="1" label="High" description="Important work" color="text-amber-400" />
-              <PriorityRow priority="2" label="Medium" description="Default priority" color="text-primary" />
-              <PriorityRow priority="3" label="Low" description="Nice to have" color="text-white/60" />
-              <PriorityRow priority="4" label="Backlog" description="Future consideration" color="text-white/40" />
+              {messages.issueTypes.priorities.list.map((item, index) => {
+                const colors = ["text-red-400", "text-amber-400", "text-primary", "text-white/60", "text-white/40"];
+                return (
+                  <PriorityRow
+                    key={index}
+                    priority={item.priority}
+                    label={item.label}
+                    description={item.description}
+                    color={colors[index] || "text-white/60"}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>
@@ -219,46 +186,34 @@ export function BeadsLesson() {
 
       {/* The Agent Workflow */}
       <Section
-        title={<T>The Agent Workflow</T>}
+        title={messages.agentWorkflow.title}
         icon={<Workflow className="h-5 w-5" />}
         delay={0.3}
       >
-        <AgentWorkflow />
+        <AgentWorkflow messages={messages.agentWorkflow} />
       </Section>
 
       <Divider />
 
       {/* Understanding Graph Metrics */}
       <Section
-        title={<T>Understanding Graph Metrics</T>}
+        title={messages.graphMetrics.title}
         icon={<BarChart className="h-5 w-5" />}
         delay={0.35}
       >
         <Paragraph>
-          <T>BV calculates graph metrics to help prioritize work:</T>
+          {messages.graphMetrics.intro}
         </Paragraph>
 
         <div className="mt-6 space-y-4">
-          <MetricCard
-            name="PageRank"
-            description="How central is this issue? High PageRank = many things depend on it"
-            usage="Focus on high PageRank blockers first"
-          />
-          <MetricCard
-            name="Betweenness"
-            description="How often does this issue sit on critical paths?"
-            usage="Clearing high betweenness issues unblocks the most work"
-          />
-          <MetricCard
-            name="Critical Path"
-            description="The longest chain of dependencies"
-            usage="Prioritize work on the critical path to reduce total time"
-          />
-          <MetricCard
-            name="Cycles"
-            description="Circular dependencies (A blocks B, B blocks A)"
-            usage="Must be resolved—they create deadlocks"
-          />
+          {messages.graphMetrics.metrics.map((metric, index) => (
+            <MetricCard
+              key={index}
+              name={metric.name}
+              description={metric.description}
+              usage={metric.usage}
+            />
+          ))}
         </div>
       </Section>
 
@@ -266,37 +221,23 @@ export function BeadsLesson() {
 
       {/* Best Practices */}
       <Section
-        title={<T>Best Practices</T>}
+        title={messages.bestPractices.title}
         icon={<CheckCircle className="h-5 w-5" />}
         delay={0.4}
       >
         <div className="space-y-4">
-          <BestPractice
-            title="Start with bd ready"
-            description="Find work that has no blockers—you can start immediately"
-          />
-          <BestPractice
-            title="Use bd dep add for dependencies"
-            description="Explicit dependencies enable smart prioritization"
-          />
-          <BestPractice
-            title="Claim work with --status=in_progress"
-            description="Prevents duplicate work by other agents"
-          />
-          <BestPractice
-            title="Close issues promptly"
-            description="Unblocks dependent work faster"
-          />
-          <BestPractice
-            title="Run bd sync at session end"
-            description="Keeps .beads/ in sync across agents and machines"
-          />
+          {messages.bestPractices.practices.map((practice, index) => (
+            <BestPractice
+              key={index}
+              title={practice.title}
+              description={practice.description}
+            />
+          ))}
         </div>
 
         <div className="mt-6">
           <TipBox variant="info">
-            Always commit <code>.beads/</code> with your code changes. It&apos;s
-            the authoritative source of truth for issue state.
+            {messages.bestPractices.tipBox.content}
           </TipBox>
         </div>
       </Section>
@@ -305,25 +246,12 @@ export function BeadsLesson() {
 
       {/* Try It Now */}
       <Section
-        title={<T>Try It Now</T>}
+        title={messages.tryItNow.title}
         icon={<Play className="h-5 w-5" />}
         delay={0.45}
       >
         <CodeBlock
-          code={`# See what's ready to work on
-$ bd ready
-
-# Get smart triage recommendations
-$ bv --robot-triage | jq '.quick_ref'
-
-# Create a task
-$ bd create "Add login page" -t feature -p 2
-
-# Start working on it
-$ bd update bd-1 --status=in_progress
-
-# Sync when done
-$ bd sync`}
+          code={messages.tryItNow.codeExample}
           showLineNumbers
         />
       </Section>
@@ -430,14 +358,14 @@ function RobotCommand({
 // =============================================================================
 // AGENT WORKFLOW
 // =============================================================================
-function AgentWorkflow() {
-  const steps = [
-    { icon: <Target className="h-5 w-5" />, title: "bd ready", desc: "Find unblocked work" },
-    { icon: <ListTodo className="h-5 w-5" />, title: "bd show <id>", desc: "Review issue details" },
-    { icon: <Play className="h-5 w-5" />, title: "bd update --status=in_progress", desc: "Claim the work" },
-    { icon: <Zap className="h-5 w-5" />, title: "Implement + test", desc: "Do the actual work" },
-    { icon: <CheckCircle className="h-5 w-5" />, title: "bd close <id>", desc: "Mark complete" },
-    { icon: <GitBranch className="h-5 w-5" />, title: "bd sync", desc: "Sync with remote" },
+function AgentWorkflow({ messages }: { messages: any }) {
+  const icons = [
+    <Target className="h-5 w-5" />,
+    <ListTodo className="h-5 w-5" />,
+    <Play className="h-5 w-5" />,
+    <Zap className="h-5 w-5" />,
+    <CheckCircle className="h-5 w-5" />,
+    <GitBranch className="h-5 w-5" />,
   ];
 
   return (
@@ -449,7 +377,7 @@ function AgentWorkflow() {
       <div className="relative space-y-5">
         <div className="absolute left-5 top-5 bottom-5 w-px bg-gradient-to-b from-primary/50 via-violet-500/50 to-emerald-500/50" />
 
-        {steps.map((step, i) => (
+        {messages.steps.map((step: any, i: number) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, x: -20 }}
@@ -459,11 +387,11 @@ function AgentWorkflow() {
             className="relative flex items-start gap-4 pl-2 group"
           >
             <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-violet-500 text-white shadow-lg shadow-primary/30 group-hover:shadow-xl group-hover:shadow-primary/40 transition-shadow duration-300">
-              {step.icon}
+              {icons[i]}
             </div>
             <div className="pt-1.5">
               <code className="text-sm text-primary font-medium group-hover:text-white transition-colors">{step.title}</code>
-              <p className="text-sm text-white/50">{step.desc}</p>
+              <p className="text-sm text-white/50">{step.description}</p>
             </div>
           </motion.div>
         ))}

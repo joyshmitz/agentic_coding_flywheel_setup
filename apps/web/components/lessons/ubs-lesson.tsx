@@ -26,54 +26,55 @@ import {
   FeatureCard,
   FeatureGrid,
 } from "./lesson-components";
+import { useLocale, getUbsLessonMessages } from "@/lib/i18n";
 
 export function UbsLesson() {
+  const { locale } = useLocale();
+  const messages = getUbsLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Learn to catch bugs before they reach production with UBS.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* What Is UBS */}
       <Section
-        title="What Is UBS?"
+        title={messages.whatIsUbs.title}
         icon={<Bug className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>UBS (Ultimate Bug Scanner)</Highlight> is your safety net
-          before every commit. It scans your code for common bugs, security
-          issues, and anti-patterns that might slip through during development.
+          <Highlight>{messages.whatIsUbs.highlightText}</Highlight> {messages.whatIsUbs.description}
         </Paragraph>
         <Paragraph>
-          Think of it as a code review bot that catches issues in seconds, not
-          hours.
+          {messages.whatIsUbs.analogy}
         </Paragraph>
 
         <div className="mt-8">
           <FeatureGrid>
             <FeatureCard
               icon={<Shield className="h-5 w-5" />}
-              title="Security Scanning"
-              description="XSS, injection, and OWASP vulnerabilities"
+              title={messages.whatIsUbs.features.securityScanning.title}
+              description={messages.whatIsUbs.features.securityScanning.description}
               gradient="from-red-500/20 to-rose-500/20"
             />
             <FeatureCard
               icon={<Bug className="h-5 w-5" />}
-              title="Bug Detection"
-              description="Null safety, async/await, type issues"
+              title={messages.whatIsUbs.features.bugDetection.title}
+              description={messages.whatIsUbs.features.bugDetection.description}
               gradient="from-amber-500/20 to-orange-500/20"
             />
             <FeatureCard
               icon={<Zap className="h-5 w-5" />}
-              title="Fast Feedback"
-              description="Scan a file in under 1 second"
+              title={messages.whatIsUbs.features.fastFeedback.title}
+              description={messages.whatIsUbs.features.fastFeedback.description}
               gradient="from-primary/20 to-violet-500/20"
             />
             <FeatureCard
               icon={<FileCode className="h-5 w-5" />}
-              title="Multi-Language"
-              description="TypeScript, Python, Rust, Go, and more"
+              title={messages.whatIsUbs.features.multiLanguage.title}
+              description={messages.whatIsUbs.features.multiLanguage.description}
               gradient="from-emerald-500/20 to-teal-500/20"
             />
           </FeatureGrid>
@@ -84,7 +85,7 @@ export function UbsLesson() {
 
       {/* The Golden Rule */}
       <Section
-        title="The Golden Rule"
+        title={messages.goldenRule.title}
         icon={<GitCommit className="h-5 w-5" />}
         delay={0.15}
       >
@@ -99,11 +100,10 @@ export function UbsLesson() {
             </div>
             <div>
               <p className="text-lg font-bold text-white">
-                Run <code className="text-amber-400">ubs</code> before every
-                commit.
+                Run <code className="text-amber-400">ubs</code> {messages.goldenRule.mainRule}
               </p>
               <p className="text-white/60 mt-1">
-                Exit 0 = safe to commit. Exit &gt;0 = fix issues first.
+                {messages.goldenRule.explanation}
               </p>
             </div>
           </div>
@@ -114,40 +114,19 @@ export function UbsLesson() {
 
       {/* Essential Commands */}
       <Section
-        title="Essential Commands"
+        title={messages.essentialCommands.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.2}
       >
         <CommandList
-          commands={[
-            {
-              command: "ubs file.ts",
-              description: "Scan a specific file (fastest)",
-            },
-            {
-              command: "ubs src/",
-              description: "Scan a directory",
-            },
-            {
-              command: "ubs $(git diff --name-only --cached)",
-              description: "Scan staged files before commit",
-            },
-            {
-              command: "ubs --only=js,python src/",
-              description: "Filter by language (3-5x faster)",
-            },
-            {
-              command: "ubs .",
-              description: "Scan whole project (ignores node_modules)",
-            },
-          ]}
+          commands={messages.essentialCommands.commands}
         />
 
         <div className="mt-6">
           <TipBox variant="tip">
-            Always scope to changed files when possible.{" "}
-            <code>ubs file.ts</code> runs in under 1 second, while{" "}
-            <code>ubs .</code> may take 30+ seconds.
+            {messages.essentialCommands.tip.content}
+            <code>ubs file.ts</code>{messages.essentialCommands.tip.example1}
+            <code>ubs .</code>{messages.essentialCommands.tip.example2}
           </TipBox>
         </div>
       </Section>

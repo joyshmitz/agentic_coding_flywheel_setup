@@ -1,0 +1,35 @@
+/**
+ * Lesson Messages - Index
+ *
+ * Centralized exports for lesson message files
+ */
+
+// Welcome lesson
+export { welcomeLessonMessages } from './welcome-messages';
+
+// Linux basics lesson
+export { linuxBasicsLessonMessages } from './linux-basics-messages';
+
+// Wave 2 lessons (tools)
+export { ntmPaletteLessonMessages } from './ntm-palette-messages';
+export { ntmCoreLessonMessages } from './ntm-core-messages';
+export { agentsLoginLessonMessages } from './agents-login-messages';
+export { cassLessonMessages } from './cass-messages';
+
+// Wave 3 lessons (development)
+export { ubsLessonMessages } from './ubs-messages';
+export { githubCliLessonMessages } from './github-cli-messages';
+export { gitBasicsLessonMessages } from './git-basics-messages';
+
+// Wave 5 lessons (deep dive)
+export { cmLessonMessages } from './cm';
+export { cmLessonMessagesUk } from './cm.uk';
+export { safetyToolsLessonMessages } from './safety-tools';
+export { safetyToolsLessonMessagesUk } from './safety-tools.uk';
+export { flywheelLoopLessonMessages } from './flywheel-loop';
+export { flywheelLoopLessonMessagesUk } from './flywheel-loop.uk';
+
+// Wave 6 lessons (case studies)
+export { slbCaseStudyLessonMessagesUk } from './slb-case-study-messages.uk';
+export { promptEngineeringLessonMessagesUk } from './prompt-engineering-messages.uk';
+export { realWorldCaseStudyLessonMessagesUk } from './real-world-case-study-messages.uk';

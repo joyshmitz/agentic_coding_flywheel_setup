@@ -22,28 +22,32 @@ import {
   GoalBanner,
   InlineCode,
 } from "./lesson-components";
+import { useLocale, getLinuxBasicsLessonMessages } from "@/lib/i18n";
 
 export function LinuxBasicsLesson() {
+  const { locale } = useLocale();
+  const messages = getLinuxBasicsLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Navigate the filesystem like a pro in 3 minutes.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* Where Am I */}
       <Section
-        title="Where Am I?"
+        title={messages.whereAmI.title}
         icon={<MapPin className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          First, let&apos;s find out where you are in the filesystem:
+          {messages.whereAmI.intro}
         </Paragraph>
         <div className="mt-6">
           <CodeBlock code="$ pwd" />
         </div>
         <Paragraph>
-          This prints your current directory. You should see{" "}
+          {messages.whereAmI.explanation}{" "}
           <InlineCode>/home/ubuntu</InlineCode>.
         </Paragraph>
       </Section>
@@ -52,30 +56,29 @@ export function LinuxBasicsLesson() {
 
       {/* What's Here */}
       <Section
-        title="What's Here?"
+        title={messages.whatsHere.title}
         icon={<FolderOpen className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          List the contents of your current directory:
+          {messages.whatsHere.intro}
         </Paragraph>
         <div className="mt-6">
           <CodeBlock code="$ ls" />
         </div>
         <Paragraph>
-          With ACFS, this is aliased to <InlineCode>lsd</InlineCode> which shows
-          beautiful icons.
+          {messages.whatsHere.aliasInfo} <InlineCode>lsd</InlineCode> {messages.whatsHere.aliasDescription}
         </Paragraph>
 
         <div className="mt-8">
           <h4 className="text-lg font-semibold text-white mb-4">
-            Try these variations:
+            {messages.whatsHere.variations.title}
           </h4>
           <CommandList
             commands={[
-              { command: "ll", description: "Long format with details" },
-              { command: "la", description: "Show hidden files" },
-              { command: "tree", description: "Tree view of directories" },
+              { command: "ll", description: messages.whatsHere.variations.commands.ll },
+              { command: "la", description: messages.whatsHere.variations.commands.la },
+              { command: "tree", description: messages.whatsHere.variations.commands.tree },
             ]}
           />
         </div>
@@ -85,12 +88,12 @@ export function LinuxBasicsLesson() {
 
       {/* Moving Around */}
       <Section
-        title="Moving Around"
+        title={messages.movingAround.title}
         icon={<Move className="h-5 w-5" />}
         delay={0.2}
       >
         <Paragraph>
-          Navigate the filesystem with the <InlineCode>cd</InlineCode> command:
+          {messages.movingAround.intro} <InlineCode>cd</InlineCode> {messages.movingAround.command}
         </Paragraph>
 
         <div className="mt-6">
@@ -98,20 +101,19 @@ export function LinuxBasicsLesson() {
             commands={[
               {
                 command: "cd /data/projects",
-                description: "Go to the projects directory",
+                description: messages.movingAround.commands.cdProjects,
               },
-              { command: "cd ~", description: "Go home (shortcut)" },
-              { command: "cd ..", description: "Go up one level" },
-              { command: "cd -", description: "Go to previous directory" },
+              { command: "cd ~", description: messages.movingAround.commands.cdHome },
+              { command: "cd ..", description: messages.movingAround.commands.cdUp },
+              { command: "cd -", description: messages.movingAround.commands.cdPrevious },
             ]}
           />
         </div>
 
         <div className="mt-8">
           <TipBox variant="tip">
-            With <Highlight>zoxide</Highlight> installed, you can use{" "}
-            <InlineCode>z projects</InlineCode> to jump to{" "}
-            <InlineCode>/data/projects</InlineCode> after visiting it once!
+            {messages.movingAround.tipBox.content} <Highlight>{messages.movingAround.tipBox.toolName}</Highlight> {messages.movingAround.tipBox.description}{" "}
+            <InlineCode>{messages.movingAround.tipBox.jumpCommand}</InlineCode> {messages.movingAround.tipBox.afterVisiting}
           </TipBox>
         </div>
       </Section>
@@ -120,21 +122,21 @@ export function LinuxBasicsLesson() {
 
       {/* Creating Things */}
       <Section
-        title="Creating Things"
+        title={messages.creatingThings.title}
         icon={<Plus className="h-5 w-5" />}
         delay={0.25}
       >
-        <Paragraph>Create new directories and files:</Paragraph>
+        <Paragraph>{messages.creatingThings.intro}</Paragraph>
 
         <div className="mt-6">
           <CommandList
             commands={[
-              { command: "mkdir my-project", description: "Create a directory" },
+              { command: "mkdir my-project", description: messages.creatingThings.commands.mkdir },
               {
                 command: "mkcd my-project",
-                description: "Create AND cd into it (ACFS function)",
+                description: messages.creatingThings.commands.mkcd,
               },
-              { command: "touch file.txt", description: "Create an empty file" },
+              { command: "touch file.txt", description: messages.creatingThings.commands.touch },
             ]}
           />
         </div>
@@ -144,25 +146,25 @@ export function LinuxBasicsLesson() {
 
       {/* Viewing Files */}
       <Section
-        title="Viewing Files"
+        title={messages.viewingFiles.title}
         icon={<Eye className="h-5 w-5" />}
         delay={0.3}
       >
-        <Paragraph>Read file contents in different ways:</Paragraph>
+        <Paragraph>{messages.viewingFiles.intro}</Paragraph>
 
         <div className="mt-6">
           <CommandList
             commands={[
               {
                 command: "cat file.txt",
-                description: "Print entire file (aliased to bat)",
+                description: messages.viewingFiles.commands.cat,
               },
               {
                 command: "less file.txt",
-                description: "Scroll through file (q to quit)",
+                description: messages.viewingFiles.commands.less,
               },
-              { command: "head -20 file.txt", description: "First 20 lines" },
-              { command: "tail -20 file.txt", description: "Last 20 lines" },
+              { command: "head -20 file.txt", description: messages.viewingFiles.commands.head },
+              { command: "tail -20 file.txt", description: messages.viewingFiles.commands.tail },
             ]}
           />
         </div>
@@ -172,22 +174,22 @@ export function LinuxBasicsLesson() {
 
       {/* Deleting Things */}
       <Section
-        title="Deleting Things"
+        title={messages.deletingThings.title}
         icon={<Trash2 className="h-5 w-5" />}
         delay={0.35}
       >
         <div className="mb-6">
           <TipBox variant="warning">
-            There&apos;s no trash can in Linux. <strong>Deleted = gone.</strong>
+            {messages.deletingThings.warningBox.content} <strong>{messages.deletingThings.warningBox.emphasis}</strong>
           </TipBox>
         </div>
 
         <CommandList
           commands={[
-            { command: "rm file.txt", description: "Delete a file" },
+            { command: "rm file.txt", description: messages.deletingThings.commands.rmFile },
             {
               command: "rm -rf directory/",
-              description: "Delete a directory (DANGEROUS!)",
+              description: messages.deletingThings.commands.rmDirectory,
             },
           ]}
         />
@@ -197,20 +199,20 @@ export function LinuxBasicsLesson() {
 
       {/* Searching */}
       <Section
-        title="Searching"
+        title={messages.searching.title}
         icon={<Search className="h-5 w-5" />}
         delay={0.4}
       >
-        <Paragraph>Find files and search their contents:</Paragraph>
+        <Paragraph>{messages.searching.intro}</Paragraph>
 
         <div className="mt-6">
           <CommandList
             commands={[
               {
                 command: 'rg "search term"',
-                description: "Search file contents (ripgrep)",
+                description: messages.searching.commands.ripgrep,
               },
-              { command: 'fd "pattern"', description: "Find files by name" },
+              { command: 'fd "pattern"', description: messages.searching.commands.fd },
             ]}
           />
         </div>
@@ -220,11 +222,11 @@ export function LinuxBasicsLesson() {
 
       {/* Verify Section */}
       <Section
-        title="Verify You Learned It"
+        title={messages.verify.title}
         icon={<CheckCircle2 className="h-5 w-5" />}
         delay={0.45}
       >
-        <Paragraph>Try this sequence to test your new skills:</Paragraph>
+        <Paragraph>{messages.verify.intro}</Paragraph>
 
         <div className="mt-6">
           <CodeBlock
@@ -241,7 +243,7 @@ $ ls`}
         </div>
 
         <div className="mt-8">
-          <VerificationCard />
+          <VerificationCard messages={messages} />
         </div>
       </Section>
     </div>
@@ -251,7 +253,7 @@ $ ls`}
 // =============================================================================
 // VERIFICATION CARD - Success state indicator
 // =============================================================================
-function VerificationCard() {
+function VerificationCard({ messages }: { messages: any }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -268,9 +270,9 @@ function VerificationCard() {
           <CheckCircle2 className="h-7 w-7 text-white" />
         </div>
         <div>
-          <h4 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">All Commands Work?</h4>
+          <h4 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">{messages.verify.verificationCard.title}</h4>
           <p className="text-emerald-300/80 group-hover:text-emerald-200 transition-colors">
-            You&apos;re ready for the next lesson!
+            {messages.verify.verificationCard.subtitle}
           </p>
         </div>
       </div>

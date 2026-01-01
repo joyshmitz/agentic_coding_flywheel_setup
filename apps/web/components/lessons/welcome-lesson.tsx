@@ -28,53 +28,58 @@ import {
   Divider,
   GoalBanner,
 } from "./lesson-components";
+import { useLocale, getWelcomeLessonMessages } from "@/lib/i18n";
 
 export function WelcomeLesson() {
+  const { locale } = useLocale();
+  const messages = getWelcomeLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Understand what you have and what you&apos;re about to learn.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* What You Now Have Section */}
       <Section
-        title="What You Now Have"
+        title={messages.whatYouNowHave.title}
         icon={<Zap className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph highlight>
-          Congratulations! You&apos;ve just set up a fully-armed{" "}
-          <Highlight>agentic engineering workstation</Highlight>.
+          {messages.whatYouNowHave.congratulations.split(messages.whatYouNowHave.highlight)[0]}{" "}
+          <Highlight>{messages.whatYouNowHave.highlight}</Highlight>
+          {messages.whatYouNowHave.congratulations.split(messages.whatYouNowHave.highlight)[1]}.
         </Paragraph>
 
         <div className="mt-8">
-          <Paragraph>Here&apos;s what&apos;s installed on your VPS:</Paragraph>
+          <Paragraph>{messages.whatYouNowHave.installedIntro}</Paragraph>
         </div>
 
         <div className="mt-6">
           <FeatureGrid>
             <FeatureCard
               icon={<Terminal className="h-5 w-5" />}
-              title="Beautiful Terminal"
-              description="zsh, Oh My Zsh, and Powerlevel10k for a stunning shell experience"
+              title={messages.whatYouNowHave.features.beautifulTerminal.title}
+              description={messages.whatYouNowHave.features.beautifulTerminal.description}
               gradient="from-violet-500/20 to-purple-500/20"
             />
             <FeatureCard
               icon={<Wrench className="h-5 w-5" />}
-              title="Modern CLI Tools"
-              description="lsd, bat, ripgrep, fzf, and zoxide for supercharged productivity"
+              title={messages.whatYouNowHave.features.modernCliTools.title}
+              description={messages.whatYouNowHave.features.modernCliTools.description}
               gradient="from-emerald-500/20 to-teal-500/20"
             />
             <FeatureCard
               icon={<Code2 className="h-5 w-5" />}
-              title="Language Runtimes"
-              description="JavaScript (Bun), Python (uv), Rust, and Go ready to go"
+              title={messages.whatYouNowHave.features.languageRuntimes.title}
+              description={messages.whatYouNowHave.features.languageRuntimes.description}
               gradient="from-sky-500/20 to-blue-500/20"
             />
             <FeatureCard
               icon={<Bot className="h-5 w-5" />}
-              title="Three Coding Agents"
-              description="Claude Code (cc), Codex CLI (cod), and Gemini CLI (gmi)"
+              title={messages.whatYouNowHave.features.threeCodingAgents.title}
+              description={messages.whatYouNowHave.features.threeCodingAgents.description}
               gradient="from-amber-500/20 to-orange-500/20"
             />
           </FeatureGrid>
@@ -83,18 +88,18 @@ export function WelcomeLesson() {
         {/* Agent Cards */}
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           <AgentCard
-            name="Claude Code"
-            shortcut="cc"
+            name={messages.whatYouNowHave.agents.claudeCode.name}
+            shortcut={messages.whatYouNowHave.agents.claudeCode.shortcut}
             color="from-orange-500 to-amber-500"
           />
           <AgentCard
-            name="Codex CLI"
-            shortcut="cod"
+            name={messages.whatYouNowHave.agents.codexCli.name}
+            shortcut={messages.whatYouNowHave.agents.codexCli.shortcut}
             color="from-emerald-500 to-teal-500"
           />
           <AgentCard
-            name="Gemini CLI"
-            shortcut="gmi"
+            name={messages.whatYouNowHave.agents.geminiCli.name}
+            shortcut={messages.whatYouNowHave.agents.geminiCli.shortcut}
             color="from-blue-500 to-indigo-500"
           />
         </div>
@@ -104,26 +109,23 @@ export function WelcomeLesson() {
 
       {/* The Mental Model Section */}
       <Section
-        title="The Mental Model"
+        title={messages.mentalModel.title}
         icon={<Layers className="h-5 w-5" />}
         delay={0.2}
       >
-        <Paragraph>Think of your setup like this:</Paragraph>
+        <Paragraph>{messages.mentalModel.intro}</Paragraph>
 
         {/* Architecture Diagram */}
         <div className="mt-8 relative">
-          <ArchitectureDiagram />
+          <ArchitectureDiagram messages={messages} />
         </div>
 
         <div className="mt-8 space-y-4">
           <Paragraph>
-            Your laptop is just the{" "}
-            <Highlight>remote control</Highlight>. The real work happens on the
-            VPS.
+            {messages.mentalModel.laptopExplanation}
           </Paragraph>
           <Paragraph>
-            If your SSH connection drops? No problem. Your work continues in
-            tmux.
+            {messages.mentalModel.connectionExplanation}
           </Paragraph>
         </div>
       </Section>
@@ -132,37 +134,12 @@ export function WelcomeLesson() {
 
       {/* What This Tutorial Will Teach You */}
       <Section
-        title="What You'll Learn"
+        title={messages.whatYoullLearn.title}
         icon={<BookOpen className="h-5 w-5" />}
         delay={0.3}
       >
         <StepList
-          steps={[
-            {
-              title: "Linux basics",
-              description: "Navigating the filesystem with confidence",
-            },
-            {
-              title: "SSH fundamentals",
-              description: "Staying connected to your VPS",
-            },
-            {
-              title: "tmux essentials",
-              description: "Persistent sessions that survive disconnects",
-            },
-            {
-              title: "Agent commands",
-              description: "Talking to Claude, Codex, and Gemini",
-            },
-            {
-              title: "NTM mastery",
-              description: "Orchestrating multiple agents at once",
-            },
-            {
-              title: "The flywheel workflow",
-              description: "Putting it all together for maximum velocity",
-            },
-          ]}
+          steps={messages.whatYoullLearn.steps}
         />
       </Section>
 
@@ -170,8 +147,7 @@ export function WelcomeLesson() {
 
       {/* Tip */}
       <TipBox variant="tip">
-        If you ever break something, you can delete this VPS and re-run ACFS.
-        That&apos;s the beauty of VPS development!
+        {messages.tipBox.content}
       </TipBox>
     </div>
   );
@@ -217,7 +193,7 @@ function AgentCard({
 // =============================================================================
 // ARCHITECTURE DIAGRAM - Visual representation of the system
 // =============================================================================
-function ArchitectureDiagram() {
+function ArchitectureDiagram({ messages }: { messages: any }) {
   return (
     <div className="relative p-8 rounded-3xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
       {/* Background glow effects */}
@@ -232,8 +208,8 @@ function ArchitectureDiagram() {
           transition={{ delay: 0.2 }}
         >
           <DiagramBox
-            label="Your Laptop"
-            sublabel="The Cockpit"
+            label={messages.mentalModel.diagram.yourLaptop.label}
+            sublabel={messages.mentalModel.diagram.yourLaptop.sublabel}
             icon={<Laptop className="h-8 w-8" />}
             gradient="from-sky-500/20 to-blue-500/20"
           />
@@ -250,7 +226,7 @@ function ArchitectureDiagram() {
             <div className="h-px w-8 bg-gradient-to-r from-sky-500/50 to-primary/50" />
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 border border-white/[0.1]">
               <Wifi className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-mono text-white/50">SSH</span>
+              <span className="text-xs font-mono text-white/50">{messages.mentalModel.diagram.sshConnection}</span>
             </div>
             <div className="h-px w-8 bg-gradient-to-r from-primary/50 to-emerald-500/50" />
             <ChevronRight className="h-5 w-5 text-emerald-400" />
@@ -259,7 +235,7 @@ function ArchitectureDiagram() {
             <div className="w-px h-8 bg-gradient-to-b from-sky-500/50 to-primary/50" />
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 border border-white/[0.1]">
               <Wifi className="h-3.5 w-3.5 text-primary" />
-              <span className="text-xs font-mono text-white/50">SSH</span>
+              <span className="text-xs font-mono text-white/50">{messages.mentalModel.diagram.sshConnection}</span>
             </div>
             <div className="w-px h-8 bg-gradient-to-b from-primary/50 to-emerald-500/50" />
             <ChevronRight className="h-5 w-5 text-emerald-400 rotate-90" />
@@ -274,8 +250,8 @@ function ArchitectureDiagram() {
           className="space-y-4"
         >
           <DiagramBox
-            label="Your VPS"
-            sublabel="The Engine Room"
+            label={messages.mentalModel.diagram.yourVps.label}
+            sublabel={messages.mentalModel.diagram.yourVps.sublabel}
             icon={<Cloud className="h-8 w-8" />}
             gradient="from-emerald-500/20 to-teal-500/20"
           />
@@ -284,18 +260,18 @@ function ArchitectureDiagram() {
           <div className="grid grid-cols-3 gap-3">
             <VPSComponent
               icon={<Server className="h-4 w-4" />}
-              label="tmux"
-              sublabel="Sessions"
+              label={messages.mentalModel.diagram.vpsComponents.tmux.label}
+              sublabel={messages.mentalModel.diagram.vpsComponents.tmux.sublabel}
             />
             <VPSComponent
               icon={<Bot className="h-4 w-4" />}
-              label="Agents"
-              sublabel="Workers"
+              label={messages.mentalModel.diagram.vpsComponents.agents.label}
+              sublabel={messages.mentalModel.diagram.vpsComponents.agents.sublabel}
             />
             <VPSComponent
               icon={<Cpu className="h-4 w-4" />}
-              label="NTM"
-              sublabel="Orchestrator"
+              label={messages.mentalModel.diagram.vpsComponents.ntm.label}
+              sublabel={messages.mentalModel.diagram.vpsComponents.ntm.sublabel}
             />
           </div>
         </motion.div>

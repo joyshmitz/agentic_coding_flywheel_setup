@@ -25,29 +25,28 @@ import {
   InlineCode,
   BulletList,
 } from "./lesson-components";
+import { useLocale, getTmuxBasicsLessonMessages } from "@/lib/i18n";
 
 export function TmuxBasicsLesson() {
+  const { locale } = useLocale();
+  const messages = getTmuxBasicsLessonMessages(locale);
+
   return (
     <div className="space-y-8">
-      <GoalBanner>Never lose work when SSH drops.</GoalBanner>
+      <GoalBanner>{messages.goalBanner.content}</GoalBanner>
 
       {/* What Is tmux */}
       <Section
-        title="What Is tmux?"
+        title={messages.whatIsTmux.title}
         icon={<LayoutGrid className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>tmux</Highlight> is a <strong>terminal multiplexer</strong>.
-          It lets you:
+          <Highlight>{messages.whatIsTmux.highlight}</Highlight> {messages.whatIsTmux.description}
         </Paragraph>
         <div className="mt-6">
           <BulletList
-            items={[
-              "Keep sessions running after you disconnect",
-              "Split your terminal into panes",
-              "Have multiple windows in one connection",
-            ]}
+            items={messages.whatIsTmux.features}
           />
         </div>
       </Section>
@@ -56,36 +55,40 @@ export function TmuxBasicsLesson() {
 
       {/* Essential Commands */}
       <Section
-        title="Essential Commands"
+        title={messages.essentialCommands.title}
         icon={<Play className="h-5 w-5" />}
         delay={0.15}
       >
         {/* Start Session */}
         <div className="space-y-8">
           <CommandSection
-            title="Start a New Session"
+            title={messages.essentialCommands.startSession.title}
             code="tmux new -s myproject"
-            description='This creates a session named "myproject".'
+            description={messages.essentialCommands.startSession.description}
+            messages={messages}
           />
 
           <CommandSection
-            title="Detach (Leave Session Running)"
+            title={messages.essentialCommands.detachSession.title}
             keyCombo={["Ctrl+a", "d"]}
-            description="Your session continues running in the background!"
+            description={messages.essentialCommands.detachSession.description}
+            messages={messages}
           />
 
           <CommandSection
-            title="List Sessions"
+            title={messages.essentialCommands.listSessions.title}
             code="tmux ls"
-            description="See all running sessions."
+            description={messages.essentialCommands.listSessions.description}
+            messages={messages}
           />
 
           <CommandSection
-            title="Reattach to a Session"
+            title={messages.essentialCommands.reattachSession.title}
             code={`tmux attach -t myproject
 # Or just:
 tmux a`}
-            description="Attaches to the most recent session."
+            description={messages.essentialCommands.reattachSession.description}
+            messages={messages}
           />
         </div>
       </Section>
@@ -94,14 +97,12 @@ tmux a`}
 
       {/* The Prefix Key */}
       <Section
-        title="The Prefix Key"
+        title={messages.prefixKey.title}
         icon={<Keyboard className="h-5 w-5" />}
         delay={0.2}
       >
         <TipBox variant="info">
-          In ACFS, the prefix key is <InlineCode>Ctrl+a</InlineCode> (not the
-          default <InlineCode>Ctrl+b</InlineCode>). All tmux commands start with
-          the prefix.
+          {messages.prefixKey.tipBox.content}
         </TipBox>
       </Section>
 
@@ -109,7 +110,7 @@ tmux a`}
 
       {/* Splitting Panes */}
       <Section
-        title="Splitting Panes"
+        title={messages.splittingPanes.title}
         icon={<Columns className="h-5 w-5" />}
         delay={0.25}
       >
@@ -117,22 +118,22 @@ tmux a`}
           shortcuts={[
             {
               keys: ["Ctrl+a", "|"],
-              action: "Split vertically",
+              action: messages.splittingPanes.shortcuts.splitVertically.action,
               icon: <Columns className="h-4 w-4" />,
             },
             {
               keys: ["Ctrl+a", "-"],
-              action: "Split horizontally",
+              action: messages.splittingPanes.shortcuts.splitHorizontally.action,
               icon: <Rows className="h-4 w-4" />,
             },
             {
               keys: ["Ctrl+a", "h/j/k/l"],
-              action: "Move between panes",
+              action: messages.splittingPanes.shortcuts.moveBetweenPanes.action,
               icon: <ArrowLeftRight className="h-4 w-4" />,
             },
             {
               keys: ["Ctrl+a", "x"],
-              action: "Close current pane",
+              action: messages.splittingPanes.shortcuts.closeCurrentPane.action,
               icon: <Scissors className="h-4 w-4" />,
             },
           ]}
@@ -143,7 +144,7 @@ tmux a`}
 
       {/* Windows */}
       <Section
-        title="Windows (Tabs)"
+        title={messages.windows.title}
         icon={<LayoutGrid className="h-5 w-5" />}
         delay={0.3}
       >
@@ -151,22 +152,22 @@ tmux a`}
           shortcuts={[
             {
               keys: ["Ctrl+a", "c"],
-              action: "New window",
+              action: messages.windows.shortcuts.newWindow.action,
               icon: <Play className="h-4 w-4" />,
             },
             {
               keys: ["Ctrl+a", "n"],
-              action: "Next window",
+              action: messages.windows.shortcuts.nextWindow.action,
               icon: <ArrowLeftRight className="h-4 w-4" />,
             },
             {
               keys: ["Ctrl+a", "p"],
-              action: "Previous window",
+              action: messages.windows.shortcuts.previousWindow.action,
               icon: <ArrowLeftRight className="h-4 w-4 rotate-180" />,
             },
             {
               keys: ["Ctrl+a", "0-9"],
-              action: "Go to window number",
+              action: messages.windows.shortcuts.goToWindowNumber.action,
               icon: <List className="h-4 w-4" />,
             },
           ]}
@@ -177,7 +178,7 @@ tmux a`}
 
       {/* Copy Mode */}
       <Section
-        title="Copy Mode (Scrolling)"
+        title={messages.copyMode.title}
         icon={<Copy className="h-5 w-5" />}
         delay={0.35}
       >
@@ -185,17 +186,17 @@ tmux a`}
           shortcuts={[
             {
               keys: ["Ctrl+a", "["],
-              action: "Enter copy mode",
+              action: messages.copyMode.shortcuts.enterCopyMode.action,
               icon: <Play className="h-4 w-4" />,
             },
             {
               keys: ["j/k", "or arrows"],
-              action: "Scroll",
+              action: messages.copyMode.shortcuts.scroll.action,
               icon: <ArrowLeftRight className="h-4 w-4 rotate-90" />,
             },
-            { keys: ["q"], action: "Exit copy mode", icon: <Pause className="h-4 w-4" /> },
-            { keys: ["v"], action: "Start selection", icon: <Copy className="h-4 w-4" /> },
-            { keys: ["y"], action: "Copy selection", icon: <Copy className="h-4 w-4" /> },
+            { keys: ["q"], action: messages.copyMode.shortcuts.exitCopyMode.action, icon: <Pause className="h-4 w-4" /> },
+            { keys: ["v"], action: messages.copyMode.shortcuts.startSelection.action, icon: <Copy className="h-4 w-4" /> },
+            { keys: ["y"], action: messages.copyMode.shortcuts.copySelection.action, icon: <Copy className="h-4 w-4" /> },
           ]}
         />
       </Section>
@@ -204,7 +205,7 @@ tmux a`}
 
       {/* Try It Now */}
       <Section
-        title="Try It Now"
+        title={messages.tryItNow.title}
         icon={<Play className="h-5 w-5" />}
         delay={0.4}
       >
@@ -237,11 +238,11 @@ $ tmux attach -t practice`}
 
       {/* Why This Matters */}
       <Section
-        title="Why This Matters for Agents"
+        title={messages.whyItMatters.title}
         icon={<Bot className="h-5 w-5" />}
         delay={0.45}
       >
-        <WhyItMattersCard />
+        <WhyItMattersCard messages={messages} />
       </Section>
     </div>
   );
@@ -255,11 +256,13 @@ function CommandSection({
   code,
   keyCombo,
   description,
+  messages,
 }: {
   title: string;
   code?: string;
   keyCombo?: string[];
   description: string;
+  messages?: any;
 }) {
   return (
     <motion.div
@@ -272,14 +275,14 @@ function CommandSection({
       {code && <CodeBlock code={code} />}
       {keyCombo && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-white/50">Press:</span>
+          <span className="text-sm text-white/50">{messages?.commandSection?.pressLabel || "Press"}:</span>
           {keyCombo.map((key, i) => (
             <span key={i} className="flex items-center gap-2">
               <kbd className="px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.1] text-sm font-mono text-white">
                 {key}
               </kbd>
               {i < keyCombo.length - 1 && (
-                <span className="text-white/30">then</span>
+                <span className="text-white/30">{messages?.commandSection?.thenLabel || "then"}</span>
               )}
             </span>
           ))}
@@ -336,7 +339,7 @@ function KeyboardShortcutGrid({ shortcuts }: { shortcuts: ShortcutItem[] }) {
 // =============================================================================
 // WHY IT MATTERS CARD - Highlight importance
 // =============================================================================
-function WhyItMattersCard() {
+function WhyItMattersCard({ messages }: { messages: any }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -352,12 +355,10 @@ function WhyItMattersCard() {
         </div>
         <div>
           <h4 className="text-lg font-bold text-white mb-2">
-            Your Agents Run in tmux
+            {messages.whyItMatters.card.title}
           </h4>
           <p className="text-white/60">
-            Your coding agents (Claude, Codex, Gemini) run in tmux panes. If SSH
-            drops, they keep running. When you reconnect and reattach,
-            they&apos;re still there!
+            {messages.whyItMatters.card.description}
           </p>
         </div>
       </div>
