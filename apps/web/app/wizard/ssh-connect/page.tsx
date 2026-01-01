@@ -22,6 +22,7 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
+import { useLocale, getSshConnectMessages, getCommonMessages } from "@/lib/i18n";
 
 interface TroubleshootingItem {
   error: string;
@@ -138,6 +139,9 @@ export default function SSHConnectPage() {
   const [expandedError, setExpandedError] = useState<string | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   const ready = vpsIPLoaded && osLoaded;
+  const { locale } = useLocale();
+  const messages = getSshConnectMessages(locale);
+  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({
@@ -188,15 +192,15 @@ export default function SSHConnectPage() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl">
-              <Jargon term="ssh" gradientHeading>SSH</Jargon> into your <Jargon term="vps" gradientHeading>VPS</Jargon>
+              {messages.title}
             </h1>
             <p className="text-sm text-muted-foreground">
-              ~1 min
+              {messages.timeEstimate}
             </p>
           </div>
         </div>
         <p className="text-muted-foreground">
-          Connect to your new <Jargon term="vps">VPS</Jargon> for the first time.
+          {messages.description}
         </p>
       </div>
 
@@ -475,7 +479,7 @@ export default function SSHConnectPage() {
       {/* Continue button */}
       <div className="flex justify-end pt-4">
         <Button onClick={handleContinue} disabled={isNavigating} size="lg" disableMotion>
-          {isNavigating ? "Loading..." : "I'm connected, continue"}
+          {isNavigating ? common.buttons.loading : common.buttons.continue}
         </Button>
       </div>
     </div>

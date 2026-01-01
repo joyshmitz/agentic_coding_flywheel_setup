@@ -20,6 +20,7 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
+import { useLocale, getRentVpsMessages, getCommonMessages } from "@/lib/i18n";
 
 interface ProviderInfo {
   id: string;
@@ -192,6 +193,9 @@ export default function RentVPSPage() {
   const router = useRouter();
   const [expandedProvider, setExpandedProvider] = useState<string | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
+  const { locale } = useLocale();
+  const messages = getRentVpsMessages(locale);
+  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({
@@ -221,15 +225,15 @@ export default function RentVPSPage() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl">
-              Rent a <Jargon term="vps" gradientHeading>VPS</Jargon>
+              {messages.title.split("VPS")[0]}<Jargon term="vps" gradientHeading>VPS</Jargon>
             </h1>
             <p className="text-sm text-muted-foreground">
-              ~5 min
+              {messages.timeEstimate}
             </p>
           </div>
         </div>
         <p className="text-muted-foreground">
-          Pick a <Jargon term="vps">VPS</Jargon> provider and rent a server. This is where your <Jargon term="ai-agents">coding agents</Jargon> will live.
+          {messages.description}
         </p>
       </div>
 
@@ -237,10 +241,10 @@ export default function RentVPSPage() {
       <div className="rounded-xl border border-border/50 bg-card/50 p-4">
         <h2 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
           <Server className="h-5 w-5 text-primary" />
-          What to choose
+          {messages.specChecklist.title}
         </h2>
         <div className="grid gap-2 sm:grid-cols-2">
-          {SPEC_CHECKLIST.map((spec) => (
+          {messages.specChecklist.specs.map((spec) => (
             <div key={spec.label} className="flex gap-2 text-sm">
               <span className="font-medium text-muted-foreground min-w-20">
                 {spec.label}:
@@ -252,26 +256,23 @@ export default function RentVPSPage() {
       </div>
 
       {/* Credit card and verification warning */}
-      <AlertCard variant="warning" title="Before you sign up">
+      <AlertCard variant="warning" title={messages.alerts.beforeSignup.title}>
         <div className="space-y-2 text-sm">
           <p>
-            <strong className="text-foreground">Credit card required:</strong> Both providers require
-            a valid credit card for signup. Prepaid cards may not work.
+            <strong className="text-foreground">{messages.alerts.beforeSignup.creditCard}</strong> {messages.alerts.beforeSignup.creditCardDesc}
           </p>
           <p>
-            <strong className="text-foreground">Email verification:</strong> You&apos;ll need to verify
-            your email address. Check your spam folder if you don&apos;t see the verification email.
+            <strong className="text-foreground">{messages.alerts.beforeSignup.emailVerification}</strong> {messages.alerts.beforeSignup.emailVerificationDesc}
           </p>
           <p className="text-muted-foreground">
-            Some providers (especially Contabo) may require additional identity verification for
-            new accounts. This usually takes a few minutes but can occasionally take up to 24 hours.
+            {messages.alerts.beforeSignup.identityNote}
           </p>
         </div>
       </AlertCard>
 
       {/* Provider cards */}
       <div className="space-y-4">
-        <h2 className="font-semibold">Recommended providers</h2>
+        <h2 className="font-semibold">{messages.providers.title}</h2>
         <div className="space-y-3">
           {PROVIDERS.map((provider) => (
             <ProviderCard
@@ -295,23 +296,18 @@ export default function RentVPSPage() {
           </div>
           <div className="min-w-0 space-y-1 sm:space-y-1.5">
             <p className="text-[13px] font-medium leading-tight text-[oklch(0.85_0.02_260)] sm:text-sm">
-              No affiliate deals, just honest recommendations
+              {messages.disclaimer.title}
             </p>
             <p className="text-[13px] leading-relaxed text-[oklch(0.65_0.02_260)] sm:text-sm">
-              I&apos;m Jeffrey Emanuel, and I have <span className="font-medium text-[oklch(0.75_0.02_260)]">zero financial relationship</span> with
-              Contabo, OVH, or any cloud provider. No affiliate links, no kickbacks, no sponsored content.
-              I recommend these because I use them myself. They offer beefy machines (48GB+ RAM) at
-              a fraction of what AWS, GCP, or Azure charge. On those big providers, equivalent specs
-              would cost <span className="font-medium text-[oklch(0.75_0.02_260)]">3-5× more</span>.
+              {messages.disclaimer.content}
             </p>
           </div>
         </div>
       </div>
 
       {/* Other providers note */}
-      <AlertCard variant="tip" title="Using a different provider?">
-        Any provider with <Jargon term="ubuntu">Ubuntu</Jargon> <Jargon term="vps">VPS</Jargon> and <Jargon term="ssh">SSH</Jargon> key login works. Just make sure
-        you can add your <Jargon term="public-key">SSH public key</Jargon> during setup.
+      <AlertCard variant="tip" title={messages.alerts.differentProvider.title}>
+        {messages.alerts.differentProvider.content}
       </AlertCard>
 
       {/* Beginner Guide */}
@@ -646,7 +642,7 @@ export default function RentVPSPage() {
       {/* Continue button */}
       <div className="flex justify-end pt-4">
         <Button onClick={handleContinue} disabled={isNavigating} size="lg" disableMotion>
-          {isNavigating ? "Loading..." : "I rented a VPS"}
+          {isNavigating ? common.buttons.loading : common.buttons.continue}
         </Button>
       </div>
     </div>

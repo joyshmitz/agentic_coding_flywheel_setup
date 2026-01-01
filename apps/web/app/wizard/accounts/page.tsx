@@ -38,6 +38,7 @@ import {
   type ServiceTier,
 } from "@/lib/services";
 import { TrackedLink } from "@/components/tracked-link";
+import { useLocale, getAccountsMessages, getCommonMessages } from "@/lib/i18n";
 
 const TIER_META: Record<
   ServiceTier,
@@ -259,6 +260,9 @@ export default function AccountsPage() {
   const [checkedServices, setCheckedServices] = useState<Set<string>>(
     new Set()
   );
+  const { locale } = useLocale();
+  const messages = getAccountsMessages(locale);
+  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({
@@ -317,15 +321,13 @@ export default function AccountsPage() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl">
-              Set up your accounts
+              {messages.title}
             </h1>
-            <p className="text-sm text-muted-foreground">~5-10 min</p>
+            <p className="text-sm text-muted-foreground">{messages.timeEstimate}</p>
           </div>
         </div>
         <p className="text-muted-foreground">
-          Create accounts for the services you&apos;ll use with your{" "}
-          <Jargon term="vps">VPS</Jargon>. Do this now while the installer runs
-          later.
+          {messages.description}
         </p>
       </div>
 
@@ -462,7 +464,7 @@ export default function AccountsPage() {
       {/* Action buttons */}
       <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:justify-end">
         <Button variant="outline" onClick={handleSkip} disabled={isNavigating}>
-          Skip for now
+          {common.buttons.back}
         </Button>
         <Button
           onClick={handleContinue}
@@ -470,7 +472,7 @@ export default function AccountsPage() {
           size="lg"
           disableMotion
         >
-          {isNavigating ? "Loading..." : "Continue to pre-flight check"}
+          {isNavigating ? common.buttons.loading : common.buttons.continue}
         </Button>
       </div>
     </div>
