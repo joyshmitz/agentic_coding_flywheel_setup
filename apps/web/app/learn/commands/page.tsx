@@ -19,8 +19,10 @@ import {
 import { motion } from "@/components/motion";
 import { CommandCard } from "@/components/command-card";
 import { springs, staggerDelay } from "@/lib/design-tokens";
+import { useLocale, getCommands, getCommandCategories } from "@/lib/i18n";
+import type { CommandCategory, CommandRef } from "@/lib/commands";
 
-type CommandCategory =
+type LocalCommandCategory =
   | "agents"
   | "stack"
   | "search"
@@ -40,63 +42,37 @@ type CommandEntry = {
   learnMoreHref?: string;
 };
 
-const CATEGORY_META: Array<{
-  id: CommandCategory;
-  name: string;
-  description: string;
-  icon: ReactNode;
-  gradient: string;
-}> = [
-  {
-    id: "agents",
-    name: "AI Agents",
-    description: "Your three coding agents (aliases included)",
+// Icons and gradients for categories (UI-only, no translation needed)
+const CATEGORY_UI: Record<CommandCategory, { icon: ReactNode; gradient: string }> = {
+  agents: {
     icon: <Bot className="h-5 w-5" />,
     gradient: "from-violet-500/20 to-purple-500/20",
   },
-  {
-    id: "stack",
-    name: "Dicklesworthstone Stack",
-    description: "The 8-tool orchestration stack (plus Beads)",
+  stack: {
     icon: <Terminal className="h-5 w-5" />,
     gradient: "from-primary/20 to-blue-500/20",
   },
-  {
-    id: "search",
-    name: "Search & Navigation",
-    description: "Find code and jump around fast",
+  search: {
     icon: <Search className="h-5 w-5" />,
     gradient: "from-emerald-500/20 to-teal-500/20",
   },
-  {
-    id: "git",
-    name: "Git & Repo Tools",
-    description: "Version control and GitHub workflows",
+  git: {
     icon: <GitBranch className="h-5 w-5" />,
     gradient: "from-orange-500/20 to-amber-500/20",
   },
-  {
-    id: "system",
-    name: "System & Terminal UX",
-    description: "Everyday terminal helpers installed by ACFS",
+  system: {
     icon: <Wrench className="h-5 w-5" />,
     gradient: "from-pink-500/20 to-rose-500/20",
   },
-  {
-    id: "languages",
-    name: "Languages & Runtimes",
-    description: "Bun, Python (uv), Rust, Go",
+  languages: {
     icon: <Code2 className="h-5 w-5" />,
     gradient: "from-cyan-500/20 to-sky-500/20",
   },
-  {
-    id: "cloud",
-    name: "Cloud & Infra",
-    description: "Deploy, DNS, secrets, databases",
+  cloud: {
     icon: <Cloud className="h-5 w-5" />,
     gradient: "from-indigo-500/20 to-violet-500/20",
   },
-];
+};
 
 const COMMANDS: CommandEntry[] = [
   // Agents
@@ -504,13 +480,28 @@ function CategoryCard({
 }
 
 export default function CommandReferencePage() {
+  const { locale } = useLocale();
+  const localizedCommands = getCommands(locale);
+  const localizedCategories = getCommandCategories(locale);
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState<CategoryFilter>("all");
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
+  // Convert CommandRef to CommandEntry format for compatibility
+  const commandsAsEntries: CommandEntry[] = useMemo(() => {
+    return localizedCommands.map(cmd => ({
+      name: cmd.name,
+      fullName: cmd.fullName,
+      description: cmd.description,
+      example: cmd.example,
+      category: cmd.category,
+      learnMoreHref: cmd.docsUrl,
+    }));
+  }, [localizedCommands]);
+
   const filteredCommands = useMemo(() => {
-    return COMMANDS.filter((cmd) => {
+    return commandsAsEntries.filter((cmd) => {
       if (category !== "all" && cmd.category !== category) {
         return false;
       }
@@ -518,7 +509,7 @@ export default function CommandReferencePage() {
       const haystack = `${cmd.name} ${cmd.fullName} ${cmd.description} ${cmd.example}`.toLowerCase();
       return haystack.includes(normalizedQuery);
     });
-  }, [category, normalizedQuery]);
+  }, [category, normalizedQuery, commandsAsEntries]);
 
   const grouped = useMemo(() => {
     const groups: Record<CommandCategory, CommandEntry[]> = {
@@ -537,6 +528,17 @@ export default function CommandReferencePage() {
 
     return groups;
   }, [filteredCommands]);
+
+  // Build category metadata with localized labels and descriptions
+  const categoryMeta = useMemo(() => {
+    return localizedCategories.map(cat => ({
+      id: cat.id,
+      name: cat.label,
+      description: cat.description,
+      icon: CATEGORY_UI[cat.id].icon,
+      gradient: CATEGORY_UI[cat.id].gradient,
+    }));
+  }, [localizedCategories]);
 
   const hasAnyResults = filteredCommands.length > 0;
 
@@ -652,7 +654,7 @@ export default function CommandReferencePage() {
             isSelected={category === "all"}
             onClick={() => setCategory("all")}
           />
-          {CATEGORY_META.map((c) => (
+          {categoryMeta.map((c) => (
             <CategoryChip
               key={c.id}
               label={c.name}
@@ -665,7 +667,7 @@ export default function CommandReferencePage() {
         {/* Content */}
         <div className="space-y-8">
           {hasAnyResults ? (
-            CATEGORY_META.map((meta, idx) => {
+            categoryMeta.map((meta, idx) => {
               const cmds = grouped[meta.id];
               if (cmds.length === 0) return null;
               return (
