@@ -19,7 +19,7 @@ import {
 import { motion } from "@/components/motion";
 import { CommandCard } from "@/components/command-card";
 import { springs, staggerDelay } from "@/lib/design-tokens";
-import { useLocale, getCommands, getCommandCategories } from "@/lib/i18n";
+import { useLocale, getCommands, getCommandCategories, getCommandsUiMessages } from "@/lib/i18n";
 import type { CommandCategory, CommandRef } from "@/lib/commands";
 
 type LocalCommandCategory =
@@ -391,6 +391,8 @@ function CategoryCard({
   commands,
   gradient,
   index = 0,
+  docsLabel,
+  exampleLabel,
 }: {
   title: string;
   description: string;
@@ -398,6 +400,8 @@ function CategoryCard({
   commands: CommandEntry[];
   gradient: string;
   index?: number;
+  docsLabel: string;
+  exampleLabel: string;
 }) {
   return (
     <motion.div
@@ -462,14 +466,14 @@ function CategoryCard({
                         href={cmd.learnMoreHref}
                         className="group/link flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
                       >
-                        <span>Docs</span>
+                        <span>{docsLabel}</span>
                         <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover/link:translate-x-0.5" />
                       </Link>
                     )}
                   </div>
                 </div>
 
-                <CommandCard command={cmd.example} description="Example" />
+                <CommandCard command={cmd.example} description={exampleLabel} />
               </div>
             );
           })}
@@ -483,6 +487,7 @@ export default function CommandReferencePage() {
   const { locale } = useLocale();
   const localizedCommands = getCommands(locale);
   const localizedCategories = getCommandCategories(locale);
+  const ui = getCommandsUiMessages(locale);
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState<CategoryFilter>("all");
 
@@ -571,13 +576,13 @@ export default function CommandReferencePage() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.05] border border-white/[0.08] transition-all duration-300 group-hover:scale-110 group-hover:bg-white/[0.1]">
               <ArrowLeft className="h-4 w-4" />
             </div>
-            <span className="text-sm font-medium">Learning Hub</span>
+            <span className="text-sm font-medium">{ui.navigation.learningHub}</span>
           </Link>
           <Link
             href="/"
             className="group flex items-center gap-3 text-white/50 transition-all duration-300 hover:text-white"
           >
-            <span className="text-sm font-medium">Home</span>
+            <span className="text-sm font-medium">{ui.navigation.home}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.05] border border-white/[0.08] transition-all duration-300 group-hover:scale-110 group-hover:bg-white/[0.1]">
               <Home className="h-4 w-4" />
             </div>
@@ -609,12 +614,11 @@ export default function CommandReferencePage() {
 
           <h1 className="mb-4 text-4xl sm:text-5xl font-bold tracking-tight">
             <span className="bg-gradient-to-br from-white via-white to-white/50 bg-clip-text text-transparent">
-              Command Reference
+              {ui.hero.title}
             </span>
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-white/50 leading-relaxed">
-            A quick, searchable list of the commands you&apos;ll use most in an
-            ACFS environment.
+            {ui.hero.description}
           </p>
         </motion.section>
 
@@ -633,7 +637,7 @@ export default function CommandReferencePage() {
               <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-white/30 transition-colors group-focus-within:text-primary" />
               <input
                 type="text"
-                placeholder="Search commands..."
+                placeholder={ui.search.placeholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] py-4 pl-14 pr-5 text-white placeholder:text-white/30 backdrop-blur-xl transition-all duration-300 focus:border-primary/50 focus:bg-white/[0.05] focus:outline-none focus:shadow-[0_0_30px_rgba(var(--primary-rgb),0.15)]"
@@ -650,7 +654,7 @@ export default function CommandReferencePage() {
           transition={{ ...springs.smooth, delay: 0.3 }}
         >
           <CategoryChip
-            label="All"
+            label={ui.categories.all}
             isSelected={category === "all"}
             onClick={() => setCategory("all")}
           />
@@ -679,6 +683,8 @@ export default function CommandReferencePage() {
                   commands={cmds}
                   gradient={meta.gradient}
                   index={idx}
+                  docsLabel={ui.commandCard.docs}
+                  exampleLabel={ui.commandCard.example}
                 />
               );
             })
@@ -696,10 +702,10 @@ export default function CommandReferencePage() {
                 </div>
               </div>
               <p className="text-lg text-white/40">
-                No commands match your search.
+                {ui.noResults.title}
               </p>
               <p className="text-sm text-white/25 mt-2">
-                Try a different keyword or clear the filter.
+                {ui.noResults.hint}
               </p>
             </motion.div>
           )}

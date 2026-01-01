@@ -43,6 +43,7 @@ import {
   type WorkflowScenario,
   type AgentPrompt,
 } from "@/lib/flywheel";
+import { useLocale, getFlywheelMessages } from "@/lib/i18n";
 
 // ============================================================
 // ICON MAPPING
@@ -63,7 +64,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 // HERO SECTION
 // ============================================================
 
-function HeroSection() {
+function HeroSection({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
   return (
     <section className="relative overflow-hidden">
       {/* Background effects */}
@@ -80,7 +81,7 @@ function HeroSection() {
         >
           <Sparkles className="h-4 w-4 text-primary" />
           <span className="text-sm font-medium text-primary">
-            8+ projects • 6+ agents • Autonomous progress
+            {messages.badge}
           </span>
         </div>
 
@@ -89,9 +90,9 @@ function HeroSection() {
           className="max-w-4xl font-mono text-3xl font-bold leading-[1.15] tracking-tight sm:text-4xl lg:text-5xl xl:text-6xl opacity-0 animate-slide-up"
           style={{ animationDelay: "0.2s", animationFillMode: "forwards" }}
         >
-          <span className="text-gradient-cosmic">Unheard-of Velocity</span>
+          <span className="text-gradient-cosmic">{messages.hero.title.line1}</span>
           <br />
-          <span className="text-foreground">in Complex Software</span>
+          <span className="text-foreground">{messages.hero.title.line2}</span>
         </h1>
 
         {/* Subtitle */}
@@ -99,9 +100,8 @@ function HeroSection() {
           className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg lg:text-xl opacity-0 animate-slide-up"
           style={{ animationDelay: "0.3s", animationFillMode: "forwards" }}
         >
-          Eight interconnected tools that enable multiple AI agents to work in parallel,
-          review each other&apos;s work, and make incredible autonomous progress,
-          all <span className="text-foreground font-medium">while you&apos;re away</span>.
+          {messages.hero.subtitle}{" "}
+          <span className="text-foreground font-medium">{messages.hero.subtitleHighlight}</span>.
         </p>
 
         {/* Key insight quote */}
@@ -113,8 +113,7 @@ function HeroSection() {
             <Quote className="h-6 w-6 shrink-0 text-primary/50" />
             <div>
               <p className="text-sm leading-relaxed text-foreground italic sm:text-base">
-                &ldquo;The magic isn&apos;t in any single tool. It&apos;s in how they work together.
-                Using three tools is 10x better than using one.&rdquo;
+                &ldquo;{messages.hero.quote}&rdquo;
               </p>
             </div>
           </div>
@@ -130,8 +129,8 @@ function HeroSection() {
               <Users className="h-5 w-5 text-primary sm:h-6 sm:w-6" />
             </div>
             <div>
-              <p className="text-xl font-bold text-foreground sm:text-2xl">6+</p>
-              <p className="text-[12px] text-muted-foreground sm:text-sm">Parallel agents</p>
+              <p className="text-xl font-bold text-foreground sm:text-2xl">{messages.stats.parallelAgents.value}</p>
+              <p className="text-[12px] text-muted-foreground sm:text-sm">{messages.stats.parallelAgents.label}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -139,8 +138,8 @@ function HeroSection() {
               <Layers className="h-5 w-5 text-emerald-400 sm:h-6 sm:w-6" />
             </div>
             <div>
-              <p className="text-xl font-bold text-foreground sm:text-2xl">8+</p>
-              <p className="text-[12px] text-muted-foreground sm:text-sm">Projects simultaneously</p>
+              <p className="text-xl font-bold text-foreground sm:text-2xl">{messages.stats.projects.value}</p>
+              <p className="text-[12px] text-muted-foreground sm:text-sm">{messages.stats.projects.label}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -148,8 +147,8 @@ function HeroSection() {
               <Star className="h-5 w-5 text-amber-400 sm:h-6 sm:w-6" />
             </div>
             <div>
-              <p className="text-xl font-bold text-foreground sm:text-2xl">2K+</p>
-              <p className="text-[12px] text-muted-foreground sm:text-sm">GitHub stars</p>
+              <p className="text-xl font-bold text-foreground sm:text-2xl">{messages.stats.stars.value}</p>
+              <p className="text-[12px] text-muted-foreground sm:text-sm">{messages.stats.stars.label}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -157,8 +156,8 @@ function HeroSection() {
               <Clock className="h-5 w-5 text-violet-400 sm:h-6 sm:w-6" />
             </div>
             <div>
-              <p className="text-xl font-bold text-foreground sm:text-2xl">3+ hrs</p>
-              <p className="text-[12px] text-muted-foreground sm:text-sm">Autonomous work</p>
+              <p className="text-xl font-bold text-foreground sm:text-2xl">{messages.stats.autonomous.value}</p>
+              <p className="text-[12px] text-muted-foreground sm:text-sm">{messages.stats.autonomous.label}</p>
             </div>
           </div>
         </div>
@@ -171,7 +170,7 @@ function HeroSection() {
 // WORKFLOW SECTION
 // ============================================================
 
-function WorkflowCard({ scenario, index }: { scenario: WorkflowScenario; index: number }) {
+function WorkflowCard({ scenario, index, messages }: { scenario: WorkflowScenario; index: number; messages: ReturnType<typeof getFlywheelMessages> }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -218,7 +217,7 @@ function WorkflowCard({ scenario, index }: { scenario: WorkflowScenario; index: 
           className="flex w-full items-center justify-between rounded-lg bg-muted/30 px-4 py-3 min-h-[44px] text-left transition-colors hover:bg-muted/50"
         >
           <span className="text-sm font-medium text-foreground">
-            {isExpanded ? "Hide steps" : "Show workflow steps"}
+            {isExpanded ? messages.workflow.hideSteps : messages.workflow.showSteps}
           </span>
           <ChevronDown
             className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`}
@@ -262,7 +261,7 @@ function WorkflowCard({ scenario, index }: { scenario: WorkflowScenario; index: 
   );
 }
 
-function WorkflowSection() {
+function WorkflowSection({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
   return (
     <section className="border-t border-border/30 bg-card/20 py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-6">
@@ -271,22 +270,21 @@ function WorkflowSection() {
           <div className="mb-4 flex items-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-primary">
-              Real Workflows
+              {messages.sections.workflow.badge}
             </span>
           </div>
           <h2 className="font-mono text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-            How the Tools Work Together
+            {messages.sections.workflow.title}
           </h2>
           <p className="mt-4 text-base text-muted-foreground lg:text-lg">
-            These aren&apos;t hypothetical scenarios. These are actual daily workflows running across
-            8+ projects with multiple AI agents.
+            {messages.sections.workflow.description}
           </p>
         </div>
 
         {/* Workflow cards */}
         <div className="grid gap-5 lg:grid-cols-2">
           {workflowScenarios.map((scenario, index) => (
-            <WorkflowCard key={scenario.id} scenario={scenario} index={index} />
+            <WorkflowCard key={scenario.id} scenario={scenario} index={index} messages={messages} />
           ))}
         </div>
       </div>
@@ -298,7 +296,7 @@ function WorkflowSection() {
 // PROMPTS SECTION
 // ============================================================
 
-function PromptCard({ prompt, index }: { prompt: AgentPrompt; index: number }) {
+function PromptCard({ prompt, index, messages }: { prompt: AgentPrompt; index: number; messages: ReturnType<typeof getFlywheelMessages> }) {
   const [copied, setCopied] = useState(false);
 
   const copyPrompt = async () => {
@@ -352,7 +350,7 @@ function PromptCard({ prompt, index }: { prompt: AgentPrompt; index: number }) {
           <button
             onClick={copyPrompt}
             className="shrink-0 flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg bg-muted/50 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            title="Copy prompt"
+            title={messages.prompts.copy}
           >
             {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
           </button>
@@ -365,13 +363,13 @@ function PromptCard({ prompt, index }: { prompt: AgentPrompt; index: number }) {
 
         {/* When to use */}
         <p className="mt-3 text-[12px] text-muted-foreground">
-          <span className="font-medium text-foreground">When: </span>
+          <span className="font-medium text-foreground">{messages.prompts.when} </span>
           {prompt.whenToUse}
         </p>
 
         {/* Best with tools */}
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span className="text-[12px] text-muted-foreground">Best with:</span>
+          <span className="text-[12px] text-muted-foreground">{messages.prompts.bestWith}</span>
           {prompt.bestWith.map((toolId) => {
             const tool = flywheelTools.find((t) => t.id === toolId);
             if (!tool) return null;
@@ -390,7 +388,7 @@ function PromptCard({ prompt, index }: { prompt: AgentPrompt; index: number }) {
   );
 }
 
-function PromptsSection() {
+function PromptsSection({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
   return (
     <section className="border-t border-border/30 py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-6">
@@ -399,22 +397,21 @@ function PromptsSection() {
           <div className="mb-4 flex items-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-primary">
-              Battle-Tested Prompts
+              {messages.sections.prompts.badge}
             </span>
           </div>
           <h2 className="font-mono text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-            The Prompts That Power the Workflow
+            {messages.sections.prompts.title}
           </h2>
           <p className="mt-4 text-base text-muted-foreground lg:text-lg">
-            Copy these prompts to your Stream Deck or command palette. Each takes under a second
-            to execute with a single button press.
+            {messages.sections.prompts.description}
           </p>
         </div>
 
         {/* Prompts grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {agentPrompts.map((prompt, index) => (
-            <PromptCard key={prompt.id} prompt={prompt} index={index} />
+            <PromptCard key={prompt.id} prompt={prompt} index={index} messages={messages} />
           ))}
         </div>
       </div>
@@ -426,7 +423,7 @@ function PromptsSection() {
 // SYNERGY SECTION
 // ============================================================
 
-function SynergySection() {
+function SynergySection({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
   return (
     <section className="border-t border-border/30 bg-card/20 py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-6">
@@ -435,15 +432,15 @@ function SynergySection() {
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-primary">
-              The Flywheel Effect
+              {messages.sections.synergy.badge}
             </span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
           <h2 className="font-mono text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-            Using Three Tools is 10x Better Than One
+            {messages.sections.synergy.title}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground lg:text-lg">
-            Each tool amplifies the others. The synergies compound over time.
+            {messages.sections.synergy.description}
           </p>
         </div>
 
@@ -497,7 +494,7 @@ function SynergySection() {
 // TOOLS GRID SECTION
 // ============================================================
 
-function ToolCard({ tool, index }: { tool: FlywheelTool; index: number }) {
+function ToolCard({ tool, index, messages }: { tool: FlywheelTool; index: number; messages: ReturnType<typeof getFlywheelMessages> }) {
   const Icon = iconMap[tool.icon] || Zap;
   const [copied, setCopied] = useState(false);
 
@@ -599,14 +596,14 @@ function ToolCard({ tool, index }: { tool: FlywheelTool; index: number }) {
         <div className="flex gap-2">
           <Button asChild size="sm" variant="outline" className="flex-1 h-11 text-xs">
             <a href={tool.href} target="_blank" rel="noopener noreferrer">
-              GitHub
+              {messages.tools.github}
               <ExternalLink className="ml-1 h-3 w-3" />
             </a>
           </Button>
           {tool.demoUrl && (
             <Button asChild size="sm" variant="ghost" className="h-11 text-xs">
               <a href={tool.demoUrl} target="_blank" rel="noopener noreferrer">
-                Demo
+                {messages.tools.demo}
               </a>
             </Button>
           )}
@@ -616,7 +613,7 @@ function ToolCard({ tool, index }: { tool: FlywheelTool; index: number }) {
   );
 }
 
-function ToolsSection() {
+function ToolsSection({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
   return (
     <section className="border-t border-border/30 py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-6">
@@ -625,22 +622,22 @@ function ToolsSection() {
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-primary">
-              The Complete Stack
+              {messages.sections.tools.badge}
             </span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
           <h2 className="font-mono text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-            All Eight Flywheel Tools
+            {messages.sections.tools.title}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground lg:text-lg">
-            Each tool installs in under 30 seconds. Written in Go, Rust, TypeScript, and Python.
+            {messages.sections.tools.description}
           </p>
         </div>
 
         {/* Tools grid */}
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {flywheelTools.map((tool, index) => (
-            <ToolCard key={tool.id} tool={tool} index={index} />
+            <ToolCard key={tool.id} tool={tool} index={index} messages={messages} />
           ))}
         </div>
       </div>
@@ -652,30 +649,30 @@ function ToolsSection() {
 // PHILOSOPHY SECTION
 // ============================================================
 
-function PhilosophySection() {
+function PhilosophySection({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
   const items = [
     {
       icon: Code2,
-      title: "Unix Philosophy",
-      description: "Each tool does one thing well. They compose through JSON, MCP, and Git.",
+      title: messages.philosophy.unix.title,
+      description: messages.philosophy.unix.description,
       color: "from-cyan-400 to-sky-500",
     },
     {
       icon: Cpu,
-      title: "Agent-First",
-      description: "Every tool has --robot mode. Designed for AI agents to call programmatically.",
+      title: messages.philosophy.agentFirst.title,
+      description: messages.philosophy.agentFirst.description,
       color: "from-violet-400 to-purple-500",
     },
     {
       icon: Workflow,
-      title: "Self-Reinforcing",
-      description: "The flywheel effect: each tool makes the others more powerful.",
+      title: messages.philosophy.selfReinforcing.title,
+      description: messages.philosophy.selfReinforcing.description,
       color: "from-emerald-400 to-teal-500",
     },
     {
       icon: Shield,
-      title: "Battle-Tested",
-      description: "Born from daily use with 3+ AI agents on production codebases.",
+      title: messages.philosophy.battleTested.title,
+      description: messages.philosophy.battleTested.description,
       color: "from-amber-400 to-orange-500",
     },
   ];
@@ -688,12 +685,12 @@ function PhilosophySection() {
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-primary">
-              Design Philosophy
+              {messages.sections.philosophy.badge}
             </span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
           <h2 className="font-mono text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-            Built From Daily Experience
+            {messages.sections.philosophy.title}
           </h2>
         </div>
 
@@ -727,7 +724,7 @@ function PhilosophySection() {
 // CTA SECTION
 // ============================================================
 
-function CTASection() {
+function CTASection({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
   return (
     <section className="border-t border-border/30 py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-6">
@@ -737,17 +734,16 @@ function CTASection() {
 
           <div className="relative z-10">
             <h2 className="font-mono text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-              Ready to 10x Your Velocity?
+              {messages.cta.title}
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-base text-muted-foreground lg:text-lg">
-              The Agent Flywheel installer sets up all flywheel tools automatically.
-              From zero to multi-agent workflows in 30 minutes.
+              {messages.cta.description}
             </p>
 
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button asChild size="lg" className="bg-primary text-primary-foreground">
                 <Link href="/wizard/os-selection">
-                  Start the Wizard
+                  {messages.cta.startWizard}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -758,7 +754,7 @@ function CTASection() {
                   rel="noopener noreferrer"
                 >
                   <GitBranch className="mr-2 h-4 w-4" />
-                  View Source
+                  {messages.cta.viewSource}
                 </a>
               </Button>
             </div>
@@ -774,6 +770,9 @@ function CTASection() {
 // ============================================================
 
 export default function FlywheelPage() {
+  const { locale } = useLocale();
+  const messages = getFlywheelMessages(locale);
+
   return (
     <div className="relative min-h-screen bg-background overflow-x-hidden">
       {/* Navigation */}
@@ -782,7 +781,7 @@ export default function FlywheelPage() {
           <Button asChild variant="ghost" size="default" className="h-11 text-muted-foreground hover:text-foreground">
             <Link href="/">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+              {messages.navigation.back}
             </Link>
           </Button>
         </div>
@@ -790,12 +789,12 @@ export default function FlywheelPage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 lg:h-9 lg:w-9">
             <Terminal className="h-4 w-4 text-primary lg:h-5 lg:w-5" />
           </div>
-          <span className="font-mono text-base font-bold tracking-tight lg:text-lg">Agent Flywheel</span>
+          <span className="font-mono text-base font-bold tracking-tight lg:text-lg">{messages.navigation.agentFlywheel}</span>
         </div>
         <div className="flex items-center gap-4">
           <Button asChild size="default" variant="outline" className="h-11 border-primary/30 hover:bg-primary/10">
             <Link href="/wizard/os-selection">
-              Get Started
+              {messages.cta.getStarted}
               <ChevronRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>
@@ -804,19 +803,19 @@ export default function FlywheelPage() {
 
       {/* Main content */}
       <main>
-        <HeroSection />
+        <HeroSection messages={messages} />
 
         {/* Interactive Flywheel Visualization */}
         <section className="mx-auto max-w-7xl px-6 py-16 lg:py-24">
           <FlywheelVisualization />
         </section>
 
-        <WorkflowSection />
-        <PromptsSection />
-        <SynergySection />
-        <ToolsSection />
-        <PhilosophySection />
-        <CTASection />
+        <WorkflowSection messages={messages} />
+        <PromptsSection messages={messages} />
+        <SynergySection messages={messages} />
+        <ToolsSection messages={messages} />
+        <PhilosophySection messages={messages} />
+        <CTASection messages={messages} />
       </main>
 
       {/* Footer */}
@@ -827,7 +826,7 @@ export default function FlywheelPage() {
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/20">
                 <Terminal className="h-3.5 w-3.5 text-primary" />
               </div>
-              <span className="font-mono text-sm font-bold">Agent Flywheel</span>
+              <span className="font-mono text-sm font-bold">{messages.navigation.agentFlywheel}</span>
             </div>
 
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
@@ -837,17 +836,17 @@ export default function FlywheelPage() {
                 rel="noopener noreferrer"
                 className="flex items-center min-h-[44px] px-2 transition-colors hover:text-foreground"
               >
-                GitHub
+                {messages.footer.github}
               </a>
               <Link href="/" className="flex items-center min-h-[44px] px-2 transition-colors hover:text-foreground">
-                Home
+                {messages.footer.home}
               </Link>
               <Link href="/wizard/os-selection" className="flex items-center min-h-[44px] px-2 transition-colors hover:text-foreground">
-                Get Started
+                {messages.footer.getStarted}
               </Link>
             </div>
 
-            <p className="text-[12px] text-muted-foreground">Built for the agentic coding community</p>
+            <p className="text-[12px] text-muted-foreground">{messages.footer.tagline}</p>
           </div>
         </div>
       </footer>

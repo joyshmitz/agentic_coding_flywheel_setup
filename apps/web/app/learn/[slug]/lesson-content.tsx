@@ -21,11 +21,11 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   type Lesson,
-  LESSONS,
   getNextLesson,
   getPreviousLesson,
   useCompletedLessons,
 } from "@/lib/lessonProgress";
+import { useLocale, getLessons, getLessonBySlug, getLearnMessages } from "@/lib/i18n";
 import {
   getStepBySlug,
   TOTAL_STEPS as TOTAL_WIZARD_STEPS,
@@ -84,11 +84,15 @@ function FloatingOrb({
 function LessonSidebar({
   currentLessonId,
   completedLessons,
+  lessons,
+  messages,
 }: {
   currentLessonId: number;
   completedLessons: number[];
+  lessons: Lesson[];
+  messages: ReturnType<typeof getLearnMessages>["lessonPage"];
 }) {
-  const progressPercent = Math.round((completedLessons.length / LESSONS.length) * 100);
+  const progressPercent = Math.round((completedLessons.length / lessons.length) * 100);
 
   return (
     <aside className="sticky top-0 hidden h-screen w-80 shrink-0 xl:block">
@@ -131,10 +135,10 @@ function LessonSidebar({
 
               <div>
                 <span className="block text-lg font-bold tracking-tight bg-gradient-to-r from-white via-white to-white/60 bg-clip-text text-transparent">
-                  Learning Hub
+                  {messages.sidebar.title}
                 </span>
                 <span className="text-[11px] text-white/40 uppercase tracking-[0.2em] font-medium">
-                  ACFS Academy
+                  {messages.sidebar.academy}
                 </span>
               </div>
             </Link>
@@ -150,7 +154,7 @@ function LessonSidebar({
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Star className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium text-white/80">Progress</span>
+                    <span className="text-sm font-medium text-white/80">{messages.sidebar.progress}</span>
                   </div>
                   <span className="font-mono text-xl font-bold bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
                     {progressPercent}%
@@ -183,8 +187,8 @@ function LessonSidebar({
                 </div>
 
                 <div className="flex items-center justify-between mt-4 text-xs">
-                  <span className="text-white/40">{completedLessons.length} of {LESSONS.length}</span>
-                  <span className="text-emerald-400/80">{LESSONS.length - completedLessons.length} remaining</span>
+                  <span className="text-white/40">{completedLessons.length} {messages.sidebar.of} {lessons.length}</span>
+                  <span className="text-emerald-400/80">{lessons.length - completedLessons.length} {messages.sidebar.remaining}</span>
                 </div>
               </div>
             </div>
@@ -196,7 +200,7 @@ function LessonSidebar({
               {/* Timeline track */}
               <div className="absolute left-[34px] top-6 bottom-6 w-0.5 bg-gradient-to-b from-primary/30 via-white/[0.08] to-emerald-500/30" />
 
-              {LESSONS.map((lesson) => {
+              {lessons.map((lesson) => {
                 const isCompleted = completedLessons.includes(lesson.id);
                 const isCurrent = lesson.id === currentLessonId;
 
@@ -259,7 +263,7 @@ function LessonSidebar({
                       {isCurrent && (
                         <div className="flex items-center gap-1 text-[10px] font-medium text-primary">
                           <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                          NOW
+                          {messages.sidebar.now}
                         </div>
                       )}
                     </Link>
@@ -278,7 +282,7 @@ function LessonSidebar({
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.03] border border-white/[0.08] transition-all duration-500 group-hover:scale-110 group-hover:bg-white/[0.08] group-hover:border-white/20">
                 <Home className="h-5 w-5 transition-transform duration-500 group-hover:-translate-y-0.5" />
               </div>
-              <span className="font-medium">Back to Home</span>
+              <span className="font-medium">{messages.sidebar.backToHome}</span>
             </Link>
           </div>
         </div>
@@ -287,14 +291,23 @@ function LessonSidebar({
   );
 }
 
-export function LessonContent({ lesson }: Props) {
+export function LessonContent({ lesson: initialLesson }: Props) {
   const router = useRouter();
+  const { locale } = useLocale();
+  const messages = getLearnMessages(locale);
+  const m = messages.lessonPage;
+  const lessons = getLessons(locale);
+  // Get translated lesson content
+  const lesson = getLessonBySlug(initialLesson.slug, locale) || initialLesson;
+
   const [completedLessons, markComplete] = useCompletedLessons();
   const [completedSteps] = useCompletedSteps();
   const readingProgress = useReadingProgress();
   const isCompleted = completedLessons.includes(lesson.id);
-  const prevLesson = getPreviousLesson(lesson.id);
-  const nextLesson = getNextLesson(lesson.id);
+  // Get prev/next from locale-aware lessons array
+  const currentIndex = lessons.findIndex(l => l.id === lesson.id);
+  const prevLesson = currentIndex > 0 ? lessons[currentIndex - 1] : null;
+  const nextLesson = currentIndex < lessons.length - 1 ? lessons[currentIndex + 1] : null;
   const isWizardComplete = completedSteps.length === TOTAL_WIZARD_STEPS;
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
@@ -433,6 +446,8 @@ export function LessonContent({ lesson }: Props) {
         <LessonSidebar
           currentLessonId={lesson.id}
           completedLessons={completedLessons}
+          lessons={lessons}
+          messages={m}
         />
 
         <main className="flex-1 min-w-0">
@@ -448,14 +463,14 @@ export function LessonContent({ lesson }: Props) {
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.05] border border-white/[0.08] transition-all duration-300 group-hover:scale-110 group-hover:bg-white/[0.1]">
                     <ArrowLeft className="h-4 w-4" />
                   </div>
-                  <span className="text-sm font-medium">Back</span>
+                  <span className="text-sm font-medium">{m.header.back}</span>
                 </Link>
                 <div className="flex items-center gap-3">
                   <LanguageSwitcher />
                   <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/[0.05] border border-white/[0.08]">
                     <span className="text-sm font-bold text-primary tabular-nums">{lesson.id + 1}</span>
                     <span className="text-white/30">/</span>
-                    <span className="text-sm text-white/40 tabular-nums">{LESSONS.length}</span>
+                    <span className="text-sm text-white/40 tabular-nums">{lessons.length}</span>
                   </div>
                 </div>
               </div>
@@ -474,7 +489,7 @@ export function LessonContent({ lesson }: Props) {
                 <div className="flex flex-wrap items-center gap-3 mb-8">
                   <div className="group flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-primary/20 to-violet-500/20 border border-primary/30 shadow-[0_0_30px_-5px_rgba(var(--primary-rgb),0.3)] transition-all duration-500 hover:scale-105 hover:shadow-[0_0_40px_-5px_rgba(var(--primary-rgb),0.5)]">
                     <BookOpen className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-semibold text-white">Lesson {lesson.id + 1}</span>
+                    <span className="text-sm font-semibold text-white">{m.header.lesson} {lesson.id + 1}</span>
                   </div>
                   <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.03] border border-white/[0.08] text-white/50">
                     <Clock className="h-4 w-4" />
@@ -483,7 +498,7 @@ export function LessonContent({ lesson }: Props) {
                   {isCompleted && (
                     <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 border border-emerald-500/30 shadow-[0_0_20px_-5px_rgba(16,185,129,0.5)]">
                       <Check className="h-4 w-4 text-emerald-400" />
-                      <span className="text-sm font-semibold text-emerald-400">Completed</span>
+                      <span className="text-sm font-semibold text-emerald-400">{m.meta.completed}</span>
                     </div>
                   )}
                 </div>
@@ -525,16 +540,16 @@ export function LessonContent({ lesson }: Props) {
                       </div>
                       <div className="flex-1">
                         <h3 className="text-xl font-bold text-white mb-2">
-                          New to ACFS?
+                          {m.setupPrompt.title}
                         </h3>
                         <p className="text-white/50 mb-6 leading-relaxed">
-                          Complete the setup wizard first to get the most from these lessons.
+                          {m.setupPrompt.description}
                         </p>
                         <Link
                           href={`/wizard/${wizardStepSlug}`}
                           className="inline-flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-400/30 text-amber-300 font-semibold transition-all duration-300 hover:from-amber-500/30 hover:to-orange-500/30 hover:scale-105 hover:shadow-[0_0_30px_rgba(245,158,11,0.3)]"
                         >
-                          <span>Go to {wizardStepTitle}</span>
+                          <span>{m.setupPrompt.goTo} {wizardStepTitle}</span>
                           <ArrowRight className="h-5 w-5" />
                         </Link>
                       </div>
@@ -596,14 +611,14 @@ export function LessonContent({ lesson }: Props) {
 
                       <div>
                         <h3 className="text-2xl font-bold text-white mb-2">
-                          {isCompleted ? "Lesson mastered!" : "Ready to level up?"}
+                          {isCompleted ? m.completion.mastered : m.completion.readyToLevelUp}
                         </h3>
                         <p className="text-white/50 text-lg">
                           {isCompleted
                             ? nextLesson
-                              ? "Outstanding work! Continue to the next lesson."
-                              : "You've completed the entire curriculum!"
-                            : "Mark complete to track your learning progress."}
+                              ? m.completion.outstandingWork
+                              : m.completion.allComplete
+                            : m.completion.markToTrack}
                         </p>
                       </div>
                     </div>
@@ -621,18 +636,18 @@ export function LessonContent({ lesson }: Props) {
                       {isCompleted ? (
                         nextLesson ? (
                           <span className="flex items-center gap-3">
-                            Next Lesson
+                            {m.buttons.nextLesson}
                             <ArrowRight className="h-5 w-5" />
                           </span>
                         ) : (
                           <span className="flex items-center gap-3">
-                            All Complete
+                            {m.buttons.allComplete}
                             <Star className="h-5 w-5" />
                           </span>
                         )
                       ) : (
                         <span className="flex items-center gap-3">
-                          Mark Complete
+                          {m.buttons.markComplete}
                           <Check className="h-5 w-5" />
                         </span>
                       )}
@@ -654,7 +669,7 @@ export function LessonContent({ lesson }: Props) {
                         <ChevronLeft className="h-6 w-6 text-white/60 transition-all duration-500 group-hover:text-white group-hover:-translate-x-1" />
                       </div>
                       <div>
-                        <div className="text-xs text-white/30 mb-1 uppercase tracking-wider font-medium">Previous</div>
+                        <div className="text-xs text-white/30 mb-1 uppercase tracking-wider font-medium">{m.nav.previous}</div>
                         <div className="text-lg font-semibold text-white/80 transition-colors group-hover:text-white">{prevLesson.title}</div>
                       </div>
                     </div>
@@ -670,7 +685,7 @@ export function LessonContent({ lesson }: Props) {
                     <div className="absolute inset-0 bg-gradient-to-l from-white/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <div className="relative flex items-center justify-end gap-5">
                       <div>
-                        <div className="text-xs text-white/30 mb-1 uppercase tracking-wider font-medium">Next</div>
+                        <div className="text-xs text-white/30 mb-1 uppercase tracking-wider font-medium">{m.nav.next}</div>
                         <div className="text-lg font-semibold text-white/80 transition-colors group-hover:text-white">{nextLesson.title}</div>
                       </div>
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.05] border border-white/[0.08] transition-all duration-500 group-hover:scale-110 group-hover:bg-white/[0.1] group-hover:border-white/20">
@@ -725,12 +740,12 @@ export function LessonContent({ lesson }: Props) {
             >
               {isCompleted ? (
                 nextLesson ? (
-                  <span className="flex items-center gap-2">Next<ArrowRight className="h-5 w-5" /></span>
+                  <span className="flex items-center gap-2">{m.buttons.next}<ArrowRight className="h-5 w-5" /></span>
                 ) : (
-                  <span className="flex items-center gap-2">Done<Star className="h-5 w-5" /></span>
+                  <span className="flex items-center gap-2">{m.buttons.done}<Star className="h-5 w-5" /></span>
                 )
               ) : (
-                <span className="flex items-center gap-2">Complete<Check className="h-5 w-5" /></span>
+                <span className="flex items-center gap-2">{m.buttons.complete}<Check className="h-5 w-5" /></span>
               )}
             </Button>
 

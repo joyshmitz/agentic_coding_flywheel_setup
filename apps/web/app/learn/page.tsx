@@ -21,8 +21,8 @@ import {
 import { motion } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import {
+  type Lesson,
   LESSONS,
-  TOTAL_LESSONS,
   useCompletedLessons,
   getCompletionPercentage,
   getNextUncompletedLesson,
@@ -31,7 +31,7 @@ import { springs } from "@/lib/design-tokens";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import { sendEvent, initLessonFunnel, getLessonFunnelData } from "@/lib/analytics";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { useLocale, getLessons } from "@/lib/i18n";
+import { useLocale, getLessons, getLearnMessages } from "@/lib/i18n";
 
 type LessonStatus = "completed" | "current" | "locked";
 
@@ -167,6 +167,7 @@ function LessonCard({
 export default function LearnDashboard() {
   const { locale } = useLocale();
   const localizedLessons = getLessons(locale);
+  const messages = getLearnMessages(locale);
   const [completedLessons] = useCompletedLessons();
   const completionPercentage = getCompletionPercentage(completedLessons);
   const nextLesson = getNextUncompletedLesson(completedLessons);
@@ -183,13 +184,13 @@ export default function LearnDashboard() {
 
     // Initialize lesson funnel if not already started
     if (!getLessonFunnelData()) {
-      initLessonFunnel(TOTAL_LESSONS);
+      initLessonFunnel(localizedLessons.length);
     }
 
     // Track learning hub visit with context
     sendEvent('learning_hub_visit', {
       completed_lessons: completedLessons.length,
-      total_lessons: TOTAL_LESSONS,
+      total_lessons: localizedLessons.length,
       completion_percentage: completionPercentage,
       next_lesson: nextLesson?.slug || 'all_complete',
     });
@@ -340,14 +341,14 @@ export default function LearnDashboard() {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20">
                     <BookOpen className="h-4 w-4 text-primary" />
                   </div>
-                  <h2 className="text-lg font-semibold">Your Progress</h2>
+                  <h2 className="text-lg font-semibold">{messages.progress.title}</h2>
                 </div>
                 <p className="text-sm text-muted-foreground/80 sm:text-base">
-                  {completedLessons.length === TOTAL_LESSONS
-                    ? "🎉 Congratulations! You've mastered all lessons."
+                  {completedLessons.length === localizedLessons.length
+                    ? `🎉 ${messages.progress.congratulations}`
                     : nextLessonLocalized
-                      ? `Up next: ${nextLessonLocalized.title}`
-                      : "Begin your learning journey"}
+                      ? `${messages.progress.upNext} ${nextLessonLocalized.title}`
+                      : messages.progress.beginJourney}
                 </p>
               </div>
 
@@ -396,9 +397,9 @@ export default function LearnDashboard() {
                     transition={prefersReducedMotion ? { duration: 0 } : { ...springs.smooth, delay: 0.4 }}
                     style={{ textShadow: "0 0 30px oklch(0.7 0.2 280 / 0.3)" }}
                   >
-                    {completedLessons.length}/{TOTAL_LESSONS}
+                    {completedLessons.length}/{localizedLessons.length}
                   </motion.div>
-                  <div className="text-sm text-muted-foreground/60">lessons complete</div>
+                  <div className="text-sm text-muted-foreground/60">{messages.progress.lessonsComplete}</div>
                 </div>
               </div>
             </div>

@@ -65,4 +65,48 @@ export const learnMessagesUk = {
     current: "Поточний",
     completed: "Завершено",
   },
+
+  // Lesson page (lesson-content.tsx)
+  lessonPage: {
+    sidebar: {
+      title: "Навчальний центр",
+      academy: "Академія ACFS",
+      progress: "Прогрес",
+      of: "з",
+      remaining: "залишилось",
+      now: "ЗАРАЗ",
+      backToHome: "На головну",
+    },
+    header: {
+      back: "Назад",
+      lesson: "Урок",
+    },
+    meta: {
+      completed: "Завершено",
+    },
+    setupPrompt: {
+      title: "Вперше в ACFS?",
+      description: "Спочатку пройдіть майстер налаштування, щоб отримати максимум від цих уроків.",
+      goTo: "Перейти до",
+    },
+    completion: {
+      mastered: "Урок опановано!",
+      readyToLevelUp: "Готові до наступного рівня?",
+      outstandingWork: "Чудова робота! Переходьте до наступного уроку.",
+      allComplete: "Ви завершили весь курс!",
+      markToTrack: "Позначте як завершений для відстеження прогресу.",
+    },
+    buttons: {
+      nextLesson: "Наступний урок",
+      allComplete: "Все завершено",
+      markComplete: "Завершити",
+      next: "Далі",
+      done: "Готово",
+      complete: "Завершити",
+    },
+    nav: {
+      previous: "Попередній",
+      next: "Наступний",
+    },
+  },
 };

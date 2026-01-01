@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft, BookOpen, Home, Search, Wrench, ShieldCheck, Type, FileQuestion, Sparkles, ChevronDown, ChevronRight } from "lucide-react";
-import { getAllTerms, type JargonTerm } from "@/lib/jargon";
+import { type JargonTerm } from "@/lib/jargon";
+import { useLocale, getAllJargonTerms, getGlossaryUiMessages } from "@/lib/i18n";
 import { motion, springs, staggerContainer, fadeUp } from "@/components/motion";
 
 type GlossaryCategory = "concepts" | "tools" | "protocols" | "acronyms";
@@ -48,42 +49,13 @@ function matchesQuery(term: JargonTerm, query: string): boolean {
   return haystack.includes(query);
 }
 
-const CATEGORY_META: Array<{
+type CategoryMeta = {
   id: GlossaryCategory;
   label: string;
   icon: ReactNode;
   description: string;
   gradient: string;
-}> = [
-  {
-    id: "concepts",
-    label: "Concepts",
-    icon: <BookOpen className="h-4 w-4" />,
-    description: "Core ideas and mental models",
-    gradient: "from-primary/20 to-blue-500/20",
-  },
-  {
-    id: "tools",
-    label: "Tools",
-    icon: <Wrench className="h-4 w-4" />,
-    description: "Programs and CLIs you'll use",
-    gradient: "from-emerald-500/20 to-teal-500/20",
-  },
-  {
-    id: "protocols",
-    label: "Protocols",
-    icon: <ShieldCheck className="h-4 w-4" />,
-    description: "How systems talk to each other",
-    gradient: "from-violet-500/20 to-purple-500/20",
-  },
-  {
-    id: "acronyms",
-    label: "Acronyms",
-    icon: <Type className="h-4 w-4" />,
-    description: "Short words you'll see everywhere",
-    gradient: "from-amber-500/20 to-orange-500/20",
-  },
-];
+};
 
 function CategoryChip({
   label,
@@ -112,11 +84,19 @@ function CategoryChip({
   );
 }
 
-function TermCard({ term }: { term: JargonTerm }) {
+function TermCard({
+  term,
+  ui,
+  categoryMetaList,
+}: {
+  term: JargonTerm;
+  ui: ReturnType<typeof getGlossaryUiMessages>;
+  categoryMetaList: CategoryMeta[];
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const anchorId = toAnchorId(term.term);
   const inferredCategory = categorizeTerm(term);
-  const categoryMeta = CATEGORY_META.find((c) => c.id === inferredCategory);
+  const categoryMeta = categoryMetaList.find((c) => c.id === inferredCategory);
 
   return (
     <motion.div
@@ -166,12 +146,12 @@ function TermCard({ term }: { term: JargonTerm }) {
             {isOpen ? (
               <>
                 <ChevronDown className="h-4 w-4" />
-                <span>Show less</span>
+                <span>{ui.termCard.showLess}</span>
               </>
             ) : (
               <>
                 <ChevronRight className="h-4 w-4" />
-                <span>Read more</span>
+                <span>{ui.termCard.readMore}</span>
               </>
             )}
           </button>
@@ -188,7 +168,7 @@ function TermCard({ term }: { term: JargonTerm }) {
               {term.analogy && (
                 <div className="rounded-xl border border-primary/30 bg-gradient-to-br from-primary/10 to-violet-500/5 p-4">
                   <p className="mb-1 font-semibold text-white">
-                    Think of it like…
+                    {ui.termCard.thinkOfItLike}
                   </p>
                   <p className="text-white/70">{term.analogy}</p>
                 </div>
@@ -197,7 +177,7 @@ function TermCard({ term }: { term: JargonTerm }) {
               {term.why && (
                 <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
                   <p className="mb-1 font-semibold text-white">
-                    Why it matters
+                    {ui.termCard.whyItMatters}
                   </p>
                   <p>{term.why}</p>
                 </div>
@@ -206,7 +186,7 @@ function TermCard({ term }: { term: JargonTerm }) {
               {term.related && term.related.length > 0 && (
                 <div>
                   <p className="mb-3 font-semibold text-white">
-                    Related terms
+                    {ui.termCard.relatedTerms}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {term.related.map((related) => {
@@ -233,13 +213,52 @@ function TermCard({ term }: { term: JargonTerm }) {
 }
 
 export default function GlossaryPage() {
+  const { locale } = useLocale();
+  const ui = getGlossaryUiMessages(locale);
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState<CategoryFilter>("all");
 
   const allTerms = useMemo(() => {
-    const terms = getAllTerms();
+    const terms = getAllJargonTerms(locale);
     return [...terms].sort((a, b) => a.term.localeCompare(b.term));
-  }, []);
+  }, [locale]);
+
+  const categoryMeta: Array<{
+    id: GlossaryCategory;
+    label: string;
+    icon: ReactNode;
+    description: string;
+    gradient: string;
+  }> = [
+    {
+      id: "concepts",
+      label: ui.categories.concepts,
+      icon: <BookOpen className="h-4 w-4" />,
+      description: ui.categoryDescriptions.concepts,
+      gradient: "from-primary/20 to-blue-500/20",
+    },
+    {
+      id: "tools",
+      label: ui.categories.tools,
+      icon: <Wrench className="h-4 w-4" />,
+      description: ui.categoryDescriptions.tools,
+      gradient: "from-emerald-500/20 to-teal-500/20",
+    },
+    {
+      id: "protocols",
+      label: ui.categories.protocols,
+      icon: <ShieldCheck className="h-4 w-4" />,
+      description: ui.categoryDescriptions.protocols,
+      gradient: "from-violet-500/20 to-purple-500/20",
+    },
+    {
+      id: "acronyms",
+      label: ui.categories.acronyms,
+      icon: <Type className="h-4 w-4" />,
+      description: ui.categoryDescriptions.acronyms,
+      gradient: "from-amber-500/20 to-orange-500/20",
+    },
+  ];
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -298,13 +317,13 @@ export default function GlossaryPage() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.05] border border-white/[0.08] transition-all duration-300 group-hover:scale-110 group-hover:bg-white/[0.1]">
               <ArrowLeft className="h-4 w-4" />
             </div>
-            <span className="text-sm font-medium">Learning Hub</span>
+            <span className="text-sm font-medium">{ui.navigation.learningHub}</span>
           </Link>
           <Link
             href="/"
             className="group flex items-center gap-3 text-white/50 transition-all duration-300 hover:text-white"
           >
-            <span className="text-sm font-medium">Home</span>
+            <span className="text-sm font-medium">{ui.navigation.home}</span>
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.05] border border-white/[0.08] transition-all duration-300 group-hover:scale-110 group-hover:bg-white/[0.1]">
               <Home className="h-4 w-4" />
             </div>
@@ -336,11 +355,11 @@ export default function GlossaryPage() {
 
           <h1 className="mb-4 text-4xl sm:text-5xl font-bold tracking-tight">
             <span className="bg-gradient-to-br from-white via-white to-white/50 bg-clip-text text-transparent">
-              Glossary
+              {ui.hero.title}
             </span>
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-white/50 leading-relaxed">
-            Every term used throughout ACFS, explained in plain English.
+            {ui.hero.description}
           </p>
         </motion.section>
 
@@ -359,7 +378,7 @@ export default function GlossaryPage() {
               <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-white/30 transition-colors group-focus-within:text-primary" />
               <input
                 type="text"
-                placeholder="Search terms..."
+                placeholder={ui.search.placeholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full rounded-xl border border-white/[0.08] bg-white/[0.03] py-4 pl-14 pr-5 text-white placeholder:text-white/30 backdrop-blur-xl transition-all duration-300 focus:border-primary/50 focus:bg-white/[0.05] focus:outline-none focus:shadow-[0_0_30px_rgba(var(--primary-rgb),0.15)]"
@@ -376,11 +395,11 @@ export default function GlossaryPage() {
           transition={{ ...springs.smooth, delay: 0.3 }}
         >
           <CategoryChip
-            label="All"
+            label={ui.categories.all}
             isSelected={category === "all"}
             onClick={() => setCategory("all")}
           />
-          {CATEGORY_META.map((c) => (
+          {categoryMeta.map((c) => (
             <CategoryChip
               key={c.id}
               label={c.label}
@@ -397,13 +416,13 @@ export default function GlossaryPage() {
           animate={{ opacity: 1 }}
           transition={{ ...springs.smooth, delay: 0.4 }}
         >
-          Showing{" "}
+          {ui.stats.showing}{" "}
           <span className="font-mono text-white font-medium">
             {filteredTerms.length}
           </span>{" "}
-          of{" "}
+          {ui.stats.of}{" "}
           <span className="font-mono text-white font-medium">{allTerms.length}</span>{" "}
-          terms
+          {ui.stats.terms}
         </motion.p>
 
         {/* Terms */}
@@ -429,7 +448,7 @@ export default function GlossaryPage() {
                   </div>
                 </motion.div>
                 {terms.map((term) => (
-                  <TermCard key={term.term} term={term} />
+                  <TermCard key={term.term} term={term} ui={ui} categoryMetaList={categoryMeta} />
                 ))}
               </div>
             ))
@@ -447,10 +466,10 @@ export default function GlossaryPage() {
                 </div>
               </div>
               <h3 className="mb-3 text-xl font-bold text-white">
-                No terms found
+                {ui.noResults.title}
               </h3>
               <p className="mx-auto max-w-sm text-white/50 mb-6">
-                Try adjusting your search or category filter to find what you&apos;re looking for.
+                {ui.noResults.hint}
               </p>
               <motion.button
                 onClick={() => {
@@ -462,7 +481,7 @@ export default function GlossaryPage() {
                 whileTap={{ scale: 0.95 }}
                 transition={springs.snappy}
               >
-                Clear filters
+                {ui.noResults.clearFilters}
               </motion.button>
             </motion.div>
           )}
