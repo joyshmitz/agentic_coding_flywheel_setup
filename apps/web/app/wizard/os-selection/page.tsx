@@ -19,6 +19,7 @@ import {
   type OperatingSystem,
 } from "@/lib/userPreferences";
 import { withCurrentSearch } from "@/lib/utils";
+import { useLocale, getOsSelectionMessages, getCommonMessages } from "@/lib/i18n";
 
 interface OSCardProps {
   icon: React.ReactNode;
@@ -27,9 +28,11 @@ interface OSCardProps {
   selected: boolean;
   detected?: boolean;
   onClick: () => void;
+  detectedBadgeSelected?: string;
+  detectedBadgeDetected?: string;
 }
 
-function OSCard({ icon, title, description, selected, detected, onClick }: OSCardProps) {
+function OSCard({ icon, title, description, selected, detected, onClick, detectedBadgeSelected = "Selected", detectedBadgeDetected = "Detected" }: OSCardProps) {
   return (
     <button
       type="button"
@@ -58,7 +61,7 @@ function OSCard({ icon, title, description, selected, detected, onClick }: OSCar
             ? "bg-primary text-primary-foreground"
             : "bg-primary/20 text-primary"
         )}>
-          {selected ? "Selected" : "Detected"}
+          {selected ? detectedBadgeSelected : detectedBadgeDetected}
         </div>
       )}
 
@@ -112,6 +115,9 @@ export default function OSSelectionPage() {
   const [storedOS, setStoredOS] = useUserOS();
   const detectedOS = useDetectedOS();
   const [isNavigating, setIsNavigating] = useState(false);
+  const { locale } = useLocale();
+  const messages = getOsSelectionMessages(locale);
+  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({
@@ -162,15 +168,15 @@ export default function OSSelectionPage() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl">
-              What computer are you using?
+              {messages.title}
             </h1>
             <p className="text-sm text-muted-foreground">
-              ~30 sec
+              {messages.timeEstimate}
             </p>
           </div>
         </div>
         <p className="text-muted-foreground">
-          This helps us show you the right commands and instructions.
+          {messages.description}
         </p>
       </div>
 
@@ -178,38 +184,44 @@ export default function OSSelectionPage() {
       <div data-os-selection className="grid gap-6 sm:grid-cols-3" role="radiogroup" aria-label="Select your operating system">
         <OSCard
           icon={<Apple className="h-10 w-10" />}
-          title="Mac"
-          description="macOS, MacBook, iMac, Mac Mini, Mac Studio"
+          title={messages.osCards.mac.title}
+          description={messages.osCards.mac.description}
           selected={selectedOS === "mac"}
           detected={detectedOS === "mac"}
           onClick={() => handleSelectOS("mac")}
+          detectedBadgeSelected={messages.badges.selected}
+          detectedBadgeDetected={messages.badges.detected}
         />
         <OSCard
           icon={<Monitor className="h-10 w-10" />}
-          title="Windows"
-          description="Windows 10, Windows 11"
+          title={messages.osCards.windows.title}
+          description={messages.osCards.windows.description}
           selected={selectedOS === "windows"}
           detected={detectedOS === "windows"}
           onClick={() => handleSelectOS("windows")}
+          detectedBadgeSelected={messages.badges.selected}
+          detectedBadgeDetected={messages.badges.detected}
         />
         <OSCard
           icon={<Terminal className="h-10 w-10" />}
-          title="Linux"
-          description="Ubuntu, Debian, Fedora, Arch, etc."
+          title={messages.osCards.linux.title}
+          description={messages.osCards.linux.description}
           selected={selectedOS === "linux"}
           detected={detectedOS === "linux"}
           onClick={() => handleSelectOS("linux")}
+          detectedBadgeSelected={messages.badges.selected}
+          detectedBadgeDetected={messages.badges.detected}
         />
       </div>
 
       {/* Tip */}
       <div className="rounded-xl border border-border/30 bg-muted/30 p-4">
         <p className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">Tip:</span>{" "}
+          <span className="font-medium text-foreground">{messages.tip.label}:</span>{" "}
           {hasDetection ? (
-            <>We guessed your OS from your browser. If that&apos;s wrong, pick the other option. Otherwise just hit Continue.</>
+            <>{messages.tip.detected}</>
           ) : (
-            <>If you&apos;re on a phone/tablet, pick the computer you&apos;ll use for the next steps (Mac, Windows, or Linux).</>
+            <>{messages.tip.notDetected}</>
           )}
         </p>
       </div>
@@ -217,60 +229,41 @@ export default function OSSelectionPage() {
       {/* Simpler Guide for beginners */}
       <SimplerGuide>
         <div className="space-y-6">
-          <GuideSection title="What is this asking?">
+          <GuideSection title={messages.guide.whatIsAsking.title}>
             <p>
-              We need to know what type of computer you&apos;re using so we can show you
-              the right instructions. Different computers need slightly different steps.
+              {messages.guide.whatIsAsking.content}
             </p>
           </GuideSection>
 
-          <GuideExplain term="an Operating System">
-            An operating system (or &quot;OS&quot;) is the main software that runs your
-            computer. It&apos;s like the foundation that everything else runs on top of.
+          <GuideExplain term={messages.guide.operatingSystem.term}>
+            {messages.guide.operatingSystem.intro}
             <br /><br />
-            <strong>Mac</strong> = Apple computers (MacBook, iMac, Mac Mini, Mac Studio).
-            If you see an Apple logo when your computer starts, you have a Mac.
+            <strong>Mac</strong> = {messages.guide.operatingSystem.mac}
             <br /><br />
-            <strong>Windows</strong> = Most non-Apple computers (Dell, HP, Lenovo, etc.).
-            If you see a Windows logo (four colored squares) when your computer starts,
-            you have Windows.
+            <strong>Windows</strong> = {messages.guide.operatingSystem.windows}
             <br /><br />
-            <strong>Linux</strong> = If you&apos;re already using Ubuntu, Debian, Fedora, Arch,
-            or another Linux distribution. You probably already know if you&apos;re running Linux!
-            Selecting Linux will skip the terminal installation step since you already have one.
+            <strong>Linux</strong> = {messages.guide.operatingSystem.linux}
           </GuideExplain>
 
-          <GuideSection title="How do I know which one I have?">
+          <GuideSection title={messages.guide.howToKnow.title}>
             <ul className="list-disc space-y-2 pl-5">
               <li>
-                <strong>Mac:</strong> Look at the top-left corner of your screen. Do you
-                see the Apple menu (top-left Apple logo)? Click it and select &quot;About This Mac&quot; and
-                it will say something like &quot;macOS Sonoma&quot; or &quot;macOS Ventura&quot;.
+                <strong>Mac:</strong> {messages.guide.howToKnow.mac}
               </li>
               <li>
-                <strong>Windows:</strong> Look at the bottom-left corner of your screen.
-                Do you see a Windows icon (four blue squares)? That means you have Windows.
-                You can also press the Windows key on your keyboard (between Ctrl and Alt).
+                <strong>Windows:</strong> {messages.guide.howToKnow.windows}
               </li>
               <li>
-                <strong>Linux:</strong> If you installed Linux yourself (Ubuntu, Fedora, Arch, etc.),
-                you already know! Open a terminal and type <code className="rounded bg-muted px-1">uname -a</code> to
-                confirm. You&apos;ll see &quot;Linux&quot; in the output.
+                <strong>Linux:</strong> {messages.guide.howToKnow.linux}
               </li>
             </ul>
           </GuideSection>
 
           <GuideTip>
             {hasDetection ? (
-              <>
-                We tried to detect your computer type automatically. If it looks right, you can just click
-                &quot;Continue&quot;. If it looks wrong, click the other option first.
-              </>
+              <>{messages.guide.guideTip.detected}</>
             ) : (
-              <>
-                If you&apos;re reading this on your phone, choose the computer you&apos;ll use next,
-                then click &quot;Continue&quot;.
-              </>
+              <>{messages.guide.guideTip.notDetected}</>
             )}
           </GuideTip>
         </div>
@@ -288,11 +281,11 @@ export default function OSSelectionPage() {
           {isNavigating ? (
             <>
               <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-              Loading...
+              {messages.buttons.loading}
             </>
           ) : (
             <>
-              Continue
+              {messages.buttons.continue}
               <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </>
           )}

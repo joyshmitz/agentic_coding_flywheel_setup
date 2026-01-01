@@ -24,12 +24,16 @@ import {
   GuideTip,
 } from "@/components/simpler-guide";
 import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
+import { useLocale, getWindowsTerminalSetupMessages, getCommonMessages } from "@/lib/i18n";
 
 export default function WindowsTerminalSetupPage() {
   const router = useRouter();
   const [vpsIP, , vpsIPLoaded] = useVPSIP();
   const [copied, setCopied] = useState(false);
   const ready = vpsIPLoaded;
+  const { locale } = useLocale();
+  const messages = getWindowsTerminalSetupMessages(locale);
+  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   useWizardAnalytics({
@@ -91,28 +95,28 @@ export default function WindowsTerminalSetupPage() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl">
-              Windows Terminal: One-Click VPS Access
+              {messages.title}
             </h1>
             <p className="text-sm text-muted-foreground">
-              ~3 min (optional but very helpful)
+              {messages.timeEstimate}
             </p>
           </div>
         </div>
         <p className="text-muted-foreground">
-          Set up a custom profile in Windows Terminal so you can connect to your VPS with a single click.
+          {messages.description}
         </p>
       </div>
 
       {/* Why this is helpful */}
-      <AlertCard variant="success" icon={Terminal} title="Why set this up?">
+      <AlertCard variant="success" icon={Terminal} title={messages.whySetup.title}>
         <div className="space-y-2">
           <p>
-            Instead of opening PowerShell and typing your SSH command every time, you can:
+            {messages.whySetup.intro}
           </p>
           <ul className="list-disc list-inside space-y-1 text-sm">
-            <li>Click a tab in Windows Terminal to instantly connect to your VPS</li>
-            <li>Give it a custom name like &quot;My VPS&quot; or &quot;ACFS Server&quot;</li>
-            <li>Optionally set it as your default profile</li>
+            {messages.whySetup.benefits.map((benefit, i) => (
+              <li key={i}>{benefit}</li>
+            ))}
           </ul>
         </div>
       </AlertCard>
@@ -121,7 +125,7 @@ export default function WindowsTerminalSetupPage() {
       <div className="space-y-6">
         <h2 className="text-xl font-semibold flex items-center gap-2">
           <Settings className="h-5 w-5 text-primary" />
-          Step-by-Step Setup
+          {messages.steps.title}
         </h2>
 
         {/* Step 1 */}
@@ -130,17 +134,13 @@ export default function WindowsTerminalSetupPage() {
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
               1
             </div>
-            <h3 className="font-semibold">Open Windows Terminal Settings</h3>
+            <h3 className="font-semibold">{messages.steps.step1.title}</h3>
           </div>
           <p className="text-sm text-muted-foreground pl-11">
-            Open Windows Terminal, then press{" "}
-            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Ctrl</kbd>
-            {" + "}
-            <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">,</kbd>
-            {" "}(comma) to open Settings.
+            {messages.steps.step1.content}
           </p>
           <p className="text-sm text-muted-foreground pl-11">
-            Or click the dropdown arrow (▼) next to the tab bar and select &quot;Settings&quot;.
+            {messages.steps.step1.alt}
           </p>
         </div>
 
@@ -150,16 +150,16 @@ export default function WindowsTerminalSetupPage() {
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
               2
             </div>
-            <h3 className="font-semibold">Add a New Profile</h3>
+            <h3 className="font-semibold">{messages.steps.step2.title}</h3>
           </div>
           <p className="text-sm text-muted-foreground pl-11">
-            In the left sidebar, scroll down and click{" "}
+            {messages.steps.step2.content}{" "}
             <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 font-medium">
-              <Plus className="h-3 w-3" /> Add a new profile
+              <Plus className="h-3 w-3" /> {messages.steps.step2.addProfile}
             </span>
           </p>
           <p className="text-sm text-muted-foreground pl-11">
-            Then click &quot;New empty profile&quot;.
+            {messages.steps.step2.then}
           </p>
         </div>
 
@@ -169,20 +169,20 @@ export default function WindowsTerminalSetupPage() {
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
               3
             </div>
-            <h3 className="font-semibold">Configure the Profile</h3>
+            <h3 className="font-semibold">{messages.steps.step3.title}</h3>
           </div>
           <div className="pl-11 space-y-4">
             <div>
-              <p className="text-sm font-medium mb-2">Name:</p>
+              <p className="text-sm font-medium mb-2">{messages.steps.step3.name.label}</p>
               <code className="block rounded bg-muted px-3 py-2 font-mono text-sm">
-                My VPS
+                {messages.steps.step3.name.value}
               </code>
               <p className="text-xs text-muted-foreground mt-1">
-                (or whatever name you prefer, like &quot;ACFS Server&quot; or &quot;Ubuntu VPS&quot;)
+                {messages.steps.step3.name.hint}
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium mb-2">Command line:</p>
+              <p className="text-sm font-medium mb-2">{messages.steps.step3.commandLine.label}</p>
               <div className="relative">
                 <code className="block rounded bg-muted px-3 py-2 pr-12 font-mono text-sm overflow-x-auto">
                   {sshCommandLine}
@@ -201,19 +201,19 @@ export default function WindowsTerminalSetupPage() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                This is your personalized SSH command with your VPS IP ({displayIP}).
+                {messages.steps.step3.commandLine.hint.replace("{ip}", displayIP)}
               </p>
             </div>
             <div>
-              <p className="text-sm font-medium mb-2">Starting directory (optional):</p>
+              <p className="text-sm font-medium mb-2">{messages.steps.step3.startingDir.label}</p>
               <code className="block rounded bg-muted px-3 py-2 font-mono text-sm">
                 %USERPROFILE%
               </code>
             </div>
             <div>
-              <p className="text-sm font-medium mb-2">Icon (optional):</p>
+              <p className="text-sm font-medium mb-2">{messages.steps.step3.icon.label}</p>
               <p className="text-sm text-muted-foreground">
-                You can pick any icon. The &quot;penguin&quot; emoji (🐧) or a cloud (☁️) work nicely for a Linux server.
+                {messages.steps.step3.icon.hint}
               </p>
             </div>
           </div>
@@ -225,44 +225,43 @@ export default function WindowsTerminalSetupPage() {
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
               4
             </div>
-            <h3 className="font-semibold">Save and Test</h3>
+            <h3 className="font-semibold">{messages.steps.step4.title}</h3>
           </div>
           <p className="text-sm text-muted-foreground pl-11">
-            Click{" "}
+            {messages.steps.step4.save.split("Save")[0]}
             <span className="inline-flex items-center gap-1 rounded bg-primary/20 px-1.5 py-0.5 font-medium text-primary">
-              <Save className="h-3 w-3" /> Save
+              <Save className="h-3 w-3" /> {messages.buttons.save}
             </span>
-            {" "}at the bottom of the page.
+            {messages.steps.step4.save.split("Save")[1]}
           </p>
           <p className="text-sm text-muted-foreground pl-11">
-            Now click the dropdown arrow (▼) next to your tabs — you should see your new &quot;My VPS&quot; profile!
-            Click it to connect.
+            {messages.steps.step4.test}
           </p>
         </div>
       </div>
 
       {/* What you'll see */}
-      <OutputPreview title="When you click your new profile:">
+      <OutputPreview title={messages.preview.title}>
         <div className="space-y-1 font-mono text-xs">
-          <p className="text-muted-foreground">Connecting to ubuntu@{displayIP}...</p>
-          <p className="text-[oklch(0.72_0.19_145)]">Welcome to Ubuntu 25.10</p>
-          <p className="text-[oklch(0.72_0.19_145)]">ubuntu@vps:~$</p>
+          <p className="text-muted-foreground">{messages.preview.connecting.replace("{ip}", displayIP)}</p>
+          <p className="text-[oklch(0.72_0.19_145)]">{messages.preview.welcome}</p>
+          <p className="text-[oklch(0.72_0.19_145)]">{messages.preview.prompt}</p>
         </div>
       </OutputPreview>
 
       {/* Optional: Make it default */}
-      <AlertCard variant="info" icon={Settings} title="Optional: Make it your default profile">
+      <AlertCard variant="info" icon={Settings} title={messages.makeDefault.title}>
         <div className="space-y-2 text-sm">
           <p>
-            If you want Windows Terminal to open directly to your VPS:
+            {messages.makeDefault.intro}
           </p>
           <ol className="list-decimal list-inside space-y-1">
-            <li>Go to Settings → Startup</li>
-            <li>Under &quot;Default profile&quot;, select your new &quot;My VPS&quot; profile</li>
-            <li>Click Save</li>
+            {messages.makeDefault.steps.map((step, i) => (
+              <li key={i}>{step}</li>
+            ))}
           </ol>
           <p className="text-muted-foreground">
-            Now every time you open Windows Terminal, it will connect to your VPS automatically!
+            {messages.makeDefault.result}
           </p>
         </div>
       </AlertCard>
@@ -270,11 +269,10 @@ export default function WindowsTerminalSetupPage() {
       {/* Beginner Guide */}
       <SimplerGuide>
         <div className="space-y-6">
-          <GuideExplain term="What is Windows Terminal?">
-            Windows Terminal is Microsoft&apos;s modern terminal app. It&apos;s better than the
-            old Command Prompt because it supports tabs, colors, and customization.
+          <GuideExplain term={messages.guide.whatIs.term}>
+            {messages.guide.whatIs.content}
             <br /><br />
-            If you don&apos;t have it installed, you can get it free from the{" "}
+            {messages.guide.whatIs.getIt.split("Microsoft Store")[0]}
             <a
               href="https://apps.microsoft.com/detail/9n0dx20hk701"
               target="_blank"
@@ -284,43 +282,34 @@ export default function WindowsTerminalSetupPage() {
               Microsoft Store
               <ExternalLink className="h-3 w-3" />
             </a>
-            .
+            {messages.guide.whatIs.getIt.split("Microsoft Store")[1]}
           </GuideExplain>
 
-          <GuideSection title="Troubleshooting">
+          <GuideSection title={messages.guide.troubleshooting.title}>
             <div className="space-y-4">
               <div>
-                <p className="font-medium">&quot;Permission denied&quot; error</p>
+                <p className="font-medium">{messages.guide.troubleshooting.permissionDenied.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  Make sure your SSH key file exists at{" "}
-                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
-                    %USERPROFILE%\.ssh\acfs_ed25519
-                  </code>
-                  . If you used a different key name, update the command line accordingly.
+                  {messages.guide.troubleshooting.permissionDenied.content}
                 </p>
               </div>
               <div>
-                <p className="font-medium">&quot;Connection refused&quot; error</p>
+                <p className="font-medium">{messages.guide.troubleshooting.connectionRefused.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  Double-check that your VPS IP ({displayIP}) is correct and the server is running.
+                  {messages.guide.troubleshooting.connectionRefused.content.replace("{ip}", displayIP)}
                 </p>
               </div>
               <div>
-                <p className="font-medium">&quot;Host key verification failed&quot;</p>
+                <p className="font-medium">{messages.guide.troubleshooting.hostKeyFailed.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  This can happen if you rebuilt your VPS. You may need to remove the old key from{" "}
-                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
-                    %USERPROFILE%\.ssh\known_hosts
-                  </code>
-                  .
+                  {messages.guide.troubleshooting.hostKeyFailed.content}
                 </p>
               </div>
             </div>
           </GuideSection>
 
           <GuideTip>
-            You can create multiple profiles for different servers! Just repeat these steps
-            with different names and IP addresses.
+            {messages.guide.tip}
           </GuideTip>
         </div>
       </SimplerGuide>
@@ -329,7 +318,7 @@ export default function WindowsTerminalSetupPage() {
       <div className="flex justify-start pt-4">
         <Button onClick={handleBack} variant="outline" size="lg" disableMotion>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to previous page
+          {messages.buttons.back}
         </Button>
       </div>
     </div>

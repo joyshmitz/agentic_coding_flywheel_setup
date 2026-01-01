@@ -36,6 +36,7 @@ import {
 import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
 import { Jargon } from "@/components/jargon";
 import { withCurrentSearch } from "@/lib/utils";
+import { useLocale, getStatusCheckMessages, getCommonMessages } from "@/lib/i18n";
 
 const QUICK_CHECKS = [
   {
@@ -79,6 +80,9 @@ function getAuthServices(): Record<ServiceCategory, Service[]> {
 export default function StatusCheckPage() {
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
+  const { locale } = useLocale();
+  const messages = getStatusCheckMessages(locale);
+  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({
@@ -107,52 +111,52 @@ export default function StatusCheckPage() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl">
-              Agent Flywheel status check
+              {messages.title}
             </h1>
             <p className="text-sm text-muted-foreground">
-              ~1 min
+              {messages.timeEstimate}
             </p>
           </div>
         </div>
         <p className="text-muted-foreground">
-          Let&apos;s verify everything installed correctly on your <Jargon term="vps">VPS</Jargon>.
+          {messages.description.split("VPS")[0]}<Jargon term="vps">VPS</Jargon>{messages.description.split("VPS")[1]}
         </p>
       </div>
 
       {/* Reconnection Reminder */}
-      <AlertCard variant="warning" icon={AlertCircle} title="Before running these commands">
+      <AlertCard variant="warning" icon={AlertCircle} title={messages.reconnectionReminder.title}>
         <div className="space-y-2">
           <p>
-            Make sure you&apos;re connected to your <strong>VPS</strong>, not running commands on your laptop!
+            {messages.reconnectionReminder.intro}
           </p>
           <p className="text-sm">
-            If you&apos;re in PowerShell or Terminal on your laptop, first run your SSH command:
+            {messages.reconnectionReminder.sshFirst}
           </p>
           <code className="mt-1 block overflow-x-auto rounded bg-background/50 px-3 py-2 font-mono text-xs">
             ssh -i ~/.ssh/acfs_ed25519 ubuntu@YOUR_VPS_IP
           </code>
           <p className="text-sm text-muted-foreground">
-            Once you see <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">ubuntu@</code> in your prompt, you&apos;re ready.
+            {messages.reconnectionReminder.readyWhen}
           </p>
         </div>
       </AlertCard>
 
       {/* Common Mistake Warning */}
-      <AlertCard variant="error" icon={AlertCircle} title="Common Mistake: Claude Desktop vs Claude Code">
+      <AlertCard variant="error" icon={AlertCircle} title={messages.commonMistake.title}>
         <div className="space-y-2">
           <p>
-            <strong>Claude Code is NOT the Claude Desktop app</strong> you download to your computer.
+            <strong>{messages.commonMistake.notDesktop}</strong>
           </p>
           <p className="text-sm">
-            Claude Code is a command-line tool that&apos;s already installed <strong>on your VPS</strong>.
-            To use it:
+            {messages.commonMistake.howToUse}
           </p>
           <ol className="list-decimal list-inside space-y-1 text-sm">
-            <li>SSH into your VPS first (using the command above)</li>
-            <li>Then run <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">claude</code> or <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">cc</code> commands</li>
+            {messages.commonMistake.steps.map((step, i) => (
+              <li key={i}>{step}</li>
+            ))}
           </ol>
           <p className="text-sm text-muted-foreground">
-            If you&apos;re seeing &quot;command not found&quot; in PowerShell or Terminal on your laptop, you&apos;re in the wrong place!
+            {messages.commonMistake.wrongPlace}
           </p>
         </div>
       </AlertCard>
@@ -162,13 +166,13 @@ export default function StatusCheckPage() {
 
       {/* Doctor command */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-foreground">Run the doctor command</h2>
+        <h2 className="text-xl font-semibold text-foreground">{messages.doctorCommand.title}</h2>
         <p className="text-sm text-muted-foreground">
-          This checks all installed tools and reports any issues:
+          {messages.doctorCommand.description}
         </p>
         <CommandCard
           command="acfs doctor"
-          description="Run Agent Flywheel health check"
+          description={messages.doctorCommand.commandDesc}
           runLocation="vps"
           showCheckbox
           persistKey="flywheel-doctor"
@@ -176,23 +180,23 @@ export default function StatusCheckPage() {
       </div>
 
       {/* Expected output */}
-      <OutputPreview title="Expected output">
+      <OutputPreview title={messages.expectedOutput.title}>
         <div className="space-y-1 font-mono text-xs">
-          <p className="text-muted-foreground">Agent Flywheel Doctor - System Health Check</p>
-          <p className="text-muted-foreground">================================</p>
-          <p className="text-[oklch(0.72_0.19_145)]">✔ Shell: zsh with oh-my-zsh</p>
-          <p className="text-[oklch(0.72_0.19_145)]">✔ Languages: bun, uv, rust, go</p>
+          <p className="text-muted-foreground">{messages.expectedOutput.header}</p>
+          <p className="text-muted-foreground">{messages.expectedOutput.separator}</p>
+          <p className="text-[oklch(0.72_0.19_145)]">{messages.expectedOutput.shell}</p>
+          <p className="text-[oklch(0.72_0.19_145)]">{messages.expectedOutput.languages}</p>
           <p className="text-[oklch(0.72_0.19_145)]">✔ Tools: <Jargon term="tmux">tmux</Jargon>, <Jargon term="ripgrep">ripgrep</Jargon>, <Jargon term="lazygit">lazygit</Jargon></p>
-          <p className="text-[oklch(0.72_0.19_145)]">✔ Agents: claude-code, codex</p>
-          <p className="mt-2 text-foreground">All checks passed!</p>
+          <p className="text-[oklch(0.72_0.19_145)]">{messages.expectedOutput.agents}</p>
+          <p className="mt-2 text-foreground">{messages.expectedOutput.allPassed}</p>
         </div>
       </OutputPreview>
 
       {/* Quick spot checks */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Quick spot checks</h2>
+        <h2 className="text-xl font-semibold">{messages.quickChecks.title}</h2>
         <p className="text-sm text-muted-foreground">
-          Try a few commands to verify key tools:
+          {messages.quickChecks.intro}
         </p>
         <div className="space-y-3">
           {QUICK_CHECKS.map((check, i) => (
@@ -213,46 +217,42 @@ export default function StatusCheckPage() {
             <KeyRound className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold">Authenticate your services</h2>
+            <h2 className="text-xl font-semibold">{messages.authenticateServices.title}</h2>
             <p className="text-sm text-muted-foreground">
-              Log in to the tools you plan to use now (you can do the rest later)
+              {messages.authenticateServices.subtitle}
             </p>
           </div>
         </div>
 
         {/* Headless auth flow explanation */}
-        <AlertCard variant="info" icon={Laptop} title="Authentication on a Headless Server">
+        <AlertCard variant="info" icon={Laptop} title={messages.headlessAuth.title}>
           <div className="space-y-2">
             <p>
-              Your VPS doesn&apos;t have a web browser, so authentication works differently:
+              {messages.headlessAuth.intro}
             </p>
             <ol className="list-decimal list-inside space-y-1 text-sm">
-              <li>Run a login command below (like <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">claude</code>)</li>
-              <li>The terminal will display a URL and possibly a code</li>
-              <li><strong>Copy that URL and open it in your laptop&apos;s browser</strong></li>
-              <li>Complete the login in your browser</li>
-              <li>Return to your terminal — it should confirm success</li>
+              {messages.headlessAuth.steps.map((step, i) => (
+                <li key={i}>{step}</li>
+              ))}
             </ol>
             <p className="mt-2 text-xs text-muted-foreground">
-              If you see &quot;Opening browser...&quot; but nothing happens, that&apos;s normal!
-              Just copy the URL shown and open it manually on your laptop.
+              {messages.headlessAuth.note}
             </p>
           </div>
         </AlertCard>
 
-        <AlertCard variant="success" icon={Bot} title="You don't need to log into everything right now">
+        <AlertCard variant="success" icon={Bot} title={messages.dontNeedAll.title}>
           <div className="space-y-2 text-sm">
             <p className="text-muted-foreground">
-              Most people start with <strong className="text-foreground">one</strong> coding agent and add
-              the rest later.
+              {messages.dontNeedAll.intro}
             </p>
             <ul className="list-disc space-y-1 pl-5">
-              <li><strong>Recommended now:</strong> Claude Code (so you can start coding immediately)</li>
-              <li><strong>Optional now:</strong> Codex, Gemini (only if you plan to use them)</li>
-              <li><strong>Optional later:</strong> Cloud tools (Wrangler / Supabase / Vercel) and anything else you don&apos;t need yet</li>
+              <li><strong>{messages.dontNeedAll.recommendedNow.split(":")[0]}:</strong>{messages.dontNeedAll.recommendedNow.split(":")[1]}</li>
+              <li><strong>{messages.dontNeedAll.optionalNow.split(":")[0]}:</strong>{messages.dontNeedAll.optionalNow.split(":")[1]}</li>
+              <li><strong>{messages.dontNeedAll.optionalLater.split(":")[0]}:</strong>{messages.dontNeedAll.optionalLater.split(":")[1]}</li>
             </ul>
             <p className="text-xs text-muted-foreground">
-              If you skip a login, the tool is still installed — it just won&apos;t work until you authenticate.
+              {messages.dontNeedAll.note}
             </p>
           </div>
         </AlertCard>
@@ -290,114 +290,98 @@ export default function StatusCheckPage() {
       </div>
 
       {/* Troubleshooting */}
-      <AlertCard variant="warning" icon={AlertCircle} title="Something not working?">
-        Try running{" "}
-        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">source ~/.zshrc</code> to
-        reload your shell config, then try the doctor again.
+      <AlertCard variant="warning" icon={AlertCircle} title={messages.troubleshooting.title}>
+        {messages.troubleshooting.content}
       </AlertCard>
 
       {/* Beginner Guide */}
       <SimplerGuide>
         <div className="space-y-6">
-          <GuideExplain term="What is the 'doctor' command?">
-            The &quot;doctor&quot; command is like a health checkup for your VPS. Just like
-            a doctor checks your heart, lungs, and reflexes, this command checks
-            that all the software tools were installed correctly.
+          <GuideExplain term={messages.guide.whatIsDoctor.term}>
+            {messages.guide.whatIsDoctor.content}
             <br /><br />
-            It goes through a list of tools (programming languages, coding assistants,
-            utilities) and reports which ones are working and which ones might have
-            problems.
+            {messages.guide.whatIsDoctor.purpose}
           </GuideExplain>
 
-          <GuideSection title="Step-by-Step: Running the Doctor">
+          <GuideSection title={messages.guide.stepByStep.title}>
             <div className="space-y-4">
-              <GuideStep number={1} title="Make sure you're connected to your VPS">
-                Your terminal should show{" "}
-                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">ubuntu@</code>
-                at the beginning of your prompt. If it shows your laptop&apos;s name,
-                you need to SSH in first!
+              <GuideStep number={1} title={messages.guide.stepByStep.step1.title}>
+                {messages.guide.stepByStep.step1.content}
               </GuideStep>
 
-              <GuideStep number={2} title="Copy the doctor command">
-                Click the copy button on the{" "}
-                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">acfs doctor</code>
-                command box above.
+              <GuideStep number={2} title={messages.guide.stepByStep.step2.title}>
+                {messages.guide.stepByStep.step2.content}
               </GuideStep>
 
-              <GuideStep number={3} title="Paste and run">
-                Paste the command in your terminal and press{" "}
-                <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Enter</kbd>.
+              <GuideStep number={3} title={messages.guide.stepByStep.step3.title}>
+                {messages.guide.stepByStep.step3.content}
               </GuideStep>
 
-              <GuideStep number={4} title="Read the results">
-                You&apos;ll see a list with checkmarks (✔) or X marks (✘):
+              <GuideStep number={4} title={messages.guide.stepByStep.step4.title}>
+                {messages.guide.stepByStep.step4.intro}
                 <ul className="mt-2 space-y-1">
                   <li>
-                    <span className="text-[oklch(0.72_0.19_145)]">✔ Green checkmarks</span> = Working correctly!
+                    <span className="text-[oklch(0.72_0.19_145)]">✔ {messages.guide.stepByStep.step4.green}</span>
                   </li>
                   <li>
-                    <span className="text-destructive">✘ Red X marks</span> = Something needs attention
+                    <span className="text-destructive">✘ {messages.guide.stepByStep.step4.red}</span>
                   </li>
                 </ul>
               </GuideStep>
             </div>
           </GuideSection>
 
-          <GuideSection title="Understanding the Quick Spot Checks">
+          <GuideSection title={messages.guide.spotChecks.title}>
             <p className="mb-3">
-              We also show some simple commands you can run to double-check specific tools:
+              {messages.guide.spotChecks.intro}
             </p>
             <ul className="space-y-3">
               <li>
                 <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">cc --version</code>
                 <br />
                 <span className="text-sm text-muted-foreground">
-                  This checks Claude Code, the AI coding assistant. You should see
-                  a version number like &quot;1.0.3&quot;.
+                  {messages.guide.spotChecks.ccVersion}
                 </span>
               </li>
               <li>
                 <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">bun --version</code>
                 <br />
                 <span className="text-sm text-muted-foreground">
-                  This checks Bun, a fast JavaScript runtime. You should see
-                  something like &quot;1.1.38&quot;.
+                  {messages.guide.spotChecks.bunVersion}
                 </span>
               </li>
               <li>
                 <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">which tmux</code>
                 <br />
                 <span className="text-sm text-muted-foreground">
-                  This checks if tmux is installed. You should see a path like
-                  &quot;/usr/bin/tmux&quot;.
+                  {messages.guide.spotChecks.whichTmux}
                 </span>
               </li>
             </ul>
           </GuideSection>
 
-          <GuideSection title="What If Something Failed?">
+          <GuideSection title={messages.guide.whatIfFailed.title}>
             <p className="mb-3">
-              Don&apos;t panic! Here are some common fixes:
+              {messages.guide.whatIfFailed.intro}
             </p>
             <div className="space-y-4">
               <div>
-                <p className="font-medium">&quot;Command not found&quot; error</p>
+                <p className="font-medium">{messages.guide.whatIfFailed.commandNotFound.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  This usually means your shell config hasn&apos;t loaded yet. Run this command
-                  to reload it:
+                  {messages.guide.whatIfFailed.commandNotFound.content}
                 </p>
                 <code className="mt-1 block overflow-x-auto rounded bg-muted px-2 py-1 font-mono text-xs">
-                  source ~/.zshrc
+                  {messages.guide.whatIfFailed.commandNotFound.command}
                 </code>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Then try the doctor command again.
+                  {messages.guide.whatIfFailed.commandNotFound.after}
                 </p>
               </div>
 
               <div>
-                <p className="font-medium">A specific tool shows ✘</p>
+                <p className="font-medium">{messages.guide.whatIfFailed.specificToolFailed.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  You can try re-running the installer. It&apos;s safe to run multiple times:
+                  {messages.guide.whatIfFailed.specificToolFailed.content}
                 </p>
                 <code className="mt-1 block overflow-x-auto rounded bg-muted px-2 py-1 font-mono text-xs">
                   curl -fsSL &quot;https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/install.sh&quot; | bash -s -- --yes --mode vibe
@@ -405,58 +389,48 @@ export default function StatusCheckPage() {
               </div>
 
               <div>
-                <p className="font-medium">Nothing works at all</p>
+                <p className="font-medium">{messages.guide.whatIfFailed.nothingWorks.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  Make sure you&apos;re connected as the &quot;ubuntu&quot; user (not root).
-                  The installer set up tools for the ubuntu user specifically.
+                  {messages.guide.whatIfFailed.nothingWorks.content}
                 </p>
               </div>
             </div>
           </GuideSection>
 
-          <GuideSection title="Authenticating Your Services">
+          <GuideSection title={messages.guide.authenticating.title}>
             <p className="mb-3">
-              The services you signed up for need to be connected to your VPS.
-              Each command displays a URL to open in your laptop&apos;s browser:
+              {messages.guide.authenticating.intro}
             </p>
             <div className="space-y-4">
-              <GuideStep number={1} title="Run the login command">
-                Copy and run a command like{" "}
-                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">claude</code> or{" "}
-                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">vercel login</code>.
+              <GuideStep number={1} title={messages.guide.authenticating.step1.title}>
+                {messages.guide.authenticating.step1.content}
               </GuideStep>
 
-              <GuideStep number={2} title="Complete browser login">
-                A URL will appear in your terminal. Open it in your browser and
-                sign in with the account you created earlier.
+              <GuideStep number={2} title={messages.guide.authenticating.step2.title}>
+                {messages.guide.authenticating.step2.content}
               </GuideStep>
 
-              <GuideStep number={3} title="Return to terminal">
-                Once you&apos;ve logged in, the terminal will confirm the connection.
-                Check the box next to each command as you complete it.
+              <GuideStep number={3} title={messages.guide.authenticating.step3.title}>
+                {messages.guide.authenticating.step3.content}
               </GuideStep>
             </div>
           </GuideSection>
 
           <GuideTip>
-            If most things show green checkmarks (✔), you&apos;re good to go! Don&apos;t worry
-            about one or two yellow warnings; those are usually optional tools.
-            Click &quot;Everything looks good!&quot; to continue.
+            {messages.guide.tip}
           </GuideTip>
 
           <GuideCaution>
-            <strong>If you see many red X marks:</strong> Don&apos;t continue yet. Try the
-            troubleshooting steps above, or re-run the installer. If problems persist,
-            you can ask for help in the project&apos;s GitHub issues.
+            {messages.guide.caution}
           </GuideCaution>
 
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
             <Link href="/learn/welcome" className="flex items-center gap-3 text-sm">
               <BookOpen className="h-5 w-5 text-primary" />
               <div>
-                <span className="font-medium text-foreground">New to this environment?</span>
+                <span className="font-medium text-foreground">{messages.guide.learnMore.welcome.title}</span>
                 <p className="text-muted-foreground">
-                  Start with the Welcome lesson to understand what you now have →
+                  {messages.guide.learnMore.welcome.content}
                 </p>
               </div>
             </Link>
@@ -466,9 +440,9 @@ export default function StatusCheckPage() {
             <Link href="/learn/flywheel-loop" className="flex items-center gap-3 text-sm">
               <BookOpen className="h-5 w-5 text-primary" />
               <div>
-                <span className="font-medium text-foreground">Ready for the full workflow?</span>
+                <span className="font-medium text-foreground">{messages.guide.learnMore.flywheel.title}</span>
                 <p className="text-muted-foreground">
-                  See the Flywheel Loop lesson to connect all the tools →
+                  {messages.guide.learnMore.flywheel.content}
                 </p>
               </div>
             </Link>
@@ -479,7 +453,7 @@ export default function StatusCheckPage() {
       {/* Continue button */}
       <div className="flex justify-end pt-4">
         <Button onClick={handleContinue} disabled={isNavigating} size="lg" disableMotion>
-          {isNavigating ? "Loading..." : "Everything looks good!"}
+          {isNavigating ? common.buttons.loading : messages.buttons.continue}
         </Button>
       </div>
     </div>

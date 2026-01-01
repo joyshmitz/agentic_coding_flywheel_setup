@@ -37,5 +37,6 @@ export {
   getCommandsUiMessages,
   getGlossaryUiMessages,
   getSecurityMessages,
+  getHomeMessages,
   type ChecklistItem,
 } from "./translations";

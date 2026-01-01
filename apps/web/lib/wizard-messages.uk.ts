@@ -1975,7 +1975,7 @@ export const launchOnboardingMessagesUk = {
         "Завантажте Cursor з cursor.com",
         "Відкрийте command palette: Cmd/Ctrl + Shift + P",
         "Знайдіть: Remote-SSH: Connect to Host",
-        "Підключіться до ubuntu@YOUR_VPS_IP (використає ваш SSH-ключ)",
+        "Підключіться до ubuntu@{IP} (використає ваш SSH-ключ)",
       ],
       tip: "Cursor побудований на VS Code, тому розширення працюють так само — включно з Remote SSH. Ви отримуєте повний IDE-досвід (підсвітка синтаксису, файловий провідник, розширення) при редагуванні файлів прямо на VPS.",
     },

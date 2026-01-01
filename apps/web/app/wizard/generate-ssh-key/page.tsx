@@ -19,12 +19,16 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
+import { useLocale, getGenerateSshKeyMessages, getCommonMessages } from "@/lib/i18n";
 
 export default function GenerateSSHKeyPage() {
   const router = useRouter();
   const [os, , osLoaded] = useUserOS();
   const [isNavigating, setIsNavigating] = useState(false);
   const ready = osLoaded;
+  const { locale } = useLocale();
+  const messages = getGenerateSshKeyMessages(locale);
+  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({
@@ -66,27 +70,27 @@ export default function GenerateSSHKeyPage() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl">
-              Create your SSH key
+              {messages.title}
             </h1>
             <p className="text-sm text-muted-foreground">
-              ~2 min
+              {messages.timeEstimate}
             </p>
           </div>
         </div>
         <p className="text-muted-foreground">
-          This is your secure &quot;login key&quot; for connecting to your <Jargon term="vps">VPS</Jargon>.
+          {messages.description}
         </p>
       </div>
 
       {/* Explanation */}
-      <AlertCard variant="info" title="How SSH keys work">
+      <AlertCard variant="info" title={messages.howItWorks.title}>
         You&apos;re creating a <strong className="text-foreground">key pair</strong>: a <Jargon term="private-key">private key</Jargon> (stays on
         your computer) and a <Jargon term="public-key">public key</Jargon> (you&apos;ll paste during installation).
         Think of it like a lock and key: you share the lock, but only you have the key.
       </AlertCard>
 
       {/* ~/.ssh folder explanation */}
-      <AlertCard variant="tip" title="Where are SSH keys stored?">
+      <AlertCard variant="tip" title={messages.sshLocation.title}>
         <p className="mb-2">
           SSH keys are stored in a special folder called <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">~/.ssh</code> on your computer.
         </p>
@@ -117,18 +121,17 @@ export default function GenerateSSHKeyPage() {
         </div>
         <div className="min-w-0 space-y-1">
           <p className="text-[13px] font-medium leading-tight text-[oklch(0.82_0.12_145)] sm:text-sm">
-            Your keys never leave your computer
+            {messages.privacy.title}
           </p>
           <p className="text-[12px] leading-relaxed text-muted-foreground sm:text-[13px]">
-            These commands run <strong className="text-foreground/80">entirely on your machine</strong>. This website cannot see, access, or store your SSH keys.
-            We&apos;re just showing you what to type. The{" "}
+            {messages.privacy.content.split("**")[0]}<strong className="text-foreground/80">{messages.privacy.content.split("**")[1]}</strong>{messages.privacy.content.split("**")[2]}{" "}
             <a
               href="https://github.com/Dicklesworthstone/agentic_coding_flywheel_setup"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-0.5 font-medium text-[oklch(0.75_0.18_195)] hover:underline"
             >
-              entire codebase is open source
+              {messages.privacy.openSource}
               <ExternalLink className="h-3 w-3" />
             </a>.
           </p>
@@ -137,15 +140,15 @@ export default function GenerateSSHKeyPage() {
 
       {/* Step 1: Generate */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Step 1: Generate the key</h2>
+        <h2 className="text-xl font-semibold">{messages.step1.title}</h2>
         <p className="text-sm text-muted-foreground">
-          Run this command in your <Jargon term="terminal">terminal</Jargon>. You&apos;ll be asked 3 questions—here&apos;s how to answer:
+          {messages.step1.intro.split("terminal")[0]}<Jargon term="terminal">{locale === "uk" ? "терміналі" : "terminal"}</Jargon>{messages.step1.intro.split("terminal")[1]}
         </p>
         <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-sm">
           <div className="space-y-2">
-            <p><strong className="text-foreground">1. File location:</strong> <span className="text-muted-foreground">Press <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Enter</kbd> to accept the default</span></p>
-            <p><strong className="text-foreground">2. Passphrase:</strong> <span className="text-muted-foreground">Press <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Enter</kbd> (leave empty)</span></p>
-            <p><strong className="text-foreground">3. Confirm passphrase:</strong> <span className="text-muted-foreground">Press <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Enter</kbd> again</span></p>
+            <p><strong className="text-foreground">{messages.step1.prompts.fileLocation.label}</strong> <span className="text-muted-foreground">{messages.step1.prompts.fileLocation.action}</span></p>
+            <p><strong className="text-foreground">{messages.step1.prompts.passphrase.label}</strong> <span className="text-muted-foreground">{messages.step1.prompts.passphrase.action}</span></p>
+            <p><strong className="text-foreground">{messages.step1.prompts.confirmPassphrase.label}</strong> <span className="text-muted-foreground">{messages.step1.prompts.confirmPassphrase.action}</span></p>
           </div>
         </div>
         <CommandCard
@@ -158,13 +161,9 @@ export default function GenerateSSHKeyPage() {
 
       {/* Step 2: Copy public key */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Step 2: Copy your public key</h2>
+        <h2 className="text-xl font-semibold">{messages.step2.title}</h2>
         <p className="text-sm text-muted-foreground">
-          Run this command and copy the entire output. It starts with{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">
-            ssh-ed25519
-          </code>
-          .
+          {messages.step2.intro}
         </p>
         <CommandCard
           command="cat ~/.ssh/acfs_ed25519.pub"
@@ -175,37 +174,33 @@ export default function GenerateSSHKeyPage() {
       </div>
 
       {/* Important note */}
-      <AlertCard variant="warning" title="Save your public key for later">
-        You&apos;ll paste this <strong>during installation</strong>, not when creating the VPS.
-        Save it somewhere safe like a notes app—you&apos;ll need it later!
+      <AlertCard variant="warning" title={messages.saveWarning.title}>
+        {messages.saveWarning.content.split("**")[0]}<strong>{messages.saveWarning.content.split("**")[1]}</strong>{messages.saveWarning.content.split("**")[2]}
       </AlertCard>
 
       {/* Troubleshooting */}
-      <DetailsSection summary="Having trouble? Click for common fixes">
+      <DetailsSection summary={messages.troubleshooting.title}>
         <div className="space-y-4 text-sm">
           <div>
             <p className="font-medium text-foreground">
-              &quot;No such file or directory&quot; error
+              {messages.troubleshooting.noSuchFile.title}
             </p>
             <p className="text-muted-foreground">
-              Create the .ssh folder first:{" "}
-              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">mkdir -p ~/.ssh</code>
+              {messages.troubleshooting.noSuchFile.fix}
             </p>
           </div>
           <div>
-            <p className="font-medium text-foreground">&quot;Permission denied&quot; error</p>
+            <p className="font-medium text-foreground">{messages.troubleshooting.permissionDenied.title}</p>
             <p className="text-muted-foreground">
-              Fix folder permissions:{" "}
-              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">chmod 700 ~/.ssh</code>
+              {messages.troubleshooting.permissionDenied.fix}
             </p>
           </div>
           <div>
             <p className="font-medium text-foreground">
-              Key file already exists
+              {messages.troubleshooting.fileExists.title}
             </p>
             <p className="text-muted-foreground">
-              If you already have a key, you can use that one. Just copy the
-              .pub file content.
+              {messages.troubleshooting.fileExists.fix}
             </p>
           </div>
         </div>
@@ -449,7 +444,7 @@ export default function GenerateSSHKeyPage() {
       {/* Continue button */}
       <div className="flex justify-end pt-4">
         <Button onClick={handleContinue} disabled={isNavigating} size="lg" disableMotion>
-          {isNavigating ? "Loading..." : "I saved my public key"}
+          {isNavigating ? common.buttons.loading : (locale === "uk" ? "Я зберіг публічний ключ" : "I saved my public key")}
         </Button>
       </div>
     </div>

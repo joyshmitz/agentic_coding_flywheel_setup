@@ -23,6 +23,7 @@ import {
   DirectDownloadButton,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
+import { useLocale, getInstallTerminalMessages, getCommonMessages } from "@/lib/i18n";
 
 interface TerminalCardProps {
   name: string;
@@ -415,6 +416,9 @@ export default function InstallTerminalPage() {
   const [os, , osLoaded] = useUserOS();
   const [isNavigating, setIsNavigating] = useState(false);
   const ready = osLoaded;
+  const { locale } = useLocale();
+  const messages = getInstallTerminalMessages(locale);
+  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({
@@ -471,15 +475,15 @@ export default function InstallTerminalPage() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl">
-              Install a terminal you&apos;ll love
+              {messages.title}
             </h1>
             <p className="text-sm text-muted-foreground">
-              ~2 min
+              {messages.timeEstimate}
             </p>
           </div>
         </div>
         <p className="text-muted-foreground">
-          A good terminal makes everything easier.
+          {messages.description}
         </p>
       </div>
 
@@ -492,7 +496,7 @@ export default function InstallTerminalPage() {
       {/* Continue button */}
       <div className="flex justify-end pt-4">
         <Button onClick={handleContinue} disabled={isNavigating} size="lg" disableMotion>
-          {isNavigating ? "Loading..." : "I installed it, continue"}
+          {isNavigating ? messages.buttons.loading : messages.buttons.continue}
         </Button>
       </div>
     </div>

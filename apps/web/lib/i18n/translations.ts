@@ -229,6 +229,8 @@ import { glossaryUiMessages } from "../glossary-ui-messages";
 import { glossaryUiMessagesUk } from "../glossary-ui-messages.uk";
 import { securityMessages, type ChecklistItem } from "../security-messages";
 import { securityMessagesUk } from "../security-messages.uk";
+import { homeMessages } from "../home-messages";
+import { homeMessagesUk } from "../home-messages.uk";
 
 // Re-export type for consumers
 export type { ChecklistItem };
@@ -280,4 +282,11 @@ export function getGlossaryUiMessages(locale: Locale) {
  */
 export function getSecurityMessages(locale: Locale) {
   return locale === "uk" ? securityMessagesUk : securityMessages;
+}
+
+/**
+ * Get home page messages for the specified locale
+ */
+export function getHomeMessages(locale: Locale) {
+  return locale === "uk" ? homeMessagesUk : homeMessages;
 }

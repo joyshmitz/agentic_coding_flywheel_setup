@@ -20,52 +20,12 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
+import { useLocale, getPreflightCheckMessages, getCommonMessages } from "@/lib/i18n";
 
 const PREFLIGHT_COMMAND =
   "curl -fsSL \"https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/scripts/preflight.sh?$(date +%s)\" | bash";
 
-const TROUBLESHOOTING = [
-  {
-    title: "'bash' is not recognized / Get-Date error (Windows)",
-    fixes: [
-      "You're running this on your Windows computer, not on the VPS!",
-      "First, connect to your VPS with: ssh root@YOUR_VPS_IP",
-      "Wait until you see 'root@vps:~#' or similar",
-      "THEN paste the preflight command",
-      "The preflight command only works on the Linux VPS, not on Windows",
-    ],
-  },
-  {
-    title: "APT is locked by another process",
-    fixes: [
-      "Wait 1-2 minutes (auto updates often finish quickly)",
-      "If it keeps failing: sudo killall apt apt-get",
-      "Optional: sudo systemctl stop unattended-upgrades",
-    ],
-  },
-  {
-    title: "Cannot reach github.com (network/firewall)",
-    fixes: [
-      "Check that your VPS has outbound internet access",
-      "Retry in a minute (provider networking sometimes lags)",
-      "If on a corporate network, check firewall rules",
-    ],
-  },
-  {
-    title: "Insufficient disk space",
-    fixes: [
-      "Upgrade your VPS storage plan (recommended 20GB+ free)",
-      "If you just created the VPS, choose a larger disk size",
-    ],
-  },
-  {
-    title: "Unsupported architecture",
-    fixes: [
-      "Use x86_64 or aarch64 VPS images",
-      "Most providers default to x86_64 if not specified",
-    ],
-  },
-];
+// Troubleshooting items are now driven by messages
 
 export default function PreflightCheckPage() {
   const router = useRouter();
@@ -73,6 +33,9 @@ export default function PreflightCheckPage() {
   const [ackPassed, setAckPassed] = useState(false);
   const [ackFailed, setAckFailed] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const { locale } = useLocale();
+  const messages = getPreflightCheckMessages(locale);
+  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({
@@ -101,6 +64,15 @@ export default function PreflightCheckPage() {
     goNext();
   }, [goNext]);
 
+  // Build troubleshooting items from messages
+  const troubleshootingItems = [
+    { title: messages.troubleshooting.bashNotRecognized.title, fixes: messages.troubleshooting.bashNotRecognized.fixes },
+    { title: messages.troubleshooting.aptLocked.title, fixes: messages.troubleshooting.aptLocked.fixes },
+    { title: messages.troubleshooting.networkIssue.title, fixes: messages.troubleshooting.networkIssue.fixes },
+    { title: messages.troubleshooting.diskSpace.title, fixes: messages.troubleshooting.diskSpace.fixes },
+    { title: messages.troubleshooting.unsupportedArch.title, fixes: messages.troubleshooting.unsupportedArch.fixes },
+  ];
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -111,15 +83,15 @@ export default function PreflightCheckPage() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl">
-              Pre-flight check your VPS
+              {messages.title}
             </h1>
             <p className="text-sm text-muted-foreground">
-              ~1 min
+              {messages.timeEstimate}
             </p>
           </div>
         </div>
         <p className="text-muted-foreground">
-          Before installing, let&apos;s confirm your <Jargon term="vps">VPS</Jargon> is ready.
+          {messages.description.split("VPS")[0]}<Jargon term="vps">VPS</Jargon>{messages.description.split("VPS")[1]}
         </p>
       </div>
 
@@ -127,34 +99,31 @@ export default function PreflightCheckPage() {
       <ConnectionCheck vpsIP={displayIP} showExplainer showWhereAmI />
 
       {/* Why this matters */}
-      <AlertCard variant="info" icon={ShieldCheck} title="Fast safety check">
-        This quick scan validates OS, disk space, network access, and APT locks.
-        Warnings are okay — you can still continue.
+      <AlertCard variant="info" icon={ShieldCheck} title={messages.fastSafetyCheck.title}>
+        {messages.fastSafetyCheck.content}
       </AlertCard>
 
       {/* Windows-specific warning - CRITICAL for confused users */}
-      <AlertCard variant="error" icon={AlertTriangle} title="Windows users: Common mistake!">
+      <AlertCard variant="error" icon={AlertTriangle} title={messages.windowsWarning.title}>
         <div className="space-y-2">
           <p>
-            If you paste this command and see errors like <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">&apos;bash&apos; is not recognized</code> or
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">Get-Date : Cannot bind parameter</code>:
+            {messages.windowsWarning.intro}
           </p>
           <p className="font-semibold">
-            You&apos;re running this on your Windows computer, NOT on the VPS!
+            {messages.windowsWarning.mistake}
           </p>
           <p>
-            Go back to your terminal, type <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">ssh root@{displayIP}</code>,
-            enter your VPS password, and THEN paste the preflight command.
+            {messages.windowsWarning.fix.replace("YOUR_VPS_IP", displayIP)}
           </p>
         </div>
       </AlertCard>
 
       {/* Command */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">Run this command</h2>
+        <h2 className="text-xl font-semibold">{messages.runCommand.title}</h2>
         <CommandCard
           command={PREFLIGHT_COMMAND}
-          description="ACFS pre-flight validation"
+          description={messages.runCommand.desc}
           runLocation="vps"
           showCheckbox
           persistKey="preflight-check"
@@ -162,21 +131,21 @@ export default function PreflightCheckPage() {
       </div>
 
       {/* Expected output */}
-      <OutputPreview title="Expected output (example)">
+      <OutputPreview title={messages.expectedOutput.title}>
         <div className="space-y-1 font-mono text-xs">
-          <p className="text-muted-foreground">ACFS Pre-Flight Check</p>
-          <p className="text-muted-foreground">=====================</p>
-          <p className="text-[oklch(0.72_0.19_145)]">[✓] Operating System: Ubuntu 25.10 (or 24.04 before upgrade)</p>
-          <p className="text-[oklch(0.72_0.19_145)]">[✓] Architecture: x86_64</p>
-          <p className="text-[oklch(0.72_0.19_145)]">[✓] Disk Space: 45GB free</p>
-          <p className="text-[oklch(0.78_0.16_75)]">[!] Warning: Cannot reach https://claude.ai</p>
-          <p className="text-muted-foreground">Result: 0 errors, 1 warning</p>
+          <p className="text-muted-foreground">{messages.expectedOutput.lines.header}</p>
+          <p className="text-muted-foreground">{messages.expectedOutput.lines.separator}</p>
+          <p className="text-[oklch(0.72_0.19_145)]">{messages.expectedOutput.lines.os}</p>
+          <p className="text-[oklch(0.72_0.19_145)]">{messages.expectedOutput.lines.arch}</p>
+          <p className="text-[oklch(0.72_0.19_145)]">{messages.expectedOutput.lines.disk}</p>
+          <p className="text-[oklch(0.78_0.16_75)]">{messages.expectedOutput.lines.warning}</p>
+          <p className="text-muted-foreground">{messages.expectedOutput.lines.result}</p>
         </div>
       </OutputPreview>
 
       {/* Proceed acknowledgement */}
       <div className="rounded-xl border border-border/50 bg-card/50 p-4">
-        <h3 className="mb-3 font-semibold">Before you continue</h3>
+        <h3 className="mb-3 font-semibold">{messages.acknowledgement.title}</h3>
         <div className="space-y-3 text-sm">
           <label className="flex cursor-pointer items-start gap-3">
             <Checkbox
@@ -188,7 +157,7 @@ export default function PreflightCheckPage() {
               }}
             />
             <span className="text-foreground">
-              Pre-flight passed (all green, or only warnings)
+              {messages.acknowledgement.passed}
             </span>
           </label>
           <label className="flex cursor-pointer items-start gap-3">
@@ -201,7 +170,7 @@ export default function PreflightCheckPage() {
               }}
             />
             <span className="text-foreground">
-              I understand some checks failed and I&apos;m choosing to continue
+              {messages.acknowledgement.failed}
             </span>
           </label>
         </div>
@@ -209,9 +178,9 @@ export default function PreflightCheckPage() {
 
       {/* Troubleshooting */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold">Troubleshooting common failures</h2>
+        <h2 className="text-xl font-semibold">{messages.troubleshooting.title}</h2>
         <div className="space-y-3">
-          {TROUBLESHOOTING.map((item) => (
+          {troubleshootingItems.map((item) => (
             <DetailsSection key={item.title} summary={item.title}>
               <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                 {item.fixes.map((fix, i) => (
@@ -224,8 +193,8 @@ export default function PreflightCheckPage() {
       </div>
 
       {/* Help */}
-      <AlertCard variant="warning" icon={AlertTriangle} title="Seeing red errors?">
-        Fix the red errors before installing. The installer will likely fail otherwise.
+      <AlertCard variant="warning" icon={AlertTriangle} title={messages.redErrors.title}>
+        {messages.redErrors.content}
       </AlertCard>
 
       {/* Actions */}
@@ -235,37 +204,36 @@ export default function PreflightCheckPage() {
           className="bg-primary text-primary-foreground"
           disabled={!canContinue || isNavigating}
         >
-          Continue to installer
+          {messages.buttons.continue}
         </Button>
         <Button variant="outline" onClick={handleSkip} disabled={isNavigating}>
-          Skip pre-flight (advanced)
+          {messages.buttons.skip}
         </Button>
       </div>
 
       {/* Beginner Guide */}
       <SimplerGuide>
         <div className="space-y-6">
-          <GuideExplain term="What is a pre-flight check?">
-            A quick diagnostic that confirms your VPS meets the requirements before the full install.
+          <GuideExplain term={messages.guide.whatIsPreflight.term}>
+            {messages.guide.whatIsPreflight.content}
           </GuideExplain>
 
-          <GuideSection title="Step-by-Step">
+          <GuideSection title={messages.guide.stepByStep.title}>
             <div className="space-y-4">
-              <GuideStep number={1} title="Copy the command">
-                Click the copy button in the command box above.
+              <GuideStep number={1} title={messages.guide.stepByStep.step1.title}>
+                {messages.guide.stepByStep.step1.content}
               </GuideStep>
-              <GuideStep number={2} title="Paste and run">
-                Paste into your terminal (make sure you&apos;re connected to your VPS).
+              <GuideStep number={2} title={messages.guide.stepByStep.step2.title}>
+                {messages.guide.stepByStep.step2.content}
               </GuideStep>
-              <GuideStep number={3} title="Read the results">
-                Green lines are good. Yellow warnings are okay. Red errors should be fixed.
+              <GuideStep number={3} title={messages.guide.stepByStep.step3.title}>
+                {messages.guide.stepByStep.step3.content}
               </GuideStep>
             </div>
           </GuideSection>
 
           <GuideCaution>
-            <strong>Warnings are okay:</strong> Warnings mean something might be imperfect but not
-            critical. If you see errors, fix those first or use a larger VPS plan.
+            {messages.guide.caution}
           </GuideCaution>
         </div>
       </SimplerGuide>

@@ -31,6 +31,7 @@ import { Jargon } from "@/components/jargon";
 import { springs, fadeUp, staggerContainer, fadeScale } from "@/components/motion";
 import { useScrollReveal, staggerDelay } from "@/lib/hooks/useScrollReveal";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
+import { useLocale, getHomeMessages } from "@/lib/i18n";
 
 // Animated terminal lines
 const TERMINAL_LINES = [
@@ -49,6 +50,9 @@ function AnimatedTerminal() {
   const [cursorVisible, setCursorVisible] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const prefersReducedMotion = useReducedMotion();
+  const { locale } = useLocale();
+  const messages = getHomeMessages(locale);
+  const terminalLines = messages.terminal.lines;
 
   // Detect mobile to simplify animations
   useEffect(() => {
@@ -63,7 +67,7 @@ function AnimatedTerminal() {
   useEffect(() => {
     const interval = setInterval(() => {
       setVisibleLines((prev) => {
-        if (prev >= TERMINAL_LINES.length) {
+        if (prev >= terminalLines.length) {
           return 1; // Reset to loop
         }
         return prev + 1;
@@ -71,7 +75,7 @@ function AnimatedTerminal() {
     }, 800);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [terminalLines.length]);
 
   useEffect(() => {
     const cursorInterval = setInterval(() => {
@@ -95,7 +99,7 @@ function AnimatedTerminal() {
         <div className="terminal-dot terminal-dot-yellow" />
         <div className="terminal-dot terminal-dot-green" />
         <span className="ml-3 font-mono text-xs text-muted-foreground">
-          ubuntu@vps ~
+          {messages.terminal.prompt}
         </span>
       </div>
       {/* Fixed height container to prevent layout shifts */}
@@ -103,7 +107,7 @@ function AnimatedTerminal() {
         {/* Use simple rendering on mobile to prevent jank */}
         {skipAnimations ? (
           // Static render without AnimatePresence on mobile
-          TERMINAL_LINES.slice(0, visibleLines).map((line, i) => (
+          terminalLines.slice(0, visibleLines).map((line, i) => (
             <div key={`${line.text}-${i}`} className="terminal-line mb-2">
               {line.type === "command" && (
                 <>
@@ -122,7 +126,7 @@ function AnimatedTerminal() {
         ) : (
           // Animated render on desktop
           <AnimatePresence mode="sync">
-            {TERMINAL_LINES.slice(0, visibleLines).map((line, i) => (
+            {terminalLines.slice(0, visibleLines).map((line, i) => (
               <motion.div
                 key={`${line.text}-${i}`}
                 className="terminal-line mb-2"
@@ -146,7 +150,7 @@ function AnimatedTerminal() {
             ))}
           </AnimatePresence>
         )}
-        {visibleLines <= TERMINAL_LINES.length && (
+        {visibleLines <= terminalLines.length && (
           <div className="terminal-line">
             <span className="terminal-prompt">$</span>
             {skipAnimations ? (
@@ -279,6 +283,18 @@ const FEATURES = [
 
 function FeaturesSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
+  const { locale } = useLocale();
+  const messages = getHomeMessages(locale);
+
+  // Icons and gradients for features
+  const featureIcons = [
+    { icon: <Rocket className="h-6 w-6" />, gradient: "bg-[oklch(0.75_0.18_195)]" },
+    { icon: <Cpu className="h-6 w-6" />, gradient: "bg-[oklch(0.7_0.2_330)]" },
+    { icon: <ShieldCheck className="h-6 w-6" />, gradient: "bg-[oklch(0.72_0.19_145)]" },
+    { icon: <Zap className="h-6 w-6" />, gradient: "bg-[oklch(0.78_0.16_75)]" },
+    { icon: <Terminal className="h-6 w-6" />, gradient: "bg-[oklch(0.65_0.18_290)]" },
+    { icon: <Clock className="h-6 w-6" />, gradient: "bg-[oklch(0.75_0.18_195)]" },
+  ];
 
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="mx-auto max-w-7xl px-6 py-24">
@@ -289,11 +305,10 @@ function FeaturesSection() {
         transition={springs.smooth}
       >
         <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight">
-          Everything You Need
+          {messages.features.title}
         </h2>
         <p className="mx-auto max-w-2xl text-muted-foreground">
-          A single <Jargon term="curl">curl</Jargon> command installs and configures your complete{" "}
-          <Jargon term="agentic">agentic</Jargon> coding environment
+          {messages.features.subtitle}
         </p>
       </motion.div>
 
@@ -303,8 +318,26 @@ function FeaturesSection() {
         initial="hidden"
         animate={isInView ? "visible" : "hidden"}
       >
-        {FEATURES.map((feature, i) => (
-          <FeatureCard key={feature.title} {...feature} index={i} />
+        {messages.features.items.map((feature, i) => (
+          <FeatureCard
+            key={feature.title}
+            title={feature.title}
+            description={
+              feature.linkText ? (
+                <>
+                  {feature.description}{" "}
+                  <Link href="/learn/welcome" className="inline-flex items-center gap-1 text-primary hover:underline">
+                    {feature.linkText} <BookOpen className="h-3 w-3" />
+                  </Link>
+                </>
+              ) : (
+                feature.description
+              )
+            }
+            icon={featureIcons[i]?.icon || <Rocket className="h-6 w-6" />}
+            gradient={featureIcons[i]?.gradient || "bg-[oklch(0.75_0.18_195)]"}
+            index={i}
+          />
         ))}
       </motion.div>
     </section>
@@ -324,6 +357,20 @@ const FLYWHEEL_TOOLS = [
 
 function FlywheelSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
+  const { locale } = useLocale();
+  const messages = getHomeMessages(locale);
+
+  // Gradient colors for tools
+  const toolColors = [
+    "from-sky-400 to-blue-500",
+    "from-violet-400 to-purple-500",
+    "from-rose-400 to-red-500",
+    "from-emerald-400 to-teal-500",
+    "from-cyan-400 to-sky-500",
+    "from-pink-400 to-fuchsia-500",
+    "from-amber-400 to-orange-500",
+    "from-yellow-400 to-amber-500",
+  ];
 
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="border-t border-border/30 bg-card/20 py-24">
@@ -336,15 +383,14 @@ function FlywheelSection() {
         >
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">Ecosystem</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">{messages.flywheel.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
           <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight">
-            The <Jargon term="agentic">Agentic</Jargon> Coding <Jargon term="flywheel">Flywheel</Jargon>
+            {messages.flywheel.title}
           </h2>
           <p className="mx-auto max-w-2xl text-muted-foreground">
-            Eight interconnected tools that transform multi-<Jargon term="ai-agents">agent</Jargon> workflows.
-            Each tool enhances the others.
+            {messages.flywheel.subtitle}
           </p>
         </motion.div>
 
@@ -355,7 +401,7 @@ function FlywheelSection() {
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
         >
-          {FLYWHEEL_TOOLS.map((tool, i) => (
+          {messages.flywheel.tools.map((tool, i) => (
             <motion.div
               key={tool.name}
               className="flex flex-col items-center gap-2"
@@ -364,7 +410,7 @@ function FlywheelSection() {
               whileHover={{ scale: 1.1, y: -4 }}
             >
               <motion.div
-                className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${tool.color} shadow-lg`}
+                className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${toolColors[i] || toolColors[0]} shadow-lg`}
                 whileHover={{ rotate: [0, -5, 5, 0] }}
                 transition={{ duration: 0.4 }}
               >
@@ -383,7 +429,7 @@ function FlywheelSection() {
         >
           <Button asChild size="lg" variant="outline" className="border-primary/30 hover:bg-primary/10">
             <Link href="/flywheel">
-              Explore the Flywheel
+              {messages.flywheel.cta}
               <ChevronRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -411,6 +457,8 @@ const WORKFLOW_STEPS = [
 
 function WorkflowStepsSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
+  const { locale } = useLocale();
+  const messages = getHomeMessages(locale);
 
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="border-t border-border/30 bg-card/30 py-24">
@@ -422,10 +470,10 @@ function WorkflowStepsSection() {
           transition={springs.smooth}
         >
           <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight">
-            {WORKFLOW_STEPS.length} Steps to Liftoff
+            {messages.workflow.title}
           </h2>
           <p className="mx-auto max-w-2xl text-muted-foreground">
-            The wizard guides you from &quot;I have a laptop&quot; to &quot;<Jargon term="ai-agents">AI agents</Jargon> are coding for me&quot;
+            {messages.workflow.subtitle}
           </p>
         </motion.div>
 
@@ -437,7 +485,7 @@ function WorkflowStepsSection() {
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
           >
-            {WORKFLOW_STEPS.map((step, i) => (
+            {messages.workflow.steps.map((step, i) => (
               <motion.div
                 key={step}
                 className="flex shrink-0 items-center gap-2 rounded-full border border-border/50 bg-card/50 px-4 py-2 text-sm transition-colors hover:border-primary/30 hover:bg-card active:scale-95"
@@ -462,7 +510,7 @@ function WorkflowStepsSection() {
         >
           <Button asChild size="lg" className="bg-primary text-primary-foreground">
             <Link href="/wizard/os-selection">
-              Start Your Journey
+              {messages.workflow.cta}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>
@@ -474,6 +522,8 @@ function WorkflowStepsSection() {
 
 function AboutSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
+  const { locale } = useLocale();
+  const messages = getHomeMessages(locale);
 
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="border-t border-border/30 py-24">
@@ -486,12 +536,12 @@ function AboutSection() {
         >
           <div className="mb-6 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">About</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">{messages.about.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
 
           <h2 className="mb-6 font-mono text-3xl font-bold tracking-tight">
-            Who Made This? Why Is It Free?
+            {messages.about.title}
           </h2>
         </motion.div>
 
@@ -530,37 +580,9 @@ function AboutSection() {
           </motion.div>
 
           <div className="space-y-4 text-muted-foreground leading-relaxed">
-            <p>
-              I&apos;m{" "}
-              <a
-                href="https://jeffreyemanuel.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-primary hover:underline"
-              >
-                Jeffrey Emanuel
-              </a>
-              , and I built this because I was being inundated with requests from friends,
-              older relatives, and strangers on the internet asking me to help them get started
-              with using AI for software development.
-            </p>
-
-            <p>
-              I wanted <strong className="text-foreground">one resource</strong> I could point
-              people to that would help them &quot;from soup to nuts&quot; in getting set up;
-              even if they have almost no computer expertise, just motivation and desire.
-            </p>
-
-            <p>
-              This is also a platform to share my suite of{" "}
-              <strong className="text-foreground">
-                totally free, <Jargon term="open-source">open-source</Jargon>{" "}
-                <Jargon term="agentic">agentic</Jargon> coding tools
-              </strong>.
-              I originally built these for myself to move faster in my consulting work with
-              Private Equity and Hedge Funds. Now I want to help others be more productive
-              and creative too.
-            </p>
+            <p>{messages.about.intro.line1}</p>
+            <p>{messages.about.intro.line2}</p>
+            <p>{messages.about.intro.line3}</p>
           </div>
 
           <motion.div
@@ -576,7 +598,7 @@ function AboutSection() {
               className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
             >
               <MessageCircle className="h-4 w-4" />
-              Follow me on X
+              {messages.about.links.twitter}
             </a>
             <a
               href="https://github.com/Dicklesworthstone"
@@ -585,7 +607,7 @@ function AboutSection() {
               className="inline-flex items-center gap-2 rounded-full border border-border/50 bg-card/50 px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
             >
               <GitBranch className="h-4 w-4" />
-              View my projects
+              {messages.about.links.github}
             </a>
           </motion.div>
         </motion.div>
@@ -621,6 +643,15 @@ const WHY_VPS_ITEMS = [
 
 function WhyVPSSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
+  const { locale } = useLocale();
+  const messages = getHomeMessages(locale);
+
+  // Icons and gradients for items
+  const itemStyles = [
+    { icon: <Laptop className="h-6 w-6 text-white" />, gradient: "from-amber-400 to-orange-500" },
+    { icon: <Cloud className="h-6 w-6 text-white" />, gradient: "from-sky-400 to-blue-500" },
+    { icon: <Moon className="h-6 w-6 text-white" />, gradient: "from-violet-400 to-purple-500" },
+  ];
 
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="border-t border-border/30 py-24 relative overflow-hidden">
@@ -636,12 +667,12 @@ function WhyVPSSection() {
         >
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">The Foundation</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">{messages.whyVps.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
-          <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight sm:text-4xl">Why a VPS?</h2>
+          <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight sm:text-4xl">{messages.whyVps.title}</h2>
           <p className="mx-auto max-w-2xl text-muted-foreground">
-            <Jargon term="agentic">Agentic</Jargon> workflows need dedicated compute. A <Jargon term="vps">VPS</Jargon> gives you a 24/7 server that&apos;s always ready.
+            {messages.whyVps.subtitle}
           </p>
         </motion.div>
 
@@ -651,7 +682,7 @@ function WhyVPSSection() {
           initial="hidden"
           animate={isInView ? "visible" : "hidden"}
         >
-          {WHY_VPS_ITEMS.map((item, i) => (
+          {messages.whyVps.items.map((item, i) => (
             <motion.div
               key={item.title}
               className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all duration-300 hover:border-primary/30"
@@ -660,11 +691,11 @@ function WhyVPSSection() {
               whileHover={{ y: -4, boxShadow: "0 20px 40px -12px oklch(0.75 0.18 195 / 0.15)" }}
             >
               <motion.div
-                className={`pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-gradient-to-br ${item.gradient} blur-3xl opacity-0 group-hover:opacity-20 transition-opacity`}
+                className={`pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-gradient-to-br ${itemStyles[i]?.gradient || itemStyles[0].gradient} blur-3xl opacity-0 group-hover:opacity-20 transition-opacity`}
               />
               <div className="relative">
-                <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${item.gradient}`}>
-                  {item.icon}
+                <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${itemStyles[i]?.gradient || itemStyles[0].gradient}`}>
+                  {itemStyles[i]?.icon || itemStyles[0].icon}
                 </div>
                 <h3 className="mb-2 text-lg font-semibold">{item.title}</h3>
                 <p className="mb-3 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
@@ -680,9 +711,8 @@ function WhyVPSSection() {
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
           transition={{ ...springs.smooth, delay: 0.4 }}
         >
-          <p className="mb-4 text-muted-foreground">Ready to see if this approach is right for you?</p>
           <Button asChild variant="outline" className="border-primary/30 hover:bg-primary/10">
-            <a href="#is-this-for-you">Check If This Is For You<ChevronRight className="ml-2 h-4 w-4" /></a>
+            <a href="#is-this-for-you">{messages.whyVps.cta}<ChevronRight className="ml-2 h-4 w-4" /></a>
           </Button>
         </motion.div>
       </div>
@@ -707,6 +737,8 @@ const NOT_FOR_YOU_ITEMS = [
 
 function IsThisForYouSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
+  const { locale } = useLocale();
+  const messages = getHomeMessages(locale);
 
   return (
     <section id="is-this-for-you" ref={ref as React.RefObject<HTMLElement>} className="border-t border-border/30 py-24 relative overflow-hidden">
@@ -717,11 +749,11 @@ function IsThisForYouSection() {
         <motion.div className="mb-12 text-center" initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} transition={springs.smooth}>
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">Honest Assessment</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">{messages.isThisForYou.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
-          <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight sm:text-4xl">Is This For You?</h2>
-          <p className="mx-auto max-w-2xl text-muted-foreground">We believe in radical transparency. Here&apos;s who will get the most value from this setup.</p>
+          <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight sm:text-4xl">{messages.isThisForYou.title}</h2>
+          <p className="mx-auto max-w-2xl text-muted-foreground">{messages.isThisForYou.subtitle}</p>
         </motion.div>
 
         <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
@@ -733,10 +765,10 @@ function IsThisForYouSection() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[oklch(0.72_0.19_145/0.2)]">
                   <Check className="h-5 w-5 text-[oklch(0.72_0.19_145)]" />
                 </div>
-                <h3 className="font-mono text-xl font-bold text-[oklch(0.72_0.19_145)]">This is for you if...</h3>
+                <h3 className="font-mono text-xl font-bold text-[oklch(0.72_0.19_145)]">{messages.isThisForYou.forYou.title}</h3>
               </div>
               <ul className="space-y-4">
-                {FOR_YOU_ITEMS.map((item, i) => (
+                {messages.isThisForYou.forYou.items.map((item, i) => (
                   <motion.li key={item.text} className="group flex gap-3" initial={{ opacity: 0, x: -10 }} animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }} transition={{ ...springs.smooth, delay: 0.15 + i * 0.05 }}>
                     <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[oklch(0.72_0.19_145/0.2)]">
                       <Check className="h-3 w-3 text-[oklch(0.72_0.19_145)]" />
@@ -759,10 +791,10 @@ function IsThisForYouSection() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[oklch(0.65_0.22_25/0.2)]">
                   <X className="h-5 w-5 text-[oklch(0.65_0.22_25)]" />
                 </div>
-                <h3 className="font-mono text-xl font-bold text-[oklch(0.65_0.22_25)]">This is not for you if...</h3>
+                <h3 className="font-mono text-xl font-bold text-[oklch(0.65_0.22_25)]">{messages.isThisForYou.notForYou.title}</h3>
               </div>
               <ul className="space-y-4">
-                {NOT_FOR_YOU_ITEMS.map((item, i) => (
+                {messages.isThisForYou.notForYou.items.map((item, i) => (
                   <motion.li key={item.text} className="group flex gap-3" initial={{ opacity: 0, x: 10 }} animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 10 }} transition={{ ...springs.smooth, delay: 0.15 + i * 0.05 }}>
                     <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[oklch(0.65_0.22_25/0.2)]">
                       <X className="h-3 w-3 text-[oklch(0.65_0.22_25)]" />
@@ -779,9 +811,8 @@ function IsThisForYouSection() {
         </div>
 
         <motion.div className="mt-10 text-center" initial={{ opacity: 0, y: 10 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }} transition={{ ...springs.smooth, delay: 0.5 }}>
-          <p className="mb-4 text-muted-foreground">Sound like you? Let&apos;s talk about the investment.</p>
           <Button asChild variant="outline" className="border-primary/30 hover:bg-primary/10">
-            <a href="#pricing">See Full Cost Breakdown<ChevronRight className="ml-2 h-4 w-4" /></a>
+            <a href="#pricing">{messages.isThisForYou.cta}<ChevronRight className="ml-2 h-4 w-4" /></a>
           </Button>
         </motion.div>
       </div>
@@ -798,6 +829,15 @@ const PRICING_ITEMS = [
 
 function WhatDoesThisCostSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
+  const { locale } = useLocale();
+  const messages = getHomeMessages(locale);
+
+  // Icons and gradients for pricing items
+  const itemStyles = [
+    { icon: Server, gradient: "from-sky-400 to-blue-500" },
+    { icon: Bot, gradient: "from-amber-400 to-orange-500" },
+    { icon: Cpu, gradient: "from-emerald-400 to-teal-500" },
+  ];
 
   return (
     <section id="pricing" ref={ref as React.RefObject<HTMLElement>} className="border-t border-border/30 bg-card/20 py-24 relative overflow-hidden">
@@ -807,31 +847,35 @@ function WhatDoesThisCostSection() {
         <motion.div className="mb-12 text-center" initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} transition={springs.smooth}>
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">Investment</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">{messages.pricing.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
-          <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight sm:text-4xl">What Does This Cost?</h2>
-          <p className="mx-auto max-w-2xl text-muted-foreground">Complete transparency: here&apos;s what you&apos;ll actually pay each month. The tools are free; you pay for the AI services.</p>
+          <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight sm:text-4xl">{messages.pricing.title}</h2>
+          <p className="mx-auto max-w-2xl text-muted-foreground">{messages.pricing.subtitle}</p>
         </motion.div>
 
         <motion.div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-10" variants={staggerContainer} initial="hidden" animate={isInView ? "visible" : "hidden"}>
-          {PRICING_ITEMS.map((item, i) => (
-            <motion.div key={item.name} className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all duration-300 hover:border-primary/30" variants={fadeUp} transition={{ delay: staggerDelay(i, 0.1) }} whileHover={{ y: -4, boxShadow: "0 20px 40px -12px oklch(0.75 0.18 195 / 0.15)" }}>
-              <motion.div className={`pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-gradient-to-br ${item.gradient} blur-3xl opacity-0 group-hover:opacity-20 transition-opacity`} />
-              <div className="relative">
-                <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${item.gradient}`}>
-                  <item.icon className="h-6 w-6 text-white" />
+          {messages.pricing.items.map((item, i) => {
+            const IconComponent = itemStyles[i]?.icon || Server;
+            const gradient = itemStyles[i]?.gradient || "from-sky-400 to-blue-500";
+            return (
+              <motion.div key={item.name} className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/50 p-6 backdrop-blur-sm transition-all duration-300 hover:border-primary/30" variants={fadeUp} transition={{ delay: staggerDelay(i, 0.1) }} whileHover={{ y: -4, boxShadow: "0 20px 40px -12px oklch(0.75 0.18 195 / 0.15)" }}>
+                <motion.div className={`pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-gradient-to-br ${gradient} blur-3xl opacity-0 group-hover:opacity-20 transition-opacity`} />
+                <div className="relative">
+                  <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${gradient}`}>
+                    <IconComponent className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="mb-1 text-lg font-semibold">{item.name}</h3>
+                  <div className="mb-2 flex items-baseline gap-1">
+                    <span className="text-3xl font-bold text-gradient-cosmic">{item.price}</span>
+                    <span className="text-sm text-muted-foreground">{item.period}</span>
+                  </div>
+                  <p className="mb-3 text-sm text-muted-foreground">{item.description}</p>
+                  <p className="text-xs text-muted-foreground/70 italic">{item.note}</p>
                 </div>
-                <h3 className="mb-1 text-lg font-semibold">{item.name}</h3>
-                <div className="mb-2 flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-gradient-cosmic">{item.price}</span>
-                  <span className="text-sm text-muted-foreground">{item.period}</span>
-                </div>
-                <p className="mb-3 text-sm text-muted-foreground">{item.description}</p>
-                <p className="text-xs text-muted-foreground/70 italic">{item.note}</p>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </motion.div>
 
         <motion.div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/5 via-[oklch(0.7_0.2_330/0.05)] to-primary/5 p-6 sm:p-8" initial={{ opacity: 0, scale: 0.95 }} animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }} transition={{ ...springs.smooth, delay: 0.4 }}>
@@ -841,25 +885,25 @@ function WhatDoesThisCostSection() {
                 <Coins className="h-7 w-7 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Estimated Monthly Total</p>
+                <p className="text-sm font-medium text-muted-foreground">{messages.pricing.total.label}</p>
                 <p className="font-mono text-2xl font-bold sm:text-3xl">
-                  <span className="text-gradient-cosmic">$440 – $656</span>
-                  <span className="text-base font-normal text-muted-foreground">/month</span>
+                  <span className="text-gradient-cosmic">{messages.pricing.total.range}</span>
+                  <span className="text-base font-normal text-muted-foreground">{messages.pricing.total.period}</span>
                 </p>
               </div>
             </div>
             <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:items-end">
-              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-[oklch(0.72_0.19_145)]" /><span>All tools & setup scripts included free</span></div>
-              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-[oklch(0.72_0.19_145)]" /><span>Cancel AI subscriptions anytime</span></div>
-              <div className="flex items-center gap-2"><Check className="h-4 w-4 text-[oklch(0.72_0.19_145)]" /><span>No hidden fees or upsells</span></div>
+              {messages.pricing.total.benefits.map((benefit, i) => (
+                <div key={i} className="flex items-center gap-2"><Check className="h-4 w-4 text-[oklch(0.72_0.19_145)]" /><span>{benefit}</span></div>
+              ))}
             </div>
           </div>
         </motion.div>
 
         <motion.div className="mt-10 text-center" initial={{ opacity: 0, y: 10 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }} transition={{ ...springs.smooth, delay: 0.5 }}>
-          <p className="mb-6 max-w-2xl mx-auto text-muted-foreground">Consider: a junior developer costs $5,000+/month. For under $700, you get <strong className="text-foreground">10+ AI agents</strong> working 24/7, writing code while you sleep.</p>
+          <p className="mb-6 max-w-2xl mx-auto text-muted-foreground">{messages.pricing.comparison}</p>
           <Button asChild size="lg" className="bg-primary text-primary-foreground">
-            <Link href="/wizard/os-selection">Start Your Setup<ArrowRight className="ml-2 h-4 w-4" /></Link>
+            <Link href="/wizard/os-selection">{messages.pricing.cta}<ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
         </motion.div>
       </div>
@@ -888,6 +932,9 @@ function ToolBadge({ name, color }: { name: string; color: string }) {
 }
 
 export default function HomePage() {
+  const { locale } = useLocale();
+  const messages = getHomeMessages(locale);
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
       {/* Cosmic gradient background */}
@@ -918,18 +965,18 @@ export default function HomePage() {
             rel="noopener noreferrer"
             className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
           >
-            GitHub
+            {messages.nav.github}
           </a>
           <Link
             href="/learn"
             className="hidden items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground sm:flex"
           >
             <BookOpen className="h-4 w-4" />
-            Learn
+            {messages.nav.learn}
           </Link>
           <Button asChild size="sm" variant="outline" className="border-primary/30 hover:bg-primary/10">
             <Link href="/wizard/os-selection">
-              Get Started
+              {messages.nav.getStarted}
               <ChevronRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>
@@ -953,7 +1000,7 @@ export default function HomePage() {
                 variants={fadeUp}
               >
                 <Sparkles className="h-4 w-4" />
-                <span>Zero to agentic coding in 30 minutes</span>
+                <span>{messages.hero.badge}</span>
               </motion.div>
 
               {/* Headline */}
@@ -961,9 +1008,9 @@ export default function HomePage() {
                 className="mb-6 font-mono text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl"
                 variants={fadeUp}
               >
-                <span className="text-gradient-cosmic">AI Agents</span>
+                <span className="text-gradient-cosmic">{messages.hero.title.line1}</span>
                 <br />
-                <span className="text-foreground">Coding For You</span>
+                <span className="text-foreground">{messages.hero.title.line2}</span>
               </motion.h1>
 
               {/* Subheadline */}
@@ -971,11 +1018,7 @@ export default function HomePage() {
                 className="mb-8 max-w-xl text-lg leading-relaxed text-muted-foreground"
                 variants={fadeUp}
               >
-                Transform a fresh <Jargon term="cloud-server">cloud server</Jargon> into a fully-configured{" "}
-                <Jargon term="agentic">agentic</Jargon> coding environment.{" "}
-                <Jargon term="claude-code">Claude Code</Jargon>, OpenAI <Jargon term="codex">Codex</Jargon>,{" "}
-                Google <Jargon term="gemini-cli">Gemini</Jargon>: all pre-configured with 30+ modern developer tools.
-                All totally free and <Jargon term="open-source">open-source</Jargon>.
+                {messages.hero.subtitle}
               </motion.p>
 
               {/* CTA Buttons */}
@@ -990,7 +1033,7 @@ export default function HomePage() {
                 >
                   <Link href="/wizard/os-selection">
                     <span className="relative z-10 flex items-center gap-2">
-                      Start the Wizard
+                      {messages.hero.cta.primary}
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </span>
                     <span className="absolute inset-0 -z-10 bg-gradient-to-r from-primary via-[oklch(0.7_0.2_330)] to-primary opacity-0 transition-opacity group-hover:opacity-100" style={{ backgroundSize: "200% 100%", animation: "shimmer 2s linear infinite" }} />
@@ -1003,7 +1046,7 @@ export default function HomePage() {
                     rel="noopener noreferrer"
                   >
                     <GitBranch className="mr-2 h-4 w-4" />
-                    View on GitHub
+                    {messages.hero.cta.secondary}
                   </a>
                 </Button>
               </motion.div>
@@ -1013,9 +1056,9 @@ export default function HomePage() {
                 className="mt-10 flex flex-wrap items-center justify-center gap-4 sm:justify-start sm:gap-0 sm:divide-x sm:divide-border/50"
                 variants={fadeUp}
               >
-                <StatBadge value="30+" label="Tools Installed" />
-                <StatBadge value="3" label="AI Agents" />
-                <StatBadge value="~30m" label="Setup Time" />
+                <StatBadge value={messages.hero.stats.tools.value} label={messages.hero.stats.tools.label} />
+                <StatBadge value={messages.hero.stats.agents.value} label={messages.hero.stats.agents.label} />
+                <StatBadge value={messages.hero.stats.time.value} label={messages.hero.stats.time.label} />
               </motion.div>
             </motion.div>
 
@@ -1036,7 +1079,7 @@ export default function HomePage() {
           <div className="mx-auto max-w-7xl px-6">
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center sm:gap-6">
               <span className="shrink-0 text-xs uppercase tracking-widest text-muted-foreground">
-                Powered by
+                {messages.toolsTicker.label}
               </span>
               <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
                 <ToolBadge name="Claude Code" color="oklch(0.78 0.16 75)" />
@@ -1091,13 +1134,13 @@ export default function HomePage() {
                   rel="noopener noreferrer"
                   className="transition-colors hover:text-foreground"
                 >
-                  GitHub
+                  {messages.footer.links.github}
                 </a>
                 <Link
                   href="/learn"
                   className="transition-colors hover:text-foreground"
                 >
-                  Learning Hub
+                  {messages.footer.links.learn}
                 </Link>
                 <a
                   href="https://github.com/Dicklesworthstone/ntm"
@@ -1105,7 +1148,7 @@ export default function HomePage() {
                   rel="noopener noreferrer"
                   className="transition-colors hover:text-foreground"
                 >
-                  NTM
+                  {messages.footer.links.ntm}
                 </a>
                 <a
                   href="https://github.com/Dicklesworthstone/mcp_agent_mail"
@@ -1113,19 +1156,19 @@ export default function HomePage() {
                   rel="noopener noreferrer"
                   className="transition-colors hover:text-foreground"
                 >
-                  Agent Mail
+                  {messages.footer.links.agentMail}
                 </a>
               </div>
 
               <p className="text-xs text-muted-foreground">
-                Created by{" "}
+                {messages.footer.createdBy}{" "}
                 <a
                   href="https://jeffreyemanuel.com/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary hover:underline"
                 >
-                  Jeffrey Emanuel
+                  {messages.footer.author}
                 </a>
               </p>
             </div>

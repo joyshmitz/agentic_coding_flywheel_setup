@@ -20,12 +20,16 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
+import { useLocale, getVerifyKeyConnectionMessages, getCommonMessages } from "@/lib/i18n";
 
 export default function VerifyKeyConnectionPage() {
   const router = useRouter();
   const [vpsIP, , vpsIPLoaded] = useVPSIP();
   const [isNavigating, setIsNavigating] = useState(false);
   const ready = vpsIPLoaded;
+  const { locale } = useLocale();
+  const messages = getVerifyKeyConnectionMessages(locale);
+  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({
@@ -70,41 +74,41 @@ export default function VerifyKeyConnectionPage() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl">
-              Verify key-based connection
+              {messages.title}
             </h1>
             <p className="text-sm text-muted-foreground">
-              ~1 min
+              {messages.timeEstimate}
             </p>
           </div>
         </div>
         <p className="text-muted-foreground">
-          Make sure your <Jargon term="ssh">SSH</Jargon> key works so you never need the password again.
+          {messages.description.split("SSH")[0]}<Jargon term="ssh">SSH</Jargon>{messages.description.split("SSH")[1]}
         </p>
       </div>
 
-      <AlertCard variant="info" icon={ShieldCheck} title="Why this matters">
-        This confirms the installer set up your key correctly and that future logins are fast and secure.
+      <AlertCard variant="info" icon={ShieldCheck} title={messages.whyMatters.title}>
+        {messages.whyMatters.content}
       </AlertCard>
 
       {/* Step 1: Disconnect */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold">Step 1: Disconnect</h2>
+        <h2 className="text-xl font-semibold">{messages.step1.title}</h2>
         <p className="text-sm text-muted-foreground">
-          Exit your current SSH session to return to your local terminal.
+          {messages.step1.description}
         </p>
-        <CommandCard command="exit" description="Close the current session" runLocation="vps" />
+        <CommandCard command="exit" description={messages.step1.commandDesc} runLocation="vps" />
       </div>
 
       {/* Step 2: Reconnect with key */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold">Step 2: Reconnect using your SSH key</h2>
+        <h2 className="text-xl font-semibold">{messages.step2.title}</h2>
         <p className="text-sm text-muted-foreground">
-          Connect without a password prompt using the key you generated earlier.
+          {messages.step2.description}
         </p>
         <CommandCard
           command={sshKeyCommand}
           windowsCommand={sshKeyCommandWindows}
-          description="Key-based login (no password)"
+          description={messages.step2.commandDesc}
           runLocation="local"
           showCheckbox
           persistKey="verify-key-connection"
@@ -112,10 +116,10 @@ export default function VerifyKeyConnectionPage() {
       </div>
 
       {/* Success indicator */}
-      <OutputPreview title="Success looks like:">
+      <OutputPreview title={messages.success.title}>
         <div className="space-y-2 text-sm">
-          <p className="text-[oklch(0.72_0.19_145)]">• You were not asked for a password</p>
-          <p className="text-[oklch(0.72_0.19_145)]">• Your prompt shows: ubuntu@vps:~$</p>
+          <p className="text-[oklch(0.72_0.19_145)]">• {messages.success.noPassword}</p>
+          <p className="text-[oklch(0.72_0.19_145)]">• {messages.success.prompt}</p>
         </div>
       </OutputPreview>
 
@@ -128,10 +132,10 @@ export default function VerifyKeyConnectionPage() {
           <Terminal className="mt-0.5 h-5 w-5 text-[oklch(0.75_0.18_195)]" />
           <div>
             <p className="font-medium text-foreground">
-              Windows User? Set up one-click VPS access
+              {messages.windowsTip.title}
             </p>
             <p className="text-sm text-muted-foreground">
-              Create a Windows Terminal profile to connect to your VPS with a single click →
+              {messages.windowsTip.content}
             </p>
           </div>
         </Link>
@@ -139,20 +143,19 @@ export default function VerifyKeyConnectionPage() {
 
       {/* Troubleshooting */}
       <div className="space-y-3">
-        <h2 className="text-xl font-semibold">Troubleshooting</h2>
+        <h2 className="text-xl font-semibold">{messages.troubleshooting.title}</h2>
         <div className="space-y-3">
-          <AlertCard variant="warning" title="Still asks for a password?">
-            The key might not have been pasted correctly during the installer prompt.
-            Re-run the installer and paste your public key again when asked.
+          <AlertCard variant="warning" title={messages.troubleshooting.password.title}>
+            {messages.troubleshooting.password.content}
           </AlertCard>
-          <AlertCard variant="warning" title="Permission denied (publickey)">
-            Your key file permissions may be too open. Fix with:
+          <AlertCard variant="warning" title={messages.troubleshooting.permissionDenied.title}>
+            {messages.troubleshooting.permissionDenied.content}
             <div className="mt-2">
               <CommandCard command="chmod 600 ~/.ssh/acfs_ed25519" runLocation="local" />
             </div>
           </AlertCard>
-          <AlertCard variant="warning" title="Connection refused">
-            Your VPS might still be rebooting. Wait 1-2 minutes and try again.
+          <AlertCard variant="warning" title={messages.troubleshooting.connectionRefused.title}>
+            {messages.troubleshooting.connectionRefused.content}
           </AlertCard>
         </div>
       </div>
@@ -160,37 +163,32 @@ export default function VerifyKeyConnectionPage() {
       {/* Beginner Guide */}
       <SimplerGuide>
         <div className="space-y-6">
-          <GuideExplain term="Key-based authentication">
-            Instead of typing a password, your computer proves it has a secret key that matches
-            the public key stored on your VPS. It&apos;s faster and more secure than passwords.
+          <GuideExplain term={messages.guide.keyBasedAuth.term}>
+            {messages.guide.keyBasedAuth.content}
           </GuideExplain>
 
-          <GuideSection title="Step-by-step verification">
+          <GuideSection title={messages.guide.stepByStep.title}>
             <div className="space-y-4">
-              <GuideStep number={1} title="Exit the current session">
-                Type <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">exit</code> and
-                press Enter to return to your local terminal.
+              <GuideStep number={1} title={messages.guide.stepByStep.step1.title}>
+                {messages.guide.stepByStep.step1.content}
               </GuideStep>
 
-              <GuideStep number={2} title="Reconnect with your key">
-                Paste the SSH command above (with <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">-i</code>)
-                and press Enter. You should NOT be asked for a password.
+              <GuideStep number={2} title={messages.guide.stepByStep.step2.title}>
+                {messages.guide.stepByStep.step2.content}
               </GuideStep>
 
-              <GuideStep number={3} title="Confirm the prompt">
-                Look for <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">ubuntu@</code> and a
-                <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">$</code> at the end.
+              <GuideStep number={3} title={messages.guide.stepByStep.step3.title}>
+                {messages.guide.stepByStep.step3.content}
               </GuideStep>
             </div>
           </GuideSection>
 
           <GuideTip>
-            If you see a password prompt, stop and fix it now—this step prevents future login headaches.
+            {messages.guide.tip}
           </GuideTip>
 
           <GuideCaution>
-            <strong>Using a different key?</strong> Make sure you&apos;re pointing to the same key you created earlier:
-            <code className="ml-1 rounded bg-muted px-1.5 py-0.5 font-mono text-xs">~/.ssh/acfs_ed25519</code>.
+            {messages.guide.caution}
           </GuideCaution>
         </div>
       </SimplerGuide>
@@ -198,7 +196,7 @@ export default function VerifyKeyConnectionPage() {
       {/* Continue button */}
       <div className="flex justify-end pt-4">
         <Button onClick={handleContinue} disabled={isNavigating} size="lg" disableMotion>
-          {isNavigating ? "Loading..." : "My key works, continue"}
+          {isNavigating ? messages.buttons.loading : messages.buttons.continue}
         </Button>
       </div>
     </div>

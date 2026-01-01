@@ -21,6 +21,7 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
+import { useLocale, getCreateVpsMessages, getCommonMessages } from "@/lib/i18n";
 
 type ScreenshotSpec = {
   file: string;
@@ -62,15 +63,19 @@ function ScreenshotFigure({ file, alt, caption }: ScreenshotSpec) {
   );
 }
 
-const CHECKLIST_ITEMS = [
-  { id: "ubuntu", label: "Selected Ubuntu 24.04+ (25.10 preferred)" },
-  { id: "region", label: "Picked a region close to me" },
-  { id: "password", label: "Set a root password (or received one via email)" },
-  { id: "created", label: "Created the VPS and waited for it to start" },
-  { id: "copied-ip", label: "Copied the IP address" },
-] as const;
+const CHECKLIST_ITEM_IDS = ["ubuntu", "region", "password", "created", "copied-ip"] as const;
 
-type ChecklistItemId = typeof CHECKLIST_ITEMS[number]["id"];
+type ChecklistItemId = typeof CHECKLIST_ITEM_IDS[number];
+
+function getChecklistItems(messages: ReturnType<typeof getCreateVpsMessages>) {
+  return [
+    { id: "ubuntu" as const, label: messages.checklist.items.ubuntu },
+    { id: "region" as const, label: messages.checklist.items.region },
+    { id: "password" as const, label: messages.checklist.items.password },
+    { id: "created" as const, label: messages.checklist.items.created },
+    { id: "copied-ip" as const, label: messages.checklist.items.copiedIp },
+  ];
+}
 
 interface ProviderGuideProps {
   name: string;
@@ -178,6 +183,10 @@ export default function CreateVPSPage() {
   const [storedIP, setStoredIP] = useVPSIP();
   const [expandedProvider, setExpandedProvider] = useState<string | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
+  const { locale } = useLocale();
+  const messages = getCreateVpsMessages(locale);
+  const common = getCommonMessages(locale);
+  const checklistItems = getChecklistItems(messages);
 
   // Track checklist state locally for simpler form handling
   const [checkedItems, setCheckedItems] = useState<Set<ChecklistItemId>>(new Set());
@@ -231,7 +240,7 @@ export default function CreateVPSPage() {
     });
   };
 
-  const allChecked = CHECKLIST_ITEMS.every((item) => checkedItems.has(item.id));
+  const allChecked = checklistItems.every((item) => checkedItems.has(item.id));
 
   return (
     <div className="space-y-8">
@@ -243,16 +252,15 @@ export default function CreateVPSPage() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl">
-              Create your <Jargon term="vps" gradientHeading>VPS</Jargon> instance
+              {messages.title.split("VPS")[0]}<Jargon term="vps" gradientHeading>VPS</Jargon>{messages.title.split("VPS")[1] || ""}
             </h1>
             <p className="text-sm text-muted-foreground">
-              ~5 min
+              {messages.timeEstimate}
             </p>
           </div>
         </div>
         <p className="text-muted-foreground">
-          You have an account with your VPS provider. Now let&apos;s create the actual server
-          (the VPS instance) that will run your development environment.
+          {messages.description}
         </p>
       </div>
 
@@ -275,10 +283,10 @@ export default function CreateVPSPage() {
             <div>
               <h2 className="flex items-center gap-2 font-semibold text-foreground">
                 <Server className="h-5 w-5 text-primary" />
-                Setup checklist
+                {messages.checklist.title}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Check each item as you complete it to unlock the next step
+                {messages.checklist.subtitle}
               </p>
             </div>
             <div className={cn(
@@ -287,11 +295,11 @@ export default function CreateVPSPage() {
                 ? "bg-[oklch(0.72_0.19_145/0.15)] text-[oklch(0.72_0.19_145)]"
                 : "bg-muted text-muted-foreground"
             )}>
-              {checkedItems.size} of {CHECKLIST_ITEMS.length}
+              {messages.checklist.progress.replace("{done}", String(checkedItems.size)).replace("{total}", String(checklistItems.length))}
             </div>
           </div>
           <div className="space-y-3">
-            {CHECKLIST_ITEMS.map((item) => (
+            {checklistItems.map((item) => (
               <label
                 key={item.id}
                 className="flex cursor-pointer items-center gap-3"
@@ -319,34 +327,33 @@ export default function CreateVPSPage() {
 
         {/* Region selection tip - prominent placement */}
         <div className="rounded-xl border border-[oklch(0.75_0.18_195/0.3)] bg-[oklch(0.75_0.18_195/0.05)] p-4">
-          <h3 className="font-medium text-foreground mb-2">💡 Why region matters</h3>
+          <h3 className="font-medium text-foreground mb-2">{messages.regionTip.title}</h3>
           <p className="text-sm text-muted-foreground">
-            Closer servers = faster response times. When you type, commands reach your VPS faster.
-            When AI generates code, it appears on your screen faster.
+            {messages.regionTip.content}
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 text-sm">
             <div className="rounded-lg bg-background/50 px-3 py-2">
-              <span className="font-medium text-foreground">🇺🇸 USA:</span>{" "}
-              <span className="text-muted-foreground">Pick US-West (California) or US-East (Virginia)</span>
+              <span className="font-medium text-foreground">{messages.regionTip.regions.usa.label}</span>{" "}
+              <span className="text-muted-foreground">{messages.regionTip.regions.usa.hint}</span>
             </div>
             <div className="rounded-lg bg-background/50 px-3 py-2">
-              <span className="font-medium text-foreground">🇪🇺 Europe:</span>{" "}
-              <span className="text-muted-foreground">Pick Germany, France, or Finland</span>
+              <span className="font-medium text-foreground">{messages.regionTip.regions.europe.label}</span>{" "}
+              <span className="text-muted-foreground">{messages.regionTip.regions.europe.hint}</span>
             </div>
             <div className="rounded-lg bg-background/50 px-3 py-2">
-              <span className="font-medium text-foreground">🌏 Asia-Pacific:</span>{" "}
-              <span className="text-muted-foreground">Pick Singapore, Sydney, or Tokyo</span>
+              <span className="font-medium text-foreground">{messages.regionTip.regions.asiaPacific.label}</span>{" "}
+              <span className="text-muted-foreground">{messages.regionTip.regions.asiaPacific.hint}</span>
             </div>
             <div className="rounded-lg bg-background/50 px-3 py-2">
-              <span className="font-medium text-foreground">🤷 Unsure?</span>{" "}
-              <span className="text-muted-foreground">Any region works fine—pick one!</span>
+              <span className="font-medium text-foreground">{messages.regionTip.regions.unsure.label}</span>{" "}
+              <span className="text-muted-foreground">{messages.regionTip.regions.unsure.hint}</span>
             </div>
           </div>
         </div>
 
         {/* Provider-specific guides */}
         <div className="space-y-3">
-          <h2 className="font-semibold">Need help with your provider?</h2>
+          <h2 className="font-semibold">{messages.providerHelp.title}</h2>
           {PROVIDER_GUIDES.map((provider) => (
             <ProviderGuide
               key={provider.name}
@@ -483,10 +490,9 @@ export default function CreateVPSPage() {
         {/* IP Address input */}
         <div className="space-y-4">
           <div className="space-y-2">
-            <h2 className="font-semibold text-foreground">Your VPS IP address</h2>
+            <h2 className="font-semibold text-foreground">{messages.ipInput.title}</h2>
             <p className="text-sm text-muted-foreground">
-              Enter the IP address of your new VPS. You&apos;ll find this in your
-              provider&apos;s control panel after the VPS is created.
+              {messages.ipInput.subtitle}
             </p>
           </div>
 
@@ -497,21 +503,20 @@ export default function CreateVPSPage() {
             </div>
             <div className="min-w-0 space-y-1">
               <p className="text-[13px] font-medium leading-tight text-[oklch(0.82_0.12_145)] sm:text-sm">
-                Your data stays on your device
+                {messages.ipInput.privacy.title}
               </p>
               <p className="text-[12px] leading-relaxed text-muted-foreground sm:text-[13px]">
-                This IP address is stored <strong className="text-foreground/80">only in your browser&apos;s local storage</strong>. It&apos;s
-                never sent to our servers or any third party. The{" "}
+                {messages.ipInput.privacy.content}{" "}
                 <a
                   href="https://github.com/Dicklesworthstone/agentic_coding_flywheel_setup"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-0.5 font-medium text-[oklch(0.75_0.18_195)] hover:underline"
                 >
-                  entire codebase is open source
+                  {messages.ipInput.privacy.openSource}
                   <ExternalLink className="h-3 w-3" />
                 </a>{" "}
-                so you can verify this yourself.
+                {messages.ipInput.privacy.verifySuffix}
               </p>
             </div>
           </div>
@@ -558,7 +563,7 @@ export default function CreateVPSPage() {
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                     onBlur={field.handleBlur}
-                    placeholder="e.g., 192.168.1.100"
+                    placeholder={messages.ipInput.placeholder}
                     className={cn(
                       "w-full rounded-xl border bg-background px-4 py-3 font-mono text-sm outline-none transition-all",
                       "focus:border-primary focus:ring-2 focus:ring-primary/20",
@@ -576,7 +581,7 @@ export default function CreateVPSPage() {
                   {isValid && (
                     <p className="flex items-center gap-1 text-sm text-[oklch(0.72_0.19_145)]">
                       <Check className="h-4 w-4" />
-                      Valid IP address
+                      {messages.ipInput.validation.valid}
                     </p>
                   )}
 
@@ -584,7 +589,7 @@ export default function CreateVPSPage() {
                   {isValid && !allChecked && (
                     <p className="flex items-center gap-1 text-sm text-muted-foreground">
                       <AlertCircle className="h-4 w-4" />
-                      Complete the checklist above to continue
+                      {messages.ipInput.checklistHint}
                     </p>
                   )}
 
@@ -595,7 +600,7 @@ export default function CreateVPSPage() {
                       disabled={!canSubmit}
                       size="lg"
                     >
-                      {isNavigating ? "Loading..." : "Continue to SSH"}
+                      {isNavigating ? messages.buttons.loading : messages.buttons.continue}
                     </Button>
                   </div>
                 </div>
