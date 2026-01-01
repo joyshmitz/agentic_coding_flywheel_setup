@@ -354,28 +354,23 @@ function TroubleshootingCard({
 // =============================================================================
 // QUICK REFERENCE TABLE
 // =============================================================================
-function QuickReferenceTable() {
-  const commands = [
-    { command: "acfs-update", description: "Update everything (except stack)" },
-    { command: "acfs-update --stack", description: "Include stack tools" },
-    { command: "acfs-update --agents-only", description: "Just update agents" },
-    { command: "acfs-update --no-apt", description: "Skip apt (faster)" },
-    { command: "acfs-update --dry-run", description: "Preview changes" },
-    { command: "acfs-update --yes --quiet", description: "Automated mode" },
-    { command: "acfs-update --help", description: "Full help" },
-  ];
-
+function QuickReferenceTable({ messages }: {
+  messages: {
+    commands: { command: string; description: string }[];
+    tableHeaders: { command: string; description: string };
+  }
+}) {
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
       <div className="grid grid-cols-[1fr_1fr] divide-x divide-white/[0.06]">
         <div className="p-3 bg-white/[0.02] text-sm font-medium text-white/60">
-          Command
+          {messages.tableHeaders.command}
         </div>
         <div className="p-3 bg-white/[0.02] text-sm font-medium text-white/60">
-          What it does
+          {messages.tableHeaders.description}
         </div>
       </div>
-      {commands.map((cmd, i) => (
+      {messages.commands.map((cmd, i) => (
         <div
           key={i}
           className="grid grid-cols-[1fr_1fr] divide-x divide-white/[0.06] border-t border-white/[0.06]"
@@ -421,7 +416,15 @@ function FrequencyItem({
 // =============================================================================
 // CONGRATULATIONS CARD
 // =============================================================================
-function CongratulationsCard() {
+function CongratulationsCard({ messages }: {
+  messages: {
+    title: string;
+    subtitle: string;
+    description: string;
+    achievements: string[];
+    finalMessage: string;
+  }
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -444,21 +447,20 @@ function CongratulationsCard() {
         </motion.div>
 
         <h3 className="text-2xl font-bold text-white mb-4">
-          You&apos;ve completed the ACFS onboarding!
+          {messages.subtitle}
         </h3>
 
-        <p className="text-white/70 mb-6">You now have:</p>
+        <p className="text-white/70 mb-6">{messages.description}</p>
 
         <div className="grid gap-3 sm:grid-cols-2 max-w-lg mx-auto text-left">
-          <CompletionItem text="A fully configured development VPS" />
-          <CompletionItem text="Three powerful coding agents" />
-          <CompletionItem text="A complete coordination toolstack" />
-          <CompletionItem text="The knowledge to use it all" />
+          {messages.achievements.map((achievement, index) => (
+            <CompletionItem key={index} text={achievement} />
+          ))}
         </div>
 
         <div className="mt-8 pt-6 border-t border-white/[0.1]">
           <p className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
-            Go build something amazing!
+            {messages.finalMessage}
           </p>
         </div>
       </div>

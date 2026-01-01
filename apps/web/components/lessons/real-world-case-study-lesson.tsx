@@ -35,26 +35,27 @@ import {
   BulletList,
   StepList,
 } from "./lesson-components";
+import { useLocale, getRealWorldCaseStudyLessonMessages } from "@/lib/i18n";
 
 export function RealWorldCaseStudyLesson() {
+  const { locale } = useLocale();
+  const messages = getRealWorldCaseStudyLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Learn the full flywheel workflow through a real project: 693 beads, 282
-        commits on day one, 85% complete in hours.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* Introduction */}
       <Section
-        title="The Challenge: Building a Memory System"
+        title={messages.introduction.title}
         icon={<Brain className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          On December 7, 2025, a new project was conceived:{" "}
-          <Highlight>cass-memory</Highlight> - a procedural memory system for
-          coding agents. The goal? Go from zero to a fully functional CLI tool
-          in a single day using the flywheel workflow.
+          {messages.introduction.intro}{" "}
+          <Highlight>{messages.introduction.cassMemory}</Highlight> {messages.introduction.description}
         </Paragraph>
 
         <div className="mt-8">

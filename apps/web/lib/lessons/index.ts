@@ -26,8 +26,8 @@ export { cmLessonMessages } from './cm';
 export { cmLessonMessagesUk } from './cm.uk';
 export { safetyToolsLessonMessages } from './safety-tools';
 export { safetyToolsLessonMessagesUk } from './safety-tools.uk';
-export { flywheelLoopLessonMessages } from './flywheel-loop';
-export { flywheelLoopLessonMessagesUk } from './flywheel-loop.uk';
+export { flywheelLoopMessages } from './flywheel-loop';
+export { flywheelLoopMessagesUk } from './flywheel-loop.uk';
 
 // Wave 6 lessons (case studies)
 export { slbCaseStudyLessonMessagesUk } from './slb-case-study-messages.uk';

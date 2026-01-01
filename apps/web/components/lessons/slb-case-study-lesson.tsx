@@ -68,13 +68,13 @@ export function SlbCaseStudyLesson() {
 
       {/* Immediate Action */}
       <Section
-        title="Immediate Action: The First Hour"
+        title={messages.immediateAction.title}
         icon={<Zap className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          Instead of just noting the idea for later, the flywheel approach is to{" "}
-          <Highlight>start immediately</Highlight> while the idea is fresh.
+          {messages.immediateAction.intro}{" "}
+          <Highlight>{messages.immediateAction.startImmediately}</Highlight> {messages.immediateAction.freshIdea}
         </Paragraph>
 
         <div className="mt-6">
@@ -83,9 +83,7 @@ export function SlbCaseStudyLesson() {
 
         <div className="mt-6">
           <TipBox variant="tip">
-            The key insight: an initial plan within the first hour, even if
-            rough, is worth more than a perfect plan days later. The agents will
-            help refine it.
+            {messages.immediateAction.keyInsight}
           </TipBox>
         </div>
       </Section>

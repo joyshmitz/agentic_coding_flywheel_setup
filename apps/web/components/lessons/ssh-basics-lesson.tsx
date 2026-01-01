@@ -279,7 +279,7 @@ function ConnectionDiagram({ messages }: { messages: any }) {
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500/20 to-blue-500/20 border border-sky-500/30">
             <Laptop className="h-8 w-8 text-sky-400" />
           </div>
-          <span className="text-sm font-medium text-white">Your Laptop</span>
+          <span className="text-sm font-medium text-white">{messages.connectionDiagram.yourLaptop}</span>
         </motion.div>
 
         {/* Encrypted Tunnel */}
@@ -293,7 +293,7 @@ function ConnectionDiagram({ messages }: { messages: any }) {
           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/30">
             <Lock className="h-4 w-4 text-primary" />
             <span className="text-xs font-medium text-white/70">
-              Encrypted SSH
+              {messages.connectionDiagram.encryptedSSH}
             </span>
           </div>
           <ArrowRight className="h-5 w-5 text-emerald-400" />
@@ -310,7 +310,7 @@ function ConnectionDiagram({ messages }: { messages: any }) {
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30">
             <Server className="h-8 w-8 text-emerald-400" />
           </div>
-          <span className="text-sm font-medium text-white">Your VPS</span>
+          <span className="text-sm font-medium text-white">{messages.connectionDiagram.yourVPS}</span>
         </motion.div>
       </div>
     </div>
@@ -327,6 +327,7 @@ function StageCard({
   description,
   code,
   gradient,
+  messages,
 }: {
   number: number;
   title: string;
@@ -334,6 +335,7 @@ function StageCard({
   description: string;
   code: string;
   gradient: string;
+  messages?: any;
 }) {
   return (
     <motion.div
@@ -388,25 +390,12 @@ function CommandPart({
 // =============================================================================
 // QUIZ CARDS - Interactive quiz display
 // =============================================================================
-function QuizCards() {
-  const questions = [
-    {
-      question: "Where does your private key live?",
-      answer: "~/.ssh/acfs_ed25519 on your laptop",
-    },
-    {
-      question: "What happens if SSH drops?",
-      answer: "Reconnect; tmux saves your work",
-    },
-    {
-      question: "What's the quick way to reconnect?",
-      answer: "Use an alias",
-    },
-  ];
+function QuizCards({ messages }: { messages: any }) {
+  const questions = messages.verifyUnderstanding.questions;
 
   return (
     <div className="space-y-4">
-      {questions.map((q, i) => (
+      {questions.map((q: any, i: number) => (
         <motion.div
           key={i}
           initial={{ opacity: 0, x: -20 }}

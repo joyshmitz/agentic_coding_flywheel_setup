@@ -26,51 +26,53 @@ import {
   FeatureCard,
   FeatureGrid,
 } from "./lesson-components";
+import { useLocale, getPromptEngineeringLessonMessages } from "@/lib/i18n";
 
 export function PromptEngineeringLesson() {
+  const { locale } = useLocale();
+  const messages = getPromptEngineeringLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Master the art of directing AI agents with precision and intention.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* Introduction */}
       <Section
-        title="Why Prompting Matters"
+        title={messages.introduction.title}
         icon={<Sparkles className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          The difference between a mediocre agent session and a brilliant one
-          often comes down to <Highlight>how you direct the agent</Highlight>.
-          This lesson dissects the patterns that make prompts effective, drawn
-          from real-world workflows that consistently produce excellent results.
+          {messages.introduction.intro} <Highlight>{messages.introduction.howYouDirect}</Highlight>.
+          {messages.introduction.dissects}
         </Paragraph>
 
         <div className="mt-8">
           <FeatureGrid>
             <FeatureCard
               icon={<Target className="h-5 w-5" />}
-              title="Intensity Calibration"
-              description="Signal how much attention to allocate"
+              title={messages.introduction.featureCards.intensityCalibration.title}
+              description={messages.introduction.featureCards.intensityCalibration.description}
               gradient="from-primary/20 to-violet-500/20"
             />
             <FeatureCard
               icon={<Maximize2 className="h-5 w-5" />}
-              title="Scope Control"
-              description="Expand or contract the search space"
+              title={messages.introduction.featureCards.scopeControl.title}
+              description={messages.introduction.featureCards.scopeControl.description}
               gradient="from-emerald-500/20 to-teal-500/20"
             />
             <FeatureCard
               icon={<Brain className="h-5 w-5" />}
-              title="Metacognition"
-              description="Force self-verification and reflection"
+              title={messages.introduction.featureCards.metacognition.title}
+              description={messages.introduction.featureCards.metacognition.description}
               gradient="from-amber-500/20 to-orange-500/20"
             />
             <FeatureCard
               icon={<Anchor className="h-5 w-5" />}
-              title="Context Anchoring"
-              description="Ground behavior in stable references"
+              title={messages.introduction.featureCards.contextAnchoring.title}
+              description={messages.introduction.featureCards.contextAnchoring.description}
               gradient="from-blue-500/20 to-indigo-500/20"
             />
           </FeatureGrid>
