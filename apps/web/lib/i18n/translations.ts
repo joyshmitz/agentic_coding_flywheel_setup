@@ -66,8 +66,11 @@ import { gitBasicsLessonMessages } from "../lessons/git-basics-messages";
 import { gitBasicsLessonMessagesUk } from "../lessons/git-basics-messages.uk";
 
 // Wave 6 Case Study Lessons
+import { slbCaseStudyLessonMessages } from "../lessons/slb-case-study-messages.en";
 import { slbCaseStudyLessonMessagesUk } from "../lessons/slb-case-study-messages.uk";
+import { promptEngineeringLessonMessages } from "../lessons/prompt-engineering-messages.en";
 import { promptEngineeringLessonMessagesUk } from "../lessons/prompt-engineering-messages.uk";
+import { realWorldCaseStudyLessonMessages } from "../lessons/real-world-case-study-messages.en";
 import { realWorldCaseStudyLessonMessagesUk } from "../lessons/real-world-case-study-messages.uk";
 
 /**
@@ -465,19 +468,19 @@ export function getGitBasicsLessonMessages(locale: Locale) {
  * Get SLB Case Study lesson messages for the specified locale
  */
 export function getSlbCaseStudyLessonMessages(locale: Locale) {
-  return slbCaseStudyLessonMessagesUk;
+  return locale === "uk" ? slbCaseStudyLessonMessagesUk : slbCaseStudyLessonMessages;
 }
 
 /**
  * Get Prompt Engineering lesson messages for the specified locale
  */
 export function getPromptEngineeringLessonMessages(locale: Locale) {
-  return promptEngineeringLessonMessagesUk;
+  return locale === "uk" ? promptEngineeringLessonMessagesUk : promptEngineeringLessonMessages;
 }
 
 /**
  * Get Real World Case Study lesson messages for the specified locale
  */
 export function getRealWorldCaseStudyLessonMessages(locale: Locale) {
-  return realWorldCaseStudyLessonMessagesUk;
+  return locale === "uk" ? realWorldCaseStudyLessonMessagesUk : realWorldCaseStudyLessonMessages;
 }

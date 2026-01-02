@@ -38,6 +38,9 @@ export { flywheelLoopMessages } from './flywheel-loop';
 export { flywheelLoopMessagesUk } from './flywheel-loop.uk';
 
 // Wave 6 lessons (case studies)
+export { slbCaseStudyLessonMessages } from './slb-case-study-messages.en';
 export { slbCaseStudyLessonMessagesUk } from './slb-case-study-messages.uk';
+export { promptEngineeringLessonMessages } from './prompt-engineering-messages.en';
 export { promptEngineeringLessonMessagesUk } from './prompt-engineering-messages.uk';
+export { realWorldCaseStudyLessonMessages } from './real-world-case-study-messages.en';
 export { realWorldCaseStudyLessonMessagesUk } from './real-world-case-study-messages.uk';
