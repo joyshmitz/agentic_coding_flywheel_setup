@@ -69,8 +69,8 @@ export function GithubCliLesson() {
             />
             <FeatureCard
               icon={<Workflow className="h-5 w-5" />}
-              title="Actions"
-              description="View and manage workflows"
+              title={messages.whatIsGithubCli.features.actions.title}
+              description={messages.whatIsGithubCli.features.actions.description}
               gradient="from-blue-500/20 to-indigo-500/20"
             />
           </FeatureGrid>
