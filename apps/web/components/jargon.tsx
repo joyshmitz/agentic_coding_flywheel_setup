@@ -53,14 +53,14 @@ export function Jargon({ term, children, className, gradientHeading }: JargonPro
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const prefersReducedMotion = useReducedMotion();
 
-  const { locale } = useLocale();
+  const { locale, mounted } = useLocale();
   const messages = getJargonUiMessages(locale);
 
   const termKey = term.toLowerCase().replace(/[\s_]+/g, "-");
   const jargonData = getJargon(termKey);
 
-  // Check if we can use portals (client-side only)
-  const canUsePortal = typeof document !== "undefined";
+  // Check if we can use portals (client-side only after hydration)
+  const canUsePortal = mounted && typeof document !== "undefined";
 
   useEffect(() => {
     return () => {
@@ -196,6 +196,23 @@ export function Jargon({ term, children, className, gradientHeading }: JargonPro
   }
 
   const displayText = children || jargonData.term;
+
+  // Pre-hydration: render non-interactive span to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <span
+        className={cn(
+          "relative inline cursor-help",
+          "decoration-[1.5px] underline underline-offset-[3px]",
+          "decoration-primary/30 decoration-dotted",
+          gradientHeading && "bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent",
+          className
+        )}
+      >
+        {displayText}
+      </span>
+    );
+  }
 
   return (
     <>

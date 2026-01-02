@@ -34,6 +34,34 @@ import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import { useLocale, getHomeMessages } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
+/**
+ * Renders hero subtitle with Jargon tooltips for technical terms
+ */
+function HeroSubtitle({ locale }: { locale: "en" | "uk" }) {
+  if (locale === "uk") {
+    return (
+      <>
+        Перетворіть свіжий <Jargon term="cloud-server">хмарний сервер</Jargon> на повністю налаштоване{" "}
+        <Jargon term="ai-agents">агентне</Jargon> середовище розробки.{" "}
+        <Jargon term="claude-code">Claude Code</Jargon>, <Jargon term="codex">OpenAI Codex</Jargon>,{" "}
+        <Jargon term="gemini-cli">Google Gemini</Jargon>: все попередньо налаштовано з 30+ сучасними
+        інструментами розробника. Повністю безкоштовно та з{" "}
+        <Jargon term="open-source">відкритим кодом</Jargon>.
+      </>
+    );
+  }
+
+  return (
+    <>
+      Transform a fresh <Jargon term="cloud-server">cloud server</Jargon> into a fully-configured{" "}
+      <Jargon term="ai-agents">agentic</Jargon> coding environment.{" "}
+      <Jargon term="claude-code">Claude Code</Jargon>, <Jargon term="codex">OpenAI Codex</Jargon>,{" "}
+      <Jargon term="gemini-cli">Google Gemini</Jargon>: all pre-configured with 30+ modern developer
+      tools. All totally free and <Jargon term="open-source">open-source</Jargon>.
+    </>
+  );
+}
+
 // Animated terminal lines
 const TERMINAL_LINES = [
   { type: "command", text: "curl -fsSL https://agent-flywheel.com/install | bash" },
@@ -875,7 +903,7 @@ export default function HomePage() {
                 className="mb-8 max-w-xl text-lg leading-relaxed text-muted-foreground"
                 variants={fadeUp}
               >
-                {messages.hero.subtitle}
+                <HeroSubtitle locale={locale} />
               </motion.p>
 
               {/* CTA Buttons */}
