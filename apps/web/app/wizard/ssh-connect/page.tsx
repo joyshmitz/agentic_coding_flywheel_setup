@@ -21,7 +21,6 @@ import {
   GuideTip,
   GuideCaution,
 } from "@/components/simpler-guide";
-import { Jargon } from "@/components/jargon";
 import { useLocale, getSshConnectMessages, getCommonMessages } from "@/lib/i18n";
 
 interface TroubleshootingItem {

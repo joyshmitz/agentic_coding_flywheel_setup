@@ -62,18 +62,6 @@ function HeroSubtitle({ locale }: { locale: "en" | "uk" }) {
   );
 }
 
-// Animated terminal lines
-const TERMINAL_LINES = [
-  { type: "command", text: "curl -fsSL https://agent-flywheel.com/install | bash" },
-  { type: "output", text: "▸ Detecting Ubuntu 24.04... ✓" },
-  { type: "output", text: "▸ Installing zsh + oh-my-zsh + powerlevel10k..." },
-  { type: "output", text: "▸ Installing bun, uv, rust, go..." },
-  { type: "output", text: "▸ Installing Claude Code, Codex CLI, Gemini CLI..." },
-  { type: "output", text: "▸ Configuring tmux, ripgrep, lazygit..." },
-  { type: "output", text: "▸ Setting up Dicklesworthstone stack..." },
-  { type: "success", text: "✓ Setup complete! Run 'onboard' to get started." },
-];
-
 function AnimatedTerminal() {
   const [visibleLines, setVisibleLines] = useState(0);
   const [cursorVisible, setCursorVisible] = useState(true);

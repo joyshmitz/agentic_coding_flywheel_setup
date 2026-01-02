@@ -30,6 +30,8 @@ import { Jargon } from "@/components/jargon";
 import { useLocale } from "@/lib/i18n";
 import { getAgentMailLessonMessages } from "@/lib/i18n/translations";
 
+type Messages = ReturnType<typeof getAgentMailLessonMessages>;
+
 export function AgentMailLesson() {
   const { locale } = useLocale();
   const messages = getAgentMailLessonMessages(locale);
@@ -372,7 +374,7 @@ function PatternCard({
 // =============================================================================
 // COORDINATION FLOW
 // =============================================================================
-function CoordinationFlow({ messages }: { messages: any }) {
+function CoordinationFlow({ messages }: { messages: Messages }) {
   const steps = [
     {
       icon: <Bot className="h-5 w-5" />,

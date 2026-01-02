@@ -19,7 +19,7 @@ import {
   type OperatingSystem,
 } from "@/lib/userPreferences";
 import { withCurrentSearch } from "@/lib/utils";
-import { useLocale, getOsSelectionMessages, getCommonMessages } from "@/lib/i18n";
+import { useLocale, getOsSelectionMessages } from "@/lib/i18n";
 
 interface OSCardProps {
   icon: React.ReactNode;
@@ -117,7 +117,6 @@ export default function OSSelectionPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const { locale } = useLocale();
   const messages = getOsSelectionMessages(locale);
-  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({

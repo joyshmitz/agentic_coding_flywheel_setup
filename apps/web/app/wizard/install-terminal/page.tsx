@@ -22,8 +22,7 @@ import {
   GuideCaution,
   DirectDownloadButton,
 } from "@/components/simpler-guide";
-import { Jargon } from "@/components/jargon";
-import { useLocale, getInstallTerminalMessages, getCommonMessages, type Locale } from "@/lib/i18n";
+import { useLocale, getInstallTerminalMessages } from "@/lib/i18n";
 
 // Type for messages
 type Messages = ReturnType<typeof getInstallTerminalMessages>;
@@ -393,7 +392,6 @@ export default function InstallTerminalPage() {
   const ready = osLoaded;
   const { locale } = useLocale();
   const messages = getInstallTerminalMessages(locale);
-  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({

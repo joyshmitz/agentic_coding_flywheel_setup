@@ -26,6 +26,8 @@ import {
 import { Jargon } from "@/components/jargon";
 import { useLocale, getNtmCoreLessonMessages } from "@/lib/i18n";
 
+type Messages = ReturnType<typeof getNtmCoreLessonMessages>;
+
 export function NtmCoreLesson() {
   const { locale } = useLocale();
   const messages = getNtmCoreLessonMessages(locale);
@@ -238,7 +240,7 @@ ntm attach test-project`}
 // =============================================================================
 // NTM DIAGRAM - Visual representation of NTM
 // =============================================================================
-function NtmDiagram({ messages }: { messages: any }) {
+function NtmDiagram({ messages }: { messages: Messages }) {
   return (
     <div className="relative p-6 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
       <div className="absolute top-0 left-1/4 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
@@ -363,7 +365,7 @@ function SessionComponent({
 // =============================================================================
 // WORKFLOW STEPS - Visual workflow
 // =============================================================================
-function WorkflowSteps({ messages }: { messages: any }) {
+function WorkflowSteps({ messages }: { messages: Messages }) {
   const steps = messages.powerOfNtm.workflowSteps;
 
   return (
@@ -392,7 +394,7 @@ function WorkflowSteps({ messages }: { messages: any }) {
 // =============================================================================
 // AGENT RATIO CARD - Why this ratio
 // =============================================================================
-function AgentRatioCard({ messages }: { messages: any }) {
+function AgentRatioCard({ messages }: { messages: Messages }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -464,7 +466,7 @@ function KeyboardShortcutTable({
   messages,
 }: {
   shortcuts: { keys: string[]; action: string }[];
-  messages: any;
+  messages: Messages;
 }) {
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">

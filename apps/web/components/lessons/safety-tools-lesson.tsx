@@ -3,6 +3,8 @@
 import type React from "react";
 import { motion } from "@/components/motion";
 import { useLocale, getSafetyToolsLessonMessages } from "@/lib/i18n";
+
+type Messages = ReturnType<typeof getSafetyToolsLessonMessages>;
 import {
   Shield,
   Key,
@@ -337,7 +339,7 @@ export function SafetyToolsLesson() {
 // =============================================================================
 // SLB DIAGRAM
 // =============================================================================
-function SlbDiagram({ messages }: { messages: any }) {
+function SlbDiagram({ messages }: { messages: Messages }) {
   return (
     <div className="relative p-8 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
       {/* Decorative glows */}

@@ -19,10 +19,7 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
-import { useLocale, getGenerateSshKeyMessages, getCommonMessages, type Locale } from "@/lib/i18n";
-
-// Type for messages
-type Messages = ReturnType<typeof getGenerateSshKeyMessages>;
+import { useLocale, getGenerateSshKeyMessages } from "@/lib/i18n";
 
 export default function GenerateSSHKeyPage() {
   const router = useRouter();
@@ -31,7 +28,6 @@ export default function GenerateSSHKeyPage() {
   const ready = osLoaded;
   const { locale } = useLocale();
   const messages = getGenerateSshKeyMessages(locale);
-  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({

@@ -20,7 +20,7 @@ import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
 import { Jargon } from "@/components/jargon";
 import { useVPSIP } from "@/lib/userPreferences";
 import { withCurrentSearch } from "@/lib/utils";
-import { useLocale, getLaunchOnboardingMessages, getCommonMessages } from "@/lib/i18n";
+import { useLocale, getLaunchOnboardingMessages } from "@/lib/i18n";
 
 // Confetti colors
 const CONFETTI_COLORS = [
@@ -92,7 +92,6 @@ export default function LaunchOnboardingPage() {
   // i18n
   const { locale } = useLocale();
   const messages = getLaunchOnboardingMessages(locale);
-  const common = getCommonMessages(locale);
 
   // Get user's VPS IP for reconnection instructions
   const [vpsIP] = useVPSIP();

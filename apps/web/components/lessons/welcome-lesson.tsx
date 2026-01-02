@@ -31,6 +31,8 @@ import {
 import { Jargon } from "@/components/jargon";
 import { useLocale, getWelcomeLessonMessages } from "@/lib/i18n";
 
+type Messages = ReturnType<typeof getWelcomeLessonMessages>;
+
 export function WelcomeLesson() {
   const { locale } = useLocale();
   const messages = getWelcomeLessonMessages(locale);
@@ -194,7 +196,7 @@ function AgentCard({
 // =============================================================================
 // ARCHITECTURE DIAGRAM - Visual representation of the system
 // =============================================================================
-function ArchitectureDiagram({ messages }: { messages: any }) {
+function ArchitectureDiagram({ messages }: { messages: Messages }) {
   return (
     <div className="relative p-8 rounded-3xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
       {/* Background glow effects */}

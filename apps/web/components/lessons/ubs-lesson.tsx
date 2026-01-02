@@ -29,6 +29,8 @@ import {
 import { Jargon } from "@/components/jargon";
 import { useLocale, getUbsLessonMessages } from "@/lib/i18n";
 
+type Messages = ReturnType<typeof getUbsLessonMessages>;
+
 export function UbsLesson() {
   const { locale } = useLocale();
   const messages = getUbsLessonMessages(locale);
@@ -333,7 +335,7 @@ function SeverityCard({
 // =============================================================================
 // FIX WORKFLOW
 // =============================================================================
-function FixWorkflow({ messages }: { messages: any }) {
+function FixWorkflow({ messages }: { messages: Messages }) {
   const steps = messages.fixWorkflow.steps;
 
   return (
@@ -345,7 +347,7 @@ function FixWorkflow({ messages }: { messages: any }) {
       <div className="relative space-y-5">
         <div className="absolute left-4 top-4 bottom-4 w-px bg-gradient-to-b from-red-500/50 via-amber-500/50 to-emerald-500/50" />
 
-        {steps.map((step: any, i: number) => (
+        {steps.map((step: { title: string; desc: string }, i: number) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, x: -20 }}

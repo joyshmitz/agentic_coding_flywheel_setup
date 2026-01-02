@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Shield, Sparkles, ExternalLink, AlertTriangle, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { AlertCard } from "@/components/alert-card";
 import { Jargon } from "@/components/jargon";
 import { safeGetJSON, safeSetJSON } from "@/lib/utils";
-import { useLocale, getSecurityMessages, type ChecklistItem } from "@/lib/i18n";
+import { useLocale, getSecurityMessages } from "@/lib/i18n";
 
 const CHECKLIST_STORAGE_KEY = "acfs-security-checklist-v1";
 
@@ -25,16 +25,17 @@ export default function SecurityDocsPage() {
   const { locale } = useLocale();
   const messages = getSecurityMessages(locale);
   const checklistItems = messages.checklist.items;
-  const itemsById = useMemo(() => new Map(checklistItems.map((i) => [i.id, i])), [checklistItems]);
+  // Create map from items - React Compiler handles memoization automatically
+  const itemsById = new Map(checklistItems.map((i) => [i.id, i]));
   const [checked, setChecked] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const saved = safeGetJSON<string[]>(CHECKLIST_STORAGE_KEY);
     if (Array.isArray(saved)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage access must happen after mount (SSR-safe)
       setChecked(new Set(saved.filter((id) => itemsById.has(id))));
     }
-  }, [itemsById]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- itemsById is recreated each render, but we only want to load from localStorage once per locale
+  }, [locale]);
 
   const persist = useCallback((next: Set<string>) => {
     safeSetJSON(CHECKLIST_STORAGE_KEY, Array.from(next));

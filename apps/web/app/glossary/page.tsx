@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { BookOpen, ChevronDown, Home, Search, Terminal, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { jargonDictionary } from "@/lib/jargon";
 import { cn } from "@/lib/utils";
 import { useLocale, getGlossaryUiMessages, getJargonDictionary } from "@/lib/i18n";
 

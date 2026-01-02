@@ -28,6 +28,7 @@ export function LocaleProvider({ children }: LocaleProviderProps) {
 
   // Load saved locale from localStorage on mount
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: SSR hydration detection requires setState after mount
     setMounted(true);
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(LOCALE_STORAGE_KEY);

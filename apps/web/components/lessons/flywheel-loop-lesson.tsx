@@ -18,6 +18,9 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useLocale, getFlywheelLoopMessages } from "@/lib/i18n";
+
+type Messages = ReturnType<typeof getFlywheelLoopMessages>;
+
 import {
   Section,
   Paragraph,
@@ -340,7 +343,7 @@ ntm send my-first-project "${messages.firstTaskSection.codeComments.buildPrompt}
 // =============================================================================
 // FLYWHEEL DIAGRAM - Visual representation of the flywheel
 // =============================================================================
-function FlywheelDiagram({ messages }: { messages: any }) {
+function FlywheelDiagram({ messages }: { messages: Messages }) {
   return (
     <div className="relative p-8 rounded-3xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
       {/* Background glow effects */}

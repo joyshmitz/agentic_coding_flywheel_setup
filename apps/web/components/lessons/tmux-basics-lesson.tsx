@@ -22,11 +22,12 @@ import {
   Highlight,
   Divider,
   GoalBanner,
-  InlineCode,
   BulletList,
 } from "./lesson-components";
 import { Jargon } from "@/components/jargon";
 import { useLocale, getTmuxBasicsLessonMessages } from "@/lib/i18n";
+
+type Messages = ReturnType<typeof getTmuxBasicsLessonMessages>;
 
 export function TmuxBasicsLesson() {
   const { locale } = useLocale();
@@ -263,7 +264,7 @@ function CommandSection({
   code?: string;
   keyCombo?: string[];
   description: string;
-  messages?: any;
+  messages?: Messages;
 }) {
   return (
     <motion.div
@@ -340,7 +341,7 @@ function KeyboardShortcutGrid({ shortcuts }: { shortcuts: ShortcutItem[] }) {
 // =============================================================================
 // WHY IT MATTERS CARD - Highlight importance
 // =============================================================================
-function WhyItMattersCard({ messages }: { messages: any }) {
+function WhyItMattersCard({ messages }: { messages: Messages }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

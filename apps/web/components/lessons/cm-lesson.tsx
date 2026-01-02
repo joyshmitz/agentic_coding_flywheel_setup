@@ -30,6 +30,8 @@ import {
 import { Jargon } from "@/components/jargon";
 import { useLocale, getCmLessonMessages } from "@/lib/i18n";
 
+type Messages = ReturnType<typeof getCmLessonMessages>;
+
 export function CmLesson() {
   const { locale } = useLocale();
   const messages = getCmLessonMessages(locale);
@@ -287,7 +289,7 @@ $ cm onboard sample --fill-gaps`}
 // =============================================================================
 // MEMORY DIAGRAM
 // =============================================================================
-function MemoryDiagram({ messages }: { messages: any }) {
+function MemoryDiagram({ messages }: { messages: Messages["howItWorks"]["memoryDiagram"] }) {
   return (
     <div className="relative p-8 rounded-3xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
       {/* Background glow effects */}

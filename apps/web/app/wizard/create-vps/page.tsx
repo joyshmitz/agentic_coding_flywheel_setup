@@ -21,10 +21,7 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
-import { useLocale, getCreateVpsMessages, getCommonMessages, type Locale } from "@/lib/i18n";
-
-// Type for messages
-type Messages = ReturnType<typeof getCreateVpsMessages>;
+import { useLocale, getCreateVpsMessages } from "@/lib/i18n";
 
 type ScreenshotSpec = {
   file: string;
@@ -66,9 +63,7 @@ function ScreenshotFigure({ file, alt, caption }: ScreenshotSpec) {
   );
 }
 
-const CHECKLIST_ITEM_IDS = ["ubuntu", "region", "password", "created", "copied-ip"] as const;
-
-type ChecklistItemId = typeof CHECKLIST_ITEM_IDS[number];
+type ChecklistItemId = "ubuntu" | "region" | "password" | "created" | "copied-ip";
 
 function getChecklistItems(messages: ReturnType<typeof getCreateVpsMessages>) {
   return [
@@ -188,7 +183,6 @@ export default function CreateVPSPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const { locale } = useLocale();
   const messages = getCreateVpsMessages(locale);
-  const common = getCommonMessages(locale);
   const checklistItems = getChecklistItems(messages);
 
   // Track checklist state locally for simpler form handling

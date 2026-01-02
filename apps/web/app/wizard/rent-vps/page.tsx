@@ -20,10 +20,7 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
-import { useLocale, getRentVpsMessages, getCommonMessages, type Locale } from "@/lib/i18n";
-
-// Type for messages
-type Messages = ReturnType<typeof getRentVpsMessages>;
+import { useLocale, getRentVpsMessages, getCommonMessages } from "@/lib/i18n";
 
 interface ProviderInfo {
   id: string;
@@ -183,14 +180,6 @@ function ProviderCard({ provider, isExpanded, onToggle }: ProviderCardProps) {
     </div>
   );
 }
-
-const SPEC_CHECKLIST = [
-  { label: "OS", value: "Ubuntu 24.x or newer" },
-  { label: "CPU", value: "12-16 vCPU" },
-  { label: "RAM", value: "64GB recommended (48GB workable, 32GB minimum)" },
-  { label: "Storage", value: "250GB+ NVMe SSD" },
-  { label: "Price", value: "~$40-56/month for 64GB (month-to-month)" },
-];
 
 export default function RentVPSPage() {
   const router = useRouter();

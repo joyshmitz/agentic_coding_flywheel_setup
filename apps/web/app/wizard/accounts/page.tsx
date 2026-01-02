@@ -29,7 +29,6 @@ import {
   GuideExplain,
   GuideTip,
 } from "@/components/simpler-guide";
-import { Jargon } from "@/components/jargon";
 import {
   SERVICES,
   getGoogleSsoServices,
@@ -38,7 +37,7 @@ import {
   type ServiceTier,
 } from "@/lib/services";
 import { TrackedLink } from "@/components/tracked-link";
-import { useLocale, getAccountsMessages, getCommonMessages, type Locale } from "@/lib/i18n";
+import { useLocale, getAccountsMessages, getCommonMessages } from "@/lib/i18n";
 
 // Type for messages
 type Messages = ReturnType<typeof getAccountsMessages>;

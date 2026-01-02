@@ -25,6 +25,8 @@ import {
 import { Jargon } from "@/components/jargon";
 import { useLocale, getLinuxBasicsLessonMessages } from "@/lib/i18n";
 
+type Messages = ReturnType<typeof getLinuxBasicsLessonMessages>;
+
 export function LinuxBasicsLesson() {
   const { locale } = useLocale();
   const messages = getLinuxBasicsLessonMessages(locale);
@@ -254,7 +256,7 @@ $ ls`}
 // =============================================================================
 // VERIFICATION CARD - Success state indicator
 // =============================================================================
-function VerificationCard({ messages }: { messages: any }) {
+function VerificationCard({ messages }: { messages: Messages }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

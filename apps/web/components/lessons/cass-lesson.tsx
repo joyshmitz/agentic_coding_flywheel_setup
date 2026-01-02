@@ -28,6 +28,8 @@ import {
 import { Jargon } from "@/components/jargon";
 import { useLocale, getCassLessonMessages } from "@/lib/i18n";
 
+type Messages = ReturnType<typeof getCassLessonMessages>;
+
 export function CassLesson() {
   const { locale } = useLocale();
   const messages = getCassLessonMessages(locale);
@@ -140,7 +142,7 @@ export function CassLesson() {
         delay={0.25}
       >
         <div className="space-y-6">
-          {Object.values(messages.searchPatterns.patterns).map((pattern: any, index: number) => (
+          {Object.values(messages.searchPatterns.patterns).map((pattern: { title: string; description: string; code: string }, index: number) => (
             <SearchPattern
               key={index}
               title={pattern.title}
@@ -199,7 +201,7 @@ export function CassLesson() {
         delay={0.4}
       >
         <div className="space-y-4">
-          {Object.values(messages.bestPractices.practices).map((practice: any, index: number) => (
+          {Object.values(messages.bestPractices.practices).map((practice: { title: string; description: string }, index: number) => (
             <BestPractice
               key={index}
               title={practice.title}
@@ -300,7 +302,7 @@ function SearchPattern({
 // =============================================================================
 // SEARCH WORKFLOW
 // =============================================================================
-function SearchWorkflow({ messages }: { messages: any }) {
+function SearchWorkflow({ messages }: { messages: Messages }) {
   const steps = [
     {
       icon: <Search className="h-5 w-5" />,

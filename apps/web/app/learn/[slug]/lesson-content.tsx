@@ -19,12 +19,8 @@ import {
   Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  type Lesson,
-  getNextLesson,
-  getPreviousLesson,
-  useCompletedLessons,
-} from "@/lib/lessonProgress";
+import { useCompletedLessons } from "@/lib/lessonProgress";
+import type { Lesson } from "@/lib/lessons";
 import { useLocale, getLessons, getLessonBySlug, getLearnMessages } from "@/lib/i18n";
 import {
   getStepBySlug,

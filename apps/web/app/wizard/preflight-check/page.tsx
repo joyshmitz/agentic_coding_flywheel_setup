@@ -20,7 +20,7 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
-import { useLocale, getPreflightCheckMessages, getCommonMessages } from "@/lib/i18n";
+import { useLocale, getPreflightCheckMessages } from "@/lib/i18n";
 
 const PREFLIGHT_COMMAND =
   "curl -fsSL \"https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/scripts/preflight.sh?$(date +%s)\" | bash";
@@ -35,7 +35,6 @@ export default function PreflightCheckPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const { locale } = useLocale();
   const messages = getPreflightCheckMessages(locale);
-  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({

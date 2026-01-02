@@ -29,6 +29,8 @@ import { Jargon } from "@/components/jargon";
 import { useLocale } from "@/lib/i18n";
 import { getBeadsLessonMessages } from "@/lib/i18n/translations";
 
+type Messages = ReturnType<typeof getBeadsLessonMessages>;
+
 export function BeadsLesson() {
   const { locale } = useLocale();
   const messages = getBeadsLessonMessages(locale);
@@ -365,14 +367,14 @@ function RobotCommand({
 // =============================================================================
 // AGENT WORKFLOW
 // =============================================================================
-function AgentWorkflow({ messages }: { messages: any }) {
+function AgentWorkflow({ messages }: { messages: Messages["agentWorkflow"] }) {
   const icons = [
-    <Target className="h-5 w-5" />,
-    <ListTodo className="h-5 w-5" />,
-    <Play className="h-5 w-5" />,
-    <Zap className="h-5 w-5" />,
-    <CheckCircle className="h-5 w-5" />,
-    <GitBranch className="h-5 w-5" />,
+    <Target key="target" className="h-5 w-5" />,
+    <ListTodo key="list" className="h-5 w-5" />,
+    <Play key="play" className="h-5 w-5" />,
+    <Zap key="zap" className="h-5 w-5" />,
+    <CheckCircle key="check" className="h-5 w-5" />,
+    <GitBranch key="git" className="h-5 w-5" />,
   ];
 
   return (
@@ -384,7 +386,7 @@ function AgentWorkflow({ messages }: { messages: any }) {
       <div className="relative space-y-5">
         <div className="absolute left-5 top-5 bottom-5 w-px bg-gradient-to-b from-primary/50 via-violet-500/50 to-emerald-500/50" />
 
-        {messages.steps.map((step: any, i: number) => (
+        {messages.steps.map((step: { title: string; description: string }, i: number) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, x: -20 }}

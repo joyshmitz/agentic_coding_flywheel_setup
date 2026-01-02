@@ -28,7 +28,7 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
-import { useLocale, getRunInstallerMessages, getCommonMessages } from "@/lib/i18n";
+import { useLocale, getRunInstallerMessages } from "@/lib/i18n";
 
 const INSTALL_COMMAND = `curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/install.sh?$(date +%s)" | bash -s -- --yes --mode vibe`;
 
@@ -39,7 +39,6 @@ export default function RunInstallerPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const { locale } = useLocale();
   const messages = getRunInstallerMessages(locale);
-  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({

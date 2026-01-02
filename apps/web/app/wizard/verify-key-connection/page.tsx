@@ -20,7 +20,7 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
-import { useLocale, getVerifyKeyConnectionMessages, getCommonMessages } from "@/lib/i18n";
+import { useLocale, getVerifyKeyConnectionMessages } from "@/lib/i18n";
 
 export default function VerifyKeyConnectionPage() {
   const router = useRouter();
@@ -29,7 +29,6 @@ export default function VerifyKeyConnectionPage() {
   const ready = vpsIPLoaded;
   const { locale } = useLocale();
   const messages = getVerifyKeyConnectionMessages(locale);
-  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({

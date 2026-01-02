@@ -20,16 +20,7 @@ import { motion } from "@/components/motion";
 import { CommandCard } from "@/components/command-card";
 import { springs, staggerDelay } from "@/lib/design-tokens";
 import { useLocale, getCommands, getCommandCategories, getCommandsUiMessages } from "@/lib/i18n";
-import type { CommandCategory, CommandRef } from "@/lib/commands";
-
-type LocalCommandCategory =
-  | "agents"
-  | "stack"
-  | "search"
-  | "git"
-  | "system"
-  | "languages"
-  | "cloud";
+import type { CommandCategory } from "@/lib/commands";
 
 type CategoryFilter = "all" | CommandCategory;
 

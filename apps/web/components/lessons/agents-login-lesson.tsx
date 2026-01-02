@@ -16,14 +16,14 @@ import {
   Paragraph,
   CodeBlock,
   TipBox,
-  Highlight,
   Divider,
   GoalBanner,
-  InlineCode,
   BulletList,
 } from "./lesson-components";
 import { Jargon } from "@/components/jargon";
 import { useLocale, getAgentsLoginLessonMessages } from "@/lib/i18n";
+
+type Messages = ReturnType<typeof getAgentsLoginLessonMessages>;
 
 export function AgentsLoginLesson() {
   const { locale } = useLocale();
@@ -404,7 +404,7 @@ function LoginStep({
 // =============================================================================
 // OPENAI ACCOUNT WARNING - Critical warning about account types
 // =============================================================================
-function OpenAIAccountWarning({ messages }: { messages: any }) {
+function OpenAIAccountWarning({ messages }: { messages: Messages }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}

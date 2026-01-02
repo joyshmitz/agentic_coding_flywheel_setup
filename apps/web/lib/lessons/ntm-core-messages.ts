@@ -17,8 +17,8 @@ export const ntmCoreLessonMessages = {
     description2: "It creates organized tmux sessions with dedicated panes for each agent.",
 
     diagram: {
-      commandCenter: "NTM",
-      commandCenterSubtitle: "Command Center",
+      ntmTitle: "NTM",
+      commandCenter: "Command Center",
       agents: {
         claude: { name: "Claude", shortcut: "cc" },
         codex: { name: "Codex", shortcut: "cod" },

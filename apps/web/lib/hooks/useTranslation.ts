@@ -5,21 +5,11 @@
  * Currently returns the original text without translation.
  */
 
-import { useState, useEffect } from "react";
-
 export function useTranslation(text: string) {
-  const [translated, setTranslated] = useState(text);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    // For now, just return the original text
-    // Future implementation could integrate with translation services
-    setTranslated(text);
-    setIsLoading(false);
-  }, [text]);
-
+  // Placeholder: returns original text directly
+  // Future implementation could integrate with translation services
   return {
-    translated,
-    isLoading,
+    translated: text,
+    isLoading: false,
   };
 }

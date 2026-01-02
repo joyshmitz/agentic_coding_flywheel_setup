@@ -21,7 +21,6 @@ import {
 import { motion } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import {
-  type Lesson,
   LESSONS,
   useCompletedLessons,
   getCompletionPercentage,
@@ -195,7 +194,7 @@ export default function LearnDashboard() {
       completion_percentage: completionPercentage,
       next_lesson: nextLesson?.slug || 'all_complete',
     });
-  }, [completedLessons.length, completionPercentage, nextLesson]);
+  }, [completedLessons.length, localizedLessons.length, completionPercentage, nextLesson]);
 
   // Keyboard navigation state
   const [selectedIndex, setSelectedIndex] = useState(-1);

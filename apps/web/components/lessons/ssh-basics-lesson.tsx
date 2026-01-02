@@ -22,12 +22,13 @@ import {
   Highlight,
   Divider,
   GoalBanner,
-  InlineCode,
   FeatureGrid,
   FeatureCard,
 } from "./lesson-components";
 import { Jargon } from "@/components/jargon";
 import { useLocale, getSshBasicsLessonMessages } from "@/lib/i18n";
+
+type Messages = ReturnType<typeof getSshBasicsLessonMessages>;
 
 export function SSHBasicsLesson() {
   const { locale } = useLocale();
@@ -79,7 +80,6 @@ export function SSHBasicsLesson() {
             description={messages.howYouGotHere.stages.passwordLogin.description}
             code="ssh root@YOUR_SERVER_IP"
             gradient="from-amber-500/20 to-orange-500/20"
-            messages={messages}
           />
           <StageCard
             number={messages.howYouGotHere.stages.keyBasedLogin.number}
@@ -88,7 +88,6 @@ export function SSHBasicsLesson() {
             description={messages.howYouGotHere.stages.keyBasedLogin.description}
             code="ssh -i ~/.ssh/acfs_ed25519 ubuntu@YOUR_SERVER_IP"
             gradient="from-emerald-500/20 to-teal-500/20"
-            messages={messages}
           />
         </div>
 
@@ -266,7 +265,7 @@ $ cat ~/.ssh/authorized_keys`}
 // =============================================================================
 // CONNECTION DIAGRAM - Visual SSH connection
 // =============================================================================
-function ConnectionDiagram({ messages }: { messages: any }) {
+function ConnectionDiagram({ messages }: { messages: Messages }) {
   return (
     <div className="relative p-6 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl">
       <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
@@ -328,7 +327,6 @@ function StageCard({
   description,
   code,
   gradient,
-  messages,
 }: {
   number: number;
   title: string;
@@ -336,7 +334,6 @@ function StageCard({
   description: string;
   code: string;
   gradient: string;
-  messages?: any;
 }) {
   return (
     <motion.div
@@ -391,12 +388,12 @@ function CommandPart({
 // =============================================================================
 // QUIZ CARDS - Interactive quiz display
 // =============================================================================
-function QuizCards({ messages }: { messages: any }) {
+function QuizCards({ messages }: { messages: Messages }) {
   const questions = messages.verifyUnderstanding.questions;
 
   return (
     <div className="space-y-4">
-      {questions.map((q: any, i: number) => (
+      {questions.map((q: { question: string; answer: string }, i: number) => (
         <motion.div
           key={i}
           initial={{ opacity: 0, x: -20 }}

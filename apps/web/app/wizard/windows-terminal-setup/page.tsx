@@ -24,7 +24,7 @@ import {
   GuideTip,
 } from "@/components/simpler-guide";
 import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
-import { useLocale, getWindowsTerminalSetupMessages, getCommonMessages } from "@/lib/i18n";
+import { useLocale, getWindowsTerminalSetupMessages } from "@/lib/i18n";
 
 export default function WindowsTerminalSetupPage() {
   const router = useRouter();
@@ -33,7 +33,6 @@ export default function WindowsTerminalSetupPage() {
   const ready = vpsIPLoaded;
   const { locale } = useLocale();
   const messages = getWindowsTerminalSetupMessages(locale);
-  const common = getCommonMessages(locale);
 
   // Analytics tracking for this wizard step
   useWizardAnalytics({
