@@ -4,32 +4,39 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Home, Search, Terminal } from "lucide-react";
 import { CommandRefCard } from "@/components/command-ref-card";
-import { COMMANDS, COMMAND_CATEGORIES, type CommandCategory } from "@/lib/commands";
+import { useLocale, getCommandReferenceMessages, getCommands, getCommandCategories } from "@/lib/i18n";
+import type { CommandCategory } from "@/lib/commands";
 
 type CategoryFilter = "all" | CommandCategory;
 
-const CATEGORY_FILTERS: Array<{ id: CategoryFilter; label: string }> = [
-  { id: "all", label: "All" },
-  ...COMMAND_CATEGORIES.map((category) => ({
-    id: category.id,
-    label: category.label,
-  })),
-];
-
-function getCategoryLabel(category: CommandCategory): string {
-  return (
-    COMMAND_CATEGORIES.find((item) => item.id === category)?.label ?? category
-  );
-}
-
 export function CommandReference() {
+  const { locale } = useLocale();
+  const messages = getCommandReferenceMessages(locale);
+  const commands = getCommands(locale);
+  const commandCategories = getCommandCategories(locale);
+
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<CategoryFilter>("all");
+
+  const categoryFilters: Array<{ id: CategoryFilter; label: string }> = useMemo(
+    () => [
+      { id: "all", label: messages.filters.all },
+      ...commandCategories.map((cat) => ({
+        id: cat.id,
+        label: cat.label,
+      })),
+    ],
+    [commandCategories, messages.filters.all]
+  );
+
+  const getCategoryLabel = (cat: CommandCategory): string => {
+    return commandCategories.find((item) => item.id === cat)?.label ?? cat;
+  };
 
   const filteredCommands = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return COMMANDS.filter((command) => {
+    return commands.filter((command) => {
       if (category !== "all" && command.category !== category) {
         return false;
       }
@@ -49,7 +56,7 @@ export function CommandReference() {
 
       return haystack.includes(normalizedQuery);
     });
-  }, [category, query]);
+  }, [category, query, commands]);
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -63,14 +70,14 @@ export function CommandReference() {
             className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span className="text-sm">Learning Hub</span>
+            <span className="text-sm">{messages.nav.learningHub}</span>
           </Link>
           <Link
             href="/"
             className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
           >
             <Home className="h-4 w-4" />
-            <span className="text-sm">Home</span>
+            <span className="text-sm">{messages.nav.home}</span>
           </Link>
         </div>
 
@@ -79,12 +86,10 @@ export function CommandReference() {
             <Terminal className="h-8 w-8 text-primary" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Command Reference
+            {messages.header.title}
           </h1>
           <p className="mx-auto max-w-2xl text-base text-muted-foreground md:text-lg">
-            A quick lookup for every command ACFS installs. Search by name or
-            description, copy examples, and jump to detailed docs when you need
-            them.
+            {messages.header.description}
           </p>
         </div>
 
@@ -93,14 +98,14 @@ export function CommandReference() {
             <Search className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
             <input
               type="search"
-              placeholder="Search commands, aliases, or descriptions..."
+              placeholder={messages.search.placeholder}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               className="w-full rounded-xl border border-border/60 bg-card/50 py-3 pl-10 pr-4 text-sm text-foreground shadow-sm outline-none transition focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {CATEGORY_FILTERS.map((filter) => (
+            {categoryFilters.map((filter) => (
               <button
                 key={filter.id}
                 onClick={() => setCategory(filter.id)}
@@ -118,18 +123,17 @@ export function CommandReference() {
 
         <div className="mb-6 flex items-center justify-between text-sm text-muted-foreground">
           <span>
-            Showing {filteredCommands.length} of {COMMANDS.length} commands
+            {messages.results.showing} {filteredCommands.length} {messages.results.of} {commands.length} {messages.results.commands}
           </span>
           {category !== "all" ? (
-            <span>Category: {getCategoryLabel(category)}</span>
+            <span>{messages.results.category} {getCategoryLabel(category)}</span>
           ) : null}
         </div>
 
         <div className="grid gap-5">
           {filteredCommands.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border/60 bg-muted/30 p-10 text-center text-sm text-muted-foreground">
-              No commands match your search yet. Try a different keyword or
-              switch categories.
+              {messages.empty.message}
             </div>
           ) : (
             filteredCommands.map((command) => (

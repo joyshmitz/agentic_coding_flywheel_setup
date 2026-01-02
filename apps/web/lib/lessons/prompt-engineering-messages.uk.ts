@@ -245,6 +245,11 @@ export const promptEngineeringLessonMessagesUk = {
 
   quickReference: {
     title: "Швидка довідка",
+    tableHeaders: {
+      pattern: "Патерн",
+      when: "Коли",
+      keyPhrases: "Ключові фрази",
+    },
     items: [
       {
         pattern: "Інтенсивність",

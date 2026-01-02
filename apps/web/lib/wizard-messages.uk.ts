@@ -31,6 +31,12 @@ export const commonMessagesUk = {
     home: "Головна",
     setupWizard: "Майстер налаштування",
   },
+  layout: {
+    progress: "Прогрес",
+    backToHome: "На головну",
+    step: "Крок",
+    of: "з",
+  },
 };
 
 // generate-ssh-key сторінка
@@ -972,6 +978,10 @@ export const sshConnectMessagesUk = {
 
   troubleshooting: {
     title: "Маєте проблеми?",
+    labels: {
+      possibleCauses: "Можливі причини:",
+      solutions: "Рішення:",
+    },
     connectionRefused: {
       name: "Connection refused",
       causes: ["VPS ще запускається", "SSH-сервіс не працює на VPS", "Firewall блокує порт 22"],

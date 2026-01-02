@@ -31,6 +31,12 @@ export const commonMessages = {
     home: "Home",
     setupWizard: "Setup Wizard",
   },
+  layout: {
+    progress: "Progress",
+    backToHome: "Back to Home",
+    step: "Step",
+    of: "of",
+  },
 };
 
 // generate-ssh-key page
@@ -972,6 +978,10 @@ export const sshConnectMessages = {
 
   troubleshooting: {
     title: "Having trouble?",
+    labels: {
+      possibleCauses: "Possible causes:",
+      solutions: "Solutions:",
+    },
     connectionRefused: {
       name: "Connection refused",
       causes: ["VPS is still starting up", "SSH service not running on the VPS", "Firewall blocking port 22"],

@@ -12,6 +12,7 @@ import {
   Sparkles,
   Zap,
 } from "lucide-react";
+import { useLocale, getLessonComponentsMessages } from "@/lib/i18n";
 
 // =============================================================================
 // SECTION COMPONENT - Beautiful section dividers with gradient headers
@@ -84,6 +85,8 @@ export function CodeBlock({
   filename,
   showLineNumbers = false,
 }: CodeBlockProps) {
+  const { locale } = useLocale();
+  const messages = getLessonComponentsMessages(locale);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -126,12 +129,12 @@ export function CodeBlock({
           {copied ? (
             <>
               <Check className="h-3.5 w-3.5 text-emerald-400" />
-              <span className="text-emerald-400">Copied!</span>
+              <span className="text-emerald-400">{messages.codeBlock.copied}</span>
             </>
           ) : (
             <>
               <Copy className="h-3.5 w-3.5" />
-              <span>Copy</span>
+              <span>{messages.codeBlock.copy}</span>
             </>
           )}
         </button>
@@ -240,27 +243,30 @@ interface TipBoxProps {
 }
 
 export function TipBox({ children, variant = "tip" }: TipBoxProps) {
+  const { locale } = useLocale();
+  const messages = getLessonComponentsMessages(locale);
+
   const config = {
     tip: {
       icon: <Lightbulb className="h-5 w-5" />,
       gradient: "from-amber-500/20 to-orange-500/20",
       border: "border-amber-500/30",
       iconColor: "text-amber-400",
-      title: "Pro Tip",
+      title: messages.tipBox.proTip,
     },
     warning: {
       icon: <AlertTriangle className="h-5 w-5" />,
       gradient: "from-red-500/20 to-rose-500/20",
       border: "border-red-500/30",
       iconColor: "text-red-400",
-      title: "Warning",
+      title: messages.tipBox.warning,
     },
     info: {
       icon: <Sparkles className="h-5 w-5" />,
       gradient: "from-primary/20 to-violet-500/20",
       border: "border-primary/30",
       iconColor: "text-primary",
-      title: "Note",
+      title: messages.tipBox.note,
     },
   };
 
@@ -472,6 +478,9 @@ interface GoalBannerProps {
 }
 
 export function GoalBanner({ children }: GoalBannerProps) {
+  const { locale } = useLocale();
+  const messages = getLessonComponentsMessages(locale);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -487,7 +496,7 @@ export function GoalBanner({ children }: GoalBannerProps) {
         </div>
         <div>
           <span className="text-xs font-bold text-primary uppercase tracking-wider">
-            Goal
+            {messages.goalBanner.goal}
           </span>
           <p className="text-lg text-white font-medium">{children}</p>
         </div>

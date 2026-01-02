@@ -1266,6 +1266,11 @@ Scale: [users, requests, data size]
 
   quickReference: {
     title: "Quick Reference",
+    tableHeaders: {
+      pattern: "Pattern",
+      when: "When",
+      keyPhrases: "Key Phrases",
+    },
     items: [
       {
         pattern: "Intensity",

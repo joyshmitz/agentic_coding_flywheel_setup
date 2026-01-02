@@ -191,6 +191,10 @@ import { flywheelVizMessagesUk } from "../flywheel-viz-messages.uk";
 import { agentHeroCardMessages } from "../agent-hero-card-messages";
 import { agentHeroCardMessagesUk } from "../agent-hero-card-messages.uk";
 
+// Lesson components messages
+import { lessonComponentsMessages } from "../lesson-components-messages";
+import { lessonComponentsMessagesUk } from "../lesson-components-messages.uk";
+
 /**
  * Get common wizard messages for the specified locale
  */
@@ -345,6 +349,13 @@ export function getAgentHeroCardMessages(locale: Locale) {
   return locale === "uk" ? agentHeroCardMessagesUk : agentHeroCardMessages;
 }
 
+/**
+ * Get Lesson Components messages for the specified locale
+ */
+export function getLessonComponentsMessages(locale: Locale) {
+  return locale === "uk" ? lessonComponentsMessagesUk : lessonComponentsMessages;
+}
+
 // Page messages
 import { learnMessages } from "../learn-messages";
 import { learnMessagesUk } from "../learn-messages.uk";
@@ -364,6 +375,8 @@ import { homeMessages } from "../home-messages";
 import { homeMessagesUk } from "../home-messages.uk";
 import { toolPageMessages } from "../tool-page-messages";
 import { toolPageMessagesUk } from "../tool-page-messages.uk";
+import { commandReferenceMessages } from "../command-reference-messages";
+import { commandReferenceMessagesUk } from "../command-reference-messages.uk";
 
 // Re-export type for consumers
 export type { ChecklistItem };
@@ -429,6 +442,13 @@ export function getHomeMessages(locale: Locale) {
  */
 export function getToolPageMessages(locale: Locale) {
   return locale === "uk" ? toolPageMessagesUk : toolPageMessages;
+}
+
+/**
+ * Get command reference page messages for the specified locale
+ */
+export function getCommandReferenceMessages(locale: Locale) {
+  return locale === "uk" ? commandReferenceMessagesUk : commandReferenceMessages;
 }
 
 /**

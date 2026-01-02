@@ -316,4 +316,10 @@ $ git stash
 $ git stash pop
 $ rm temp.txt`,
   },
+
+  // UI labels for helper components
+  componentLabels: {
+    examplePrefix: "Приклад:",
+    securityRisk: "Ризик безпеки",
+  },
 };

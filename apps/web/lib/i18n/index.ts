@@ -37,6 +37,7 @@ export {
   getStepperMessages,
   getFlywheelVizMessages,
   getAgentHeroCardMessages,
+  getLessonComponentsMessages,
   // Page messages
   getLearnMessages,
   getFlywheelMessages,
@@ -47,6 +48,7 @@ export {
   getSecurityMessages,
   getHomeMessages,
   getToolPageMessages,
+  getCommandReferenceMessages,
   // Lesson messages
   getWelcomeLessonMessages,
   getLinuxBasicsLessonMessages,

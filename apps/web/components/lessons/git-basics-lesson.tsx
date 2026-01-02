@@ -93,6 +93,7 @@ export function GitBasicsLesson() {
               term={concept.term}
               definition={concept.definition}
               example={concept.example}
+              exampleLabel={messages.componentLabels.examplePrefix}
             />
           ))}
         </div>
@@ -130,6 +131,7 @@ export function GitBasicsLesson() {
               pattern={item.pattern}
               reason={item.reason}
               critical={item.critical}
+              securityRiskLabel={messages.componentLabels.securityRisk}
             />
           ))}
         </div>
@@ -266,10 +268,12 @@ function ConceptCard({
   term,
   definition,
   example,
+  exampleLabel,
 }: {
   term: string;
   definition: string;
   example: string;
+  exampleLabel: string;
 }) {
   return (
     <motion.div
@@ -280,7 +284,7 @@ function ConceptCard({
     >
       <h4 className="font-bold text-primary text-lg">{term}</h4>
       <p className="text-white/70 mt-2">{definition}</p>
-      <p className="text-sm text-white/50 mt-2 italic">Example: {example}</p>
+      <p className="text-sm text-white/50 mt-2 italic">{exampleLabel} {example}</p>
     </motion.div>
   );
 }
@@ -292,10 +296,12 @@ function IgnoreItem({
   pattern,
   reason,
   critical,
+  securityRiskLabel,
 }: {
   pattern: string;
   reason: string;
   critical?: boolean;
+  securityRiskLabel: string;
 }) {
   return (
     <motion.div
@@ -313,7 +319,7 @@ function IgnoreItem({
       </code>
       <span className="text-sm text-white/60">{reason}</span>
       {critical && (
-        <span className="ml-auto text-xs font-medium text-red-400 uppercase">Security Risk</span>
+        <span className="ml-auto text-xs font-medium text-red-400 uppercase">{securityRiskLabel}</span>
       )}
     </motion.div>
   );

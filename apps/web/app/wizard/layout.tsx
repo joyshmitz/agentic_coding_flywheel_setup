@@ -10,6 +10,7 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { WIZARD_STEPS, getStepBySlug } from "@/lib/wizardSteps";
 import { detectOS, getUserOS, setUserOS, getVPSIP } from "@/lib/userPreferences";
 import { withCurrentSearch } from "@/lib/utils";
+import { useLocale, getCommonMessages } from "@/lib/i18n";
 
 export default function WizardLayout({
   children,
@@ -18,6 +19,8 @@ export default function WizardLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { locale } = useLocale();
+  const messages = getCommonMessages(locale);
 
   // Extract current step from URL path
   const currentStep = useMemo(() => {
@@ -109,7 +112,7 @@ export default function WizardLayout({
             {/* Progress indicator */}
             <div className="px-6 py-4">
               <div className="mb-2 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Progress</span>
+                <span className="text-muted-foreground">{messages.layout.progress}</span>
                 <span className="font-mono text-primary">{currentStep}/{WIZARD_STEPS.length}</span>
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-muted">
@@ -135,7 +138,7 @@ export default function WizardLayout({
               >
                 <Link href="/">
                   <Home className="mr-2 h-4 w-4" />
-                  Back to Home
+                  {messages.layout.backToHome}
                 </Link>
               </Button>
             </div>
@@ -155,7 +158,7 @@ export default function WizardLayout({
             <div className="flex items-center gap-3">
               <LanguageSwitcher />
               <div className="text-xs text-muted-foreground">
-                Step <span className="font-mono text-primary">{currentStep}</span> of {WIZARD_STEPS.length}
+                {messages.layout.step} <span className="font-mono text-primary">{currentStep}</span> {messages.layout.of} {WIZARD_STEPS.length}
               </div>
             </div>
           </div>
@@ -169,7 +172,7 @@ export default function WizardLayout({
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 font-mono text-xs text-primary">
                     {currentStep}
                   </span>
-                  <span>Step {currentStep} of {WIZARD_STEPS.length}</span>
+                  <span>{messages.layout.step} {currentStep} {messages.layout.of} {WIZARD_STEPS.length}</span>
                 </div>
               </div>
 
@@ -220,7 +223,7 @@ export default function WizardLayout({
             className={currentStep === 5 ? "w-full" : "flex-1"}
           >
             <ChevronLeft className="mr-1 h-5 w-5" />
-            Back
+            {messages.buttons.back}
           </Button>
           {/* Hide Next button on step 5 - page has its own validated Continue button */}
           {currentStep !== 5 && (
@@ -230,7 +233,7 @@ export default function WizardLayout({
               disabled={!nextStep}
               className="flex-1"
             >
-              Next
+              {messages.buttons.next}
               <ChevronRight className="ml-1 h-5 w-5" />
             </Button>
           )}

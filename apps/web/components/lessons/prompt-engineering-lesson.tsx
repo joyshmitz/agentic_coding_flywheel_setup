@@ -337,6 +337,7 @@ export function PromptEngineeringLesson() {
               pattern={item.pattern}
               when={item.when}
               key_phrases={item.keyPhrases}
+              tableHeaders={messages.quickReference.tableHeaders}
             />
           ))}
         </div>
@@ -547,10 +548,12 @@ function QuickRefItem({
   pattern,
   when,
   key_phrases,
+  tableHeaders,
 }: {
   pattern: string;
   when: string;
   key_phrases: string;
+  tableHeaders: { pattern: string; when: string; keyPhrases: string };
 }) {
   return (
     <motion.div
@@ -560,15 +563,15 @@ function QuickRefItem({
       className="group grid grid-cols-3 gap-4 p-4 rounded-xl border border-white/[0.08] bg-white/[0.02] transition-all duration-300 hover:border-primary/30"
     >
       <div>
-        <span className="text-xs text-white/40 uppercase">Pattern</span>
+        <span className="text-xs text-white/40 uppercase">{tableHeaders.pattern}</span>
         <p className="font-bold text-primary">{pattern}</p>
       </div>
       <div>
-        <span className="text-xs text-white/40 uppercase">When</span>
+        <span className="text-xs text-white/40 uppercase">{tableHeaders.when}</span>
         <p className="text-sm text-white/70">{when}</p>
       </div>
       <div>
-        <span className="text-xs text-white/40 uppercase">Key Phrases</span>
+        <span className="text-xs text-white/40 uppercase">{tableHeaders.keyPhrases}</span>
         <p className="text-xs text-white/50 font-mono">{key_phrases}</p>
       </div>
     </motion.div>
