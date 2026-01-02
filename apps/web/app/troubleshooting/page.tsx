@@ -84,7 +84,7 @@ function IssueCard({ issue, isOpen, onToggle, categoryMeta, sectionLabels }: Iss
         aria-expanded={isOpen}
       >
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-2 mb-4">
             <span
               className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs"
               style={{

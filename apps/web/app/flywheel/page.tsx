@@ -267,7 +267,7 @@ function WorkflowSection({ messages }: { messages: ReturnType<typeof getFlywheel
       <div className="mx-auto max-w-7xl px-6">
         {/* Section header */}
         <div className="mb-12 max-w-3xl">
-          <div className="mb-4 flex items-center gap-3">
+          <div className="mb-6 md:mb-8 flex items-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-primary">
               {messages.sections.workflow.badge}
@@ -394,7 +394,7 @@ function PromptsSection({ messages }: { messages: ReturnType<typeof getFlywheelM
       <div className="mx-auto max-w-7xl px-6">
         {/* Section header */}
         <div className="mb-12 max-w-3xl">
-          <div className="mb-4 flex items-center gap-3">
+          <div className="mb-6 md:mb-8 flex items-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-primary">
               {messages.sections.prompts.badge}
@@ -429,7 +429,7 @@ function SynergySection({ messages }: { messages: ReturnType<typeof getFlywheelM
       <div className="mx-auto max-w-7xl px-6">
         {/* Section header */}
         <div className="mb-12 text-center">
-          <div className="mb-4 flex items-center justify-center gap-3">
+          <div className="mb-6 md:mb-8 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-primary">
               {messages.sections.synergy.badge}
@@ -619,7 +619,7 @@ function ToolsSection({ messages }: { messages: ReturnType<typeof getFlywheelMes
       <div className="mx-auto max-w-7xl px-6">
         {/* Section header */}
         <div className="mb-12 text-center">
-          <div className="mb-4 flex items-center justify-center gap-3">
+          <div className="mb-6 md:mb-8 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-primary">
               {messages.sections.tools.badge}
@@ -682,7 +682,7 @@ function PhilosophySection({ messages }: { messages: ReturnType<typeof getFlywhe
       <div className="mx-auto max-w-7xl px-6">
         {/* Section header */}
         <div className="mb-12 text-center">
-          <div className="mb-4 flex items-center justify-center gap-3">
+          <div className="mb-6 md:mb-8 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-primary">
               {messages.sections.philosophy.badge}

@@ -300,7 +300,7 @@ function FlywheelSection() {
         >
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">{messages.flywheel.badge}</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">{messages.flywheel.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
           <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight">
@@ -437,7 +437,7 @@ function AboutSection() {
         >
           <div className="mb-6 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">{messages.about.badge}</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">{messages.about.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
 
@@ -544,7 +544,7 @@ function WhyVPSSection() {
         >
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">{messages.whyVps.badge}</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">{messages.whyVps.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
           <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight sm:text-4xl">{messages.whyVps.title}</h2>
@@ -612,7 +612,7 @@ function IsThisForYouSection() {
         <motion.div className="mb-12 text-center" initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} transition={springs.smooth}>
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">{messages.isThisForYou.badge}</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">{messages.isThisForYou.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
           <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight sm:text-4xl">{messages.isThisForYou.title}</h2>
@@ -703,7 +703,7 @@ function WhatDoesThisCostSection() {
         <motion.div className="mb-12 text-center" initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} transition={springs.smooth}>
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary">{messages.pricing.badge}</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">{messages.pricing.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
           <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight sm:text-4xl">{messages.pricing.title}</h2>

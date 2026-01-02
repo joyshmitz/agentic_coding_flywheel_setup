@@ -630,9 +630,9 @@ export default function WorkflowPage() {
         >
           <Card className="p-6 border-border/50 bg-card/30 backdrop-blur-sm">
             <div className="text-center mb-6">
-              <div className="mb-3 flex items-center justify-center gap-2">
+              <div className="mb-5 md:mb-6 flex items-center justify-center gap-2">
                 <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-                <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-primary">{messages.flywheel.badge}</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">{messages.flywheel.badge}</span>
                 <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
               </div>
               <h3 className="text-xl font-bold tracking-tight mb-2">{messages.flywheel.title}</h3>

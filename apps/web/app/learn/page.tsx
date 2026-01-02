@@ -337,7 +337,7 @@ export default function LearnDashboard() {
 
             <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex-1">
-                <div className="mb-2 flex items-center gap-2">
+                <div className="mb-4 flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20">
                     <BookOpen className="h-4 w-4 text-primary" />
                   </div>
