@@ -135,47 +135,29 @@ export function UbsLesson() {
 
       {/* Understanding Output */}
       <Section
-        title="Understanding Output"
+        title={messages.understandingOutput.title}
         icon={<Search className="h-5 w-5" />}
         delay={0.25}
       >
-        <Paragraph>UBS output follows a consistent format:</Paragraph>
+        <Paragraph>{messages.understandingOutput.intro}</Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`⚠️  Null Safety (3 errors)
-    src/api/users.ts:42:5 – Possible null dereference
-    💡 Use optional chaining: user?.profile
-
-    src/api/users.ts:87:12 – Unchecked array access
-    💡 Add bounds check before accessing array[i]
-
-⚠️  Security (1 error)
-    src/api/auth.ts:23:8 – SQL injection risk
-    💡 Use parameterized queries instead of string concat
-
-Exit code: 1`}
+            code={messages.understandingOutput.outputCode}
             language="text"
             filename="ubs output"
           />
         </div>
 
         <div className="mt-6 space-y-4">
-          <OutputExplainer
-            pattern="file:line:col"
-            meaning="Exact location of the issue"
-            color="text-emerald-400"
-          />
-          <OutputExplainer
-            pattern="💡"
-            meaning="Suggested fix"
-            color="text-amber-400"
-          />
-          <OutputExplainer
-            pattern="Exit code 0/1"
-            meaning="Pass (safe) / Fail (needs fixes)"
-            color="text-primary"
-          />
+          {messages.understandingOutput.explainers.map((explainer, index) => (
+            <OutputExplainer
+              key={index}
+              pattern={explainer.pattern}
+              meaning={explainer.meaning}
+              color={index === 0 ? "text-emerald-400" : index === 1 ? "text-amber-400" : "text-primary"}
+            />
+          ))}
         </div>
       </Section>
 
@@ -183,49 +165,34 @@ Exit code: 1`}
 
       {/* Bug Severity */}
       <Section
-        title="Bug Severity Guide"
+        title={messages.bugSeverityGuide.title}
         icon={<AlertTriangle className="h-5 w-5" />}
         delay={0.3}
       >
         <div className="space-y-4">
           <SeverityCard
-            level="Critical"
+            level={messages.bugSeverityGuide.levels.critical.level}
             icon={<XCircle className="h-5 w-5" />}
             color="from-red-500/20 to-rose-500/20"
             border="border-red-500/30"
-            examples={[
-              "Null safety violations",
-              "XSS/Injection vulnerabilities",
-              "Async/await issues",
-              "Memory leaks",
-            ]}
-            action="Always fix immediately"
+            examples={messages.bugSeverityGuide.levels.critical.examples}
+            action={messages.bugSeverityGuide.levels.critical.action}
           />
           <SeverityCard
-            level="Important"
+            level={messages.bugSeverityGuide.levels.important.level}
             icon={<AlertTriangle className="h-5 w-5" />}
             color="from-amber-500/20 to-orange-500/20"
             border="border-amber-500/30"
-            examples={[
-              "Type narrowing issues",
-              "Division by zero risks",
-              "Resource leaks",
-              "Missing error handling",
-            ]}
-            action="Fix before production"
+            examples={messages.bugSeverityGuide.levels.important.examples}
+            action={messages.bugSeverityGuide.levels.important.action}
           />
           <SeverityCard
-            level="Contextual"
+            level={messages.bugSeverityGuide.levels.contextual.level}
             icon={<CheckCircle className="h-5 w-5" />}
             color="from-primary/20 to-violet-500/20"
             border="border-primary/30"
-            examples={[
-              "TODO/FIXME comments",
-              "Console.log statements",
-              "Unused variables",
-              "Magic numbers",
-            ]}
-            action="Use judgment"
+            examples={messages.bugSeverityGuide.levels.contextual.examples}
+            action={messages.bugSeverityGuide.levels.contextual.action}
           />
         </div>
       </Section>
@@ -234,42 +201,35 @@ Exit code: 1`}
 
       {/* The Fix Workflow */}
       <Section
-        title="The Fix Workflow"
+        title={messages.fixWorkflow.title}
         icon={<Zap className="h-5 w-5" />}
         delay={0.35}
       >
-        <FixWorkflow />
+        <FixWorkflow messages={messages} />
       </Section>
 
       <Divider />
 
       {/* Pre-Commit Hook */}
       <Section
-        title="Pre-Commit Integration"
+        title={messages.preCommitIntegration.title}
         icon={<GitCommit className="h-5 w-5" />}
         delay={0.4}
       >
         <Paragraph>
-          For maximum safety, add UBS to your pre-commit workflow:
+          {messages.preCommitIntegration.intro}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# In your workflow:
-$ git add .
-$ ubs $(git diff --name-only --cached)
-# If exit 0: proceed with commit
-# If exit 1: fix issues first
-
-$ git commit -m "feat: add user auth"`}
+            code={messages.preCommitIntegration.codeExample}
             showLineNumbers
           />
         </div>
 
         <div className="mt-6">
           <TipBox variant="info">
-            ACFS agents are trained to run <code>ubs</code> automatically
-            before committing. You get this protection by default!
+            {messages.preCommitIntegration.tip.content}<code>ubs</code>{messages.preCommitIntegration.tip.automatically}
           </TipBox>
         </div>
       </Section>
@@ -278,19 +238,12 @@ $ git commit -m "feat: add user auth"`}
 
       {/* Try It Now */}
       <Section
-        title="Try It Now"
+        title={messages.tryItNow.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.45}
       >
         <CodeBlock
-          code={`# View session logs
-$ ubs sessions --entries 1
-
-# Scan your project
-$ ubs .
-
-# Get help
-$ ubs --help`}
+          code={messages.tryItNow.code}
           showLineNumbers
         />
       </Section>
@@ -379,15 +332,8 @@ function SeverityCard({
 // =============================================================================
 // FIX WORKFLOW
 // =============================================================================
-function FixWorkflow() {
-  const steps = [
-    { title: "Read finding", desc: "Understand the category and fix suggestion" },
-    { title: "Navigate to location", desc: "Go to file:line:col" },
-    { title: "Verify it's real", desc: "Not all findings are bugs—some are false positives" },
-    { title: "Fix root cause", desc: "Don't just mask the symptom" },
-    { title: "Re-run UBS", desc: "Confirm the fix worked (exit 0)" },
-    { title: "Commit", desc: "Now you're safe to commit!" },
-  ];
+function FixWorkflow({ messages }: { messages: any }) {
+  const steps = messages.fixWorkflow.steps;
 
   return (
     <div className="relative p-6 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
@@ -398,7 +344,7 @@ function FixWorkflow() {
       <div className="relative space-y-5">
         <div className="absolute left-4 top-4 bottom-4 w-px bg-gradient-to-b from-red-500/50 via-amber-500/50 to-emerald-500/50" />
 
-        {steps.map((step, i) => (
+        {steps.map((step: any, i: number) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, x: -20 }}
