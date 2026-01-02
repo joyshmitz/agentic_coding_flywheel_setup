@@ -19,7 +19,10 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
-import { useLocale, getGenerateSshKeyMessages, getCommonMessages } from "@/lib/i18n";
+import { useLocale, getGenerateSshKeyMessages, getCommonMessages, type Locale } from "@/lib/i18n";
+
+// Type for messages
+type Messages = ReturnType<typeof getGenerateSshKeyMessages>;
 
 export default function GenerateSSHKeyPage() {
   const router = useRouter();
@@ -84,32 +87,32 @@ export default function GenerateSSHKeyPage() {
 
       {/* Explanation */}
       <AlertCard variant="info" title={messages.howItWorks.title}>
-        You&apos;re creating a <strong className="text-foreground">key pair</strong>: a <Jargon term="private-key">private key</Jargon> (stays on
-        your computer) and a <Jargon term="public-key">public key</Jargon> (you&apos;ll paste during installation).
-        Think of it like a lock and key: you share the lock, but only you have the key.
+        <span dangerouslySetInnerHTML={{
+          __html: messages.howItWorks.content.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>')
+        }} />
       </AlertCard>
 
       {/* ~/.ssh folder explanation */}
       <AlertCard variant="tip" title={messages.sshLocation.title}>
         <p className="mb-2">
-          SSH keys are stored in a special folder called <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">~/.ssh</code> on your computer.
+          {messages.sshLocation.intro}
         </p>
         <ul className="space-y-1 text-sm">
           <li>
             <strong className="text-foreground">On {os === "mac" ? "Mac" : os === "linux" ? "Linux" : "Windows"}:</strong>{" "}
             {os === "mac" ? (
-              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">/Users/yourname/.ssh/</code>
+              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{messages.sshLocation.locations.mac}</code>
             ) : os === "linux" ? (
-              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">/home/yourname/.ssh/</code>
+              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{messages.sshLocation.locations.linux}</code>
             ) : (
-              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">C:\\Users\\yourname\\.ssh\\</code>
+              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{messages.sshLocation.locations.windows}</code>
             )}
           </li>
           <li className="text-muted-foreground">
-            The <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~</code> symbol is shorthand for your home folder.
+            {messages.sshLocation.tildeNote}
           </li>
           <li className="text-muted-foreground">
-            The <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">.</code> prefix makes it a hidden folder (that&apos;s normal for config files).
+            {messages.sshLocation.dotNote}
           </li>
         </ul>
       </AlertCard>
@@ -209,124 +212,99 @@ export default function GenerateSSHKeyPage() {
       {/* Beginner Guide */}
       <SimplerGuide>
         <div className="space-y-6">
-          <GuideExplain term="an SSH Key">
-            An SSH key is like a special password that lets you securely connect
-            to another computer over the internet.
+          <GuideExplain term={messages.guide.sshKey.term}>
+            {messages.guide.sshKey.intro}
             <br /><br />
-            Unlike regular passwords that you type, SSH keys are files stored on
-            your computer. There are always <strong>two files</strong>:
+            <span dangerouslySetInnerHTML={{
+              __html: messages.guide.sshKey.twoFiles.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            }} />
             <br /><br />
-            <strong>1. Private key:</strong> This is your secret key. It stays on YOUR
-            computer and you never share it with anyone. It&apos;s like the key to
-            your house.
+            <span dangerouslySetInnerHTML={{
+              __html: messages.guide.sshKey.privateKey.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            }} />
             <br /><br />
-            <strong>2. Public key:</strong> This is the one you share. You&apos;ll give
-            this to your VPS provider. It&apos;s like giving someone a copy of your
-            lock so they know it&apos;s really you when you connect.
+            <span dangerouslySetInnerHTML={{
+              __html: messages.guide.sshKey.publicKey.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            }} />
           </GuideExplain>
 
-          <GuideSection title="Detailed Step-by-Step Instructions">
+          <GuideSection title={messages.guide.detailedSteps.title}>
             <div className="space-y-4">
-              <GuideStep number={1} title="Open your terminal">
-                {os === "mac" ? (
-                  <>
-                    Open the terminal app you installed (Ghostty or WezTerm).
-                    You can press <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">⌘</kbd> + <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Space</kbd>,
-                    type the name, and press Enter.
-                  </>
-                ) : os === "linux" ? (
-                  <>
-                    Open your terminal emulator. On most Linux distributions,
-                    press <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Ctrl</kbd> + <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Alt</kbd> + <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">T</kbd>,
-                    or find Terminal in your applications menu.
-                  </>
-                ) : (
-                  <>
-                    Open Windows Terminal. Click Start, type &quot;Terminal&quot;,
-                    and click on Windows Terminal.
-                  </>
-                )}
+              <GuideStep number={1} title={messages.guide.detailedSteps.step1.title}>
+                {os === "mac" ? messages.guide.detailedSteps.step1.mac : os === "linux" ? messages.guide.detailedSteps.step1.linux : messages.guide.detailedSteps.step1.windows}
               </GuideStep>
 
-              <GuideStep number={2} title="Copy the command">
-                Look at the gray box above that shows the ssh-keygen command.
-                Click the <strong>copy button</strong> (it looks like two overlapping squares)
-                on the right side of the box. This copies the command to your clipboard.
+              <GuideStep number={2} title={messages.guide.detailedSteps.step2.title}>
+                <span dangerouslySetInnerHTML={{
+                  __html: messages.guide.detailedSteps.step2.content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                }} />
               </GuideStep>
 
-              <GuideStep number={3} title="Paste and run the command">
-                Click inside the terminal window to make sure it&apos;s active.
-                Then paste the command:
+              <GuideStep number={3} title={messages.guide.detailedSteps.step3.title}>
+                {messages.guide.detailedSteps.step3.intro}
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  <li><strong>Mac:</strong> Press <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">⌘</kbd> + <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">V</kbd></li>
-                  <li><strong>Linux:</strong> Press <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Ctrl</kbd> + <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Shift</kbd> + <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">V</kbd></li>
-                  <li><strong>Windows:</strong> Right-click inside the terminal OR press <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Ctrl</kbd> + <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">V</kbd></li>
+                  <li><strong>Mac:</strong> {messages.guide.detailedSteps.step3.mac}</li>
+                  <li><strong>Linux:</strong> {messages.guide.detailedSteps.step3.linux}</li>
+                  <li><strong>Windows:</strong> {messages.guide.detailedSteps.step3.windows}</li>
                 </ul>
-                <p className="mt-2">Then press <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Enter</kbd> to run it.</p>
+                <p className="mt-2">{messages.guide.detailedSteps.step3.run}</p>
               </GuideStep>
 
-              <GuideStep number={4} title="Answer the prompts">
-                The terminal will ask you a few questions. Here&apos;s exactly what you&apos;ll see:
+              <GuideStep number={4} title={messages.guide.detailedSteps.step4.title}>
+                {messages.guide.detailedSteps.step4.intro}
 
                 <div className="mt-4 space-y-4">
                   <div>
-                    <p className="mb-2 font-medium text-foreground">First: File location</p>
-                    <OutputPreview title="You will see:">
-                      <p className="text-[oklch(0.72_0.19_145)]">Enter file in which to save the key (/Users/you/.ssh/acfs_ed25519):</p>
+                    <p className="mb-2 font-medium text-foreground">{messages.guide.detailedSteps.step4.fileLocation.label}</p>
+                    <OutputPreview title={locale === "uk" ? "Ви побачите:" : "You will see:"}>
+                      <p className="text-[oklch(0.72_0.19_145)]">{messages.guide.detailedSteps.step4.fileLocation.prompt}</p>
                     </OutputPreview>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      <strong className="text-foreground">→ Just press Enter!</strong> The path is already set by our command.
+                      <strong className="text-foreground">{messages.guide.detailedSteps.step4.fileLocation.action}</strong>
                     </p>
                     <div className="mt-2 rounded border border-border/30 bg-muted/20 p-2 text-xs text-muted-foreground">
-                      <strong className="text-foreground">What this means:</strong> The path shown (like{" "}
-                      <code className="rounded bg-muted px-1 py-0.5 font-mono">/Users/you/.ssh/acfs_ed25519</code>) is where your
-                      key files will be saved. The <code className="rounded bg-muted px-1 py-0.5 font-mono">.ssh</code> folder
-                      is a standard location for SSH keys on all computers. Our command already specifies this path, so
-                      just press Enter to confirm it.
+                      {messages.guide.detailedSteps.step4.fileLocation.explanation}
                     </div>
                   </div>
 
                   <div>
-                    <p className="mb-2 font-medium text-foreground">Second: Passphrase</p>
-                    <OutputPreview title="You will see:">
-                      <p className="text-[oklch(0.72_0.19_145)]">Enter passphrase (empty for no passphrase):</p>
+                    <p className="mb-2 font-medium text-foreground">{messages.guide.detailedSteps.step4.passphrase.label}</p>
+                    <OutputPreview title={locale === "uk" ? "Ви побачите:" : "You will see:"}>
+                      <p className="text-[oklch(0.72_0.19_145)]">{messages.guide.detailedSteps.step4.passphrase.prompt}</p>
                     </OutputPreview>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      <strong className="text-foreground">→ Press Enter without typing anything.</strong> Leave it empty.
+                      <strong className="text-foreground">{messages.guide.detailedSteps.step4.passphrase.action}</strong>
                     </p>
                     <div className="mt-2 rounded border border-border/30 bg-muted/20 p-2 text-xs text-muted-foreground">
-                      <strong className="text-foreground">Why no passphrase?</strong> A passphrase would add an extra password
-                      you&apos;d have to type every time you connect. For a development VPS that you control, this extra
-                      security isn&apos;t necessary and would slow you down. Your private key file itself is already secure
-                      because it never leaves your computer.
+                      {messages.guide.detailedSteps.step4.passphrase.explanation}
                     </div>
                   </div>
 
                   <div>
-                    <p className="mb-2 font-medium text-foreground">Third: Confirm passphrase</p>
-                    <OutputPreview title="You will see:">
-                      <p className="text-[oklch(0.72_0.19_145)]">Enter same passphrase again:</p>
+                    <p className="mb-2 font-medium text-foreground">{messages.guide.detailedSteps.step4.confirmPassphrase.label}</p>
+                    <OutputPreview title={locale === "uk" ? "Ви побачите:" : "You will see:"}>
+                      <p className="text-[oklch(0.72_0.19_145)]">{messages.guide.detailedSteps.step4.confirmPassphrase.prompt}</p>
                     </OutputPreview>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      <strong className="text-foreground">→ Press Enter again.</strong> That&apos;s it!
+                      <strong className="text-foreground">{messages.guide.detailedSteps.step4.confirmPassphrase.action}</strong>
                     </p>
                   </div>
                 </div>
 
-                <p className="mt-3 text-xs text-muted-foreground">
-                  <strong>Summary:</strong> Press Enter three times total. The command we provided handles all the important settings.
-                </p>
+                <p className="mt-3 text-xs text-muted-foreground" dangerouslySetInnerHTML={{
+                  __html: messages.guide.detailedSteps.step4.summary.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                }} />
               </GuideStep>
 
-              <GuideStep number={5} title="Success!">
-                When the key is created, you&apos;ll see a confirmation:
+              <GuideStep number={5} title={messages.guide.detailedSteps.step5.title}>
+                {messages.guide.detailedSteps.step5.intro}
                 <div className="mt-3">
-                  <OutputPreview title="You will see something like:">
-                    <p className="text-[oklch(0.72_0.19_145)]">Your identification has been saved in /Users/you/.ssh/acfs_ed25519</p>
-                    <p className="text-[oklch(0.72_0.19_145)]">Your public key has been saved in /Users/you/.ssh/acfs_ed25519.pub</p>
-                    <p className="mt-2 text-muted-foreground">The key fingerprint is:</p>
+                  <OutputPreview title={locale === "uk" ? "Ви побачите щось на кшталт:" : "You will see something like:"}>
+                    <p className="text-[oklch(0.72_0.19_145)]">{messages.guide.detailedSteps.step5.saved}</p>
+                    <p className="text-[oklch(0.72_0.19_145)]">{messages.guide.detailedSteps.step5.publicSaved}</p>
+                    <p className="mt-2 text-muted-foreground">{messages.guide.detailedSteps.step5.fingerprint}</p>
                     <p className="text-muted-foreground">SHA256:xYz123abc... acfs</p>
-                    <p className="mt-2 text-muted-foreground">The key&apos;s randomart image is:</p>
+                    <p className="mt-2 text-muted-foreground">{messages.guide.detailedSteps.step5.randomart}</p>
                     <pre className="text-xs text-muted-foreground">{`+--[ED25519 256]--+
 |     .o+*o.      |
 |    . o.=o+ .    |
@@ -340,102 +318,101 @@ export default function GenerateSSHKeyPage() {
 +----[SHA256]-----+`}</pre>
                   </OutputPreview>
                 </div>
-                <p className="mt-3 text-sm">
-                  <strong className="text-[oklch(0.72_0.19_145)]">The randomart pattern means it worked!</strong> You now have SSH keys.
-                </p>
+                <p className="mt-3 text-sm" dangerouslySetInnerHTML={{
+                  __html: messages.guide.detailedSteps.step5.success.replace(/\*\*(.*?)\*\*/g, '<strong class="text-[oklch(0.72_0.19_145)]">$1</strong>')
+                }} />
               </GuideStep>
             </div>
           </GuideSection>
 
-          <GuideSection title="Verify Your Key Was Created">
-            <p className="mb-4">
-              Let&apos;s make sure your keys were created correctly:
-            </p>
+          <GuideSection title={messages.guide.verify.title}>
+            <p className="mb-4">{messages.guide.verify.intro}</p>
             <div className="space-y-4">
-              <GuideStep number={1} title="Check the files exist">
+              <GuideStep number={1} title={messages.guide.verify.checkFiles.title}>
                 <CommandCard
                   command="ls -la ~/.ssh/acfs_*"
                   windowsCommand="dir $HOME\\.ssh\\acfs_*"
-                  description="List your new key files"
+                  description={messages.guide.verify.checkFiles.description}
                 />
-                <p className="mt-3 text-sm text-muted-foreground">
-                  You should see two files:
-                </p>
+                <p className="mt-3 text-sm text-muted-foreground">{messages.guide.verify.checkFiles.result}</p>
                 <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
                   <li>
                     <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">acfs_ed25519</code>
-                    <span className="text-muted-foreground"> — Your <strong className="text-foreground">private key</strong> (keep this secret!)</span>
+                    <span className="text-muted-foreground" dangerouslySetInnerHTML={{
+                      __html: " — " + messages.guide.verify.checkFiles.privateKey.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>')
+                    }} />
                   </li>
                   <li>
                     <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">acfs_ed25519.pub</code>
-                    <span className="text-muted-foreground"> — Your <strong className="text-foreground">public key</strong> (this gets shared)</span>
+                    <span className="text-muted-foreground" dangerouslySetInnerHTML={{
+                      __html: " — " + messages.guide.verify.checkFiles.publicKey.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>')
+                    }} />
                   </li>
                 </ul>
               </GuideStep>
             </div>
 
             <GuideTip>
-              Think of it like a mailbox: the <strong>public key</strong> is your address
-              (you share it so people can send you mail), and the <strong>private key</strong>
-              is your mailbox key (only you have it to open your mail).
+              <span dangerouslySetInnerHTML={{
+                __html: messages.guide.verify.analogy.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+              }} />
             </GuideTip>
           </GuideSection>
 
-          <GuideSection title="Now Copy Your Public Key">
+          <GuideSection title={messages.guide.copyPublicKey.title}>
             <div className="space-y-4">
-              <GuideStep number={1} title="Run the second command">
-                Now look at the second gray command box (the &quot;cat&quot; or &quot;type&quot; command).
-                Click its copy button and paste it into the terminal, then press Enter.
+              <GuideStep number={1} title={messages.guide.copyPublicKey.step1.title}>
+                {messages.guide.copyPublicKey.step1.content}
               </GuideStep>
 
-              <GuideStep number={2} title="Select and copy the output">
-                You&apos;ll see a long string of text that starts with{" "}
-                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">ssh-ed25519</code>.
-                This is your public key!
+              <GuideStep number={2} title={messages.guide.copyPublicKey.step2.title}>
+                {messages.guide.copyPublicKey.step2.intro}
                 <br /><br />
-                <strong>To copy it:</strong>
+                <span dangerouslySetInnerHTML={{
+                  __html: messages.guide.copyPublicKey.step2.howToCopy.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                }} />
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  <li><strong>Mac:</strong> Triple-click to select the whole line, then <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">⌘</kbd> + <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">C</kbd></li>
-                  <li><strong>Linux:</strong> Triple-click to select the whole line, then <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Ctrl</kbd> + <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">Shift</kbd> + <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">C</kbd></li>
-                  <li><strong>Windows:</strong> Triple-click to select, then right-click to copy</li>
+                  <li><strong>Mac:</strong> {messages.guide.copyPublicKey.step2.mac}</li>
+                  <li><strong>Linux:</strong> {messages.guide.copyPublicKey.step2.linux}</li>
+                  <li><strong>Windows:</strong> {messages.guide.copyPublicKey.step2.windows}</li>
                 </ul>
               </GuideStep>
 
-              <GuideStep number={3} title="Save it somewhere safe">
-                Open a notes app (like Notes on Mac, Notepad on Windows, or any text editor on Linux) and paste your
-                public key there. You&apos;ll need it later when running the installer (not
-                when creating the VPS—we&apos;ll use a password for that).
+              <GuideStep number={3} title={messages.guide.copyPublicKey.step3.title}>
+                {messages.guide.copyPublicKey.step3.content}
               </GuideStep>
             </div>
           </GuideSection>
 
           <GuideTip>
-            Your public key looks something like this:
+            {messages.guide.publicKeyExample.intro}
             <code className="mt-2 block overflow-x-auto rounded bg-muted p-2 font-mono text-xs">
-              ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGx... acfs
+              {messages.guide.publicKeyExample.example}
             </code>
-            Make sure you copy the WHOLE thing, from &quot;ssh-ed25519&quot; to &quot;acfs&quot;!
+            {messages.guide.publicKeyExample.reminder}
           </GuideTip>
 
           <GuideCaution>
-            <strong>Never share your private key!</strong> The private key is the file
-            WITHOUT &quot;.pub&quot; at the end. Only share the public key (the one
-            that ends in &quot;.pub&quot;). If anyone asks for your private key,
-            that&apos;s a scam.
+            <span dangerouslySetInnerHTML={{
+              __html: messages.guide.privateKeyCaution.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            }} />
           </GuideCaution>
 
-          <GuideSection title="What if something went wrong?">
+          <GuideSection title={messages.guide.troubleshootingGuide.title}>
             <p>
-              <strong>&quot;Command not found&quot;:</strong> Make sure you&apos;re in the terminal,
-              not in a web browser or text editor.
+              <span dangerouslySetInnerHTML={{
+                __html: messages.guide.troubleshootingGuide.commandNotFound.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+              }} />
               <br /><br />
-              <strong>&quot;Permission denied&quot;:</strong> Try this command first, then run the
-              ssh-keygen command again:
+              <span dangerouslySetInnerHTML={{
+                __html: messages.guide.troubleshootingGuide.permissionDenied.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+              }} />
               <code className="my-2 block overflow-x-auto rounded bg-muted px-3 py-2 font-mono text-xs">
-                mkdir -p ~/.ssh && chmod 700 ~/.ssh
+                {messages.guide.troubleshootingGuide.permissionFix}
               </code>
-              <strong>&quot;File already exists&quot;:</strong> You already have a key! You can
-              use your existing key, or type &quot;y&quot; and press Enter to overwrite it.
+              <span dangerouslySetInnerHTML={{
+                __html: messages.guide.troubleshootingGuide.fileExists.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+              }} />
             </p>
           </GuideSection>
         </div>
@@ -444,7 +421,7 @@ export default function GenerateSSHKeyPage() {
       {/* Continue button */}
       <div className="flex justify-end pt-4">
         <Button onClick={handleContinue} disabled={isNavigating} size="lg" disableMotion>
-          {isNavigating ? common.buttons.loading : (locale === "uk" ? "Я зберіг публічний ключ" : "I saved my public key")}
+          {isNavigating ? messages.buttons.loading : messages.buttons.continue}
         </Button>
       </div>
     </div>
