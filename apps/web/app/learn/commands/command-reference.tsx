@@ -141,6 +141,7 @@ export function CommandReference() {
                 key={command.name}
                 command={command}
                 categoryLabel={getCategoryLabel(command.category)}
+                cardLabels={messages.card}
               />
             ))
           )}

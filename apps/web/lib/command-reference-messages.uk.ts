@@ -30,4 +30,10 @@ export const commandReferenceMessagesUk = {
     message:
       "Жодна команда не відповідає вашому пошуку. Спробуйте інше ключове слово або змініть категорію.",
   },
+  card: {
+    aliases: "псевдоніми:",
+    copied: "Скопійовано!",
+    copyCommand: "Копіювати команду",
+    fullDocs: "Документація →",
+  },
 };

@@ -16,7 +16,7 @@ export function LanguageSwitcher() {
           disabled
           className="bg-transparent text-sm text-white/60 cursor-pointer border-none focus:ring-0 focus:outline-none"
         >
-          <option>English</option>
+          <option>{LOCALE_NAMES["en"]}</option>
         </select>
       </div>
     );

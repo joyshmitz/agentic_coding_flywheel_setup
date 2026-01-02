@@ -30,4 +30,10 @@ export const commandReferenceMessages = {
     message:
       "No commands match your search yet. Try a different keyword or switch categories.",
   },
+  card: {
+    aliases: "aliases:",
+    copied: "Copied!",
+    copyCommand: "Copy command",
+    fullDocs: "Full docs →",
+  },
 };

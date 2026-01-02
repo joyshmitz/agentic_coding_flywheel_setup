@@ -209,79 +209,6 @@ function FeatureCard({ icon, title, description, gradient, index }: FeatureCardP
   );
 }
 
-const FEATURES = [
-  {
-    icon: <Rocket className="h-6 w-6" />,
-    title: "One-liner Install",
-    description: (
-      <>
-        A single command transforms your <Jargon term="vps">VPS</Jargon>. No manual configuration, no dependency hell.
-      </>
-    ),
-    gradient: "bg-[oklch(0.75_0.18_195)]",
-  },
-  {
-    icon: <Cpu className="h-6 w-6" />,
-    title: "Three AI Agents",
-    description: (
-      <>
-        <Jargon term="claude-code">Claude Code</Jargon>, <Jargon term="codex">Codex CLI</Jargon>, and{" "}
-        <Jargon term="gemini-cli">Gemini CLI</Jargon>, all configured with optimal settings for coding.
-      </>
-    ),
-    gradient: "bg-[oklch(0.7_0.2_330)]",
-  },
-  {
-    icon: <ShieldCheck className="h-6 w-6" />,
-    title: "Idempotent & Safe",
-    description: (
-      <>
-        Re-run anytime. <Jargon term="idempotent">Idempotent</Jargon> phases resume on failure.{" "}
-        <Jargon term="sha256">SHA256</Jargon> verified installers.
-      </>
-    ),
-    gradient: "bg-[oklch(0.72_0.19_145)]",
-  },
-  {
-    icon: <Zap className="h-6 w-6" />,
-    title: "Vibe Mode",
-    description: (
-      <>
-        Passwordless <Jargon term="sudo">sudo</Jargon> with dangerous flags enabled for maximum velocity on throwaway{" "}
-        <Jargon term="vps">VPS</Jargon> environments.
-      </>
-    ),
-    gradient: "bg-[oklch(0.78_0.16_75)]",
-  },
-  {
-    icon: <Terminal className="h-6 w-6" />,
-    title: "Modern Shell",
-    description: (
-      <>
-        <Jargon term="zsh">zsh</Jargon> + <Jargon term="oh-my-zsh">oh-my-zsh</Jargon> +{" "}
-        <Jargon term="powerlevel10k">powerlevel10k</Jargon> with <Jargon term="lsd">lsd</Jargon>,{" "}
-        <Jargon term="atuin">atuin</Jargon>, <Jargon term="fzf">fzf</Jargon>, and{" "}
-        <Jargon term="zoxide">zoxide</Jargon>; developer UX perfected.
-      </>
-    ),
-    gradient: "bg-[oklch(0.65_0.18_290)]",
-  },
-  {
-    icon: <Clock className="h-6 w-6" />,
-    title: "Interactive Tutorial",
-    description: (
-      <>
-        Run &apos;onboard&apos; after setup for guided lessons from <Jargon term="linux">Linux</Jargon> basics to full{" "}
-        <Jargon term="agentic">agentic</Jargon> workflows.{" "}
-        <Link href="/learn/welcome" className="inline-flex items-center gap-1 text-primary hover:underline">
-          Preview lessons <BookOpen className="h-3 w-3" />
-        </Link>
-      </>
-    ),
-    gradient: "bg-[oklch(0.75_0.18_195)]",
-  },
-];
-
 function FeaturesSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
   const { locale } = useLocale();
@@ -439,22 +366,6 @@ function FlywheelSection() {
     </section>
   );
 }
-
-const WORKFLOW_STEPS = [
-  "Choose OS",
-  "Install Terminal",
-  "Generate SSH Key",
-  "Rent VPS",
-  "Create Instance",
-  "SSH Connect",
-  "Set Up Accounts",
-  "Pre-Flight Check",
-  "Run Installer",
-  "Reconnect",
-  "Verify Key",
-  "Status Check",
-  "Launch Onboard",
-];
 
 function WorkflowStepsSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
@@ -618,30 +529,6 @@ function AboutSection() {
 }
 
 // "Why VPS?" Explainer Section
-const WHY_VPS_ITEMS = [
-  {
-    icon: <Laptop className="h-6 w-6 text-white" />,
-    title: "Not Your Laptop",
-    description: "AI agents consume significant RAM and CPU. Running them locally drains your battery and slows everything down.",
-    detail: "Each agent uses ~2GB RAM. With 10+ agents, you need 48-64GB—more than most laptops have.",
-    gradient: "from-amber-400 to-orange-500",
-  },
-  {
-    icon: <Cloud className="h-6 w-6 text-white" />,
-    title: "Not AWS/GCP/Azure",
-    description: "Cloud giants charge by the hour and make billing unpredictable. A dedicated VPS is simpler and cheaper.",
-    detail: "A 64GB VPS costs ~$40-56/month flat. Equivalent cloud resources would cost 3-5x more.",
-    gradient: "from-sky-400 to-blue-500",
-  },
-  {
-    icon: <Moon className="h-6 w-6 text-white" />,
-    title: "Works While You Sleep",
-    description: "Your VPS runs 24/7. Queue up tasks before bed, wake up to completed code.",
-    detail: "AI agents can refactor, test, and iterate autonomously—compounding progress overnight.",
-    gradient: "from-violet-400 to-purple-500",
-  },
-];
-
 function WhyVPSSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
   const { locale } = useLocale();
@@ -722,20 +609,6 @@ function WhyVPSSection() {
 }
 
 // "Is This For You?" Decision Section
-const FOR_YOU_ITEMS = [
-  { text: "You want AI to write real, production code for you", detail: "Full implementations, not just suggestions" },
-  { text: "Sites like Lovable.dev are too limiting for what you want to build", detail: "You need full control and complexity" },
-  { text: "You're willing to invest ~$500/month in AI subscriptions", detail: "Claude Max + ChatGPT Pro + VPS hosting" },
-  { text: "You can follow step-by-step instructions", detail: "No coding experience required, just patience" },
-];
-
-const NOT_FOR_YOU_ITEMS = [
-  { text: "You want a completely free solution", detail: "AI subscriptions have real costs" },
-  { text: "You only want occasional AI help with snippets", detail: "This is for full agentic workflows" },
-  { text: "You're looking for mobile-first development", detail: "This requires a desktop or laptop" },
-  { text: "You need enterprise compliance out of the box", detail: "This is for individual developers" },
-];
-
 function IsThisForYouSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
   const { locale } = useLocale();

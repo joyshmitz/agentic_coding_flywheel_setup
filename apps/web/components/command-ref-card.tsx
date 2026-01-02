@@ -8,12 +8,20 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { CommandRef } from "@/lib/commands";
 
+interface CardLabels {
+  aliases: string;
+  copied: string;
+  copyCommand: string;
+  fullDocs: string;
+}
+
 interface CommandRefCardProps {
   command: CommandRef;
   categoryLabel: string;
+  cardLabels: CardLabels;
 }
 
-export function CommandRefCard({ command, categoryLabel }: CommandRefCardProps) {
+export function CommandRefCard({ command, categoryLabel, cardLabels }: CommandRefCardProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(async () => {
@@ -49,7 +57,7 @@ export function CommandRefCard({ command, categoryLabel }: CommandRefCardProps) 
               </span>
               {command.aliases && command.aliases.length > 0 ? (
                 <span className="text-xs text-muted-foreground">
-                  aliases: {command.aliases.join(", ")}
+                  {cardLabels.aliases} {command.aliases.join(", ")}
                 </span>
               ) : null}
             </div>
@@ -76,7 +84,7 @@ export function CommandRefCard({ command, categoryLabel }: CommandRefCardProps) 
                 "bg-[oklch(0.72_0.19_145/0.1)] text-[oklch(0.72_0.19_145)]"
             )}
             onClick={handleCopy}
-            aria-label={copied ? "Copied!" : "Copy command"}
+            aria-label={copied ? cardLabels.copied : cardLabels.copyCommand}
             disableMotion
           >
             {copied ? (
@@ -96,7 +104,7 @@ export function CommandRefCard({ command, categoryLabel }: CommandRefCardProps) 
               href={command.docsUrl}
               className="text-sm text-primary transition-colors hover:text-primary/80"
             >
-              Full docs →
+              {cardLabels.fullDocs}
             </Link>
           ) : null}
         </div>
