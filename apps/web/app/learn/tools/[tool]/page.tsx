@@ -20,6 +20,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { motion } from "@/components/motion";
+import { useLocale, getToolPageMessages } from "@/lib/i18n";
 
 type ToolId =
   | "claude-code"
@@ -34,27 +35,23 @@ type ToolId =
   | "caam"
   | "slb";
 
-type ToolCard = {
+// Static tool data (icons, colors, URLs - not translated)
+type ToolData = {
   id: ToolId;
   title: string;
-  tagline: string;
   icon: ReactNode;
   gradient: string;
   glowColor: string;
-  /** Primary docs/repo link */
   docsUrl: string;
   docsLabel: string;
-  /** Quick install or start command */
   quickCommand?: string;
-  /** Related tools in ACFS */
   relatedTools: ToolId[];
 };
 
-const TOOLS: Record<ToolId, ToolCard> = {
+const TOOLS: Record<ToolId, ToolData> = {
   "claude-code": {
     id: "claude-code",
     title: "Claude Code",
-    tagline: "Anthropic's AI coding agent - deep reasoning and architecture",
     icon: <Bot className="h-8 w-8" />,
     gradient: "from-orange-500/20 via-amber-500/20 to-orange-500/20",
     glowColor: "rgba(251,146,60,0.4)",
@@ -66,7 +63,6 @@ const TOOLS: Record<ToolId, ToolCard> = {
   "codex-cli": {
     id: "codex-cli",
     title: "Codex CLI",
-    tagline: "OpenAI's coding agent - fast iteration and structured work",
     icon: <GraduationCap className="h-8 w-8" />,
     gradient: "from-emerald-500/20 via-teal-500/20 to-emerald-500/20",
     glowColor: "rgba(52,211,153,0.4)",
@@ -78,7 +74,6 @@ const TOOLS: Record<ToolId, ToolCard> = {
   "gemini-cli": {
     id: "gemini-cli",
     title: "Gemini CLI",
-    tagline: "Google's coding agent - large context exploration",
     icon: <Search className="h-8 w-8" />,
     gradient: "from-blue-500/20 via-indigo-500/20 to-blue-500/20",
     glowColor: "rgba(99,102,241,0.4)",
@@ -90,7 +85,6 @@ const TOOLS: Record<ToolId, ToolCard> = {
   ntm: {
     id: "ntm",
     title: "Named Tmux Manager",
-    tagline: "The agent cockpit - spawn and orchestrate multiple agents",
     icon: <LayoutGrid className="h-8 w-8" />,
     gradient: "from-sky-500/20 via-blue-500/20 to-sky-500/20",
     glowColor: "rgba(56,189,248,0.4)",
@@ -102,7 +96,6 @@ const TOOLS: Record<ToolId, ToolCard> = {
   beads: {
     id: "beads",
     title: "Beads",
-    tagline: "Task graphs + robot triage for dependency-aware work tracking",
     icon: <GitBranch className="h-8 w-8" />,
     gradient: "from-emerald-500/20 via-teal-500/20 to-emerald-500/20",
     glowColor: "rgba(52,211,153,0.4)",
@@ -114,7 +107,6 @@ const TOOLS: Record<ToolId, ToolCard> = {
   "agent-mail": {
     id: "agent-mail",
     title: "MCP Agent Mail",
-    tagline: "Gmail for agents - messaging, threads, and file reservations",
     icon: <KeyRound className="h-8 w-8" />,
     gradient: "from-violet-500/20 via-purple-500/20 to-violet-500/20",
     glowColor: "rgba(139,92,246,0.4)",
@@ -125,7 +117,6 @@ const TOOLS: Record<ToolId, ToolCard> = {
   ubs: {
     id: "ubs",
     title: "Ultimate Bug Scanner",
-    tagline: "Fast polyglot static analysis - your pre-commit quality gate",
     icon: <ShieldCheck className="h-8 w-8" />,
     gradient: "from-rose-500/20 via-red-500/20 to-rose-500/20",
     glowColor: "rgba(244,63,94,0.4)",
@@ -137,7 +128,6 @@ const TOOLS: Record<ToolId, ToolCard> = {
   cass: {
     id: "cass",
     title: "CASS",
-    tagline: "Search across all your agent sessions instantly",
     icon: <Search className="h-8 w-8" />,
     gradient: "from-cyan-500/20 via-sky-500/20 to-cyan-500/20",
     glowColor: "rgba(34,211,238,0.4)",
@@ -149,7 +139,6 @@ const TOOLS: Record<ToolId, ToolCard> = {
   cm: {
     id: "cm",
     title: "CASS Memory",
-    tagline: "Procedural memory - playbooks and lessons from past sessions",
     icon: <Wrench className="h-8 w-8" />,
     gradient: "from-fuchsia-500/20 via-pink-500/20 to-fuchsia-500/20",
     glowColor: "rgba(217,70,239,0.4)",
@@ -161,7 +150,6 @@ const TOOLS: Record<ToolId, ToolCard> = {
   caam: {
     id: "caam",
     title: "CAAM",
-    tagline: "Switch agent credentials safely without account confusion",
     icon: <Wrench className="h-8 w-8" />,
     gradient: "from-amber-500/20 via-orange-500/20 to-amber-500/20",
     glowColor: "rgba(251,146,60,0.4)",
@@ -172,7 +160,6 @@ const TOOLS: Record<ToolId, ToolCard> = {
   slb: {
     id: "slb",
     title: "SLB",
-    tagline: "Two-person rule for dangerous commands - safety first",
     icon: <ShieldCheck className="h-8 w-8" />,
     gradient: "from-yellow-500/20 via-orange-500/20 to-yellow-500/20",
     glowColor: "rgba(251,191,36,0.4)",
@@ -248,10 +235,16 @@ interface Props {
 export default function ToolCardPage({ params }: Props) {
   const { tool } = use(params);
   const doc = TOOLS[tool as ToolId];
+  const { locale } = useLocale();
+  const messages = getToolPageMessages(locale);
 
   if (!doc) {
     notFound();
   }
+
+  // Get translated tagline
+  const toolMessages = messages.tools[tool as ToolId];
+  const tagline = toolMessages?.tagline || "";
 
   return (
     <div className="min-h-screen bg-black relative overflow-x-hidden">
@@ -290,14 +283,14 @@ export default function ToolCardPage({ params }: Props) {
             className="group flex items-center gap-2 text-white/50 transition-colors hover:text-white"
           >
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-            <span className="text-sm font-medium">Learning Hub</span>
+            <span className="text-sm font-medium">{messages.navigation.learningHub}</span>
           </Link>
           <Link
             href="/"
             className="group flex items-center gap-2 text-white/50 transition-colors hover:text-white"
           >
             <Home className="h-4 w-4" />
-            <span className="text-sm font-medium">Home</span>
+            <span className="text-sm font-medium">{messages.navigation.home}</span>
           </Link>
         </motion.div>
 
@@ -357,7 +350,7 @@ export default function ToolCardPage({ params }: Props) {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.5, delay: 0.4 }}
                   >
-                    {doc.tagline}
+                    {tagline}
                   </motion.p>
                 </div>
               </div>
@@ -379,7 +372,7 @@ export default function ToolCardPage({ params }: Props) {
                   }}
                 >
                   <Sparkles className="h-5 w-5 text-primary" />
-                  <span>View Full Documentation on {doc.docsLabel}</span>
+                  <span>{messages.ui.viewDocs} {doc.docsLabel}</span>
                   <ArrowUpRight className="h-5 w-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1" />
                 </a>
               </motion.div>
@@ -395,7 +388,7 @@ export default function ToolCardPage({ params }: Props) {
                   <div className="flex items-center gap-2 mb-3">
                     <Terminal className="h-4 w-4 text-primary" />
                     <span className="text-sm font-semibold text-white/70 uppercase tracking-wider">
-                      Quick Start
+                      {messages.ui.quickStart}
                     </span>
                   </div>
                   <div className="relative group/cmd rounded-xl border border-white/[0.08] bg-black/40 backdrop-blur-sm overflow-hidden">
@@ -404,7 +397,7 @@ export default function ToolCardPage({ params }: Props) {
                       <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
                       <div className="w-3 h-3 rounded-full bg-green-500/70" />
                       <span className="ml-2 text-xs text-white/30">
-                        terminal
+                        {messages.ui.terminal}
                       </span>
                     </div>
                     <div className="p-4 font-mono text-sm">
@@ -416,7 +409,7 @@ export default function ToolCardPage({ params }: Props) {
                     {/* Copy hint */}
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover/cmd:opacity-100 transition-opacity">
                       <span className="text-xs text-white/40">
-                        Click to copy
+                        {messages.ui.clickToCopy}
                       </span>
                     </div>
                   </div>
@@ -433,7 +426,7 @@ export default function ToolCardPage({ params }: Props) {
                   <div className="flex items-center gap-2 mb-4">
                     <LayoutGrid className="h-4 w-4 text-primary" />
                     <span className="text-sm font-semibold text-white/70 uppercase tracking-wider">
-                      Related Tools
+                      {messages.ui.relatedTools}
                     </span>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -465,7 +458,7 @@ export default function ToolCardPage({ params }: Props) {
             href="/learn/commands"
             className="group flex items-center gap-2 text-white/50 transition-colors hover:text-primary"
           >
-            <span className="text-sm">See all commands in the Command Reference</span>
+            <span className="text-sm">{messages.ui.seeAllCommands}</span>
             <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </motion.div>

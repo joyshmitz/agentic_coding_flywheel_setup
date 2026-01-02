@@ -108,5 +108,8 @@ export const learnMessagesUk = {
       previous: "Попередній",
       next: "Наступний",
     },
+    error: {
+      contentNotFound: "Вміст уроку не знайдено для:",
+    },
   },
 };

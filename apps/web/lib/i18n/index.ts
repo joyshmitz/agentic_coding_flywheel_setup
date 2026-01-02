@@ -40,6 +40,7 @@ export {
   getGlossaryUiMessages,
   getSecurityMessages,
   getHomeMessages,
+  getToolPageMessages,
   // Lesson messages
   getWelcomeLessonMessages,
   getLinuxBasicsLessonMessages,

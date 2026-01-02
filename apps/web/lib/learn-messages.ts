@@ -108,5 +108,8 @@ export const learnMessages = {
       previous: "Previous",
       next: "Next",
     },
+    error: {
+      contentNotFound: "Lesson content not found for:",
+    },
   },
 };

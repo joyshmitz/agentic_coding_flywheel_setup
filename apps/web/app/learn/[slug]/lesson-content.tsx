@@ -570,7 +570,7 @@ export function LessonContent({ lesson: initialLesson }: Props) {
                   lessonContent
                 ) : (
                   <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 to-orange-500/10 p-8 text-center">
-                    <p className="text-white/70">Lesson content not found for: {lesson.slug}</p>
+                    <p className="text-white/70">{m.error.contentNotFound} {lesson.slug}</p>
                   </div>
                 )}
               </article>

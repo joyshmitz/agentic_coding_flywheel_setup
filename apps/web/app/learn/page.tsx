@@ -269,7 +269,7 @@ export default function LearnDashboard() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.04] backdrop-blur transition-colors group-hover:bg-white/[0.08]">
               <Home className="h-4 w-4" />
             </div>
-            <span className="hidden text-sm sm:block">Home</span>
+            <span className="hidden text-sm sm:block">{messages.navigation.home}</span>
           </Link>
 
           <div className="flex items-center gap-3 sm:gap-4">
@@ -278,14 +278,14 @@ export default function LearnDashboard() {
               <kbd className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px]">j</kbd>
               /
               <kbd className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px]">k</kbd>
-              {" "}to navigate
+              {" "}{messages.navigation.toNavigate}
             </span>
             <Link
               href="/wizard/os-selection"
               className="group flex items-center gap-2 rounded-lg bg-white/[0.04] px-3 py-2 text-muted-foreground backdrop-blur transition-all hover:bg-white/[0.08] hover:text-foreground"
             >
               <Terminal className="h-4 w-4" />
-              <span className="text-sm">Setup Wizard</span>
+              <span className="text-sm">{messages.navigation.setupWizard}</span>
             </Link>
           </div>
         </motion.header>
@@ -314,11 +314,11 @@ export default function LearnDashboard() {
           </motion.div>
 
           <h1 className="mb-4 bg-gradient-to-b from-white via-white to-white/60 bg-clip-text font-mono text-3xl font-bold tracking-tight text-transparent sm:text-4xl lg:text-5xl">
-            Learning Hub
+            {messages.hero.title}
           </h1>
           <p className="mx-auto max-w-2xl text-base text-muted-foreground/80 sm:text-lg">
-            Master your agentic coding environment with hands-on lessons.
-            <span className="hidden sm:inline"> Start from the basics and progress to advanced workflows.</span>
+            {messages.hero.subtitle}
+            <span className="hidden sm:inline"> {messages.hero.subtitleExtended}</span>
           </p>
         </motion.section>
 
@@ -431,7 +431,7 @@ export default function LearnDashboard() {
                 <Button asChild size="lg" className="group w-full gap-2 sm:w-auto">
                   <Link href={`/learn/${nextLesson.slug}`}>
                     <Zap className="h-4 w-4" />
-                    Continue Learning
+                    {messages.progress.continueButton}
                     <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 </Button>
@@ -447,7 +447,7 @@ export default function LearnDashboard() {
           animate={{ opacity: 1 }}
           transition={prefersReducedMotion ? { duration: 0 } : { ...springs.smooth, delay: 0.3 }}
         >
-          <h2 className="mb-5 text-xl font-semibold lg:mb-6 lg:text-2xl">All Lessons</h2>
+          <h2 className="mb-5 text-xl font-semibold lg:mb-6 lg:text-2xl">{messages.sections.allLessons}</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
             {localizedLessons.map((lesson, index) => {
               const status = getLessonStatus(lesson.id, completedLessons);
@@ -478,35 +478,35 @@ export default function LearnDashboard() {
             {/* Subtle gradient */}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/[0.03] via-transparent to-transparent" />
 
-            <h2 className="relative mb-5 text-lg font-semibold lg:mb-6 lg:text-xl">Quick Reference</h2>
+            <h2 className="relative mb-5 text-lg font-semibold lg:mb-6 lg:text-xl">{messages.sections.quickReference}</h2>
             <div className="relative grid gap-3 sm:grid-cols-2 sm:gap-4">
               {[
                 {
                   href: "/learn/agent-commands",
                   icon: Terminal,
-                  title: "Agent Commands",
-                  desc: "Claude, Codex, Gemini shortcuts",
+                  title: messages.quickRef.agentCommands.title,
+                  desc: messages.quickRef.agentCommands.description,
                   gradient: "from-violet-500/10 to-violet-500/5",
                 },
                 {
                   href: "/learn/ntm-palette",
                   icon: BookOpen,
-                  title: "NTM Commands",
-                  desc: "Session management reference",
+                  title: messages.quickRef.ntmCommands.title,
+                  desc: messages.quickRef.ntmCommands.description,
                   gradient: "from-blue-500/10 to-blue-500/5",
                 },
                 {
                   href: "/learn/commands",
                   icon: List,
-                  title: "Command Reference",
-                  desc: "Searchable list of key commands",
+                  title: messages.quickRef.commandReference.title,
+                  desc: messages.quickRef.commandReference.description,
                   gradient: "from-emerald-500/10 to-emerald-500/5",
                 },
                 {
                   href: "/learn/glossary",
                   icon: Book,
-                  title: "Glossary",
-                  desc: "Definitions for all jargon terms",
+                  title: messages.quickRef.glossary.title,
+                  desc: messages.quickRef.glossary.description,
                   gradient: "from-amber-500/10 to-amber-500/5",
                 },
               ].map((item, index) => (
@@ -546,9 +546,9 @@ export default function LearnDashboard() {
           transition={prefersReducedMotion ? { duration: 0 } : { ...springs.smooth, delay: 0.8 }}
         >
           <p>
-            Need to set up your VPS first?{" "}
+            {messages.footer.needSetup}{" "}
             <Link href="/wizard/os-selection" className="text-primary transition-colors hover:text-primary/80 hover:underline">
-              Start the setup wizard →
+              {messages.footer.startWizard} →
             </Link>
           </p>
         </motion.footer>
@@ -567,12 +567,12 @@ export default function LearnDashboard() {
 
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs text-muted-foreground/60">Up next</p>
+              <p className="truncate text-xs text-muted-foreground/60">{messages.mobile.upNext}</p>
               <p className="truncate text-sm font-medium">{nextLessonLocalized.title}</p>
             </div>
             <Button asChild size="lg" className="shrink-0 gap-1.5">
               <Link href={`/learn/${nextLessonLocalized.slug}`}>
-                Continue
+                {messages.mobile.continue}
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </Button>

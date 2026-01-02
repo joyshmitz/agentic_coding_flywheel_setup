@@ -296,6 +296,8 @@ import { securityMessages, type ChecklistItem } from "../security-messages";
 import { securityMessagesUk } from "../security-messages.uk";
 import { homeMessages } from "../home-messages";
 import { homeMessagesUk } from "../home-messages.uk";
+import { toolPageMessages } from "../tool-page-messages";
+import { toolPageMessagesUk } from "../tool-page-messages.uk";
 
 // Re-export type for consumers
 export type { ChecklistItem };
@@ -354,6 +356,13 @@ export function getSecurityMessages(locale: Locale) {
  */
 export function getHomeMessages(locale: Locale) {
   return locale === "uk" ? homeMessagesUk : homeMessages;
+}
+
+/**
+ * Get tool page messages for the specified locale
+ */
+export function getToolPageMessages(locale: Locale) {
+  return locale === "uk" ? toolPageMessagesUk : toolPageMessages;
 }
 
 /**
