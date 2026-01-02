@@ -96,13 +96,14 @@ export default function WizardLayout({
         <aside className="sticky top-0 hidden h-screen w-72 shrink-0 border-r border-border/50 bg-sidebar/80 backdrop-blur-sm md:block">
           <div className="flex h-full flex-col">
             {/* Logo */}
-            <div className="flex items-center gap-3 border-b border-border/50 px-6 py-5">
+            <div className="flex items-center justify-between border-b border-border/50 px-6 py-5">
               <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-80">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20">
                   <Terminal className="h-4 w-4 text-primary" />
                 </div>
                 <span className="font-mono text-sm font-bold tracking-tight">Agent Flywheel</span>
               </Link>
+              <LanguageSwitcher />
             </div>
 
             {/* Progress indicator */}
@@ -125,10 +126,7 @@ export default function WizardLayout({
             </div>
 
             {/* Sidebar footer */}
-            <div className="border-t border-border/50 p-4 space-y-2">
-              <div className="flex justify-center">
-                <LanguageSwitcher />
-              </div>
+            <div className="border-t border-border/50 p-4">
               <Button
                 asChild
                 variant="ghost"
