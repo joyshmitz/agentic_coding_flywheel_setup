@@ -38,7 +38,10 @@ import {
   type ServiceTier,
 } from "@/lib/services";
 import { TrackedLink } from "@/components/tracked-link";
-import { useLocale, getAccountsMessages, getCommonMessages } from "@/lib/i18n";
+import { useLocale, getAccountsMessages, getCommonMessages, type Locale } from "@/lib/i18n";
+
+// Type for messages
+type Messages = ReturnType<typeof getAccountsMessages>;
 
 const TIER_META: Record<
   ServiceTier,
@@ -81,10 +84,12 @@ interface ServiceCardProps {
   service: Service;
   isChecked: boolean;
   onToggle: () => void;
+  messages: Messages;
 }
 
-function ServiceCard({ service, isChecked, onToggle }: ServiceCardProps) {
+function ServiceCard({ service, isChecked, onToggle, messages }: ServiceCardProps) {
   const checkboxId = `service-${service.id}`;
+  const sc = messages.serviceCard;
 
   return (
     <div
@@ -105,7 +110,7 @@ function ServiceCard({ service, isChecked, onToggle }: ServiceCardProps) {
             htmlFor={checkboxId}
             className="text-[10px] text-muted-foreground"
           >
-            Authenticated
+            {sc.authenticated}
           </label>
         </div>
         <div className="min-w-0 flex-1 space-y-2">
@@ -119,10 +124,10 @@ function ServiceCard({ service, isChecked, onToggle }: ServiceCardProps) {
             {service.requiresSubscription && (
               <div
                 className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-medium text-amber-500"
-                title={service.subscriptionNote ?? "Paid plan required"}
+                title={service.subscriptionNote ?? sc.paidPlanRequired}
               >
                 <DollarSign className="h-3 w-3" />
-                {service.subscriptionNote ?? "Paid plan required"}
+                {service.subscriptionNote ?? sc.paidPlanRequired}
               </div>
             )}
           </div>
@@ -131,7 +136,7 @@ function ServiceCard({ service, isChecked, onToggle }: ServiceCardProps) {
           </p>
           {service.requiresSubscription && (
             <p className="text-xs text-amber-600/80">
-              Paid plan needed to actually use this service on your VPS.
+              {sc.paidPlanNote}
             </p>
           )}
           <p className="text-xs text-muted-foreground/80">
@@ -145,7 +150,7 @@ function ServiceCard({ service, isChecked, onToggle }: ServiceCardProps) {
                 className="inline-flex items-center gap-1.5 rounded-lg border border-[oklch(0.72_0.19_145/0.3)] bg-[oklch(0.72_0.19_145/0.1)] px-2.5 py-1.5 text-xs font-medium text-[oklch(0.72_0.19_145)] transition-colors hover:bg-[oklch(0.72_0.19_145/0.2)]"
               >
                 <Sparkles className="h-3 w-3" />
-                Sign up with Google
+                {sc.signUpWithGoogle}
                 <ExternalLink className="h-2.5 w-2.5" />
               </TrackedLink>
             )}
@@ -154,7 +159,7 @@ function ServiceCard({ service, isChecked, onToggle }: ServiceCardProps) {
               trackingId={`service-signup-${service.id}`}
               className="inline-flex items-center gap-1 rounded-lg border border-border/50 bg-card/50 px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground"
             >
-              {service.supportsGoogleSso ? "Other signup options" : "Sign up"}
+              {service.supportsGoogleSso ? sc.otherSignupOptions : sc.signUp}
               <ExternalLink className="h-2.5 w-2.5" />
             </TrackedLink>
             <TrackedLink
@@ -162,7 +167,7 @@ function ServiceCard({ service, isChecked, onToggle }: ServiceCardProps) {
               trackingId={`service-docs-${service.id}`}
               className="inline-flex items-center gap-1 px-1.5 py-1.5 text-xs text-muted-foreground hover:text-foreground"
             >
-              Docs
+              {sc.docs}
               <ExternalLink className="h-2.5 w-2.5" />
             </TrackedLink>
           </div>
@@ -171,7 +176,7 @@ function ServiceCard({ service, isChecked, onToggle }: ServiceCardProps) {
             <div className="flex items-center gap-2 pt-2 text-xs text-muted-foreground/70">
               <Terminal className="h-3 w-3 shrink-0" />
               <span>
-                After install:{" "}
+                {sc.afterInstall}{" "}
                 <code className="rounded bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                   {service.postInstallCommand}
                 </code>
@@ -192,6 +197,7 @@ interface TierSectionProps {
   services: Service[];
   checkedServices: Set<string>;
   onToggleService: (serviceId: string) => void;
+  messages: Messages;
 }
 
 function TierSection({
@@ -199,12 +205,14 @@ function TierSection({
   services,
   checkedServices,
   onToggleService,
+  messages,
 }: TierSectionProps) {
   const [isOpen, setIsOpen] = useState(TIER_META[tier].defaultOpen);
   const checkedCount = services.filter((service) =>
     checkedServices.has(service.id)
   ).length;
   const meta = TIER_META[tier];
+  const tierMessages = messages.tierMeta[tier];
 
   if (services.length === 0) return null;
 
@@ -224,12 +232,12 @@ function TierSection({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-semibold">{meta.title}</h2>
+              <h2 className="text-lg font-semibold">{tierMessages.title}</h2>
               <span className="text-xs text-muted-foreground">
                 {checkedCount}/{services.length}
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">{meta.description}</p>
+            <p className="text-sm text-muted-foreground">{tierMessages.description}</p>
           </div>
         </div>
         <ChevronDown
@@ -246,6 +254,7 @@ function TierSection({
               service={service}
               isChecked={checkedServices.has(service.id)}
               onToggle={() => onToggleService(service.id)}
+              messages={messages}
             />
           ))}
         </div>
@@ -332,30 +341,30 @@ export default function AccountsPage() {
       </div>
 
       {/* Cost warning - prominent placement for subscription services */}
-      <AlertCard variant="warning" icon={DollarSign} title="Subscription costs ahead">
-        Some AI coding agents require expensive subscriptions to use after installation:
+      <AlertCard variant="warning" icon={DollarSign} title={messages.alerts.subscriptionCosts.title}>
+        {messages.alerts.subscriptionCosts.intro}
         <ul className="mt-2 list-inside list-disc space-y-1 text-sm">
-          <li><strong>Claude Code</strong>: Requires Claude Max ($200/mo)</li>
-          <li><strong>Codex CLI</strong>: Requires ChatGPT Pro ($200/mo)</li>
-          <li><strong>Gemini CLI</strong>: Requires Gemini Advanced (~$20/mo)</li>
+          <li><span dangerouslySetInnerHTML={{ __html: messages.alerts.subscriptionCosts.claudeCode.replace(/^([^:]+):/, '<strong>$1</strong>:') }} /></li>
+          <li><span dangerouslySetInnerHTML={{ __html: messages.alerts.subscriptionCosts.codexCli.replace(/^([^:]+):/, '<strong>$1</strong>:') }} /></li>
+          <li><span dangerouslySetInnerHTML={{ __html: messages.alerts.subscriptionCosts.geminiCli.replace(/^([^:]+):/, '<strong>$1</strong>:') }} /></li>
         </ul>
         <p className="mt-2 text-sm">
-          <strong>You don&apos;t need all of them!</strong> Start with one agent (Claude Code is recommended)
-          and add others later if you want different AI perspectives.
+          <span dangerouslySetInnerHTML={{ __html: messages.alerts.subscriptionCosts.dontNeedAll.replace(/^([^!]+!)/, '<strong>$1</strong>') }} />
         </p>
       </AlertCard>
 
       {/* Google SSO tip - uses getGoogleSsoServices() to show count */}
-      <AlertCard variant="tip" icon={Sparkles} title="Quick signup with Google">
-        {getGoogleSsoServices().length} of {SERVICES.length} services support Google SSO.
-        Use the same Google account for all of them to streamline your setup.
+      <AlertCard variant="tip" icon={Sparkles} title={messages.alerts.googleSso.title}>
+        {messages.alerts.googleSso.content
+          .replace('{count}', String(getGoogleSsoServices().length))
+          .replace('{total}', String(SERVICES.length))}
       </AlertCard>
 
       {/* Progress indicator */}
       <div className="rounded-xl border border-border/50 bg-card/50 p-4">
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted-foreground">
-            Essential accounts:
+            {messages.progress.essentialAccounts}
           </span>
           <span className="font-medium">
             {essentialChecked.length} / {essentialServices.length}
@@ -384,6 +393,7 @@ export default function AccountsPage() {
             services={tieredServices[tier]}
             checkedServices={checkedServices}
             onToggleService={handleToggle}
+            messages={messages}
           />
         ))}
       </div>
@@ -391,59 +401,50 @@ export default function AccountsPage() {
       {/* Beginner Guide */}
       <SimplerGuide>
         <div className="space-y-6">
-          <GuideExplain term="Why do I need all these accounts?">
-            You don&apos;t need all of them right now! We&apos;ve organized them into three tiers:
+          <GuideExplain term={messages.guide.whyAccounts.term}>
+            {messages.guide.whyAccounts.content}
             <br />
             <br />
-            <strong>Essential (do now):</strong> GitHub for code backup and Claude Code
-            for AI assistance. These two are all you need to start.
+            <span dangerouslySetInnerHTML={{ __html: messages.guide.whyAccounts.essential.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
             <br />
             <br />
-            <strong>Recommended (after first project):</strong> Add Codex CLI and Gemini CLI
-            for more AI options with different perspectives.
+            <span dangerouslySetInnerHTML={{ __html: messages.guide.whyAccounts.recommended.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
             <br />
             <br />
-            <strong>Optional (when you need them):</strong> Cloud platforms for deployment,
-            databases, and VPN access. Set these up when your project needs them.
+            <span dangerouslySetInnerHTML={{ __html: messages.guide.whyAccounts.optional.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
           </GuideExplain>
 
-          <GuideSection title="How to Sign Up Efficiently">
+          <GuideSection title={messages.guide.howToSignUp.title}>
             <div className="space-y-4">
-              <GuideStep number={1} title="Use Google SSO when available">
-                Click the green &quot;Sign up with Google&quot; button. This is
-                fastest and you won&apos;t need to remember extra passwords.
+              <GuideStep number={1} title={messages.guide.howToSignUp.step1.title}>
+                {messages.guide.howToSignUp.step1.content}
               </GuideStep>
 
-              <GuideStep number={2} title="Check the box after signing up">
-                After you create each account, check the box next to it. This
-                helps you track your progress.
+              <GuideStep number={2} title={messages.guide.howToSignUp.step2.title}>
+                {messages.guide.howToSignUp.step2.content}
               </GuideStep>
 
-              <GuideStep number={3} title="Focus on the Essential tier first">
-                Knock out the two essential accounts. You can leave recommended
-                and optional services for later.
+              <GuideStep number={3} title={messages.guide.howToSignUp.step3.title}>
+                {messages.guide.howToSignUp.step3.content}
               </GuideStep>
 
-              <GuideStep number={4} title="You can come back later">
-                Don&apos;t want to create all accounts now? That&apos;s fine!
-                Click &quot;Skip for now&quot; and create them after installation.
+              <GuideStep number={4} title={messages.guide.howToSignUp.step4.title}>
+                {messages.guide.howToSignUp.step4.content}
               </GuideStep>
             </div>
           </GuideSection>
 
           <GuideTip>
-            <strong>Pro tip:</strong> Open each signup link in a new tab
-            (Cmd+click on Mac, Ctrl+click on Linux/Windows). That way you can create
-            multiple accounts quickly without losing your place here.
+            <span dangerouslySetInnerHTML={{ __html: messages.guide.tip.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
           </GuideTip>
 
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
             <Link href="/learn/agent-commands" className="flex items-center gap-3 text-sm">
               <BookOpen className="h-5 w-5 text-primary" />
               <div>
-                <span className="font-medium text-foreground">Need help with agent logins?</span>
+                <span className="font-medium text-foreground">{messages.guide.learnMore.title}</span>
                 <p className="text-muted-foreground">
-                  See the Agent Commands lesson for auth tips and shortcuts →
+                  {messages.guide.learnMore.content}
                 </p>
               </div>
             </Link>
@@ -454,10 +455,8 @@ export default function AccountsPage() {
       {/* Skip reassurance note */}
       <div className="rounded-xl border border-muted bg-muted/30 p-4">
         <p className="text-sm text-muted-foreground">
-          <strong className="text-foreground">Don&apos;t want to create accounts now?</strong>{" "}
-          That&apos;s completely fine! You can skip this step and create accounts after
-          installation. The ACFS installer will still install all the tools—you&apos;ll
-          just need to authenticate them later when you&apos;re ready to use them.
+          <strong className="text-foreground">{messages.skipNote.title}</strong>{" "}
+          {messages.skipNote.content}
         </p>
       </div>
 

@@ -21,7 +21,10 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
-import { useLocale, getCreateVpsMessages, getCommonMessages } from "@/lib/i18n";
+import { useLocale, getCreateVpsMessages, getCommonMessages, type Locale } from "@/lib/i18n";
+
+// Type for messages
+type Messages = ReturnType<typeof getCreateVpsMessages>;
 
 type ScreenshotSpec = {
   file: string;
@@ -373,116 +376,107 @@ export default function CreateVPSPage() {
         {/* Beginner Guide */}
         <SimplerGuide>
           <div className="space-y-6">
-            <GuideExplain term="an IP Address">
-              An IP address is like a phone number for computers. It&apos;s a series
-              of numbers (like 192.168.1.100) that identifies your VPS on the internet.
+            <GuideExplain term={messages.guide.ipAddress.term}>
+              {messages.guide.ipAddress.content}
               <br /><br />
-              You&apos;ll need this address to connect to your VPS from your computer.
-              It&apos;s like knowing someone&apos;s phone number so you can call them.
+              {messages.guide.ipAddress.purpose}
             </GuideExplain>
 
             <GuideTip>
-              <strong>Why password first?</strong> Adding SSH keys in the provider website is
-              confusing and easy to mess up. Instead, we connect once with a password, then
-              the installer sets up your SSH key the right way.
+              <strong>{messages.guide.whyPassword.title}</strong> {messages.guide.whyPassword.content}
             </GuideTip>
 
-            <GuideSection title="Detailed Steps for Creating Your VPS">
+            <GuideSection title={messages.guide.detailedSteps.title}>
               <div className="space-y-4">
-                <GuideStep number={1} title="Log into your VPS provider">
-                  Go to the website where you created your account (OVH or Contabo)
-                  and sign in with the email and password you created earlier.
+                <GuideStep number={1} title={messages.guide.detailedSteps.step1.title}>
+                  {messages.guide.detailedSteps.step1.content}
                 </GuideStep>
 
-                <GuideStep number={2} title="Find the 'Create Server' or 'Add VPS' button">
-                  Look for a button that says something like:
+                <GuideStep number={2} title={messages.guide.detailedSteps.step2.title}>
+                  {locale === "uk" ? "Шукайте кнопку:" : "Look for a button that says something like:"}
                   <ul className="mt-2 list-disc space-y-1 pl-5">
-                    <li><strong>OVH:</strong> Click &quot;Create an instance&quot; or &quot;Order&quot;</li>
-                    <li><strong>Contabo:</strong> Go to &quot;Your services&quot; → click the VPS you ordered</li>
+                    <li><span dangerouslySetInnerHTML={{ __html: messages.guide.detailedSteps.step2.ovh.replace(/^([^:]+:)/, '<strong>$1</strong>') }} /></li>
+                    <li><span dangerouslySetInnerHTML={{ __html: messages.guide.detailedSteps.step2.contabo.replace(/^([^:]+:)/, '<strong>$1</strong>') }} /></li>
                   </ul>
                 </GuideStep>
 
-                <GuideStep number={3} title="Choose your server location">
-                  Pick a data center close to you for faster speeds. The closer the server,
-                  the faster your typing appears and AI responses stream back. This matters
-                  because you&apos;ll be interacting with your VPS constantly.
+                <GuideStep number={3} title={messages.guide.detailedSteps.step3.title}>
+                  {messages.guide.detailedSteps.step3.content}
                   <ul className="mt-2 list-disc space-y-1 pl-5">
-                    <li><strong>USA West Coast:</strong> Pick US-West, Los Angeles, or Seattle</li>
-                    <li><strong>USA East Coast:</strong> Pick US-East, Virginia, or New York</li>
-                    <li><strong>Europe:</strong> Pick Germany (Nuremberg/Frankfurt), France, or Finland</li>
-                    <li><strong>Asia-Pacific:</strong> Pick Singapore, Sydney, or Tokyo</li>
-                    <li><strong>If unsure:</strong> Just pick one! Any region works, and the difference is small.</li>
+                    <li><strong>{locale === "uk" ? "США Західне узбережжя:" : "USA West Coast:"}</strong> {locale === "uk" ? "Оберіть US-West, Лос-Анджелес або Сієтл" : "Pick US-West, Los Angeles, or Seattle"}</li>
+                    <li><strong>{locale === "uk" ? "США Східне узбережжя:" : "USA East Coast:"}</strong> {locale === "uk" ? "Оберіть US-East, Вірджинія або Нью-Йорк" : "Pick US-East, Virginia, or New York"}</li>
+                    <li><strong>{locale === "uk" ? "Європа:" : "Europe:"}</strong> {locale === "uk" ? "Оберіть Німеччину, Францію або Фінляндію" : "Pick Germany (Nuremberg/Frankfurt), France, or Finland"}</li>
+                    <li><strong>{locale === "uk" ? "Азія-Тихий океан:" : "Asia-Pacific:"}</strong> {locale === "uk" ? "Оберіть Сінгапур, Сідней або Токіо" : "Pick Singapore, Sydney, or Tokyo"}</li>
+                    <li><strong>{locale === "uk" ? "Не впевнені:" : "If unsure:"}</strong> {locale === "uk" ? "Просто оберіть один! Будь-який регіон працює, різниця невелика." : "Just pick one! Any region works, and the difference is small."}</li>
                   </ul>
                 </GuideStep>
 
-                <GuideStep number={4} title="Select Ubuntu as the operating system">
-                  You&apos;ll see a list of &quot;images&quot; or &quot;operating systems&quot;.
+                <GuideStep number={4} title={messages.guide.detailedSteps.step4.title}>
+                  {messages.guide.detailedSteps.step4.content}
                   <br /><br />
-                  <strong>Look for:</strong> Ubuntu 25.10 (or newest available)
+                  <strong>{messages.guide.detailedSteps.step4.lookFor}</strong>
                   <br />
                   <em className="text-xs">
-                    If only Ubuntu 24.04 LTS is offered, that&apos;s fine. The installer
-                    automatically upgrades to 25.10 before ACFS installs.
+                    {messages.guide.detailedSteps.step4.fallback}
                   </em>
                 </GuideStep>
 
-                <GuideStep number={5} title="Set a root password">
-                  Look for a section called &quot;Authentication&quot; or &quot;Password&quot;.
+                <GuideStep number={5} title={messages.guide.detailedSteps.step5.title}>
+                  {locale === "uk" ? "Шукайте секцію \"Authentication\" або \"Password\"." : "Look for a section called \"Authentication\" or \"Password\"."}
                   <ul className="mt-2 list-disc space-y-1 pl-5">
-                    <li>If asked about SSH keys, <strong>skip that section</strong></li>
-                    <li>Choose &quot;Password&quot; authentication</li>
-                    <li>Set a strong root password</li>
-                    <li><strong>Save this password!</strong> You&apos;ll need it once to connect</li>
+                    <li>{messages.guide.detailedSteps.step5.skipSsh}</li>
+                    <li>{messages.guide.detailedSteps.step5.choosePassword}</li>
+                    <li>{messages.guide.detailedSteps.step5.setPassword}</li>
+                    <li><strong>{messages.guide.detailedSteps.step5.saveIt}</strong></li>
                   </ul>
                   <p className="mt-2 text-xs italic">
-                    Some providers email you a password instead - that&apos;s fine too!
+                    {messages.guide.detailedSteps.step5.emailNote}
                   </p>
                 </GuideStep>
 
-                <GuideStep number={6} title="Choose your plan size">
-                  Look for a plan with:
+                <GuideStep number={6} title={messages.guide.detailedSteps.step6.title}>
+                  {locale === "uk" ? "Шукайте план з:" : "Look for a plan with:"}
                   <ul className="mt-2 list-disc space-y-1 pl-5">
-                    <li>12-16 vCPU (virtual CPUs)</li>
-                    <li>48-64 GB RAM (each AI agent uses ~2GB, you want to run 10+)</li>
+                    <li>12-16 vCPU {locale === "uk" ? "(віртуальні CPU)" : "(virtual CPUs)"}</li>
+                    <li>48-64 GB RAM {locale === "uk" ? "(кожен AI-агент використовує ~2GB, ви хочете запускати 10+)" : "(each AI agent uses ~2GB, you want to run 10+)"}</li>
                     <li>250GB+ NVMe storage</li>
-                    <li>Cost: ~$40-56/month for 64GB (worth it!)</li>
+                    <li>{locale === "uk" ? "Ціна: ~$40-56/міс за 64GB (варто!)" : "Cost: ~$40-56/month for 64GB (worth it!)"}</li>
                   </ul>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    64GB is strongly recommended. You&apos;re investing $400+/month in AI subscriptions,
-                    so don&apos;t bottleneck that with insufficient RAM.
+                    {messages.guide.detailedSteps.step6.recommendation}
                   </p>
                 </GuideStep>
 
-                <GuideStep number={7} title="Create and wait">
-                  Click the &quot;Create&quot;, &quot;Deploy&quot;, or &quot;Order&quot; button.
+                <GuideStep number={7} title={messages.guide.detailedSteps.step7.title}>
+                  {messages.guide.detailedSteps.step7.content}
                   <br /><br />
-                  Your VPS will take 1-5 minutes to start up. You&apos;ll see a status like
-                  &quot;Running&quot; or a green indicator when it&apos;s ready.
+                  {messages.guide.detailedSteps.step7.waitTime}
                 </GuideStep>
 
-                <GuideStep number={8} title="Find and copy the IP address">
-                  Once your VPS is running, look for the IP address. It&apos;s usually shown:
+                <GuideStep number={8} title={messages.guide.detailedSteps.step8.title}>
+                  {messages.guide.detailedSteps.step8.content}
                   <ul className="mt-2 list-disc space-y-1 pl-5">
-                    <li>On the main server overview page</li>
-                    <li>In a &quot;Network&quot; or &quot;IP Addresses&quot; section</li>
-                    <li>It looks like: <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">123.45.67.89</code></li>
+                    {messages.guide.detailedSteps.step8.locations.map((loc, i) => (
+                      <li key={i}>{loc}</li>
+                    ))}
+                    <li>{messages.guide.detailedSteps.step8.example.replace(/123\.45\.67\.89/, '')} <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">123.45.67.89</code></li>
                   </ul>
                   <br />
-                  <strong>Copy this number</strong> and paste it in the box below!
+                  <strong>{messages.guide.detailedSteps.step8.action}</strong>
                 </GuideStep>
               </div>
             </GuideSection>
 
             <GuideTip>
-              The IP address should be 4 groups of numbers separated by periods,
-              like <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">192.168.1.100</code>.
-              Don&apos;t include any letters or extra characters!
+              <span dangerouslySetInnerHTML={{
+                __html: messages.guide.ipTip.replace(/192\.168\.1\.100/, '<code class="rounded bg-muted px-1 py-0.5 font-mono text-xs">192.168.1.100</code>')
+              }} />
             </GuideTip>
 
             <GuideCaution>
-              <strong>Save your password!</strong> You&apos;ll need it once to connect
-              for the first time. After that, the installer will set up SSH key access
-              so you won&apos;t need the password anymore.
+              <span dangerouslySetInnerHTML={{
+                __html: messages.guide.passwordCaution.replace(/^([^!]+!)/, '<strong>$1</strong>')
+              }} />
             </GuideCaution>
           </div>
         </SimplerGuide>

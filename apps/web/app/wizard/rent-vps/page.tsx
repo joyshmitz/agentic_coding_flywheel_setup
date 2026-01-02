@@ -20,7 +20,10 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { Jargon } from "@/components/jargon";
-import { useLocale, getRentVpsMessages, getCommonMessages } from "@/lib/i18n";
+import { useLocale, getRentVpsMessages, getCommonMessages, type Locale } from "@/lib/i18n";
+
+// Type for messages
+type Messages = ReturnType<typeof getRentVpsMessages>;
 
 interface ProviderInfo {
   id: string;
@@ -313,330 +316,314 @@ export default function RentVPSPage() {
       {/* Beginner Guide */}
       <SimplerGuide>
         <div className="space-y-6">
-          <GuideExplain term="a VPS (Virtual Private Server)">
-            A dedicated server in a data center that runs 24/7, even when your laptop is closed.
-            You get root access and full control.
+          <GuideExplain term={messages.guide.vpsExplanation.term}>
+            {messages.guide.vpsExplanation.content}
             <br /><br />
-            <strong>Why do you need one?</strong>
+            <strong>{messages.guide.vpsExplanation.whyNeeded}</strong>
             <br />
-            AI coding assistants work best on a dedicated server that&apos;s always on.
-            Running them on your laptop would drain your battery and slow everything down.
-            With a VPS, your AI assistants can work even when you&apos;re asleep.
+            {messages.guide.vpsExplanation.whyContent}
           </GuideExplain>
 
-          <GuideSection title="Why 64GB RAM?">
+          <GuideSection title={messages.guide.whyRam.title}>
             <div className="rounded-lg border border-[oklch(0.78_0.16_75/0.3)] bg-[oklch(0.78_0.16_75/0.08)] p-4 mb-4">
-              <p className="font-medium text-foreground mb-2">⚡ This matters a lot!</p>
+              <p className="font-medium text-foreground mb-2">{messages.guide.whyRam.highlight}</p>
               <p className="text-sm text-muted-foreground">
-                Each AI coding agent (like Claude Code) uses about 2GB of RAM when running.
-                To get the full power of this approach, you&apos;ll want to run 10-20+ agents
-                simultaneously. That&apos;s 20-40GB just for the agents, plus room for your
-                development tools and databases.
+                {messages.guide.whyRam.description}
               </p>
             </div>
             <ul className="space-y-2 text-sm">
               <li>
-                <strong>32GB RAM:</strong> Absolute minimum. Can run 5-8 agents. Not recommended.
+                <span dangerouslySetInnerHTML={{
+                  __html: messages.guide.whyRam.options.ram32.replace(/^([^:]+:)/, '<strong>$1</strong>')
+                }} />
               </li>
               <li>
-                <strong>48GB RAM:</strong> Workable but tight. Run 10+ agents. (~$26-36/month)
+                <span dangerouslySetInnerHTML={{
+                  __html: messages.guide.whyRam.options.ram48.replace(/^([^:]+:)/, '<strong>$1</strong>')
+                }} />
               </li>
               <li>
-                <strong>64GB RAM:</strong> Just get this. Run 20+ agents with headroom. (~$40-56/month)
+                <span dangerouslySetInnerHTML={{
+                  __html: messages.guide.whyRam.options.ram64.replace(/^([^:]+:)/, '<strong>$1</strong>')
+                }} />
               </li>
             </ul>
             <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-3">
               <p className="text-sm text-muted-foreground">
-                <strong>Just get 64GB.</strong> You&apos;re spending $400+/month on AI subscriptions, so the
-                extra $14-20/month for 64GB vs 48GB is noise. Don&apos;t bottleneck a $400+/month
-                investment to save $20. The headroom matters when you&apos;re running 15+ agents
-                plus databases, build tools, and language servers.
+                {messages.guide.whyRam.justGet64}
               </p>
             </div>
           </GuideSection>
 
-          <GuideSection title="The Reality of VPS Performance">
+          <GuideSection title={messages.guide.vpsPerformance.title}>
             <p className="mb-3 text-sm text-muted-foreground">
-              A VPS isn&apos;t a dedicated machine. It&apos;s a slice of a larger physical server shared
-              with other customers. Understanding this helps you set realistic expectations:
+              {messages.guide.vpsPerformance.intro}
             </p>
             <ul className="space-y-3 text-sm">
               <li>
-                <strong>Shared resources:</strong> Your &quot;16 vCPU&quot; VPS shares the physical CPU
-                with other tenants. When neighbors run heavy workloads, your performance dips.
-                This is normal and expected.
+                <strong>{messages.guide.vpsPerformance.sharedResources.title}</strong> {messages.guide.vpsPerformance.sharedResources.content}
               </li>
               <li>
-                <strong>Overselling is common:</strong> Providers bet that not everyone uses their
-                full allocation simultaneously. When you&apos;re sleeping, they effectively reuse that
-                capacity. This is how they offer low prices, and why performance can be inconsistent.
+                <strong>{messages.guide.vpsPerformance.overselling.title}</strong> {messages.guide.vpsPerformance.overselling.content}
               </li>
               <li>
-                <strong>Dedicated servers exist:</strong> If you want guaranteed, consistent performance,
-                bare-metal dedicated servers are available, but they cost 3-10× more. For most users,
-                VPS is the right price/performance tradeoff.
+                <strong>{messages.guide.vpsPerformance.dedicated.title}</strong> {messages.guide.vpsPerformance.dedicated.content}
               </li>
             </ul>
             <div className="mt-4 rounded-lg border border-[oklch(0.65_0.15_220/0.3)] bg-[oklch(0.65_0.15_220/0.08)] p-3">
               <p className="text-sm text-muted-foreground">
-                <strong>💡 This is another reason to get 64GB:</strong> You won&apos;t always get the full
-                performance you&apos;d expect from those specs. Having headroom means your agents keep
-                running smoothly even when the underlying hardware is contested. Think of the extra
-                RAM as insurance against noisy neighbors.
+                <strong>💡 {messages.guide.vpsPerformance.anotherReason.split(':')[0]}:</strong> {messages.guide.vpsPerformance.anotherReason.split(':').slice(1).join(':')}
               </p>
             </div>
           </GuideSection>
 
-          <GuideSection title="The Full Investment">
+          <GuideSection title={messages.guide.fullInvestment.title}>
             <p className="mb-4 text-sm text-muted-foreground">
-              To use the agentic coding approach, you&apos;ll need subscriptions to AI services
-              in addition to your VPS. Here&apos;s what the full setup looks like:
+              {messages.guide.fullInvestment.intro}
             </p>
             <div className="space-y-3">
               <div className="rounded-lg border border-border/50 bg-card/50 p-3">
-                <p className="font-medium text-foreground">Claude Max ($200/month)</p>
+                <p className="font-medium text-foreground">{messages.guide.fullInvestment.claudeMax.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  Unlimited Claude Code usage. For serious multi-agent workflows, consider
-                  2 accounts ($400/month) to maximize parallel capacity.
+                  {messages.guide.fullInvestment.claudeMax.content}
                 </p>
               </div>
               <div className="rounded-lg border border-border/50 bg-card/50 p-3">
-                <p className="font-medium text-foreground">ChatGPT Pro ($200/month): Critical for Planning</p>
+                <p className="font-medium text-foreground">{messages.guide.fullInvestment.chatgptPro.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  Access to GPT 5.2 Pro with Extended Thinking in the ChatGPT webapp. This is
-                  <strong> the key to making this approach work</strong>: you use it to write,
-                  revise, and iterate on comprehensive plan documents in markdown. Everything
-                  depends on having an extremely detailed, granular plan, which you then convert
-                  into trackable tasks using <Jargon term="beads">Beads</Jargon>. The extended thinking capability is unmatched
-                  for this kind of strategic planning work.
+                  <span dangerouslySetInnerHTML={{
+                    __html: messages.guide.fullInvestment.chatgptPro.content
+                      .replace('Beads', '<span data-jargon="beads">Beads</span>')
+                  }} />
                 </p>
               </div>
               <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
-                <p className="font-medium text-foreground">Total for full setup:</p>
+                <p className="font-medium text-foreground">{messages.guide.fullInvestment.total.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  VPS (~$56) + Claude Max x2 ($400) + ChatGPT Pro ($200) = <strong>~$656/month</strong>
+                  <span dangerouslySetInnerHTML={{
+                    __html: messages.guide.fullInvestment.total.content.replace(/~\$656\/m/, '<strong>~$656/m')
+                  }} />
                   <br /><br />
-                  <em>This sounds like a lot, but compare it to hiring: a junior developer in the US
-                  costs $100k+/year (~$8,300+/month). For less than 10% of that, you get AI agents
-                  working 24/7 with no vacation, no onboarding, and instant scaling.</em>
+                  <em>{messages.guide.fullInvestment.total.perspective}</em>
                 </p>
               </div>
             </div>
             <div className="mt-4 rounded-lg border border-[oklch(0.65_0.12_30/0.3)] bg-[oklch(0.65_0.12_30/0.08)] p-3">
               <p className="text-sm text-muted-foreground">
-                <strong>⚠️ Realistic minimum investment:</strong> VPS (~$40-56/month for 64GB) + Claude Max ($200/month) + ChatGPT Pro ($200/month) = <strong>~$440-456/month</strong>.
-                The $20/month Claude Pro tier does <em>not</em> have enough capacity for agentic workflows; you&apos;ll
-                hit rate limits almost immediately. Claude Max is required for execution, and ChatGPT Pro&apos;s extended
-                thinking is essential for creating the detailed plan documents that make this approach work.
+                <strong>{messages.guide.fullInvestment.realistic.title}</strong> {messages.guide.fullInvestment.realistic.content}
                 <br /><br />
-                <strong>Perspective:</strong> A junior US developer costs ~$8k+/month. This is ~5% of that, for AI agents that work 24/7.
+                <strong>{messages.guide.fullInvestment.realistic.perspective.split(':')[0]}:</strong> {messages.guide.fullInvestment.realistic.perspective.split(':').slice(1).join(':')}
               </p>
             </div>
           </GuideSection>
 
-          <GuideSection title="Which provider should I choose?">
+          <GuideSection title={messages.guide.whichProvider.title}>
             <p className="mb-4">
-              Both providers we recommend are great. Here&apos;s how to choose:
+              {messages.guide.whichProvider.intro}
             </p>
             <ul className="space-y-3">
               <li>
-                <strong>Contabo:</strong> Our top recommendation! Best specs for the price.
-                Cloud VPS 50 (64GB RAM, ~$56/month US) is our top pick. Cloud VPS 40 (48GB RAM, ~$36/month US)
-                for budget. Interface is basic but functional. Usually activates within minutes (occasionally up to ~1 hour).
+                <span dangerouslySetInnerHTML={{
+                  __html: messages.guide.whichProvider.contabo.replace(/^([^:]+:)/, '<strong>$1</strong>')
+                }} />
               </li>
               <li>
-                <strong>OVH:</strong> Great alternative with polished interface.
-                VPS-5 (64GB RAM, ~$40/month) or VPS-4 (48GB RAM, ~$26/month).
-                Great EU and US data centers. Typically activates within minutes.
+                <span dangerouslySetInnerHTML={{
+                  __html: messages.guide.whichProvider.ovh.replace(/^([^:]+:)/, '<strong>$1</strong>')
+                }} />
               </li>
             </ul>
             <div className="mt-4 rounded-lg border border-[oklch(0.65_0.15_220/0.3)] bg-[oklch(0.65_0.15_220/0.08)] p-3">
               <p className="text-sm text-muted-foreground">
-                <strong>💡 About pricing:</strong> All prices shown are <strong>month-to-month with no commitment</strong>.
-                Both providers offer 5-20% discounts if you prepay for 6-12 months, but we recommend starting
-                monthly so you can cancel anytime. Contabo US pricing includes the ~$10/month US datacenter fee.
+                <strong>💡 {messages.guide.whichProvider.pricingNote.split(':')[0]}:</strong> {messages.guide.whichProvider.pricingNote.split(':').slice(1).join(':')}
               </p>
             </div>
           </GuideSection>
 
-          <GuideSection title="Step-by-Step: Signing Up (Contabo Example)">
+          <GuideSection title={messages.guide.contaboSteps.title}>
             <div className="space-y-4">
-              <GuideStep number={1} title="Go to Contabo's website">
-                Click on &quot;Contabo&quot; above, or go to{" "}
+              <GuideStep number={1} title={messages.guide.contaboSteps.step1.title}>
+                {messages.guide.contaboSteps.step1.content.split('contabo.com')[0]}
                 <TrackedLink href="https://contabo.com/en-us/vps/" trackingId="contabo-guide-link" className="text-primary underline">
                   contabo.com/en-us/vps
                 </TrackedLink>
                 <ScreenshotFigure
                   file="contabo_us_01_main.png"
                   alt="Contabo VPS page showing plan tiles and pricing"
-                  caption="Contabo VPS page (US) — you’ll pick a plan from here."
+                  caption={messages.guide.contaboSteps.step1.caption}
                 />
               </GuideStep>
 
-              <GuideStep number={2} title="Choose a plan with enough resources">
-                Look for a plan with <strong>12+ vCPU</strong> and <strong>48GB+ RAM</strong> (32GB absolute minimum).
-                NVMe storage is standard on all recommended plans. Click &quot;Configure&quot; or &quot;Order&quot;.
+              <GuideStep number={2} title={messages.guide.contaboSteps.step2.title}>
+                <span dangerouslySetInnerHTML={{
+                  __html: messages.guide.contaboSteps.step2.content
+                    .replace(/12\+ vCPU/g, '<strong>12+ vCPU</strong>')
+                    .replace(/48GB\+ RAM/g, '<strong>48GB+ RAM</strong>')
+                }} />
                 <ScreenshotFigure
                   file="contabo_us_02_plans.png"
                   alt="Contabo plans list highlighting Cloud VPS options"
-                  caption="Plans list — pick Cloud VPS 50 (64GB) or Cloud VPS 40 (48GB)."
+                  caption={messages.guide.contaboSteps.step2.caption}
                 />
               </GuideStep>
 
-              <GuideStep number={3} title="Configure your VPS">
+              <GuideStep number={3} title={messages.guide.contaboSteps.step3.title}>
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  <li><strong>Region:</strong> Choose closest to you (US or EU)</li>
-                  <li><strong>Storage:</strong> Keep the default NVMe option</li>
-                  <li><strong>Image:</strong> Select &quot;Ubuntu 25.10&quot; or newest available</li>
+                  <li><span dangerouslySetInnerHTML={{ __html: messages.guide.contaboSteps.step3.region.replace(/^([^:]+:)/, '<strong>$1</strong>') }} /></li>
+                  <li><span dangerouslySetInnerHTML={{ __html: messages.guide.contaboSteps.step3.storage.replace(/^([^:]+:)/, '<strong>$1</strong>') }} /></li>
+                  <li><span dangerouslySetInnerHTML={{ __html: messages.guide.contaboSteps.step3.image.replace(/^([^:]+:)/, '<strong>$1</strong>') }} /></li>
                 </ul>
                 <p className="mt-2 text-xs text-muted-foreground">
-                  If 25.10 isn&apos;t offered, Ubuntu 24.04 LTS is fine — ACFS upgrades to 25.10 automatically.
+                  {messages.guide.contaboSteps.step3.note}
                 </p>
                 <ScreenshotFigure
                   file="contabo_us_03_order_page.png"
                   alt="Contabo order/configure page with region and image selections"
-                  caption="Configure page — choose region + Ubuntu image, then continue checkout."
+                  caption={messages.guide.contaboSteps.step3.caption}
                 />
               </GuideStep>
 
-              <GuideStep number={4} title="Create an account">
-                Click &quot;Sign up&quot; or &quot;Register&quot;. You&apos;ll need:
+              <GuideStep number={4} title={messages.guide.contaboSteps.step4.title}>
+                {messages.guide.contaboSteps.step4.content}
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  <li>An email address</li>
-                  <li>A password (make it strong!)</li>
-                  <li>Your name and address</li>
+                  {messages.guide.contaboSteps.step4.items.map((item, i) => (
+                    <li key={i}>{item}</li>
+                  ))}
                 </ul>
               </GuideStep>
 
-              <GuideStep number={5} title="Add payment method">
-                Contabo accepts credit cards and PayPal. You&apos;ll be charged for the
-                first month upfront.
+              <GuideStep number={5} title={messages.guide.contaboSteps.step5.title}>
+                {messages.guide.contaboSteps.step5.content}
                 <br /><br />
-                <strong>Tip:</strong> Monthly billing is fine to start. You can switch to
-                annual billing later for a small discount.
+                <strong>{messages.guide.contaboSteps.step5.tip.split(':')[0]}:</strong> {messages.guide.contaboSteps.step5.tip.split(':').slice(1).join(':')}
               </GuideStep>
 
-              <GuideStep number={6} title="Complete the order">
-                Review your order and complete checkout. Contabo activates servers
-                quickly, usually within minutes (occasionally up to ~1 hour).
+              <GuideStep number={6} title={messages.guide.contaboSteps.step6.title}>
+                {messages.guide.contaboSteps.step6.content}
               </GuideStep>
             </div>
           </GuideSection>
 
-          <GuideSection title="Step-by-Step: Signing Up (OVH Example)">
+          <GuideSection title={messages.guide.ovhSteps.title}>
             <div className="space-y-4">
-              <GuideStep number={1} title="Go to OVH's VPS page">
-                Click on &quot;OVH&quot; above, or go to{" "}
+              <GuideStep number={1} title={messages.guide.ovhSteps.step1.title}>
+                {messages.guide.ovhSteps.step1.content.split('us.ovhcloud.com')[0]}
                 <TrackedLink href="https://us.ovhcloud.com/vps/" trackingId="ovh-guide-link" className="text-primary underline">
                   us.ovhcloud.com/vps
                 </TrackedLink>
                 <ScreenshotFigure
                   file="ovh_us_01_main.png"
                   alt="OVH VPS page showing plan tiers and call-to-action buttons"
-                  caption="OVH VPS page (US) — pick a VPS tier to start ordering."
+                  caption={messages.guide.ovhSteps.step1.caption}
                 />
               </GuideStep>
 
-              <GuideStep number={2} title="Choose VPS-5 (64GB) or VPS-4 (48GB)">
-                We recommend:
+              <GuideStep number={2} title={messages.guide.ovhSteps.step2.title}>
+                {messages.guide.ovhSteps.step2.intro}
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  <li><strong>VPS-5:</strong> 64GB RAM (best for multi-agent work)</li>
-                  <li><strong>VPS-4:</strong> 48GB RAM (budget option)</li>
+                  <li><span dangerouslySetInnerHTML={{ __html: messages.guide.ovhSteps.step2.vps5.replace(/^([^:]+:)/, '<strong>$1</strong>') }} /></li>
+                  <li><span dangerouslySetInnerHTML={{ __html: messages.guide.ovhSteps.step2.vps4.replace(/^([^:]+:)/, '<strong>$1</strong>') }} /></li>
                 </ul>
-                Click &quot;Order&quot; to continue.
+                {messages.guide.ovhSteps.step2.action}
                 <ScreenshotFigure
                   file="ovh_us_02_plans.png"
                   alt="OVH plans list showing VPS-4 and VPS-5 options"
-                  caption="Plans list — select VPS-5 (64GB) or VPS-4 (48GB), then click Order."
+                  caption={messages.guide.ovhSteps.step2.caption}
                 />
               </GuideStep>
 
-              <GuideStep number={3} title="Configure your order">
-                During configuration, look for:
+              <GuideStep number={3} title={messages.guide.ovhSteps.step3.title}>
+                {messages.guide.ovhSteps.step3.intro}
                 <ul className="mt-2 list-disc space-y-1 pl-5">
-                  <li><strong>Image/OS:</strong> Ubuntu 25.10 (or latest available)</li>
-                  <li><strong>Region:</strong> Closest to you (US-East/US-West/EU)</li>
-                  <li><strong>Authentication:</strong> Password (skip SSH keys for now)</li>
+                  <li><span dangerouslySetInnerHTML={{ __html: messages.guide.ovhSteps.step3.image.replace(/^([^:]+:)/, '<strong>$1</strong>') }} /></li>
+                  <li><span dangerouslySetInnerHTML={{ __html: messages.guide.ovhSteps.step3.region.replace(/^([^:]+:)/, '<strong>$1</strong>') }} /></li>
+                  <li><span dangerouslySetInnerHTML={{ __html: messages.guide.ovhSteps.step3.auth.replace(/^([^:]+:)/, '<strong>$1</strong>') }} /></li>
                 </ul>
                 <ScreenshotFigure
                   file="ovh_us_03_order.png"
                   alt="OVH order/configuration flow showing OS and region selections"
-                  caption="Order flow — pick Ubuntu + region, then continue to checkout."
+                  caption={messages.guide.ovhSteps.step3.caption}
                 />
                 <p className="mt-2 text-xs text-muted-foreground">
-                  If Ubuntu 25.10 isn&apos;t available, Ubuntu 24.04 LTS is fine — ACFS upgrades automatically.
+                  {messages.guide.ovhSteps.step3.note}
                 </p>
               </GuideStep>
 
-              <GuideStep number={4} title="Create an account + pay">
-                OVH will prompt you to create an account and add a payment method.
-                Once the order completes, activation is usually instant.
+              <GuideStep number={4} title={messages.guide.ovhSteps.step4.title}>
+                {messages.guide.ovhSteps.step4.content}
               </GuideStep>
             </div>
           </GuideSection>
 
-          <GuideSection title="Understanding the specs">
+          <GuideSection title={messages.guide.understandingSpecs.title}>
             <p className="mb-3">
-              When choosing a plan, you&apos;ll see terms like vCPU, RAM, and NVMe.
-              Here&apos;s what they mean:
+              {messages.guide.understandingSpecs.intro}
             </p>
             <ul className="space-y-2">
               <li>
-                <strong>vCPU (12+):</strong> The &quot;brain&quot; of the computer. More = faster.
-                12 vCPU is comfortable for multi-agent work, 16 is great.
+                <span dangerouslySetInnerHTML={{ __html: messages.guide.understandingSpecs.vcpu.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
               </li>
               <li>
-                <strong>RAM (48–64 GB):</strong> Short-term memory. This is crucial for running
-                multiple AI agents. 32GB is absolute minimum; 48GB+ is recommended.
+                <span dangerouslySetInnerHTML={{ __html: messages.guide.understandingSpecs.ram.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
               </li>
               <li>
-                <strong>Storage (250GB+ NVMe):</strong> Long-term storage for files, databases,
-                and AI model caches. NVMe is fast. 250GB is a good starting point.
+                <span dangerouslySetInnerHTML={{ __html: messages.guide.understandingSpecs.storage.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
               </li>
               <li>
-                <strong>Ubuntu:</strong> The operating system we&apos;ll install. It&apos;s like
-                Windows or macOS, but for servers. It&apos;s free and widely used.
+                <span dangerouslySetInnerHTML={{ __html: messages.guide.understandingSpecs.ubuntu.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
               </li>
             </ul>
           </GuideSection>
 
-          <GuideSection title="Backup Strategy">
+          <GuideSection title={messages.guide.backupStrategy.title}>
             <p className="mb-3 text-sm text-muted-foreground">
-              Both providers offer VPS snapshots (~$2-5/month) for quick restore points. But for code,
-              <strong> <Jargon term="github">GitHub</Jargon> is your real backup</strong>:
+              <span dangerouslySetInnerHTML={{
+                __html: messages.guide.backupStrategy.intro.replace(
+                  /GitHub/g,
+                  '<strong><span data-jargon="github">GitHub</span></strong>'
+                )
+              }} />
             </p>
             <ul className="space-y-2 text-sm">
               <li>
-                <strong>Push to GitHub regularly.</strong> If your VPS dies, your code is safe. We install the{" "}
-                <code className="rounded bg-muted px-1">gh</code> CLI for easy GitHub access.
+                <span dangerouslySetInnerHTML={{
+                  __html: messages.guide.backupStrategy.pushRegularly
+                    .replace(/^([^.]+\.)/, '<strong>$1</strong>')
+                    .replace(/gh/, '<code class="rounded bg-muted px-1">gh</code>')
+                }} />
               </li>
               <li>
-                <strong>Open-source = free everything.</strong> Public repos, unlimited Actions, GitHub Pages, all free.
+                <span dangerouslySetInnerHTML={{
+                  __html: messages.guide.backupStrategy.openSource.replace(/^([^.]+\.)/, '<strong>$1</strong>')
+                }} />
               </li>
               <li>
-                <strong>Private projects:</strong> Free tier works for individuals. Teams or heavy CI/CD may need
-                GitHub Pro ($4/month) or Team ($4/user/month) for more Actions minutes.
+                <span dangerouslySetInnerHTML={{
+                  __html: messages.guide.backupStrategy.privateProjects.replace(/^([^:]+:)/, '<strong>$1</strong>')
+                }} />
               </li>
             </ul>
           </GuideSection>
 
           <GuideTip>
-            <strong>TL;DR:</strong> Get Contabo <strong>Cloud VPS 50</strong> (64GB RAM, 16 vCPU, ~$56/month US).
-            Don&apos;t overthink it. 64GB is the right choice when you&apos;re investing $400+/month in AI subscriptions.
-            Contabo can take up to an hour to provision (usually minutes); OVH is typically faster.
+            <span dangerouslySetInnerHTML={{
+              __html: messages.guide.tldr
+                .replace(/^TL;DR:/, '<strong>TL;DR:</strong>')
+                .replace(/Cloud VPS 50/g, '<strong>Cloud VPS 50</strong>')
+            }} />
           </GuideTip>
 
           <GuideCaution>
-            <strong>Keep your account credentials safe!</strong> Write down your
-            login email and password somewhere secure. You&apos;ll need them to
-            manage your VPS later.
+            <span dangerouslySetInnerHTML={{
+              __html: messages.guide.caution.replace(/^([^!]+!)/, '<strong>$1</strong>')
+            }} />
           </GuideCaution>
         </div>
       </SimplerGuide>
 
       {/* Transition to next step */}
-      <AlertCard variant="info" icon={Info} title="Account created?">
-        Next, you&apos;ll create and launch your actual VPS instance.
+      <AlertCard variant="info" icon={Info} title={messages.guide.accountCreated.title}>
+        {messages.guide.accountCreated.content}
       </AlertCard>
 
       {/* Continue button */}
