@@ -83,61 +83,38 @@ export function PromptEngineeringLesson() {
 
       {/* Pattern 1: Intensity Calibration */}
       <Section
-        title="Pattern 1: Intensity Calibration"
+        title={messages.pattern1.title}
         icon={<Zap className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          AI models allocate &quot;compute&quot; based on perceived task
-          importance. <Highlight>Stacked modifiers</Highlight> signal that this
-          task deserves maximum attention:
+          {messages.pattern1.intro} <Highlight>{messages.pattern1.stackedModifiers}</Highlight> {messages.pattern1.maxAttention}
         </Paragraph>
 
         <div className="mt-6 space-y-4">
-          <IntensityExample
-            phrase="super carefully"
-            effect="Elevates attention above baseline"
-          />
-          <IntensityExample
-            phrase="super careful, methodical, and critical"
-            effect="Triple-stacking for maximum precision"
-          />
-          <IntensityExample
-            phrase="systematically and meticulously and intelligently"
-            effect="Emphasizes both process and quality"
-          />
+          {messages.pattern1.intensityExamples.map((example, i) => (
+            <IntensityExample
+              key={i}
+              phrase={example.phrase}
+              effect={example.effect}
+            />
+          ))}
         </div>
 
         <div className="mt-6">
-          <CodeBlock
-            code={`# Low intensity (default behavior)
-"Check the code for bugs"
-
-# High intensity (elevated attention)
-"Do a super careful, methodical, and critical check
-with fresh eyes to find any obvious bugs, problems,
-errors, issues, silly mistakes, etc. and then
-systematically and meticulously and intelligently
-correct them."`}
-          />
+          <CodeBlock code={messages.codeBlocks.lowIntensity} />
         </div>
 
         <div className="mt-6">
           <TipBox variant="info">
-            These aren&apos;t filler words. They&apos;re{" "}
-            <strong>calibration signals</strong> that tell the model to allocate
-            more reasoning depth to the task.
+            {messages.pattern1.notFillerWords}{" "}
+            <strong>{messages.pattern1.calibrationSignals}</strong> {messages.pattern1.allocateReasoning}
           </TipBox>
         </div>
 
         <div className="mt-6">
           <TipBox variant="tip">
-            <strong>Claude Code feature:</strong> The word{" "}
-            <strong>ultrathink</strong> is a specific Claude Code directive that
-            tells the system to allocate significantly more thinking tokens. While
-            it&apos;s a tool-level feature in Claude Code, using intensity words like
-            &quot;think deeply&quot; or &quot;reason carefully&quot; can help other
-            agents/models allocate more attention to complex tasks as well.
+            <strong>{messages.pattern1.claudeCodeFeature.intro}</strong> {messages.pattern1.claudeCodeFeature.ultrathinkDesc}
           </TipBox>
         </div>
       </Section>
@@ -146,53 +123,29 @@ correct them."`}
 
       {/* Pattern 2: Scope Control */}
       <Section
-        title="Pattern 2: Scope Control"
+        title={messages.pattern2.title}
         icon={<Maximize2 className="h-5 w-5" />}
         delay={0.2}
       >
         <Paragraph>
-          Models tend to take shortcuts. Explicit scope directives push against
-          premature narrowing:
+          {messages.pattern2.intro}
         </Paragraph>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <ScopeCard
             direction="expand"
-            phrases={[
-              "take ALL of that",
-              "Don't restrict yourself",
-              "cast a wider net",
-              "comprehensive and granular",
-            ]}
+            title={messages.pattern2.scopeCards.expand.title}
+            phrases={messages.pattern2.scopeCards.expand.phrases}
           />
           <ScopeCard
             direction="deepen"
-            phrases={[
-              "go super deep",
-              "deeply investigate and understand",
-              "trace their functionality and execution flows",
-              "first-principle analysis",
-            ]}
+            title={messages.pattern2.scopeCards.deepen.title}
+            phrases={messages.pattern2.scopeCards.deepen.phrases}
           />
         </div>
 
         <div className="mt-6">
-          <CodeBlock
-            code={`# Avoiding narrow focus
-"Don't restrict yourself to the latest commits,
-cast a wider net and go super deep!"
-
-# Comprehensive coverage
-"Take ALL of that and elaborate on it more,
-then create a comprehensive and granular set..."
-
-# Depth with breadth
-"Randomly explore the code files in this project,
-choosing code files to deeply investigate and understand
-and trace their functionality and execution flows
-through the related code files which they import
-or which they are imported by."`}
-          />
+          <CodeBlock code={messages.codeBlocks.avoidingNarrow} />
         </div>
       </Section>
 
@@ -200,53 +153,31 @@ or which they are imported by."`}
 
       {/* Pattern 3: Self-Verification */}
       <Section
-        title="Pattern 3: Forcing Self-Verification"
+        title={messages.pattern3.title}
         icon={<CheckSquare className="h-5 w-5" />}
         delay={0.25}
       >
         <Paragraph>
-          Questions trigger <Highlight>metacognition</Highlight>—forcing the
-          model to evaluate its own output before finalizing:
+          {messages.pattern3.intro} <Highlight>{messages.pattern3.metacognition}</Highlight>{messages.pattern3.forcingModel}
         </Paragraph>
 
         <div className="mt-6 space-y-4">
-          <VerificationQuestion
-            question="Are you sure it makes sense?"
-            purpose="Basic sanity check"
-          />
-          <VerificationQuestion
-            question="Is it optimal?"
-            purpose="Pushes beyond 'good enough'"
-          />
-          <VerificationQuestion
-            question="Could we change anything to make the system work better for users?"
-            purpose="User-centric optimization"
-          />
-          <VerificationQuestion
-            question="Check over each bead super carefully"
-            purpose="Item-by-item review"
-          />
+          {messages.pattern3.verificationQuestions.map((vq, i) => (
+            <VerificationQuestion
+              key={i}
+              question={vq.question}
+              purpose={vq.purpose}
+            />
+          ))}
         </div>
 
         <div className="mt-6">
-          <CodeBlock
-            code={`# The Plan Review Pattern
-"Check over each bead super carefully—
-are you sure it makes sense?
-Is it optimal?
-Could we change anything to make the system work better?
-If so, revise the beads.
-
-It's a lot easier and faster to operate in 'plan space'
-before we start implementing these things!"`}
-          />
+          <CodeBlock code={messages.codeBlocks.planReview} />
         </div>
 
         <div className="mt-6">
           <TipBox variant="tip">
-            <strong>Plan Space Principle:</strong> Revising plans is 10x cheaper
-            than debugging implementations. Force verification at the planning
-            stage.
+            <strong>{messages.pattern3.planSpacePrinciple.title}</strong> {messages.pattern3.planSpacePrinciple.description}
           </TipBox>
         </div>
       </Section>
@@ -255,49 +186,27 @@ before we start implementing these things!"`}
 
       {/* Pattern 4: Fresh Eyes Technique */}
       <Section
-        title="Pattern 4: The Fresh Eyes Technique"
+        title={messages.pattern4.title}
         icon={<Eye className="h-5 w-5" />}
         delay={0.3}
       >
         <Paragraph>
-          <Highlight>Psychological reset techniques</Highlight> help agents
-          approach code without prior assumptions or confirmation bias:
+          <Highlight>{messages.pattern4.intro}</Highlight> {messages.pattern4.helpAgents}
         </Paragraph>
 
         <div className="mt-6 space-y-4">
-          <FreshEyesCard
-            technique="Explicit Reset"
-            example='with "fresh eyes"'
-            mechanism="Signals to discard prior assumptions"
-          />
-          <FreshEyesCard
-            technique="Random Exploration"
-            example='"randomly explore the code files"'
-            mechanism="Avoids tunnel vision on expected locations"
-          />
-          <FreshEyesCard
-            technique="Peer Framing"
-            example='"reviewing code written by your fellow agents"'
-            mechanism="Creates psychological distance from own work"
-          />
+          {messages.pattern4.freshEyesTechniques.map((tech, i) => (
+            <FreshEyesCard
+              key={i}
+              technique={tech.technique}
+              example={tech.example}
+              mechanism={tech.mechanism}
+            />
+          ))}
         </div>
 
         <div className="mt-6">
-          <CodeBlock
-            code={`# The Fresh Eyes Code Review
-"I want you to carefully read over all of the new code
-you just wrote and other existing code you just modified
-with 'fresh eyes' looking super carefully for any obvious
-bugs, errors, problems, issues, confusion, etc.
-Carefully fix anything you uncover."
-
-# Peer Review Framing
-"Turn your attention to reviewing the code written by
-your fellow agents and checking for any issues, bugs,
-errors, problems, inefficiencies, security problems,
-reliability issues, etc. and carefully diagnose their
-underlying root causes using first-principle analysis."`}
-          />
+          <CodeBlock code={messages.codeBlocks.freshEyesReview} />
         </div>
       </Section>
 
@@ -305,42 +214,26 @@ underlying root causes using first-principle analysis."`}
 
       {/* Pattern 5: Temporal Awareness */}
       <Section
-        title="Pattern 5: Temporal Awareness"
+        title={messages.pattern5.title}
         icon={<Clock className="h-5 w-5" />}
         delay={0.35}
       >
         <Paragraph>
-          Great prompts consider <Highlight>future contexts</Highlight>—the
-          agent that will continue this work, the human who will review it, the
-          &quot;future self&quot; who needs to understand it:
+          {messages.pattern5.intro} <Highlight>{messages.pattern5.futureContexts}</Highlight>{messages.pattern5.agentWillContinue}
         </Paragraph>
 
         <div className="mt-6">
-          <CodeBlock
-            code={`# Self-Documenting Output
-"Create a comprehensive set of beads with detailed comments
-so that the whole thing is totally self-contained and
-self-documenting (including relevant background,
-reasoning/justification, considerations, etc.—
-anything we'd want our 'future self' to know about
-the goals and intentions and thought process and how it
-serves the over-arching goals of the project)."`}
-          />
+          <CodeBlock code={messages.codeBlocks.selfDocumenting} />
         </div>
 
         <div className="mt-6 space-y-3">
-          <TemporalConcept
-            concept="Future Self"
-            description="Write as if explaining to someone with no context"
-          />
-          <TemporalConcept
-            concept="Self-Contained"
-            description="Output should work independently of current conversation"
-          />
-          <TemporalConcept
-            concept="Over-Arching Goals"
-            description="Connect current work to bigger picture"
-          />
+          {messages.pattern5.temporalConcepts.map((tc, i) => (
+            <TemporalConcept
+              key={i}
+              concept={tc.concept}
+              description={tc.description}
+            />
+          ))}
         </div>
       </Section>
 
@@ -348,52 +241,33 @@ serves the over-arching goals of the project)."`}
 
       {/* Pattern 6: Context Anchoring */}
       <Section
-        title="Pattern 6: Context Anchoring"
+        title={messages.pattern6.title}
         icon={<Anchor className="h-5 w-5" />}
         delay={0.4}
       >
         <Paragraph>
-          <Highlight>Stable reference documents</Highlight> (like AGENTS.md)
-          serve as behavioral anchors. Re-reading them is especially critical
-          after context compaction.
+          <Highlight>{messages.pattern6.intro}</Highlight> {messages.pattern6.agentsMd}
         </Paragraph>
 
         <div className="mt-6">
-          <CodeBlock
-            code={`# The Post-Compaction Refresh
-"Reread AGENTS.md so it's still fresh in your mind.
-Use ultrathink."`}
-          />
+          <CodeBlock code={messages.codeBlocks.postCompaction} />
         </div>
 
         <div className="mt-6">
           <TipBox variant="warning">
-            <strong>Why this matters after compaction:</strong>
+            <strong>{messages.pattern6.whyMatters.title}</strong>
             <br /><br />
-            1. <strong>Context decay:</strong> Rules lose salience as more
-            content is added
-            <br />
-            2. <strong>Summarization loss:</strong> Compaction may miss nuances
-            <br />
-            3. <strong>Drift prevention:</strong> Periodic grounding prevents
-            behavioral divergence
-            <br />
-            4. <strong>Fresh frame:</strong> Re-reading establishes correct
-            operating context
+            {messages.pattern6.whyMatters.reasons.map((reason, i) => (
+              <span key={i}>
+                {i + 1}. <strong>{reason.title}</strong> {reason.description}
+                <br />
+              </span>
+            ))}
           </TipBox>
         </div>
 
         <div className="mt-6">
-          <CodeBlock
-            code={`# Grounding Throughout Work
-"Be sure to comply with ALL rules in AGENTS.md and
-ensure that any code you write or revise conforms to
-the best practice guides referenced in the AGENTS.md file."
-
-# Making Rules Explicit
-"You may NOT delete any file or directory unless I
-explicitly give the exact command in this session."`}
-          />
+          <CodeBlock code={messages.codeBlocks.grounding} />
         </div>
       </Section>
 
@@ -401,42 +275,26 @@ explicitly give the exact command in this session."`}
 
       {/* Pattern 7: First Principles */}
       <Section
-        title="Pattern 7: First Principles Analysis"
+        title={messages.pattern7.title}
         icon={<Layers className="h-5 w-5" />}
         delay={0.45}
       >
         <Paragraph>
-          Push for <Highlight>deep understanding</Highlight> over surface-level
-          pattern matching:
+          {messages.pattern7.intro} <Highlight>{messages.pattern7.deepUnderstanding}</Highlight> {messages.pattern7.overSurface}
         </Paragraph>
 
         <div className="mt-6">
-          <CodeBlock
-            code={`# Root Cause Emphasis
-"Carefully diagnose their underlying root causes
-using first-principle analysis and then fix or
-revise them if necessary."
-
-# Context Before Action
-"Once you understand the purpose of the code in
-the larger context of the workflows, I want you
-to do a super careful, methodical check..."`}
-          />
+          <CodeBlock code={messages.codeBlocks.rootCause} />
         </div>
 
         <div className="mt-6 space-y-3">
-          <PrincipleCard
-            principle="Understand Before Fixing"
-            description="Trace execution flows and dependencies first"
-          />
-          <PrincipleCard
-            principle="Root Cause Over Symptom"
-            description="Diagnose underlying issues, not surface manifestations"
-          />
-          <PrincipleCard
-            principle="Larger Context"
-            description="Understand how code fits into overall workflows"
-          />
+          {messages.pattern7.principleCards.map((pc, i) => (
+            <PrincipleCard
+              key={i}
+              principle={pc.principle}
+              description={pc.description}
+            />
+          ))}
         </div>
       </Section>
 
@@ -444,41 +302,23 @@ to do a super careful, methodical check..."`}
 
       {/* Putting It Together */}
       <Section
-        title="Putting It All Together"
+        title={messages.puttingTogether.title}
         icon={<Lightbulb className="h-5 w-5" />}
         delay={0.5}
       >
         <Paragraph>
-          Here&apos;s a real prompt that combines multiple patterns:
+          {messages.puttingTogether.intro}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`"Reread AGENTS.md so it's still fresh in your mind.
-Use ultrathink.
-
-I want you to sort of randomly explore the code files
-in this project, choosing code files to deeply investigate
-and understand and trace their functionality and execution
-flows through the related code files which they import or
-which they are imported by.
-
-Once you understand the purpose of the code in the larger
-context of the workflows, I want you to do a super careful,
-methodical, and critical check with 'fresh eyes' to find
-any obvious bugs, problems, errors, issues, silly mistakes,
-etc. and then systematically and meticulously and
-intelligently correct them.
-
-Be sure to comply with ALL rules in AGENTS.md and ensure
-that any code you write or revise conforms to the best
-practice guides referenced in the AGENTS.md file."`}
+            code={messages.codeBlocks.combinedExample}
             language="markdown"
           />
         </div>
 
         <div className="mt-6">
-          <PatternBreakdown />
+          <PatternBreakdown patterns={messages.puttingTogether.patternAnalysis.patterns} title={messages.puttingTogether.patternAnalysis.title} />
         </div>
       </Section>
 
@@ -486,46 +326,19 @@ practice guides referenced in the AGENTS.md file."`}
 
       {/* Quick Reference */}
       <Section
-        title="Quick Reference"
+        title={messages.quickReference.title}
         icon={<FileText className="h-5 w-5" />}
         delay={0.55}
       >
         <div className="space-y-4">
-          <QuickRefItem
-            pattern="Intensity"
-            when="Tasks requiring maximum precision"
-            key_phrases="super carefully, methodical, use ultrathink"
-          />
-          <QuickRefItem
-            pattern="Scope Expansion"
-            when="Avoiding narrow focus or shortcuts"
-            key_phrases="take ALL, cast wider net, comprehensive"
-          />
-          <QuickRefItem
-            pattern="Self-Verification"
-            when="Before implementing or finalizing"
-            key_phrases="are you sure?, is it optimal?, revise if needed"
-          />
-          <QuickRefItem
-            pattern="Fresh Eyes"
-            when="Code review, finding missed issues"
-            key_phrases="fresh eyes, fellow agents, randomly explore"
-          />
-          <QuickRefItem
-            pattern="Temporal"
-            when="Creating persistent artifacts"
-            key_phrases="future self, self-documenting, self-contained"
-          />
-          <QuickRefItem
-            pattern="Anchoring"
-            when="After compaction or drift risk"
-            key_phrases="reread AGENTS.md, comply with ALL rules"
-          />
-          <QuickRefItem
-            pattern="First Principles"
-            when="Debugging or understanding complex code"
-            key_phrases="root causes, first-principle, larger context"
-          />
+          {messages.quickReference.items.map((item, i) => (
+            <QuickRefItem
+              key={i}
+              pattern={item.pattern}
+              when={item.when}
+              key_phrases={item.keyPhrases}
+            />
+          ))}
         </div>
       </Section>
     </div>
@@ -561,9 +374,11 @@ function IntensityExample({
 // =============================================================================
 function ScopeCard({
   direction,
+  title,
   phrases,
 }: {
   direction: "expand" | "deepen";
+  title: string;
   phrases: string[];
 }) {
   const isExpand = direction === "expand";
@@ -579,7 +394,7 @@ function ScopeCard({
       }`}
     >
       <h4 className={`font-bold mb-3 ${isExpand ? "text-emerald-400" : "text-blue-400"}`}>
-        {isExpand ? "↔ Breadth" : "↓ Depth"}
+        {title}
       </h4>
       <ul className="space-y-2">
         {phrases.map((phrase) => (
@@ -702,24 +517,16 @@ function PrincipleCard({
 // =============================================================================
 // PATTERN BREAKDOWN
 // =============================================================================
-function PatternBreakdown() {
-  const patterns = [
-    { name: "Anchoring", line: "Reread AGENTS.md..." },
-    { name: "Intensity", line: "Use ultrathink" },
-    { name: "Fresh Eyes", line: "randomly explore" },
-    { name: "Scope (depth)", line: "deeply investigate and understand" },
-    { name: "First Principles", line: "trace their functionality" },
-    { name: "Context First", line: "Once you understand...larger context" },
-    { name: "Intensity (stacked)", line: "super careful, methodical, and critical" },
-    { name: "Fresh Eyes", line: 'with "fresh eyes"' },
-    { name: "Scope (breadth)", line: "any obvious bugs, problems, errors, issues..." },
-    { name: "Intensity (triple)", line: "systematically and meticulously and intelligently" },
-    { name: "Anchoring", line: "comply with ALL rules" },
-  ];
-
+function PatternBreakdown({
+  patterns,
+  title,
+}: {
+  patterns: { name: string; line: string }[];
+  title: string;
+}) {
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 backdrop-blur-xl">
-      <h4 className="font-bold text-white mb-4">Pattern Analysis</h4>
+      <h4 className="font-bold text-white mb-4">{title}</h4>
       <div className="space-y-2">
         {patterns.map((p, i) => (
           <div key={i} className="flex items-center gap-3 text-sm">

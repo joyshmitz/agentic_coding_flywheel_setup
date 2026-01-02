@@ -1056,4 +1056,355 @@ Scale: [users, requests, data size]
       content: "Prompt engineering is the bridge between human intention and AI capability. Master this bridge, and you unlock the full potential of AI-assisted development. The flywheel spins faster when you and your AI agents communicate with precision and purpose.",
     },
   },
+
+  // Pattern-based structure (used by component)
+  pattern1: {
+    title: "Pattern 1: Intensity Calibration",
+    intro: "AI models allocate \"compute\" based on perceived task importance.",
+    stackedModifiers: "Stacked modifiers",
+    maxAttention: "signal that this task deserves maximum attention:",
+
+    intensityExamples: [
+      {
+        phrase: "super carefully",
+        effect: "Elevates attention above baseline",
+      },
+      {
+        phrase: "super careful, methodical, and critical",
+        effect: "Triple-stacking for maximum precision",
+      },
+      {
+        phrase: "systematically and meticulously and intelligently",
+        effect: "Emphasizes both process and quality",
+      },
+    ],
+
+    notFillerWords: "These aren't filler words. They're",
+    calibrationSignals: "calibration signals",
+    allocateReasoning: "that tell the model to allocate more reasoning depth to the task.",
+
+    claudeCodeFeature: {
+      intro: "Claude Code feature:",
+      ultrathinkDesc: "The word ultrathink is a specific Claude Code directive that tells the system to allocate significantly more thinking tokens. While it's a tool-level feature in Claude Code, using intensity words like \"think deeply\" or \"reason carefully\" can help other agents/models allocate more attention to complex tasks as well.",
+    },
+  },
+
+  pattern2: {
+    title: "Pattern 2: Scope Control",
+    intro: "Models tend to take shortcuts. Explicit scope directives push against premature narrowing:",
+
+    scopeCards: {
+      expand: {
+        title: "↔ Breadth",
+        phrases: [
+          "take ALL of that",
+          "Don't restrict yourself",
+          "cast a wider net",
+          "comprehensive and granular",
+        ],
+      },
+      deepen: {
+        title: "↓ Depth",
+        phrases: [
+          "go super deep",
+          "deeply investigate and understand",
+          "trace their functionality and execution flows",
+          "first-principle analysis",
+        ],
+      },
+    },
+  },
+
+  pattern3: {
+    title: "Pattern 3: Forcing Self-Verification",
+    intro: "Questions trigger",
+    metacognition: "metacognition",
+    forcingModel: "—forcing the model to evaluate its own output before finalizing:",
+
+    verificationQuestions: [
+      {
+        question: "Are you sure it makes sense?",
+        purpose: "Basic sanity check",
+      },
+      {
+        question: "Is it optimal?",
+        purpose: "Pushes beyond 'good enough'",
+      },
+      {
+        question: "Could we change anything to make the system work better for users?",
+        purpose: "User-centric optimization",
+      },
+      {
+        question: "Check over each bead super carefully",
+        purpose: "Item-by-item review",
+      },
+    ],
+
+    planSpacePrinciple: {
+      title: "Plan Space Principle:",
+      description: "Revising plans is 10x cheaper than debugging implementations. Force verification at the planning stage.",
+    },
+  },
+
+  pattern4: {
+    title: "Pattern 4: The Fresh Eyes Technique",
+    intro: "Psychological reset techniques",
+    helpAgents: "help agents approach code without prior assumptions or confirmation bias:",
+
+    freshEyesTechniques: [
+      {
+        technique: "Explicit Reset",
+        example: 'with "fresh eyes"',
+        mechanism: "Signals to discard prior assumptions",
+      },
+      {
+        technique: "Random Exploration",
+        example: '"randomly explore the code files"',
+        mechanism: "Avoids tunnel vision on expected locations",
+      },
+      {
+        technique: "Peer Framing",
+        example: '"reviewing code written by your fellow agents"',
+        mechanism: "Creates psychological distance from own work",
+      },
+    ],
+  },
+
+  pattern5: {
+    title: "Pattern 5: Temporal Awareness",
+    intro: "Great prompts consider",
+    futureContexts: "future contexts",
+    agentWillContinue: "—the agent that will continue this work, the human who will review it, the \"future self\" who needs to understand it:",
+
+    temporalConcepts: [
+      {
+        concept: "Future Self",
+        description: "Write as if explaining to someone with no context",
+      },
+      {
+        concept: "Self-Contained",
+        description: "Output should work independently of current conversation",
+      },
+      {
+        concept: "Over-Arching Goals",
+        description: "Connect current work to bigger picture",
+      },
+    ],
+  },
+
+  pattern6: {
+    title: "Pattern 6: Context Anchoring",
+    intro: "Stable reference documents",
+    agentsMd: "(like AGENTS.md) serve as behavioral anchors. Re-reading them is especially critical after context compaction.",
+
+    whyMatters: {
+      title: "Why this matters after compaction:",
+      reasons: [
+        {
+          title: "Context decay:",
+          description: "Rules lose salience as more content is added",
+        },
+        {
+          title: "Summarization loss:",
+          description: "Compaction may miss nuances",
+        },
+        {
+          title: "Drift prevention:",
+          description: "Periodic grounding prevents behavioral divergence",
+        },
+        {
+          title: "Fresh frame:",
+          description: "Re-reading establishes correct operating context",
+        },
+      ],
+    },
+  },
+
+  pattern7: {
+    title: "Pattern 7: First Principles Analysis",
+    intro: "Push for",
+    deepUnderstanding: "deep understanding",
+    overSurface: "over surface-level pattern matching:",
+
+    principleCards: [
+      {
+        principle: "Understand Before Fixing",
+        description: "Trace execution flows and dependencies first",
+      },
+      {
+        principle: "Root Cause Over Symptom",
+        description: "Diagnose underlying issues, not surface manifestations",
+      },
+      {
+        principle: "Larger Context",
+        description: "Understand how code fits into overall workflows",
+      },
+    ],
+  },
+
+  puttingTogether: {
+    title: "Putting It All Together",
+    intro: "Here's a real prompt that combines multiple patterns:",
+
+    patternAnalysis: {
+      title: "Pattern Analysis",
+      patterns: [
+        { name: "Anchoring", line: "Reread AGENTS.md..." },
+        { name: "Intensity", line: "Use ultrathink" },
+        { name: "Fresh Eyes", line: "randomly explore" },
+        { name: "Scope (depth)", line: "deeply investigate and understand" },
+        { name: "First Principles", line: "trace their functionality" },
+        { name: "Context First", line: "Once you understand...larger context" },
+        { name: "Intensity (stacked)", line: "super careful, methodical, and critical" },
+        { name: "Fresh Eyes", line: 'with "fresh eyes"' },
+        { name: "Scope (breadth)", line: "any obvious bugs, problems, errors, issues..." },
+        { name: "Intensity (triple)", line: "systematically and meticulously and intelligently" },
+        { name: "Anchoring", line: "comply with ALL rules" },
+      ],
+    },
+  },
+
+  quickReference: {
+    title: "Quick Reference",
+    items: [
+      {
+        pattern: "Intensity",
+        when: "Tasks requiring maximum precision",
+        keyPhrases: "super carefully, methodical, use ultrathink",
+      },
+      {
+        pattern: "Scope Expansion",
+        when: "Avoiding narrow focus or shortcuts",
+        keyPhrases: "take ALL, cast wider net, comprehensive",
+      },
+      {
+        pattern: "Self-Verification",
+        when: "Before implementing or finalizing",
+        keyPhrases: "are you sure?, is it optimal?, revise if needed",
+      },
+      {
+        pattern: "Fresh Eyes",
+        when: "Code review, finding missed issues",
+        keyPhrases: "fresh eyes, fellow agents, randomly explore",
+      },
+      {
+        pattern: "Temporal",
+        when: "Creating persistent artifacts",
+        keyPhrases: "future self, self-documenting, self-contained",
+      },
+      {
+        pattern: "Anchoring",
+        when: "After compaction or drift risk",
+        keyPhrases: "reread AGENTS.md, comply with ALL rules",
+      },
+      {
+        pattern: "First Principles",
+        when: "Debugging or understanding complex code",
+        keyPhrases: "root causes, first-principle, larger context",
+      },
+    ],
+  },
+
+  codeBlocks: {
+    lowIntensity: `# Low intensity (default behavior)
+"Check the code for bugs"
+
+# High intensity (elevated attention)
+"Do a super careful, methodical, and critical check
+with fresh eyes to find any obvious bugs, problems,
+errors, issues, silly mistakes, etc. and then
+systematically and meticulously and intelligently
+correct them."`,
+
+    avoidingNarrow: `# Avoiding narrow focus
+"Don't restrict yourself to the latest commits,
+cast a wider net and go super deep!"
+
+# Comprehensive coverage
+"Take ALL of that and elaborate on it more,
+then create a comprehensive and granular set..."
+
+# Depth with breadth
+"Randomly explore the code files in this project,
+choosing code files to deeply investigate and understand
+and trace their functionality and execution flows
+through the related code files which they import
+or which they are imported by."`,
+
+    planReview: `# The Plan Review Pattern
+"Check over each bead super carefully—
+are you sure it makes sense?
+Is it optimal?
+Could we change anything to make the system work better?
+If so, revise the beads.
+
+It's a lot easier and faster to operate in 'plan space'
+before we start implementing these things!"`,
+
+    freshEyesReview: `# The Fresh Eyes Code Review
+"I want you to carefully read over all of the new code
+you just wrote and other existing code you just modified
+with 'fresh eyes' looking super carefully for any obvious
+bugs, errors, problems, issues, confusion, etc.
+Carefully fix anything you uncover."
+
+# Peer Review Framing
+"Turn your attention to reviewing the code written by
+your fellow agents and checking for any issues, bugs,
+errors, problems, inefficiencies, security problems,
+reliability issues, etc. and carefully diagnose their
+underlying root causes using first-principle analysis."`,
+
+    selfDocumenting: `# Self-Documenting Output
+"Create a comprehensive set of beads with detailed comments
+so that the whole thing is totally self-contained and
+self-documenting (including relevant background,
+reasoning/justification, considerations, etc.—
+anything we'd want our 'future self' to know about
+the goals and intentions and thought process and how it
+serves the over-arching goals of the project)."`,
+
+    postCompaction: `# The Post-Compaction Refresh
+"Reread AGENTS.md so it's still fresh in your mind.
+Use ultrathink."`,
+
+    grounding: `# Grounding Throughout Work
+"Be sure to comply with ALL rules in AGENTS.md and
+ensure that any code you write or revise conforms to
+the best practice guides referenced in the AGENTS.md file."
+
+# Making Rules Explicit
+"You may NOT delete any file or directory unless I
+explicitly give the exact command in this session."`,
+
+    rootCause: `# Root Cause Emphasis
+"Carefully diagnose their underlying root causes
+using first-principle analysis and then fix or
+revise them if necessary."
+
+# Context Before Action
+"Once you understand the purpose of the code in
+the larger context of the workflows, I want you
+to do a super careful, methodical check..."`,
+
+    combinedExample: `"Reread AGENTS.md so it's still fresh in your mind.
+Use ultrathink.
+
+I want you to sort of randomly explore the code files
+in this project, choosing code files to deeply investigate
+and understand and trace their functionality and execution
+flows through the related code files which they import or
+which they are imported by.
+
+Once you understand the purpose of the code in the larger
+context of the workflows, I want you to do a super careful,
+methodical, and critical check with 'fresh eyes' to find
+any obvious bugs, problems, errors, issues, silly mistakes,
+etc. and then systematically and meticulously and
+intelligently correct them.
+
+Be sure to comply with ALL rules in AGENTS.md and ensure
+that any code you write or revise conforms to the best
+practice guides referenced in the AGENTS.md file."`,
+  },
 };

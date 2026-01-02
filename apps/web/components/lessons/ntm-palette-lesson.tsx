@@ -112,33 +112,31 @@ export function NtmPaletteLesson() {
 
       {/* Using Palette Prompts */}
       <Section
-        title="Using Palette Prompts"
+        title={messages.usingPalettePrompts.title}
         icon={<Send className="h-5 w-5" />}
         delay={0.2}
       >
         <div className="space-y-8">
           <UsageOption
             number={1}
-            title="Copy and Send"
-            steps={[
-              <>Open the palette: <InlineCode>ntm palette</InlineCode></>,
-              "Select a prompt",
-              "Copy it",
-              <>Use <InlineCode>ntm send</InlineCode> or paste directly</>,
-            ]}
+            title={messages.usingPalettePrompts.options.copyAndSend.title}
+            steps={messages.usingPalettePrompts.options.copyAndSend.steps.map((step, i) =>
+              i === 0 ? <>{step.split(':')[0]}: <InlineCode>ntm palette</InlineCode></> :
+              i === 3 ? <>{step.split('ntm send')[0]}<InlineCode>ntm send</InlineCode>{step.split('ntm send')[1]}</> :
+              step
+            )}
           />
 
           <UsageOption
             number={2}
-            title="Direct Send (Power Move)"
+            title={messages.usingPalettePrompts.options.directSend.title}
             steps={[]}
           >
             <div className="mt-4">
               <CodeBlock code="ntm palette myproject --send" />
             </div>
             <p className="mt-3 text-white/60">
-              This lets you select a prompt and immediately send it to all
-              agents!
+              {messages.usingPalettePrompts.options.directSend.description}
             </p>
           </UsageOption>
         </div>
@@ -148,37 +146,22 @@ export function NtmPaletteLesson() {
 
       {/* Example Prompts */}
       <Section
-        title="Example Prompts"
+        title={messages.examplePrompts.title}
         icon={<Sparkles className="h-5 w-5" />}
         delay={0.25}
       >
-        <Paragraph>Here are a few examples from the palette:</Paragraph>
+        <Paragraph>{messages.examplePrompts.intro}</Paragraph>
 
         <div className="mt-8 space-y-6">
           <ExamplePrompt
-            title="Code Review"
-            prompt={`Review this code with an emphasis on:
-1. Security vulnerabilities
-2. Performance issues
-3. Code readability
-4. Edge cases not handled
-
-For each issue, provide:
-- The specific problem
-- Why it matters
-- A suggested fix`}
+            title={messages.examplePrompts.examples.codeReview.title}
+            prompt={messages.examplePrompts.examples.codeReview.prompt}
             gradient="from-sky-500/20 to-blue-500/20"
           />
 
           <ExamplePrompt
-            title="Architecture Analysis"
-            prompt={`Analyze the architecture of this codebase:
-1. Identify the main components
-2. Map the data flow
-3. Note any anti-patterns
-4. Suggest improvements
-
-Create a simple diagram if helpful.`}
+            title={messages.examplePrompts.examples.architectureAnalysis.title}
+            prompt={messages.examplePrompts.examples.architectureAnalysis.prompt}
             gradient="from-violet-500/20 to-purple-500/20"
           />
         </div>
@@ -188,22 +171,21 @@ Create a simple diagram if helpful.`}
 
       {/* Customizing The Palette */}
       <Section
-        title="Customizing The Palette"
+        title={messages.customizingPalette.title}
         icon={<FolderOpen className="h-5 w-5" />}
         delay={0.3}
       >
-        <Paragraph>You can add your own prompts:</Paragraph>
+        <Paragraph>{messages.customizingPalette.intro}</Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Location of custom prompts
+            code={`# ${messages.customizingPalette.location}
 ~/.acfs/palette/custom/`}
           />
         </div>
 
         <Paragraph>
-          Create <InlineCode>.md</InlineCode> files with your prompts, and
-          they&apos;ll appear in the palette.
+          {messages.customizingPalette.instructions}
         </Paragraph>
       </Section>
 
@@ -211,30 +193,17 @@ Create a simple diagram if helpful.`}
 
       {/* Pro Tips */}
       <Section
-        title="Pro Tips"
+        title={messages.proTips.title}
         icon={<Lightbulb className="h-5 w-5" />}
         delay={0.35}
       >
         <div className="mt-4">
           <BulletList
-            items={[
-              <span key="1">
-                <strong>Start broad, then narrow</strong> - Use high-level
-                prompts first
-              </span>,
-              <span key="2">
-                <strong>Combine agents</strong> - Send different prompts to
-                different agents
-              </span>,
-              <span key="3">
-                <strong>Build on responses</strong> - Use agent output in
-                follow-up prompts
-              </span>,
-              <span key="4">
-                <strong>Save good prompts</strong> - Add working prompts to your
-                custom palette
-              </span>,
-            ]}
+            items={messages.proTips.tips.map((tip, i) => (
+              <span key={i}>
+                <strong>{tip.title}</strong> - {tip.description}
+              </span>
+            ))}
           />
         </div>
       </Section>
@@ -243,17 +212,17 @@ Create a simple diagram if helpful.`}
 
       {/* Try It Now */}
       <Section
-        title="Try It Now"
+        title={messages.tryItNow.title}
         icon={<Play className="h-5 w-5" />}
         delay={0.4}
       >
         <CodeBlock
-          code={`# Open the palette
+          code={`# ${messages.tryItNow.comment1}
 $ ntm palette
 
-# Browse the categories
-# Select something interesting
-# Try sending it to your test session`}
+# ${messages.tryItNow.comment2}
+# ${messages.tryItNow.comment3}
+# ${messages.tryItNow.comment4}`}
           showLineNumbers
         />
       </Section>
