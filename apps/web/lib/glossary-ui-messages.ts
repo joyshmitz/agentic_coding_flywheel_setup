@@ -9,10 +9,17 @@ export const glossaryUiMessages = {
   hero: {
     title: "Glossary",
     description: "Every term used throughout ACFS, explained in plain English.",
+    // Top-level glossary page description
+    topLevelDescription:
+      "Search and browse plain‑English definitions for terms you see in the wizard and learning hub.",
+    tip: "Tip: Many",
+    tipHighlight: "dotted‑underline",
+    tipSuffix: "terms link here from the tooltip.",
   },
 
   search: {
     placeholder: "Search terms...",
+    searchTermsExample: "Search terms (e.g., SSH, tmux, API key)…",
   },
 
   categories: {
@@ -21,6 +28,9 @@ export const glossaryUiMessages = {
     tools: "Tools",
     protocols: "Protocols",
     acronyms: "Acronyms",
+    // Top-level glossary categories
+    shell: "Shell",
+    networking: "Networking",
   },
 
   categoryDescriptions: {
@@ -53,5 +63,25 @@ export const glossaryUiMessages = {
   navigation: {
     learningHub: "Learning Hub",
     home: "Home",
+    setupWizard: "Setup Wizard",
+  },
+
+  // Top-level glossary sections
+  sections: {
+    whatItMeans: "What it means",
+    whyWeUseIt: "Why we use it",
+    thinkOfItLike: "Think of it like…",
+    relatedTerms: "Related terms",
+  },
+
+  // Learn more links
+  learnMore: {
+    sshBasics: "Learn: SSH basics",
+    generateSshKey: "Wizard: Generate SSH key",
+    rentVps: "Wizard: Rent a VPS",
+    tmuxBasics: "Learn: tmux basics",
+    ntmCore: "Learn: NTM command center",
+    flywheelLoop: "Learn: The flywheel loop",
+    agentCommands: "Learn: Agent commands",
   },
 };

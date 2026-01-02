@@ -10,10 +10,17 @@ export const glossaryUiMessagesUk = {
     title: "Глосарій",
     description:
       "Усі терміни, що використовуються в ACFS, пояснені простою мовою.",
+    // Опис для головної сторінки глосарія
+    topLevelDescription:
+      "Шукайте та переглядайте визначення термінів простою мовою, які ви бачите в майстрі налаштування та навчальному центрі.",
+    tip: "Порада: Багато",
+    tipHighlight: "підкреслених пунктиром",
+    tipSuffix: "термінів мають посилання сюди з підказки.",
   },
 
   search: {
     placeholder: "Пошук термінів...",
+    searchTermsExample: "Пошук термінів (напр., SSH, tmux, API key)…",
   },
 
   categories: {
@@ -22,6 +29,9 @@ export const glossaryUiMessagesUk = {
     tools: "Інструменти",
     protocols: "Протоколи",
     acronyms: "Акроніми",
+    // Категорії головної сторінки глосарія
+    shell: "Оболонка",
+    networking: "Мережі",
   },
 
   categoryDescriptions: {
@@ -54,5 +64,25 @@ export const glossaryUiMessagesUk = {
   navigation: {
     learningHub: "Навчальний центр",
     home: "Головна",
+    setupWizard: "Майстер налаштування",
+  },
+
+  // Секції головної сторінки глосарія
+  sections: {
+    whatItMeans: "Що це означає",
+    whyWeUseIt: "Чому ми це використовуємо",
+    thinkOfItLike: "Уявіть це як…",
+    relatedTerms: "Пов'язані терміни",
+  },
+
+  // Посилання «Дізнатися більше»
+  learnMore: {
+    sshBasics: "Дізнатися: Основи SSH",
+    generateSshKey: "Майстер: Створення SSH ключа",
+    rentVps: "Майстер: Оренда VPS",
+    tmuxBasics: "Дізнатися: Основи tmux",
+    ntmCore: "Дізнатися: Командний центр NTM",
+    flywheelLoop: "Дізнатися: Цикл flywheel",
+    agentCommands: "Дізнатися: Команди агентів",
   },
 };
