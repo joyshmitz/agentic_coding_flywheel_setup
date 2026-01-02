@@ -272,17 +272,6 @@ function FeaturesSection() {
   );
 }
 
-const FLYWHEEL_TOOLS = [
-  { name: "NTM", color: "from-sky-400 to-blue-500", desc: "Agent Orchestration" },
-  { name: "Mail", color: "from-violet-400 to-purple-500", desc: "Coordination" },
-  { name: "UBS", color: "from-rose-400 to-red-500", desc: "Bug Scanning" },
-  { name: "BV", color: "from-emerald-400 to-teal-500", desc: "Task Graph" },
-  { name: "CASS", color: "from-cyan-400 to-sky-500", desc: "Search" },
-  { name: "CM", color: "from-pink-400 to-fuchsia-500", desc: "Memory" },
-  { name: "CAAM", color: "from-amber-400 to-orange-500", desc: "Auth" },
-  { name: "SLB", color: "from-yellow-400 to-amber-500", desc: "Safety" },
-];
-
 function FlywheelSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
   const { locale } = useLocale();
@@ -693,13 +682,6 @@ function IsThisForYouSection() {
     </section>
   );
 }
-
-// "What Does This Cost?" Pricing Section
-const PRICING_ITEMS = [
-  { name: "Cloud VPS", price: "$40–56", period: "/month", description: "64GB RAM Ubuntu server (Contabo, OVH)", icon: Server, gradient: "from-sky-400 to-blue-500", note: "64GB RAM for 10+ agents" },
-  { name: "Claude Max", price: "$200", period: "/month", description: "Anthropic's Claude Code CLI", icon: Bot, gradient: "from-amber-400 to-orange-500", note: "$400 for power users (2 accounts)" },
-  { name: "ChatGPT Pro", price: "$200", period: "/month", description: "ChatGPT 5.2 Pro for extended thinking planning", icon: Cpu, gradient: "from-emerald-400 to-teal-500", note: "Essential for plan documents" },
-];
 
 function WhatDoesThisCostSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
