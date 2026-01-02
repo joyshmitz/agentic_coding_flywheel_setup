@@ -25,44 +25,46 @@ import {
   FeatureGrid,
   InlineCode,
 } from "./lesson-components";
+import { useLocale, getGithubCliLessonMessages } from "@/lib/i18n";
 
 export function GithubCliLesson() {
+  const { locale } = useLocale();
+  const messages = getGithubCliLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Manage GitHub issues, PRs, releases, and actions from the command line.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* What Is GitHub CLI */}
       <Section
-        title="What Is GitHub CLI?"
+        title={messages.whatIsGithubCli.title}
         icon={<Github className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>GitHub CLI (gh)</Highlight> lets you interact with GitHub
-          directly from your terminal. No more switching between your editor and
-          browser for common tasks.
+          <Highlight>{messages.whatIsGithubCli.highlightText}</Highlight> {messages.whatIsGithubCli.description}
         </Paragraph>
 
         <div className="mt-8">
           <FeatureGrid>
             <FeatureCard
               icon={<CircleDot className="h-5 w-5" />}
-              title="Issues"
-              description="Create, view, and close issues"
+              title={messages.whatIsGithubCli.features.issues.title}
+              description={messages.whatIsGithubCli.features.issues.description}
               gradient="from-emerald-500/20 to-teal-500/20"
             />
             <FeatureCard
               icon={<GitPullRequest className="h-5 w-5" />}
-              title="Pull Requests"
-              description="Create, review, and merge PRs"
+              title={messages.whatIsGithubCli.features.pullRequests.title}
+              description={messages.whatIsGithubCli.features.pullRequests.description}
               gradient="from-primary/20 to-violet-500/20"
             />
             <FeatureCard
               icon={<Tag className="h-5 w-5" />}
-              title="Releases"
-              description="Create tags and releases"
+              title={messages.whatIsGithubCli.features.releases.title}
+              description={messages.whatIsGithubCli.features.releases.description}
               gradient="from-amber-500/20 to-orange-500/20"
             />
             <FeatureCard
@@ -76,9 +78,7 @@ export function GithubCliLesson() {
 
         <div className="mt-6">
           <TipBox variant="info">
-            AI agents use <InlineCode>gh</InlineCode> extensively for
-            GitHub operations. Understanding these commands helps you review
-            what agents propose.
+            {messages.whatIsGithubCli.tip.content}<InlineCode>gh</InlineCode>{messages.whatIsGithubCli.tip.description}
           </TipBox>
         </div>
       </Section>
@@ -87,32 +87,24 @@ export function GithubCliLesson() {
 
       {/* Authentication */}
       <Section
-        title="Authentication"
+        title={messages.authentication.title}
         icon={<KeyRound className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          First, authenticate with your GitHub account:
+          {messages.authentication.intro}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Interactive login (recommended)
-$ gh auth login
-
-# Check your auth status
-$ gh auth status
-
-# View current user
-$ gh api user --jq '.login'`}
+            code={messages.authentication.codeExample}
             language="bash"
           />
         </div>
 
         <div className="mt-6">
           <TipBox variant="tip">
-            The interactive login will guide you through browser-based OAuth.
-            Choose HTTPS for the git protocol unless you have SSH keys set up.
+            {messages.authentication.tip.content}
           </TipBox>
         </div>
       </Section>
@@ -121,50 +113,17 @@ $ gh api user --jq '.login'`}
 
       {/* Issues */}
       <Section
-        title="Working with Issues"
+        title={messages.workingWithIssues.title}
         icon={<CircleDot className="h-5 w-5" />}
         delay={0.2}
       >
         <CommandList
-          commands={[
-            {
-              command: "gh issue list",
-              description: "List open issues",
-            },
-            {
-              command: "gh issue list --state all",
-              description: "List all issues (open and closed)",
-            },
-            {
-              command: "gh issue view 123",
-              description: "View issue #123 details",
-            },
-            {
-              command: 'gh issue create --title "Bug" --body "Description"',
-              description: "Create a new issue",
-            },
-            {
-              command: "gh issue close 123",
-              description: "Close issue #123",
-            },
-            {
-              command: 'gh issue comment 123 --body "Comment text"',
-              description: "Add a comment to issue #123",
-            },
-          ]}
+          commands={messages.workingWithIssues.commands}
         />
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Create an issue interactively
-$ gh issue create
-
-# Create with labels and assignee
-$ gh issue create \\
-  --title "Fix login bug" \\
-  --body "Users can't login with email" \\
-  --label bug \\
-  --assignee @me`}
+            code={messages.workingWithIssues.codeExample}
             language="bash"
           />
         </div>
@@ -174,73 +133,30 @@ $ gh issue create \\
 
       {/* Pull Requests */}
       <Section
-        title="Pull Requests"
+        title={messages.pullRequests.title}
         icon={<GitPullRequest className="h-5 w-5" />}
         delay={0.25}
       >
         <Paragraph>
-          Create and manage pull requests without leaving your terminal:
+          {messages.pullRequests.intro}
         </Paragraph>
 
         <div className="mt-6">
           <CommandList
-            commands={[
-              {
-                command: "gh pr list",
-                description: "List open pull requests",
-              },
-              {
-                command: "gh pr view 456",
-                description: "View PR #456 details",
-              },
-              {
-                command: "gh pr create",
-                description: "Create a PR (interactive)",
-              },
-              {
-                command: "gh pr checkout 456",
-                description: "Check out PR #456 locally",
-              },
-              {
-                command: "gh pr merge 456",
-                description: "Merge PR #456",
-              },
-              {
-                command: "gh pr diff 456",
-                description: "View PR diff",
-              },
-            ]}
+            commands={messages.pullRequests.commands}
           />
         </div>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Create a PR with title and body
-$ gh pr create \\
-  --title "Add user authentication" \\
-  --body "## Summary
-Implements OAuth2 login flow.
-
-## Test plan
-- [x] Unit tests pass
-- [ ] Manual testing on staging"
-
-# Create a draft PR
-$ gh pr create --draft
-
-# Request review
-$ gh pr edit 456 --add-reviewer username
-
-# View PR checks status
-$ gh pr checks 456`}
+            code={messages.pullRequests.codeExample}
             language="bash"
           />
         </div>
 
         <div className="mt-6">
           <TipBox variant="tip">
-            Agents often create PRs using heredocs for the body. This format
-            is common: <InlineCode>--body &quot;$(cat &lt;&lt;&apos;EOF&apos; ... EOF)&quot;</InlineCode>
+            {messages.pullRequests.tip.content}<InlineCode>--body &quot;$(cat &lt;&lt;&apos;EOF&apos; ... EOF)&quot;</InlineCode>
           </TipBox>
         </div>
       </Section>
@@ -249,48 +165,17 @@ $ gh pr checks 456`}
 
       {/* Releases and Tags */}
       <Section
-        title="Releases & Tags"
+        title={messages.releasesAndTags.title}
         icon={<Tag className="h-5 w-5" />}
         delay={0.3}
       >
         <CommandList
-          commands={[
-            {
-              command: "gh release list",
-              description: "List releases",
-            },
-            {
-              command: "gh release view v1.2.0",
-              description: "View release details",
-            },
-            {
-              command: 'gh release create v1.2.0 --notes "Release notes"',
-              description: "Create a release with tag",
-            },
-            {
-              command: "gh release create v1.2.0 --generate-notes",
-              description: "Auto-generate notes from commits",
-            },
-            {
-              command: "gh release download v1.2.0",
-              description: "Download release assets",
-            },
-          ]}
+          commands={messages.releasesAndTags.commands}
         />
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Create a release with assets
-$ gh release create v2.0.0 \\
-  --title "Version 2.0.0" \\
-  --notes "Major update with new features" \\
-  ./dist/*.zip
-
-# Create a pre-release
-$ gh release create v2.1.0-beta --prerelease
-
-# Delete a release (be careful!)
-$ gh release delete v1.0.0-test --yes`}
+            code={messages.releasesAndTags.codeExample}
             language="bash"
           />
         </div>
@@ -300,58 +185,23 @@ $ gh release delete v1.0.0-test --yes`}
 
       {/* GitHub Actions */}
       <Section
-        title="GitHub Actions"
+        title={messages.githubActions.title}
         icon={<Workflow className="h-5 w-5" />}
         delay={0.35}
       >
         <Paragraph>
-          Monitor and interact with your CI/CD workflows:
+          {messages.githubActions.intro}
         </Paragraph>
 
         <div className="mt-6">
           <CommandList
-            commands={[
-              {
-                command: "gh workflow list",
-                description: "List all workflows",
-              },
-              {
-                command: "gh run list",
-                description: "List recent workflow runs",
-              },
-              {
-                command: "gh run view 123456",
-                description: "View run details",
-              },
-              {
-                command: "gh run view 123456 --log",
-                description: "View run logs",
-              },
-              {
-                command: "gh run watch 123456",
-                description: "Watch a run in real-time",
-              },
-              {
-                command: "gh run rerun 123456",
-                description: "Re-run a failed workflow",
-              },
-            ]}
+            commands={messages.githubActions.commands}
           />
         </div>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# View failed runs
-$ gh run list --status failure
-
-# Trigger a workflow manually
-$ gh workflow run build.yml
-
-# Trigger with inputs
-$ gh workflow run deploy.yml -f environment=staging
-
-# View job logs for a specific job
-$ gh run view 123456 --job 789 --log`}
+            code={messages.githubActions.codeExample}
             language="bash"
           />
         </div>
@@ -361,37 +211,12 @@ $ gh run view 123456 --job 789 --log`}
 
       {/* Repository Info */}
       <Section
-        title="Repository Operations"
+        title={messages.repositoryOperations.title}
         icon={<Github className="h-5 w-5" />}
         delay={0.4}
       >
         <CommandList
-          commands={[
-            {
-              command: "gh repo view",
-              description: "View current repo info",
-            },
-            {
-              command: "gh repo clone owner/repo",
-              description: "Clone a repository",
-            },
-            {
-              command: "gh repo fork",
-              description: "Fork current repo",
-            },
-            {
-              command: "gh repo create my-project --public",
-              description: "Create a new repository",
-            },
-            {
-              command: "gh browse",
-              description: "Open repo in browser",
-            },
-            {
-              command: "gh browse issues",
-              description: "Open issues page in browser",
-            },
-          ]}
+          commands={messages.repositoryOperations.commands}
         />
       </Section>
 
@@ -399,38 +224,24 @@ $ gh run view 123456 --job 789 --log`}
 
       {/* API Access */}
       <Section
-        title="Direct API Access"
+        title={messages.directApiAccess.title}
         icon={<Zap className="h-5 w-5" />}
         delay={0.45}
       >
         <Paragraph>
-          For advanced use cases, access the GitHub API directly:
+          {messages.directApiAccess.intro}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Get repo info as JSON
-$ gh api repos/owner/repo
-
-# List PR comments
-$ gh api repos/owner/repo/pulls/123/comments
-
-# Use jq to extract specific fields
-$ gh api user --jq '.login, .email'
-
-# POST to create something
-$ gh api repos/owner/repo/issues \\
-  -f title="API created issue" \\
-  -f body="Created via gh api"`}
+            code={messages.directApiAccess.codeExample}
             language="bash"
           />
         </div>
 
         <div className="mt-6">
           <TipBox variant="info">
-            Agents use <InlineCode>gh api</InlineCode> for operations not
-            covered by the standard commands. Review these carefully as they
-            have full API access.
+            {messages.directApiAccess.tip.content}<InlineCode>gh api</InlineCode>{messages.directApiAccess.tip.description}
           </TipBox>
         </div>
       </Section>
@@ -439,31 +250,18 @@ $ gh api repos/owner/repo/issues \\
 
       {/* Best Practices */}
       <Section
-        title="Best Practices"
+        title={messages.bestPractices.title}
         icon={<CheckCircle className="h-5 w-5" />}
         delay={0.5}
       >
         <div className="space-y-4">
-          <BestPractice
-            title="Always review PR details before merging"
-            description="Use gh pr view and gh pr diff to understand changes."
-          />
-          <BestPractice
-            title="Use --dry-run where available"
-            description="Some commands support --dry-run to preview actions."
-          />
-          <BestPractice
-            title="Check workflow status before deploying"
-            description="Run gh run list to ensure CI passed before releasing."
-          />
-          <BestPractice
-            title="Use labels and milestones"
-            description="Organize issues with --label and --milestone flags."
-          />
-          <BestPractice
-            title="Review agent-created PRs carefully"
-            description="Agents may create PRs automatically. Always review before merging."
-          />
+          {messages.bestPractices.practices.map((practice, index) => (
+            <BestPractice
+              key={index}
+              title={practice.title}
+              description={practice.description}
+            />
+          ))}
         </div>
       </Section>
 
@@ -471,25 +269,12 @@ $ gh api repos/owner/repo/issues \\
 
       {/* Try It Now */}
       <Section
-        title="Try It Now"
+        title={messages.tryItNow.title}
         icon={<Eye className="h-5 w-5" />}
         delay={0.55}
       >
         <CodeBlock
-          code={`# Check if gh is installed and authenticated
-$ gh auth status
-
-# View the current repository
-$ gh repo view
-
-# List recent issues
-$ gh issue list --limit 5
-
-# List recent PRs
-$ gh pr list --limit 5
-
-# Check recent workflow runs
-$ gh run list --limit 5`}
+          code={messages.tryItNow.code}
           showLineNumbers
         />
       </Section>
