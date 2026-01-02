@@ -486,21 +486,27 @@ export function LessonContent({ lesson: initialLesson }: Props) {
                 <div className="absolute -top-32 -right-32 w-64 h-64 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl pointer-events-none" />
 
                 {/* Meta badges */}
-                <div className="flex flex-wrap items-center gap-3 mb-8">
-                  <div className="group flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-primary/20 to-violet-500/20 border border-primary/30 shadow-[0_0_30px_-5px_rgba(var(--primary-rgb),0.3)] transition-all duration-500 hover:scale-105 hover:shadow-[0_0_40px_-5px_rgba(var(--primary-rgb),0.5)]">
-                    <BookOpen className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-semibold text-white">{m.header.lesson} {lesson.id + 1}</span>
-                  </div>
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.03] border border-white/[0.08] text-white/50">
-                    <Clock className="h-4 w-4" />
-                    <span className="text-sm">{lesson.duration}</span>
-                  </div>
-                  {isCompleted && (
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 border border-emerald-500/30 shadow-[0_0_20px_-5px_rgba(16,185,129,0.5)]">
-                      <Check className="h-4 w-4 text-emerald-400" />
-                      <span className="text-sm font-semibold text-emerald-400">{m.meta.completed}</span>
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-8">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="group flex items-center gap-2.5 px-4 py-2 rounded-full bg-gradient-to-r from-primary/20 to-violet-500/20 border border-primary/30 shadow-[0_0_30px_-5px_rgba(var(--primary-rgb),0.3)] transition-all duration-500 hover:scale-105 hover:shadow-[0_0_40px_-5px_rgba(var(--primary-rgb),0.5)]">
+                      <BookOpen className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-semibold text-white">{m.header.lesson} {lesson.id + 1}</span>
                     </div>
-                  )}
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.03] border border-white/[0.08] text-white/50">
+                      <Clock className="h-4 w-4" />
+                      <span className="text-sm">{lesson.duration}</span>
+                    </div>
+                    {isCompleted && (
+                      <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-500/20 to-emerald-600/20 border border-emerald-500/30 shadow-[0_0_20px_-5px_rgba(16,185,129,0.5)]">
+                        <Check className="h-4 w-4 text-emerald-400" />
+                        <span className="text-sm font-semibold text-emerald-400">{m.meta.completed}</span>
+                      </div>
+                    )}
+                  </div>
+                  {/* Desktop language switcher */}
+                  <div className="hidden xl:block">
+                    <LanguageSwitcher />
+                  </div>
                 </div>
 
                 {/* Title with dramatic gradient */}
