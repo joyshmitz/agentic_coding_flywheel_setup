@@ -125,24 +125,24 @@ export const cassLessonMessagesUk = {
   searchWorkflow: {
     title: "Робочий процес пошуку",
 
-    steps: [
-      {
+    steps: {
+      search: {
         title: "Пошук",
         description: "Знайти відповідні минулі сесії",
       },
-      {
+      review: {
         title: "Огляд",
         description: "Перевірити уривки та оцінки",
       },
-      {
+      expand: {
         title: "Розширити",
         description: "Переглянути повний контекст при потребі",
       },
-      {
+      apply: {
         title: "Застосувати",
         description: "Використати рішення в поточній роботі",
       },
-    ],
+    },
   },
 
   understandingOutput: {

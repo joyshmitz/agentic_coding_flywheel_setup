@@ -125,24 +125,24 @@ export const cassLessonMessages = {
   searchWorkflow: {
     title: "The Search Workflow",
 
-    steps: [
-      {
+    steps: {
+      search: {
         title: "Search",
         description: "Find relevant past sessions",
       },
-      {
+      review: {
         title: "Review",
         description: "Check snippets and scores",
       },
-      {
+      expand: {
         title: "Expand",
         description: "View full context if needed",
       },
-      {
+      apply: {
         title: "Apply",
         description: "Use the solution in your current work",
       },
-    ],
+    },
   },
 
   understandingOutput: {
