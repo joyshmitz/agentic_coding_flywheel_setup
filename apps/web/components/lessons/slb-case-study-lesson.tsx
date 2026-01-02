@@ -32,6 +32,8 @@ import {
 } from "./lesson-components";
 import { useLocale, getSlbCaseStudyLessonMessages } from "@/lib/i18n";
 
+type Messages = ReturnType<typeof getSlbCaseStudyLessonMessages>;
+
 export function SlbCaseStudyLesson() {
   const { locale } = useLocale();
   const messages = getSlbCaseStudyLessonMessages(locale);
@@ -54,7 +56,7 @@ export function SlbCaseStudyLesson() {
         </Paragraph>
 
         <div className="mt-8">
-          <IdeaCard />
+          <IdeaCard messages={messages} />
         </div>
 
         <Paragraph>
@@ -78,7 +80,7 @@ export function SlbCaseStudyLesson() {
         </Paragraph>
 
         <div className="mt-6">
-          <TimelineCard />
+          <TimelineCard messages={messages} />
         </div>
 
         <div className="mt-6">
@@ -92,68 +94,54 @@ export function SlbCaseStudyLesson() {
 
       {/* Multi-Model Feedback */}
       <Section
-        title="The Feedback Loop: Four Models, One Plan"
+        title={messages.feedbackLoop.title}
         icon={<MessageSquare className="h-5 w-5" />}
         delay={0.2}
       >
         <Paragraph>
-          Once the initial plan existed, it was sent to multiple frontier models
-          for review and improvement:
+          {messages.feedbackLoop.intro}
         </Paragraph>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <FeedbackCard
-            model="Claude Opus 4.5"
-            focus="Architecture refinement"
+            model={messages.feedbackLoop.models.claude.name}
+            focus={messages.feedbackLoop.models.claude.focus}
             color="from-amber-500/20 to-orange-500/20"
           />
           <FeedbackCard
-            model="Gemini 3 Deep Think"
-            focus="Edge case analysis"
+            model={messages.feedbackLoop.models.gemini.name}
+            focus={messages.feedbackLoop.models.gemini.focus}
             color="from-blue-500/20 to-indigo-500/20"
           />
           <FeedbackCard
-            model="GPT 5.2 Pro"
-            focus="Security considerations"
+            model={messages.feedbackLoop.models.gpt.name}
+            focus={messages.feedbackLoop.models.gpt.focus}
             color="from-emerald-500/20 to-teal-500/20"
           />
           <FeedbackCard
-            model="Claude (synthesis)"
-            focus="Combining all feedback"
+            model={messages.feedbackLoop.models.synthesis.name}
+            focus={messages.feedbackLoop.models.synthesis.focus}
             color="from-violet-500/20 to-purple-500/20"
           />
         </div>
 
         <div className="mt-6">
           <Paragraph>
-            The feedback was then integrated by Claude Code, with{" "}
-            <strong>multiple verification passes</strong> to ensure nothing was
-            missed:
+            {messages.feedbackLoop.integration}{" "}
+            <strong>{messages.feedbackLoop.multipleVerification}</strong> {messages.feedbackLoop.ensureNothing}
           </Paragraph>
         </div>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# First pass: Integrate all feedback
-cc "Revise the plan document using all the feedback.
-Make sure ALL changes are reflected properly."
-
-# Second pass: Verification
-cc "Go over everything again. Did we miss anything?"
-# Result: Found small oversights
-
-# Third pass: Final check
-cc "One more careful review. Any remaining gaps?"
-# Result: Found 2 more edge cases`}
+            code={messages.codeBlocks.firstPass}
             showLineNumbers
           />
         </div>
 
         <div className="mt-6">
           <TipBox variant="info">
-            Each verification pass found something. This is why multiple passes
-            are critical - they catch problems in the planning phase when
-            they&apos;re easiest to fix.
+            {messages.feedbackLoop.foundSomething}
           </TipBox>
         </div>
       </Section>
@@ -162,55 +150,34 @@ cc "One more careful review. Any remaining gaps?"
 
       {/* Converting to Beads */}
       <Section
-        title="Plan to Beads: Making It Executable"
+        title={messages.planToBeads.title}
         icon={<LayoutDashboard className="h-5 w-5" />}
         delay={0.25}
       >
         <Paragraph>
-          The refined plan was then transformed into structured, trackable
-          beads. The prompt was carefully crafted to ensure thoroughness:
+          {messages.planToBeads.intro}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`cc "First read ALL of the AGENTS.md file and
-PLAN_TO_MAKE_SLB.md file super carefully.
-Understand ALL of both! Use ultrathink.
-
-Take ALL of that and elaborate on it more, then create
-a comprehensive and granular set of beads with:
-- Tasks and subtasks
-- Dependency structure
-- Detailed comments making everything self-contained
-- Background, reasoning, justification
-- Anything our 'future self' would need to know
-
-Use the bd tool repeatedly to create the actual beads."`}
+            code={messages.codeBlocks.beadsCreation}
             showLineNumbers
           />
         </div>
 
         <div className="mt-8">
-          <BeadsResultCard />
+          <BeadsResultCard messages={messages} />
         </div>
 
         <div className="mt-6">
           <Paragraph>
-            Then, just like the plan itself, the beads went through verification
-            passes:
+            {messages.planToBeads.verificationIntro}
           </Paragraph>
         </div>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Beads verification prompt
-cc "Check over each bead super carefully:
-- Does it make sense?
-- Is it optimal?
-- Could we change anything to make the system work better?
-
-If so, revise the beads. It's a lot easier and faster
-to operate in 'plan space' before implementing!"`}
+            code={messages.codeBlocks.beadsVerification}
             showLineNumbers
           />
         </div>
@@ -220,42 +187,27 @@ to operate in 'plan space' before implementing!"`}
 
       {/* What SLB Does */}
       <Section
-        title="What SLB Does"
+        title={messages.whatSlbDoes.title}
         icon={<Shield className="h-5 w-5" />}
         delay={0.3}
       >
         <Paragraph>
-          The Simultaneous Launch Button implements a{" "}
-          <Highlight>two-person rule</Highlight> for AI coding agents:
+          {messages.whatSlbDoes.intro}{" "}
+          <Highlight>{messages.whatSlbDoes.twoPersonRuleHighlight}</Highlight> {messages.whatSlbDoes.forAgents}
         </Paragraph>
 
         <div className="mt-6">
-          <RiskTierCard />
+          <RiskTierCard messages={messages} />
         </div>
 
         <div className="mt-8">
           <BulletList
             items={[
-              <span key="1">
-                <strong>Client-side execution:</strong> Commands run in the
-                user&apos;s shell, inheriting all credentials
-              </span>,
-              <span key="2">
-                <strong>Command hash binding:</strong> Approvals tied to exact
-                commands via SHA-256
-              </span>,
-              <span key="3">
-                <strong>Pre-flight validation:</strong> Automatic dry-runs for
-                supported commands
-              </span>,
-              <span key="4">
-                <strong>Rollback capture:</strong> System state saved before
-                dangerous operations
-              </span>,
-              <span key="5">
-                <strong>Agent Mail integration:</strong> Reviewers notified
-                automatically
-              </span>,
+              <span key="1">{messages.whatSlbDoes.features.clientSide}</span>,
+              <span key="2">{messages.whatSlbDoes.features.hashBinding}</span>,
+              <span key="3">{messages.whatSlbDoes.features.preflightValidation}</span>,
+              <span key="4">{messages.whatSlbDoes.features.rollbackCapture}</span>,
+              <span key="5">{messages.whatSlbDoes.features.agentMailIntegration}</span>,
             ]}
           />
         </div>
@@ -265,41 +217,27 @@ to operate in 'plan space' before implementing!"`}
 
       {/* The Implementation Sprint */}
       <Section
-        title="The Implementation Sprint"
+        title={messages.implementationSprint.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.35}
       >
         <Paragraph>
-          With beads ready, the agent swarm began implementation. The project
-          was smaller than cass-memory, but the workflow was identical:
+          {messages.implementationSprint.intro}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Launch agents
-ntm spawn slb --cc=3 --cod=2
-
-# Each agent runs:
-bv --robot-triage        # What's ready?
-bd update <id> --status in_progress
-# ... implement ...
-bd close <id>
-
-# Commit agent runs every 15-20 min
-cc "Commit all changes in logical groupings with
-detailed messages. Don't edit code. Push when done."`}
+            code={messages.codeBlocks.implementation}
             showLineNumbers
           />
         </div>
 
         <div className="mt-8">
-          <ResultsCard />
+          <ResultsCard messages={messages} />
         </div>
 
         <Paragraph>
-          By dinner time, about two-thirds of the project was complete. The
-          agent swarm continued working while the developer ate, pushing commits
-          autonomously.
+          {messages.implementationSprint.resultIntro}
         </Paragraph>
       </Section>
 
@@ -307,45 +245,30 @@ detailed messages. Don't edit code. Push when done."`}
 
       {/* Key Differences from Large Projects */}
       <Section
-        title="Small vs Large Projects"
+        title={messages.smallVsLarge.title}
         icon={<RefreshCw className="h-5 w-5" />}
         delay={0.4}
       >
         <Paragraph>
-          Compared to the 693-bead cass-memory project, SLB&apos;s 76 beads
-          allowed for some workflow optimizations:
+          {messages.smallVsLarge.intro}
         </Paragraph>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <ComparisonCard
-            title="Small Project (SLB)"
-            items={[
-              "76 beads (14 epics, 62 tasks)",
-              "3-5 agents sufficient",
-              "Faster verification passes",
-              "Easier to track in bv",
-              "One evening to ~70%",
-            ]}
+            title={messages.smallVsLarge.smallProject.title}
+            items={messages.smallVsLarge.smallProject.items}
             gradient="from-emerald-500/20 to-teal-500/20"
           />
           <ComparisonCard
-            title="Large Project (cass-memory)"
-            items={[
-              "693 beads (14 epics, 350+ tasks)",
-              "10+ agents needed",
-              "Multiple planning sessions",
-              "Graph analysis critical",
-              "One day to ~85%",
-            ]}
+            title={messages.smallVsLarge.largeProject.title}
+            items={messages.smallVsLarge.largeProject.items}
             gradient="from-violet-500/20 to-purple-500/20"
           />
         </div>
 
         <div className="mt-6">
           <TipBox variant="tip">
-            Start with smaller projects to learn the workflow. Once
-            you&apos;re comfortable with 50-100 beads, scale up to larger
-            projects.
+            {messages.smallVsLarge.tip}
           </TipBox>
         </div>
       </Section>
@@ -354,38 +277,12 @@ detailed messages. Don't edit code. Push when done."`}
 
       {/* Lessons Learned */}
       <Section
-        title="Lessons Learned"
+        title={messages.lessonsLearned.title}
         icon={<CheckCircle2 className="h-5 w-5" />}
         delay={0.45}
       >
         <StepList
-          steps={[
-            {
-              title: "Act immediately on good ideas",
-              description:
-                "An hour from idea to initial plan keeps momentum high",
-            },
-            {
-              title: "Multi-model feedback finds blind spots",
-              description:
-                "Each model brings different perspectives and catches different issues",
-            },
-            {
-              title: "Multiple verification passes are essential",
-              description:
-                "Each pass found something - never skip this step",
-            },
-            {
-              title: "Smaller projects are great for learning",
-              description:
-                "76 beads is manageable while still demonstrating the full workflow",
-            },
-            {
-              title: "Document everything",
-              description:
-                "The conversation transcripts become valuable learning resources",
-            },
-          ]}
+          steps={messages.lessonsLearned.steps}
         />
       </Section>
 
@@ -393,47 +290,24 @@ detailed messages. Don't edit code. Push when done."`}
 
       {/* Try It Yourself */}
       <Section
-        title="Try It Yourself: Weekend Project"
+        title={messages.tryItYourself.title}
         icon={<Play className="h-5 w-5" />}
         delay={0.5}
       >
         <Paragraph>
-          Pick a small tool idea (something that would take you a day or two
-          manually) and try this workflow:
+          {messages.tryItYourself.intro}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Hour 1: Draft initial plan
-cc "I want to build [your idea]. Help me create a
-detailed plan document covering architecture,
-features, and implementation approach."
-
-# Hour 2: Multi-model feedback
-# Send plan to 2-3 different frontier models
-# Collect their suggestions and improvements
-
-# Hour 3: Synthesize and create beads
-cc "Read the plan and all feedback. Create a
-revised plan incorporating the best suggestions."
-
-cc "Convert the plan into 50-100 beads with
-dependencies. Use bd CLI."
-
-# Hour 4+: Implementation
-ntm spawn myproject --cc=2 --cod=1
-# Let the swarm work!
-
-# Every 15-20 min: Commit agent
-cc "Commit all changes with detailed messages."`}
+            code={messages.codeBlocks.tryItYourself}
             showLineNumbers
           />
         </div>
 
         <div className="mt-6">
           <TipBox variant="info">
-            For your first flywheel project, aim for something with 50-100 beads.
-            CLI tools, utilities, and small libraries are perfect candidates.
+            {messages.tryItYourself.tip}
           </TipBox>
         </div>
       </Section>
@@ -444,7 +318,7 @@ cc "Commit all changes with detailed messages."`}
 // =============================================================================
 // IDEA CARD - The tweet inspiration
 // =============================================================================
-function IdeaCard() {
+function IdeaCard({ messages }: { messages: Messages }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -457,17 +331,13 @@ function IdeaCard() {
           <Lightbulb className="h-6 w-6 text-white" />
         </div>
         <div>
-          <h4 className="font-bold text-white mb-2">The WarGames Insight</h4>
+          <h4 className="font-bold text-white mb-2">{messages.ideaCard.title}</h4>
           <p className="text-white/70 text-sm italic">
-            &quot;You know how in movies like WarGames they show how the two
-            guys have to turn the keys at the same time to arm the nuclear
-            warheads? I want to make something like that where for potentially
-            damaging commands, the agents have to get one other agent to agree
-            with their reasoning and sign off on the command.&quot;
+            &quot;{messages.ideaCard.quote}&quot;
           </p>
           <div className="mt-3 flex items-center gap-2 text-xs text-white/50">
             <Key className="h-3 w-3" />
-            <span>Two-person rule for AI agents</span>
+            <span>{messages.ideaCard.subtitle}</span>
           </div>
         </div>
       </div>
@@ -478,14 +348,8 @@ function IdeaCard() {
 // =============================================================================
 // TIMELINE CARD
 // =============================================================================
-function TimelineCard() {
-  const steps = [
-    { time: "3:55 PM", event: "Idea sparked from tweet", icon: Lightbulb },
-    { time: "~4:30 PM", event: "Initial plan drafted with Claude Code", icon: FileText },
-    { time: "5:25 PM", event: "Plan document published", icon: GitBranch },
-    { time: "Evening", event: "Multi-model feedback gathered", icon: MessageSquare },
-    { time: "Night", event: "Beads created, implementation started", icon: LayoutDashboard },
-  ];
+function TimelineCard({ messages }: { messages: Messages }) {
+  const icons = [Lightbulb, FileText, GitBranch, MessageSquare, LayoutDashboard];
 
   return (
     <motion.div
@@ -496,31 +360,34 @@ function TimelineCard() {
     >
       <h4 className="font-bold text-white mb-4 flex items-center gap-2">
         <Clock className="h-5 w-5 text-primary" />
-        December 13, 2025 Timeline
+        {messages.timeline.title}
       </h4>
 
       <div className="space-y-4">
-        {steps.map((step, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.1 }}
-            whileHover={{ x: 6 }}
-            className="group flex items-center gap-4 p-2 -mx-2 rounded-lg transition-all duration-300 hover:bg-white/[0.02]"
-          >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/20 group-hover:bg-primary/30 group-hover:shadow-lg group-hover:shadow-primary/20 transition-all">
-              <step.icon className="h-4 w-4 text-primary" />
-            </div>
-            <div className="flex-1 flex items-center gap-3">
-              <span className="text-xs font-mono text-white/50 w-20">
-                {step.time}
-              </span>
-              <ArrowRight className="h-3 w-3 text-white/30 group-hover:text-primary/50 transition-colors" />
-              <span className="text-sm text-white/70 group-hover:text-white/90 transition-colors">{step.event}</span>
-            </div>
-          </motion.div>
-        ))}
+        {messages.timeline.events.map((step, i) => {
+          const Icon = icons[i] || Lightbulb;
+          return (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.1 }}
+              whileHover={{ x: 6 }}
+              className="group flex items-center gap-4 p-2 -mx-2 rounded-lg transition-all duration-300 hover:bg-white/[0.02]"
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/20 group-hover:bg-primary/30 group-hover:shadow-lg group-hover:shadow-primary/20 transition-all">
+                <Icon className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1 flex items-center gap-3">
+                <span className="text-xs font-mono text-white/50 w-20">
+                  {step.time}
+                </span>
+                <ArrowRight className="h-3 w-3 text-white/30 group-hover:text-primary/50 transition-colors" />
+                <span className="text-sm text-white/70 group-hover:text-white/90 transition-colors">{step.event}</span>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
     </motion.div>
   );
@@ -557,7 +424,7 @@ function FeedbackCard({
 // =============================================================================
 // BEADS RESULT CARD
 // =============================================================================
-function BeadsResultCard() {
+function BeadsResultCard({ messages }: { messages: Messages }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -567,27 +434,26 @@ function BeadsResultCard() {
     >
       <div className="flex items-center gap-3 mb-4">
         <LayoutDashboard className="h-5 w-5 text-sky-400" />
-        <h4 className="font-bold text-white">Final Beads Structure</h4>
+        <h4 className="font-bold text-white">{messages.beadsResult.title}</h4>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="text-center p-4 rounded-xl bg-black/20">
           <div className="text-2xl font-bold text-sky-400">14</div>
-          <div className="text-xs text-white/60">Epics</div>
+          <div className="text-xs text-white/60">{messages.beadsResult.epics}</div>
         </div>
         <div className="text-center p-4 rounded-xl bg-black/20">
           <div className="text-2xl font-bold text-sky-400">62</div>
-          <div className="text-xs text-white/60">Tasks</div>
+          <div className="text-xs text-white/60">{messages.beadsResult.tasks}</div>
         </div>
         <div className="text-center p-4 rounded-xl bg-black/20">
           <div className="text-2xl font-bold text-sky-400">76</div>
-          <div className="text-xs text-white/60">Total Beads</div>
+          <div className="text-xs text-white/60">{messages.beadsResult.total}</div>
         </div>
       </div>
 
       <p className="mt-4 text-sm text-white/60">
-        Smaller than cass-memory&apos;s 693 beads, but still comprehensive
-        enough to capture the full implementation.
+        {messages.beadsResult.description}
       </p>
     </motion.div>
   );
@@ -596,33 +462,33 @@ function BeadsResultCard() {
 // =============================================================================
 // RISK TIER CARD
 // =============================================================================
-function RiskTierCard() {
+function RiskTierCard({ messages }: { messages: Messages }) {
   const tiers = [
     {
-      name: "CRITICAL",
-      approvals: "2+",
-      examples: "System destruction, database drops",
+      name: messages.whatSlbDoes.riskTiers.critical.name,
+      approvals: messages.whatSlbDoes.riskTiers.critical.approvals,
+      examples: messages.whatSlbDoes.riskTiers.critical.examples,
       color: "from-red-500/20 to-rose-500/20",
       border: "border-red-500/30",
     },
     {
-      name: "DANGEROUS",
-      approvals: "1",
-      examples: "rm -rf, git push --force",
+      name: messages.whatSlbDoes.riskTiers.dangerous.name,
+      approvals: messages.whatSlbDoes.riskTiers.dangerous.approvals,
+      examples: messages.whatSlbDoes.riskTiers.dangerous.examples,
       color: "from-orange-500/20 to-amber-500/20",
       border: "border-orange-500/30",
     },
     {
-      name: "CAUTION",
-      approvals: "Auto (30s)",
-      examples: "Single file delete, branch remove",
+      name: messages.whatSlbDoes.riskTiers.caution.name,
+      approvals: messages.whatSlbDoes.riskTiers.caution.approvals,
+      examples: messages.whatSlbDoes.riskTiers.caution.examples,
       color: "from-yellow-500/20 to-amber-500/20",
       border: "border-yellow-500/30",
     },
     {
-      name: "SAFE",
-      approvals: "Skip",
-      examples: "Temp file cleanup, cache clear",
+      name: messages.whatSlbDoes.riskTiers.safe.name,
+      approvals: messages.whatSlbDoes.riskTiers.safe.approvals,
+      examples: messages.whatSlbDoes.riskTiers.safe.examples,
       color: "from-emerald-500/20 to-teal-500/20",
       border: "border-emerald-500/30",
     },
@@ -642,7 +508,7 @@ function RiskTierCard() {
           <div className="flex items-center justify-between mb-2">
             <span className="font-bold text-white text-sm">{tier.name}</span>
             <span className="text-xs px-2 py-1 rounded bg-black/30 text-white/70 group-hover:bg-black/40 transition-colors">
-              {tier.approvals}{/^\d/.test(tier.approvals) ? (tier.approvals === "1" ? " approval" : " approvals") : ""}
+              {tier.approvals}
             </span>
           </div>
           <p className="text-xs text-white/60 group-hover:text-white/80 transition-colors">{tier.examples}</p>
@@ -655,7 +521,7 @@ function RiskTierCard() {
 // =============================================================================
 // RESULTS CARD
 // =============================================================================
-function ResultsCard() {
+function ResultsCard({ messages }: { messages: Messages }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -665,21 +531,21 @@ function ResultsCard() {
     >
       <div className="flex items-center gap-3 mb-4">
         <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-        <h4 className="font-bold text-white">Implementation Results</h4>
+        <h4 className="font-bold text-white">{messages.implementationResults.title}</h4>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="text-center p-4 rounded-xl bg-black/20">
           <div className="text-2xl font-bold text-emerald-400">268</div>
-          <div className="text-xs text-white/60">Total Commits</div>
+          <div className="text-xs text-white/60">{messages.implementationResults.totalCommits}</div>
         </div>
         <div className="text-center p-4 rounded-xl bg-black/20">
           <div className="text-2xl font-bold text-emerald-400">Go 1.21+</div>
-          <div className="text-xs text-white/60">Built In</div>
+          <div className="text-xs text-white/60">{messages.implementationResults.builtIn}</div>
         </div>
         <div className="text-center p-4 rounded-xl bg-black/20">
           <div className="text-2xl font-bold text-emerald-400">~70%</div>
-          <div className="text-xs text-white/60">Day 1 Complete</div>
+          <div className="text-xs text-white/60">{messages.implementationResults.dayOneComplete}</div>
         </div>
       </div>
     </motion.div>

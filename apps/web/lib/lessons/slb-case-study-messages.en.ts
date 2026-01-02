@@ -7,7 +7,7 @@
 
 export const slbCaseStudyLessonMessages = {
   goalBanner: {
-    content: "Watch how a tweet becomes working code in one evening using the flywheel workflow.",
+    content: "Watch how a tweet becomes working code in one evening: 76 beads, 268 commits, from idea to ~70% complete in hours.",
   },
 
   theSpark: {
@@ -26,12 +26,12 @@ export const slbCaseStudyLessonMessages = {
   },
 
   feedbackLoop: {
-    title: "Feedback Loop: Multiple Perspectives",
-
+    title: "The Feedback Loop: Four Models, One Plan",
+    intro: "Once the initial plan existed, it was sent to multiple frontier models for review and improvement:",
     models: {
       claude: {
-        name: "Claude Sonnet 4",
-        focus: "User experience design",
+        name: "Claude Opus 4.5",
+        focus: "Architecture refinement",
       },
       gemini: {
         name: "Gemini 3 Deep Think",
@@ -39,233 +39,242 @@ export const slbCaseStudyLessonMessages = {
       },
       gpt: {
         name: "GPT 5.2 Pro",
-        focus: "Safety reasoning",
+        focus: "Security considerations",
       },
       synthesis: {
         name: "Claude (synthesis)",
-        focus: "Best parts integration",
+        focus: "Combining all feedback",
       },
     },
-
-    insight: "Each model brought unique perspectives. Claude focused on UX, Gemini on edge cases, GPT on safety. The synthesis combined the best ideas into a coherent plan.",
+    integration: "The feedback was then integrated by Claude Code, with",
+    multipleVerification: "multiple verification passes",
+    ensureNothing: "to ensure nothing was missed:",
+    foundSomething: "Each verification pass found something. This is why multiple passes are critical - they catch problems in the planning phase when they're easiest to fix.",
   },
 
   planToBeads: {
-    title: "From Plan to Beads",
-    description: "The plan was broken into actionable \"beads\" - small, testable units of work that could be completed and verified quickly.",
-    beadCount: "693 total beads created in the planning phase",
+    title: "Plan to Beads: Making It Executable",
+    intro: "The refined plan was then transformed into structured, trackable beads. The prompt was carefully crafted to ensure thoroughness:",
+    verificationIntro: "Then, just like the plan itself, the beads went through verification passes:",
   },
 
   whatSlbDoes: {
-    title: "What SLB Actually Does",
-    description: "SLB (Safety Lock Buddy) provides peer review for dangerous shell commands before execution.",
-
+    title: "What SLB Does",
+    intro: "The Simultaneous Launch Button implements a",
+    twoPersonRuleHighlight: "two-person rule",
+    forAgents: "for AI coding agents:",
     features: {
-      commandAnalysis: "Analyzes commands for potential risks",
-      peerReview: "Routes dangerous commands to another agent for review",
-      safetyCategories: "Categorizes commands by risk level",
-      contextAware: "Understands project context and user intent",
+      clientSide: "Client-side execution: Commands run in the user's shell, inheriting all credentials",
+      hashBinding: "Command hash binding: Approvals tied to exact commands via SHA-256",
+      preflightValidation: "Pre-flight validation: Automatic dry-runs for supported commands",
+      rollbackCapture: "Rollback capture: System state saved before dangerous operations",
+      agentMailIntegration: "Agent Mail integration: Reviewers notified automatically",
     },
-
     riskTiers: {
       critical: {
-        title: "Critical Risk",
-        commands: ["rm -rf /", "sudo chmod 777 /", "kill -9 $(pgrep .)"],
-        action: "Block and require human confirmation",
+        name: "CRITICAL",
+        approvals: "2+",
+        examples: "System destruction, database drops",
       },
       dangerous: {
-        title: "Dangerous",
-        commands: ["kubectl delete", "git push --force", "DROP TABLE"],
-        action: "Require peer agent review",
+        name: "DANGEROUS",
+        approvals: "1",
+        examples: "rm -rf, git push --force",
       },
       caution: {
-        title: "Caution",
-        commands: ["rm *.log", "git reset --hard", "npm run build"],
-        action: "Show warning, proceed if confirmed",
+        name: "CAUTION",
+        approvals: "Auto (30s)",
+        examples: "Single file delete, branch remove",
       },
       safe: {
-        title: "Safe",
-        commands: ["ls", "git status", "cat README.md"],
-        action: "Execute immediately",
+        name: "SAFE",
+        approvals: "Skip",
+        examples: "Temp file cleanup, cache clear",
       },
     },
   },
 
   implementationSprint: {
-    title: "Implementation Sprint",
-    description: "With the plan in place, implementation began using the agent flywheel approach.",
+    title: "The Implementation Sprint",
+    intro: "With beads ready, the agent swarm began implementation. The project was smaller than cass-memory, but the workflow was identical:",
+    resultIntro: "By dinner time, about two-thirds of the project was complete. The agent swarm continued working while the developer ate, pushing commits autonomously.",
   },
 
   smallVsLarge: {
-    title: "Small Projects vs. Large: Different Strategies",
-
+    title: "Small vs Large Projects",
+    intro: "Compared to the 693-bead cass-memory project, SLB's 76 beads allowed for some workflow optimizations:",
     smallProject: {
-      title: "Small Project Approach (SLB)",
-      characteristics: [
-        "Single developer, clear scope",
-        "Can be completed in days/weeks",
-        "Simple architecture sufficient",
+      title: "Small Project (SLB)",
+      items: [
+        "76 beads (14 epics, 62 tasks)",
+        "3-5 agents sufficient",
+        "Faster verification passes",
+        "Easier to track in bv",
+        "One evening to ~70%",
       ],
-      strategy: "Fast iteration, rapid feedback, minimal overhead",
-      tools: "Claude Code, simple tooling, direct deployment",
     },
-
     largeProject: {
-      title: "Large Project Approach",
-      characteristics: [
-        "Multiple developers, complex scope",
-        "Takes months/years to complete",
-        "Requires robust architecture",
+      title: "Large Project (cass-memory)",
+      items: [
+        "693 beads (14 epics, 350+ tasks)",
+        "10+ agents needed",
+        "Multiple planning sessions",
+        "Graph analysis critical",
+        "One day to ~85%",
       ],
-      strategy: "Planned coordination, structured processes, comprehensive testing",
-      tools: "Multiple agents, formal workflows, enterprise tooling",
     },
+    tip: "Start with smaller projects to learn the workflow. Once you're comfortable with 50-100 beads, scale up to larger projects.",
   },
 
   lessonsLearned: {
     title: "Lessons Learned",
-    lessons: [
+    steps: [
       {
-        lesson: "Speed trumps perfection in early stages",
-        explanation: "Getting something working quickly creates momentum and reveals real requirements",
+        title: "Act immediately on good ideas",
+        description: "An hour from idea to initial plan keeps momentum high",
       },
       {
-        lesson: "Multiple model perspectives improve planning",
-        explanation: "Different AI models notice different aspects of the problem",
+        title: "Multi-model feedback finds blind spots",
+        description: "Each model brings different perspectives and catches different issues",
       },
       {
-        lesson: "Breaking work into beads enables progress tracking",
-        explanation: "Small, testable units make progress visible and debugging easier",
+        title: "Multiple verification passes are essential",
+        description: "Each pass found something - never skip this step",
       },
       {
-        lesson: "Real user feedback comes from real deployment",
-        explanation: "Internal testing misses issues that only appear with actual users",
+        title: "Smaller projects are great for learning",
+        description: "76 beads is manageable while still demonstrating the full workflow",
+      },
+      {
+        title: "Document everything",
+        description: "The conversation transcripts become valuable learning resources",
       },
     ],
   },
 
   tryItYourself: {
-    title: "Try It Yourself",
-    description: "Ready to build your own tool using the flywheel approach?",
-    steps: [
-      "Find a problem that annoys you daily",
-      "Spend 1 hour planning with AI assistance",
-      "Break the plan into small, testable beads",
-      "Start coding and deploy early",
-      "Iterate based on real usage",
-    ],
+    title: "Try It Yourself: Weekend Project",
+    intro: "Pick a small tool idea (something that would take you a day or two manually) and try this workflow:",
+    tip: "For your first flywheel project, aim for something with 50-100 beads. CLI tools, utilities, and small libraries are perfect candidates.",
   },
 
   timeline: {
-    title: "SLB Development Timeline",
+    title: "December 13, 2025 Timeline",
     events: [
       {
-        time: "Hour 0",
-        event: "Idea sparked from Twitter conversation",
-        action: "Immediate planning session with multiple AI models",
+        time: "3:55 PM",
+        event: "Idea sparked from tweet",
       },
       {
-        time: "Hour 1",
-        event: "Plan complete, 693 beads identified",
-        action: "Begin implementation sprint",
+        time: "~4:30 PM",
+        event: "Initial plan drafted with Claude Code",
       },
       {
-        time: "Hour 6",
-        event: "MVP working locally",
-        action: "First deployment and testing",
+        time: "5:25 PM",
+        event: "Plan document published",
       },
       {
-        time: "Day 1",
-        event: "Basic functionality complete",
-        action: "Share with first users for feedback",
+        time: "Evening",
+        event: "Multi-model feedback gathered",
       },
       {
-        time: "Week 1",
-        event: "Production-ready version",
-        action: "Public release and user onboarding",
+        time: "Night",
+        event: "Beads created, implementation started",
       },
     ],
   },
 
   ideaCard: {
-    originalIdea: "What if dangerous commands required peer review from another agent?",
-    finalImplementation: "SLB provides multi-tiered safety checking for shell commands with agent-based peer review for risky operations.",
-    transformation: "Simple idea → Working tool in one day",
+    title: "The WarGames Insight",
+    quote: "You know how in movies like WarGames they show how the two guys have to turn the keys at the same time to arm the nuclear warheads? I want to make something like that where for potentially damaging commands, the agents have to get one other agent to agree with their reasoning and sign off on the command.",
+    subtitle: "Two-person rule for AI agents",
   },
 
   beadsResult: {
-    title: "The Power of Beads",
-    totalBeads: 693,
-    completedFirstDay: 589,
-    percentComplete: "85%",
-    insight: "Breaking work into small beads made progress visible and debugging straightforward.",
+    title: "Final Beads Structure",
+    epics: "Epics",
+    tasks: "Tasks",
+    total: "Total Beads",
+    description: "Smaller than cass-memory's 693 beads, but still comprehensive enough to capture the full implementation.",
   },
 
   implementationResults: {
     title: "Implementation Results",
-    codeGenerated: "2,847 lines across 23 files",
-    testsWritten: "156 test cases with 94% coverage",
-    deploymentTime: "12 minutes from code to production",
+    totalCommits: "Total Commits",
+    builtIn: "Built In",
+    dayOneComplete: "Day 1 Complete",
   },
 
   codeBlocks: {
-    commandAnalysis: {
-      title: "Command Risk Analysis",
-      code: `def analyze_command_risk(command: str, context: dict) -> RiskLevel:
-    # Parse command structure
-    tokens = shlex.split(command)
-    cmd = tokens[0] if tokens else ""
+    firstPass: `# First pass: Integrate all feedback
+cc "Revise the plan document using all the feedback.
+Make sure ALL changes are reflected properly."
 
-    # Check critical patterns
-    if any(pattern in command for pattern in CRITICAL_PATTERNS):
-        return RiskLevel.CRITICAL
+# Second pass: Verification
+cc "Go over everything again. Did we miss anything?"
+# Result: Found small oversights
 
-    # Check dangerous patterns with context
-    if is_dangerous_in_context(command, context):
-        return RiskLevel.DANGEROUS
+# Third pass: Final check
+cc "One more careful review. Any remaining gaps?"
+# Result: Found 2 more edge cases`,
 
-    # Default safety checks
-    return assess_default_risk(tokens)`,
-    },
-    peerReview: {
-      title: "Peer Review Request",
-      code: `async def request_peer_review(command: str, risk: RiskLevel) -> ReviewResult:
-    review_request = {
-        "command": command,
-        "risk_level": risk.value,
-        "context": get_execution_context(),
-        "requester": get_current_agent_id()
-    }
+    beadsCreation: `cc "First read ALL of the AGENTS.md file and
+PLAN_TO_MAKE_SLB.md file super carefully.
+Understand ALL of both! Use ultrathink.
 
-    # Route to appropriate reviewer
-    reviewer = await get_available_peer_agent()
-    result = await reviewer.review_command(review_request)
+Take ALL of that and elaborate on it more, then create
+a comprehensive and granular set of beads with:
+- Tasks and subtasks
+- Dependency structure
+- Detailed comments making everything self-contained
+- Background, reasoning, justification
+- Anything our 'future self' would need to know
 
-    return ReviewResult(
-        approved=result.approved,
-        feedback=result.feedback,
-        modifications=result.suggested_changes
-    )`,
-    },
-    safetyGates: {
-      title: "Safety Gate Implementation",
-      code: `class SafetyGate:
-    def __init__(self):
-        self.risk_analyzer = CommandRiskAnalyzer()
-        self.peer_reviewer = PeerReviewer()
+Use the bd tool repeatedly to create the actual beads."`,
 
-    async def check_command(self, command: str) -> ExecutionDecision:
-        risk = self.risk_analyzer.analyze(command)
+    beadsVerification: `# Beads verification prompt
+cc "Check over each bead super carefully:
+- Does it make sense?
+- Is it optimal?
+- Could we change anything to make the system work better?
 
-        if risk == RiskLevel.SAFE:
-            return ExecutionDecision.PROCEED
+If so, revise the beads. It's a lot easier and faster
+to operate in 'plan space' before implementing!"`,
 
-        if risk == RiskLevel.CRITICAL:
-            return ExecutionDecision.BLOCK
+    implementation: `# Launch agents
+ntm spawn slb --cc=3 --cod=2
 
-        # Require peer review for dangerous commands
-        review = await self.peer_reviewer.request_review(command, risk)
-        return ExecutionDecision.PROCEED if review.approved else ExecutionDecision.BLOCK`,
-    },
+# Each agent runs:
+bv --robot-triage        # What's ready?
+bd update <id> --status in_progress
+# ... implement ...
+bd close <id>
+
+# Commit agent runs every 15-20 min
+cc "Commit all changes in logical groupings with
+detailed messages. Don't edit code. Push when done."`,
+
+    tryItYourself: `# Hour 1: Draft initial plan
+cc "I want to build [your idea]. Help me create a
+detailed plan document covering architecture,
+features, and implementation approach."
+
+# Hour 2: Multi-model feedback
+# Send plan to 2-3 different frontier models
+# Collect their suggestions and improvements
+
+# Hour 3: Synthesize and create beads
+cc "Read the plan and all feedback. Create a
+revised plan incorporating the best suggestions."
+
+cc "Convert the plan into 50-100 beads with
+dependencies. Use bd CLI."
+
+# Hour 4+: Implementation
+ntm spawn myproject --cc=2 --cod=1
+# Let the swarm work!
+
+# Every 15-20 min: Commit agent
+cc "Commit all changes with detailed messages."`,
   },
 };
