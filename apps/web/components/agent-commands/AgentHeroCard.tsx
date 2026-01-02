@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Copy, Check, ChevronDown, Terminal } from "lucide-react";
 import { motion, AnimatePresence, springs } from "@/components/motion";
 import { cn } from "@/lib/utils";
+import { useLocale, getAgentHeroCardMessages } from "@/lib/i18n";
 
 export type AgentType = "claude" | "codex" | "gemini";
 
@@ -32,7 +33,6 @@ export const agentPersonalities: Record<
     glowColor: string;
     bgGlow: string;
     borderHover: string;
-    tagline: string;
   }
 > = {
   claude: {
@@ -40,21 +40,18 @@ export const agentPersonalities: Record<
     glowColor: "oklch(0.78 0.16 75)",
     bgGlow: "bg-[oklch(0.78_0.16_75/0.15)]",
     borderHover: "hover:border-[oklch(0.78_0.16_75/0.5)]",
-    tagline: "Deep reasoning & architecture",
   },
   codex: {
     gradient: "from-emerald-400 via-teal-400 to-emerald-500",
     glowColor: "oklch(0.72 0.19 145)",
     bgGlow: "bg-[oklch(0.72_0.19_145/0.15)]",
     borderHover: "hover:border-[oklch(0.72_0.19_145/0.5)]",
-    tagline: "Structured & precise",
   },
   gemini: {
     gradient: "from-blue-400 via-indigo-400 to-blue-500",
     glowColor: "oklch(0.75 0.18 195)",
     bgGlow: "bg-[oklch(0.75_0.18_195/0.15)]",
     borderHover: "hover:border-[oklch(0.75_0.18_195/0.5)]",
-    tagline: "Large context exploration",
   },
 };
 
@@ -73,10 +70,13 @@ export function AgentHeroCard({
   index,
   onKeyboardFocus,
 }: AgentHeroCardProps) {
+  const { locale } = useLocale();
+  const messages = getAgentHeroCardMessages(locale);
   const [copiedAlias, setCopiedAlias] = useState<string | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const personality = agentPersonalities[agent.id];
+  const tagline = messages.taglines[agent.id];
 
   // Handle keyboard number navigation
   useEffect(() => {
@@ -202,7 +202,7 @@ export function AgentHeroCard({
         {/* Agent info */}
         <div className="min-w-0 flex-1">
           <h3 className="text-xl font-bold text-white">{agent.name}</h3>
-          <p className="text-sm text-white/80">{personality.tagline}</p>
+          <p className="text-sm text-white/80">{tagline}</p>
         </div>
 
         {/* Quick alias + expand indicator */}
@@ -281,9 +281,9 @@ export function AgentHeroCard({
                 {agent.model}
               </span>
               <div className="flex items-center gap-2 text-sm text-white/40">
-                <span>{agent.examples.length} commands</span>
+                <span>{agent.examples.length} {messages.stats.commands}</span>
                 <span className="text-white/20">·</span>
-                <span>{agent.tips.length} tips</span>
+                <span>{agent.tips.length} {messages.stats.tips}</span>
               </div>
             </div>
           </motion.div>

@@ -31,6 +31,12 @@ export {
   getLaunchOnboardingMessages,
   // Component messages
   getSimplerGuideMessages,
+  getCommandCardMessages,
+  getConnectionCheckMessages,
+  getJargonUiMessages,
+  getStepperMessages,
+  getFlywheelVizMessages,
+  getAgentHeroCardMessages,
   // Page messages
   getLearnMessages,
   getFlywheelMessages,

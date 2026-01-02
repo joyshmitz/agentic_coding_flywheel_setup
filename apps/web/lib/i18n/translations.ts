@@ -167,6 +167,30 @@ import {
 import { simplerGuideMessages } from "../simpler-guide-messages";
 import { simplerGuideMessagesUk } from "../simpler-guide-messages.uk";
 
+// CommandCard component messages
+import { commandCardMessages } from "../command-card-messages";
+import { commandCardMessagesUk } from "../command-card-messages.uk";
+
+// ConnectionCheck component messages
+import { connectionCheckMessages } from "../connection-check-messages";
+import { connectionCheckMessagesUk } from "../connection-check-messages.uk";
+
+// Jargon component messages
+import { jargonUiMessages } from "../jargon-ui-messages";
+import { jargonUiMessagesUk } from "../jargon-ui-messages.uk";
+
+// Stepper component messages
+import { stepperMessages } from "../stepper-messages";
+import { stepperMessagesUk } from "../stepper-messages.uk";
+
+// Flywheel visualization component messages
+import { flywheelVizMessages } from "../flywheel-viz-messages";
+import { flywheelVizMessagesUk } from "../flywheel-viz-messages.uk";
+
+// AgentHeroCard component messages
+import { agentHeroCardMessages } from "../agent-hero-card-messages";
+import { agentHeroCardMessagesUk } from "../agent-hero-card-messages.uk";
+
 /**
  * Get common wizard messages for the specified locale
  */
@@ -277,6 +301,48 @@ export function getLaunchOnboardingMessages(locale: Locale) {
  */
 export function getSimplerGuideMessages(locale: Locale) {
   return locale === "uk" ? simplerGuideMessagesUk : simplerGuideMessages;
+}
+
+/**
+ * Get CommandCard component messages for the specified locale
+ */
+export function getCommandCardMessages(locale: Locale) {
+  return locale === "uk" ? commandCardMessagesUk : commandCardMessages;
+}
+
+/**
+ * Get ConnectionCheck component messages for the specified locale
+ */
+export function getConnectionCheckMessages(locale: Locale) {
+  return locale === "uk" ? connectionCheckMessagesUk : connectionCheckMessages;
+}
+
+/**
+ * Get Jargon component UI messages for the specified locale
+ */
+export function getJargonUiMessages(locale: Locale) {
+  return locale === "uk" ? jargonUiMessagesUk : jargonUiMessages;
+}
+
+/**
+ * Get Stepper component messages for the specified locale
+ */
+export function getStepperMessages(locale: Locale) {
+  return locale === "uk" ? stepperMessagesUk : stepperMessages;
+}
+
+/**
+ * Get Flywheel Visualization component messages for the specified locale
+ */
+export function getFlywheelVizMessages(locale: Locale) {
+  return locale === "uk" ? flywheelVizMessagesUk : flywheelVizMessages;
+}
+
+/**
+ * Get AgentHeroCard component messages for the specified locale
+ */
+export function getAgentHeroCardMessages(locale: Locale) {
+  return locale === "uk" ? agentHeroCardMessagesUk : agentHeroCardMessages;
 }
 
 // Page messages

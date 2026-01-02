@@ -10,6 +10,9 @@ import {
   type WizardStep,
 } from "@/lib/wizardSteps";
 import { motion } from "@/components/motion";
+import { useLocale, getStepperMessages } from "@/lib/i18n";
+
+type Messages = ReturnType<typeof getStepperMessages>;
 
 export interface StepperProps {
   /** Current active step (1-indexed) */
@@ -26,6 +29,7 @@ interface StepItemProps {
   isCompleted: boolean;
   isClickable: boolean;
   onClick?: () => void;
+  messages: Messages;
 }
 
 function StepItem({
@@ -34,6 +38,7 @@ function StepItem({
   isCompleted,
   isClickable,
   onClick,
+  messages,
 }: StepItemProps) {
   return (
     <button
@@ -82,10 +87,10 @@ function StepItem({
           {step.title}
         </div>
         {isActive && (
-          <div className="mt-0.5 text-xs text-primary">In progress</div>
+          <div className="mt-0.5 text-xs text-primary">{messages.status.inProgress}</div>
         )}
         {isCompleted && (
-          <div className="mt-0.5 text-xs text-[oklch(0.72_0.19_145)]">Complete</div>
+          <div className="mt-0.5 text-xs text-[oklch(0.72_0.19_145)]">{messages.status.complete}</div>
         )}
       </div>
 
@@ -108,6 +113,8 @@ function StepItem({
  */
 export function Stepper({ currentStep, onStepClick, className }: StepperProps) {
   const [completedSteps] = useCompletedSteps();
+  const { locale } = useLocale();
+  const messages = getStepperMessages(locale);
 
   const handleStepClick = useCallback(
     (stepId: number) => {
@@ -139,6 +146,7 @@ export function Stepper({ currentStep, onStepClick, className }: StepperProps) {
               isCompleted={isCompleted}
               isClickable={isClickable}
               onClick={() => handleStepClick(step.id)}
+              messages={messages}
             />
           </div>
         );
@@ -158,6 +166,8 @@ export function StepperMobile({
   className,
 }: StepperProps) {
   const [completedSteps] = useCompletedSteps();
+  const { locale } = useLocale();
+  const messages = getStepperMessages(locale);
 
   const currentStepData = WIZARD_STEPS.find((s) => s.id === currentStep);
   const progress = (currentStep / WIZARD_STEPS.length) * 100;
@@ -292,9 +302,9 @@ export function StepperMobile({
             {currentStepData.title}
           </motion.span>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Step {currentStep} of {WIZARD_STEPS.length}
+            {messages.mobile.step} {currentStep} {messages.mobile.of} {WIZARD_STEPS.length}
             <span className="mx-1.5 opacity-50">|</span>
-            <span className="opacity-70">Swipe to navigate</span>
+            <span className="opacity-70">{messages.mobile.swipeToNavigate}</span>
           </p>
         </div>
       )}

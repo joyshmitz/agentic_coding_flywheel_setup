@@ -16,6 +16,9 @@ import { X, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getJargon, type JargonTerm } from "@/lib/jargon";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
+import { useLocale, getJargonUiMessages } from "@/lib/i18n";
+
+type Messages = ReturnType<typeof getJargonUiMessages>;
 
 interface JargonProps {
   /** The term key to look up in the dictionary */
@@ -49,6 +52,9 @@ export function Jargon({ term, children, className, gradientHeading }: JargonPro
   const tooltipRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const prefersReducedMotion = useReducedMotion();
+
+  const { locale } = useLocale();
+  const messages = getJargonUiMessages(locale);
 
   const termKey = term.toLowerCase().replace(/[\s_]+/g, "-");
   const jargonData = getJargon(termKey);
@@ -216,7 +222,7 @@ export function Jargon({ term, children, className, gradientHeading }: JargonPro
           gradientHeading && "bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent",
           className
         )}
-        aria-label={`Learn about ${jargonData.term}`}
+        aria-label={`${messages.ariaLabel.learnAbout} ${jargonData.term}`}
         aria-expanded={isOpen}
       >
         {displayText}
@@ -264,7 +270,7 @@ export function Jargon({ term, children, className, gradientHeading }: JargonPro
                 }, 150);
               }}
             >
-              <TooltipContent term={jargonData} termKey={termKey} />
+              <TooltipContent term={jargonData} termKey={termKey} messages={messages} />
             </motion.div>
           )}
         </AnimatePresence>,
@@ -318,7 +324,7 @@ export function Jargon({ term, children, className, gradientHeading }: JargonPro
                   className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pt-2 pb-[calc(2rem+env(safe-area-inset-bottom,0px))]"
                   style={{ WebkitOverflowScrolling: 'touch' }}
                 >
-                  <SheetContent term={jargonData} termKey={termKey} />
+                  <SheetContent term={jargonData} termKey={termKey} messages={messages} />
                 </div>
               </motion.div>
             </>
@@ -333,7 +339,7 @@ export function Jargon({ term, children, className, gradientHeading }: JargonPro
 /**
  * Desktop tooltip content
  */
-function TooltipContent({ term, termKey }: { term: JargonTerm; termKey: string }) {
+function TooltipContent({ term, termKey, messages }: { term: JargonTerm; termKey: string; messages: Messages }) {
   const glossaryHref = `/glossary#${encodeURIComponent(termKey)}`;
 
   return (
@@ -354,14 +360,14 @@ function TooltipContent({ term, termKey }: { term: JargonTerm; termKey: string }
       {/* Analogy if available */}
       {term.analogy && (
         <div className="rounded-lg bg-primary/5 px-3 py-2 text-xs text-muted-foreground">
-          <span className="font-medium text-primary">Think of it like:</span>{" "}
+          <span className="font-medium text-primary">{messages.tooltip.thinkOfItLike}</span>{" "}
           {term.analogy}
         </div>
       )}
 
       {/* Tap for more hint */}
       <p className="text-[11px] text-muted-foreground/60">
-        Hover or focus to learn more
+        {messages.tooltip.hoverHint}
       </p>
 
       <Link
@@ -371,7 +377,7 @@ function TooltipContent({ term, termKey }: { term: JargonTerm; termKey: string }
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
         )}
       >
-        Open in glossary →
+        {messages.tooltip.openInGlossary}
       </Link>
     </div>
   );
@@ -380,7 +386,7 @@ function TooltipContent({ term, termKey }: { term: JargonTerm; termKey: string }
 /**
  * Mobile bottom sheet content
  */
-function SheetContent({ term, termKey }: { term: JargonTerm; termKey: string }) {
+function SheetContent({ term, termKey, messages }: { term: JargonTerm; termKey: string; messages: Messages }) {
   const glossaryHref = `/glossary#${encodeURIComponent(termKey)}`;
 
   return (
@@ -402,7 +408,7 @@ function SheetContent({ term, termKey }: { term: JargonTerm; termKey: string }) 
       <div className="space-y-4">
         <div>
           <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            What is it?
+            {messages.sheet.whatIsIt}
           </h4>
           <p className="text-sm leading-relaxed text-foreground">
             {term.long}
@@ -413,7 +419,7 @@ function SheetContent({ term, termKey }: { term: JargonTerm; termKey: string }) 
         {term.why && (
           <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
             <p className="mb-1 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              Why we use it
+              {messages.sheet.whyWeUseIt}
             </p>
             <p className="text-sm leading-relaxed text-foreground">
               {term.why}
@@ -425,7 +431,7 @@ function SheetContent({ term, termKey }: { term: JargonTerm; termKey: string }) 
         {term.analogy && (
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
             <p className="mb-1 text-xs font-bold uppercase tracking-wider text-primary">
-              Think of it like...
+              {messages.sheet.thinkOfItLike}
             </p>
             <p className="text-sm leading-relaxed text-foreground">
               {term.analogy}
@@ -437,7 +443,7 @@ function SheetContent({ term, termKey }: { term: JargonTerm; termKey: string }) 
         {term.related && term.related.length > 0 && (
           <div>
             <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Related Terms
+              {messages.sheet.relatedTerms}
             </h4>
             <div className="flex flex-wrap gap-2">
               {term.related.map((relatedTerm) => (
@@ -460,7 +466,7 @@ function SheetContent({ term, termKey }: { term: JargonTerm; termKey: string }) 
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
             )}
           >
-            View in glossary →
+            {messages.sheet.viewInGlossary}
           </Link>
         </div>
       </div>

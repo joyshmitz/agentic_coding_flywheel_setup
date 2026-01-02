@@ -10,6 +10,7 @@ import { cn, safeGetItem, safeSetItem } from "@/lib/utils";
 import { useDetectedOS, useUserOS } from "@/lib/userPreferences";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import { springs } from "@/components/motion";
+import { useLocale, getCommandCardMessages } from "@/lib/i18n";
 
 export interface CommandCardProps {
   /** The default command to display */
@@ -56,22 +57,24 @@ function setCompletionInStorage(key: string, completed: boolean): void {
   safeSetItem(key, completed ? "true" : "false");
 }
 
+type Messages = ReturnType<typeof getCommandCardMessages>;
+
 /**
  * Badge showing whether a command runs on VPS or locally
  */
-function LocationBadge({ location }: { location: "vps" | "local" }) {
+function LocationBadge({ location, messages }: { location: "vps" | "local"; messages: Messages }) {
   if (location === "vps") {
     return (
       <div className="inline-flex items-center gap-1.5 rounded-md border border-[oklch(0.72_0.19_195/0.3)] bg-[oklch(0.72_0.19_195/0.12)] px-2 py-1 text-xs font-medium text-[oklch(0.72_0.19_195)]">
         <Server className="h-3 w-3" aria-hidden="true" />
-        <span>Run on VPS</span>
+        <span>{messages.location.runOnVps}</span>
       </div>
     );
   }
   return (
     <div className="inline-flex items-center gap-1.5 rounded-md border border-[oklch(0.78_0.16_75/0.3)] bg-[oklch(0.78_0.16_75/0.12)] px-2 py-1 text-xs font-medium text-[oklch(0.78_0.16_75)]">
       <Monitor className="h-3 w-3" aria-hidden="true" />
-      <span>Run on your computer</span>
+      <span>{messages.location.runOnLocal}</span>
     </div>
   );
 }
@@ -95,6 +98,9 @@ export function CommandCard({
   const detectedOS = useDetectedOS();
   const os: OS = storedOS ?? detectedOS ?? "mac";
   const prefersReducedMotion = useReducedMotion();
+
+  const { locale } = useLocale();
+  const messages = getCommandCardMessages(locale);
 
   // Use TanStack Query for completion state
   const completionKey = getCompletionKey(persistKey);
@@ -182,7 +188,7 @@ export function CommandCard({
             {description && (
               <p className="text-sm text-muted-foreground">{description}</p>
             )}
-            {runLocation && <LocationBadge location={runLocation} />}
+            {runLocation && <LocationBadge location={runLocation} messages={messages} />}
           </div>
         </div>
       )}
@@ -221,7 +227,7 @@ export function CommandCard({
               copied && "bg-[oklch(0.72_0.19_145/0.1)] text-[oklch(0.72_0.19_145)]"
             )}
             onClick={handleCopy}
-            aria-label={copied ? "Copied!" : "Copy command"}
+            aria-label={copied ? messages.copy.copied : messages.copy.copyCommand}
             disableMotion
           >
             <AnimatePresence mode="wait">
@@ -291,10 +297,10 @@ export function CommandCard({
             {completed ? (
               <>
                 <CheckCircle2 className="h-4 w-4" />
-                <span>Command completed</span>
+                <span>{messages.checkbox.commandCompleted}</span>
               </>
             ) : (
-              <span>I ran this command</span>
+              <span>{messages.checkbox.iRanThisCommand}</span>
             )}
           </label>
         </div>
@@ -316,6 +322,8 @@ export function CodeBlock({
   className?: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const { locale } = useLocale();
+  const messages = getCommandCardMessages(locale);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -356,12 +364,12 @@ export function CodeBlock({
           {copied ? (
             <>
               <Check className="h-3 w-3 text-[oklch(0.72_0.19_145)]" />
-              <span className="text-[oklch(0.72_0.19_145)]">Copied</span>
+              <span className="text-[oklch(0.72_0.19_145)]">{messages.copy.copied}</span>
             </>
           ) : (
             <>
               <Copy className="h-3 w-3" />
-              <span>Copy</span>
+              <span>{messages.copy.copy}</span>
             </>
           )}
         </Button>

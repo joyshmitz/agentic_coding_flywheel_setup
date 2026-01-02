@@ -21,6 +21,9 @@ import {
 } from "lucide-react";
 import { flywheelTools, flywheelDescription, getAllConnections, type FlywheelTool } from "@/lib/flywheel";
 import { Button } from "@/components/ui/button";
+import { useLocale, getFlywheelVizMessages } from "@/lib/i18n";
+
+type Messages = ReturnType<typeof getFlywheelVizMessages>;
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   LayoutGrid,
@@ -261,9 +264,11 @@ function CenterHub() {
 function ToolDetailPanel({
   tool,
   onClose,
+  messages,
 }: {
   tool: FlywheelTool;
   onClose: () => void;
+  messages: Messages;
 }) {
   const Icon = iconMap[tool.icon] || Zap;
   const [copied, setCopied] = useState(false);
@@ -329,13 +334,13 @@ function ToolDetailPanel({
         {tool.stars && (
           <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-sm font-semibold text-amber-400">
             <Star className="h-4 w-4 fill-current" />
-            <span>{tool.stars.toLocaleString()} GitHub stars</span>
+            <span>{tool.stars.toLocaleString()} {messages.detail.githubStars}</span>
           </div>
         )}
 
         {/* Features */}
         <div className="mt-5">
-          <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Key Features</h4>
+          <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{messages.detail.keyFeatures}</h4>
           <ul className="space-y-1.5">
             {tool.features.slice(0, 4).map((feature, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-foreground">
@@ -349,7 +354,7 @@ function ToolDetailPanel({
         {/* Install command */}
         {tool.installCommand && (
           <div className="mt-5">
-            <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Quick Install</h4>
+            <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">{messages.detail.quickInstall}</h4>
             <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 font-mono text-xs">
               <code className="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-foreground">
                 {tool.installCommand.length > 50 ? tool.installCommand.slice(0, 50) + "..." : tool.installCommand}
@@ -370,13 +375,13 @@ function ToolDetailPanel({
           <Button asChild size="sm" className={`bg-gradient-to-r ${tool.color} text-white hover:opacity-90`}>
             <a href={tool.href} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="mr-1.5 h-4 w-4" />
-              View on GitHub
+              {messages.detail.viewOnGithub}
             </a>
           </Button>
           {tool.demoUrl && (
             <Button asChild size="sm" variant="outline">
               <a href={tool.demoUrl} target="_blank" rel="noopener noreferrer">
-                Try Demo
+                {messages.detail.tryDemo}
                 <ChevronRight className="ml-1 h-4 w-4" />
               </a>
             </Button>
@@ -385,7 +390,7 @@ function ToolDetailPanel({
 
         {/* Connections */}
         <div className="mt-6 border-t border-border/50 pt-5">
-          <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Integrates With</h4>
+          <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">{messages.detail.integratesWith}</h4>
           <div className="space-y-2">
             {tool.connectsTo.map((targetId) => {
               const targetTool = flywheelTools.find((t) => t.id === targetId);
@@ -405,7 +410,7 @@ function ToolDetailPanel({
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-foreground">{targetTool.shortName}</p>
                     <p className="text-xs text-muted-foreground line-clamp-1">
-                      {tool.connectionDescriptions[targetId] || "Integration"}
+                      {tool.connectionDescriptions[targetId] || messages.detail.integration}
                     </p>
                   </div>
                 </div>
@@ -419,15 +424,15 @@ function ToolDetailPanel({
 }
 
 // Placeholder panel
-function PlaceholderPanel() {
+function PlaceholderPanel({ messages }: { messages: Messages }) {
   return (
     <div className="rounded-2xl border border-border/50 bg-card/60 p-6 backdrop-blur-sm animate-scale-in">
       <div className="flex flex-col items-center justify-center py-8 text-center">
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/30">
           <Sparkles className="h-7 w-7 text-primary" />
         </div>
-        <h3 className="mb-2 text-lg font-semibold text-foreground">Explore the Flywheel</h3>
-        <p className="text-sm text-muted-foreground">Click a tool to see its connections and features</p>
+        <h3 className="mb-2 text-lg font-semibold text-foreground">{messages.placeholder.title}</h3>
+        <p className="text-sm text-muted-foreground">{messages.placeholder.description}</p>
       </div>
       <div className="rounded-xl bg-muted/30 p-4 border border-border/30">
         <p className="text-sm leading-relaxed text-muted-foreground">{flywheelDescription.description}</p>
@@ -440,9 +445,11 @@ function PlaceholderPanel() {
 function MobileBottomSheet({
   tool,
   onClose,
+  messages,
 }: {
   tool: FlywheelTool | null;
   onClose: () => void;
+  messages: Messages;
 }) {
   useEffect(() => {
     if (tool) {
@@ -506,14 +513,14 @@ function MobileBottomSheet({
             {/* Action button */}
             <Button asChild className={`mt-5 w-full bg-gradient-to-r ${tool.color} text-white`}>
               <a href={tool.href} target="_blank" rel="noopener noreferrer">
-                View on GitHub
+                {messages.detail.viewOnGithub}
                 <ExternalLink className="ml-2 h-4 w-4" />
               </a>
             </Button>
 
             {/* Connections */}
             <div className="mt-6">
-              <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Integrates With</h4>
+              <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">{messages.detail.integratesWith}</h4>
               <div className="space-y-2">
                 {tool.connectsTo.map((targetId) => {
                   const targetTool = flywheelTools.find((t) => t.id === targetId);
@@ -533,7 +540,7 @@ function MobileBottomSheet({
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-foreground">{targetTool.shortName}</p>
                         <p className="text-xs text-muted-foreground">
-                          {tool.connectionDescriptions[targetId] || "Integration"}
+                          {tool.connectionDescriptions[targetId] || messages.detail.integration}
                         </p>
                       </div>
                     </div>
@@ -549,7 +556,7 @@ function MobileBottomSheet({
 }
 
 // Stats badge
-function StatsBadge() {
+function StatsBadge({ messages }: { messages: Messages }) {
   return (
     <div className="mt-6 flex justify-center">
       <div className="inline-flex items-center gap-3 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 backdrop-blur-sm">
@@ -558,13 +565,13 @@ function StatsBadge() {
             <Zap className="h-3 w-3 text-primary" />
           </div>
           <span className="text-sm font-semibold text-foreground">{flywheelDescription.metrics.toolCount}</span>
-          <span className="text-xs text-muted-foreground">tools</span>
+          <span className="text-xs text-muted-foreground">{messages.stats.tools}</span>
         </div>
         <div className="h-4 w-px bg-primary/30" />
         <div className="flex items-center gap-1.5">
           <Star className="h-4 w-4 text-amber-400 fill-current" />
           <span className="text-sm font-semibold text-foreground">{flywheelDescription.metrics.totalStars}</span>
-          <span className="text-xs text-muted-foreground">stars</span>
+          <span className="text-xs text-muted-foreground">{messages.stats.stars}</span>
         </div>
         <div className="h-4 w-px bg-primary/30" />
         <div className="flex items-center gap-1">
@@ -572,7 +579,7 @@ function StatsBadge() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
             <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
           </span>
-          <span className="text-[12px] text-green-400">Active</span>
+          <span className="text-[12px] text-green-400">{messages.stats.active}</span>
         </div>
       </div>
     </div>
@@ -581,6 +588,8 @@ function StatsBadge() {
 
 // Main component
 export default function FlywheelVisualization() {
+  const { locale } = useLocale();
+  const messages = getFlywheelVizMessages(locale);
   const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
   const [hoveredToolId, setHoveredToolId] = useState<string | null>(null);
 
@@ -635,7 +644,7 @@ export default function FlywheelVisualization() {
       <div className="mb-8 md:mb-12 text-center">
         <div className="mb-4 flex items-center justify-center gap-3">
           <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-          <span className="text-[12px] font-bold uppercase tracking-[0.25em] text-primary">Ecosystem</span>
+          <span className="text-[12px] font-bold uppercase tracking-[0.25em] text-primary">{messages.header.ecosystem}</span>
           <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
         </div>
         <h2 className="mb-4 font-mono text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
@@ -730,21 +739,21 @@ export default function FlywheelVisualization() {
           </div>
 
           {/* Stats badge */}
-          <StatsBadge />
+          <StatsBadge messages={messages} />
         </div>
 
         {/* Detail panel (desktop) */}
         <div className="hidden lg:flex lg:flex-col">
           {displayedTool ? (
-            <ToolDetailPanel key={displayedTool.id} tool={displayedTool} onClose={handleCloseDetail} />
+            <ToolDetailPanel key={displayedTool.id} tool={displayedTool} onClose={handleCloseDetail} messages={messages} />
           ) : (
-            <PlaceholderPanel />
+            <PlaceholderPanel messages={messages} />
           )}
         </div>
       </div>
 
       {/* Mobile bottom sheet */}
-      <MobileBottomSheet tool={selectedTool} onClose={handleCloseDetail} />
+      <MobileBottomSheet tool={selectedTool} onClose={handleCloseDetail} messages={messages} />
     </div>
   );
 }
