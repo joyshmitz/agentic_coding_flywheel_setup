@@ -63,8 +63,7 @@ export function RealWorldCaseStudyLesson() {
         </div>
 
         <Paragraph>
-          This lesson walks you through exactly how it was done, so you can
-          replicate this workflow on your own projects.
+          {messages.introduction.walkThrough}
         </Paragraph>
       </Section>
 
@@ -72,41 +71,41 @@ export function RealWorldCaseStudyLesson() {
 
       {/* Phase 1: Multi-Model Planning */}
       <Section
-        title="Phase 1: Multi-Model Planning"
+        title={messages.phase1.title}
         icon={<FileText className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          The first step isn&apos;t to start coding. It&apos;s to{" "}
-          <Highlight>gather diverse perspectives</Highlight> on the problem.
+          {messages.phase1.intro}{" "}
+          <Highlight>{messages.phase1.gatherPerspectives}</Highlight> {messages.phase1.onProblem}
         </Paragraph>
 
         <div className="mt-8">
           <PhaseCard
             phase={1}
-            title="Collect Competing Proposals"
-            description="Ask multiple frontier models to propose implementation plans"
+            title={messages.phase1.collectProposals.title}
+            description={messages.phase1.collectProposals.description}
           >
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <ModelCard
-                name="GPT 5.1 Pro"
+                name={messages.phase1.models.gpt.name}
                 color="from-emerald-500/20 to-teal-500/20"
-                focus="Scientific validation approach"
+                focus={messages.phase1.models.gpt.focus}
               />
               <ModelCard
-                name="Gemini 3 Ultra"
+                name={messages.phase1.models.gemini.name}
                 color="from-blue-500/20 to-indigo-500/20"
-                focus="Search pointers & tombstones"
+                focus={messages.phase1.models.gemini.focus}
               />
               <ModelCard
-                name="Grok 4.1"
+                name={messages.phase1.models.grok.name}
                 color="from-violet-500/20 to-purple-500/20"
-                focus="Cross-agent enrichment"
+                focus={messages.phase1.models.grok.focus}
               />
               <ModelCard
-                name="Claude Opus 4.5"
+                name={messages.phase1.models.claude.name}
                 color="from-amber-500/20 to-orange-500/20"
-                focus="ACE pipeline design"
+                focus={messages.phase1.models.claude.focus}
               />
             </div>
           </PhaseCard>
@@ -114,18 +113,14 @@ export function RealWorldCaseStudyLesson() {
 
         <div className="mt-6">
           <Paragraph>
-            Each model received the same prompt with minimal guidance - just 2-3
-            messages to clarify the goal. The key instruction: &quot;Design a
-            memory system that works for{" "}
-            <em>all</em> coding agents, not just Claude.&quot;
+            {messages.phase1.instruction}
           </Paragraph>
         </div>
 
         <div className="mt-6">
           <TipBox variant="tip">
-            Save each conversation as markdown. The{" "}
-            <InlineCode>chat_shared_conversation_to_file</InlineCode> tool makes
-            this easy.
+            {messages.phase1.tipSaveConversations.intro}{" "}
+            <InlineCode>chat_shared_conversation_to_file</InlineCode> {messages.phase1.tipSaveConversations.toolMention}
           </TipBox>
         </div>
       </Section>
@@ -134,40 +129,27 @@ export function RealWorldCaseStudyLesson() {
 
       {/* Phase 2: Synthesis */}
       <Section
-        title="Phase 2: Plan Synthesis"
+        title={messages.phase2.title}
         icon={<Layers className="h-5 w-5" />}
         delay={0.2}
       >
         <Paragraph>
-          Now comes the crucial step: have one model synthesize the best ideas
-          from all proposals into a single master plan.
+          {messages.phase2.intro}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Put all proposal files in the project folder
-competing_proposal_plans/
-  2025-12-07-gemini-*.md
-  2025-12-07-grok-*.md
-  gpt_pro_version.md
-  claude_version/
-
-# Ask Opus 4.5 to create the hybrid plan
-cc "Read all the files in competing_proposal_plans/.
-Create a hybrid plan that takes the best parts of each.
-Write it to PLAN_FOR_CASS_MEMORY_SYSTEM.md"`}
+            code={messages.codeBlocks.competingProposals}
             showLineNumbers
           />
         </div>
 
         <div className="mt-8">
-          <SynthesisResultCard />
+          <SynthesisResultCard messages={messages} />
         </div>
 
         <Paragraph>
-          The resulting plan was <strong>5,600+ lines</strong> - a comprehensive
-          blueprint covering architecture, data models, CLI commands, the
-          reflection pipeline, storage, and implementation roadmap.
+          {messages.phase2.resultLines}
         </Paragraph>
       </Section>
 
@@ -175,98 +157,40 @@ Write it to PLAN_FOR_CASS_MEMORY_SYSTEM.md"`}
 
       {/* Anatomy of a Great Plan */}
       <Section
-        title="Anatomy of a Great Plan"
+        title={messages.planAnatomy.title}
         icon={<BookOpen className="h-5 w-5" />}
         delay={0.22}
       >
         <Paragraph>
-          The plan is the bedrock of a successful agentic project. Let&apos;s
-          dissect what makes{" "}
+          {messages.planAnatomy.intro}{" "}
           <a
             href="https://github.com/Dicklesworthstone/cass_memory_system/blob/main/PLAN_FOR_CASS_MEMORY_SYSTEM.md"
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary underline inline-flex items-center gap-1"
           >
-            the actual 5,600+ line plan
+            {messages.planAnatomy.actualPlan}
             <ExternalLink className="h-3 w-3" />
           </a>{" "}
-          so effective.
+          {messages.planAnatomy.soEffective}
         </Paragraph>
 
         {/* Document Structure */}
         <div className="mt-8">
           <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <Layers className="h-5 w-5 text-violet-400" />
-            Document Structure: 11 Major Sections
+            {messages.planAnatomy.documentStructure.title}
           </h4>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <PlanSectionCard
-              number={1}
-              title="Executive Summary"
-              description="Problem statement, three-layer solution, key innovations table"
-              icon={<Rocket className="h-4 w-4" />}
-            />
-            <PlanSectionCard
-              number={2}
-              title="Core Architecture"
-              description="Cognitive model, ACE pipeline, 7 design principles"
-              icon={<Brain className="h-4 w-4" />}
-            />
-            <PlanSectionCard
-              number={3}
-              title="Data Models"
-              description="TypeScript schemas, confidence decay algorithm, validation rules"
-              icon={<Database className="h-4 w-4" />}
-            />
-            <PlanSectionCard
-              number={4}
-              title="CLI Commands"
-              description="15+ commands with usage examples and JSON outputs"
-              icon={<Terminal className="h-4 w-4" />}
-            />
-            <PlanSectionCard
-              number={5}
-              title="Reflection Pipeline"
-              description="Generator, Reflector, Validator, Curator phases"
-              icon={<Layers className="h-4 w-4" />}
-            />
-            <PlanSectionCard
-              number={6}
-              title="Integration"
-              description="Search wrapper, error handling, secret sanitization"
-              icon={<Code className="h-4 w-4" />}
-            />
-            <PlanSectionCard
-              number={7}
-              title="LLM Integration"
-              description="Provider abstraction, Zod schemas, prompt templates"
-              icon={<Bot className="h-4 w-4" />}
-            />
-            <PlanSectionCard
-              number={8}
-              title="Storage & Persistence"
-              description="Directory structure, cascading config, embeddings"
-              icon={<Database className="h-4 w-4" />}
-            />
-            <PlanSectionCard
-              number={9}
-              title="Agent Integration"
-              description="AGENTS.md template, MCP server design"
-              icon={<Users className="h-4 w-4" />}
-            />
-            <PlanSectionCard
-              number={10}
-              title="Implementation Roadmap"
-              description="Phased delivery with ROI priorities"
-              icon={<TrendingUp className="h-4 w-4" />}
-            />
-            <PlanSectionCard
-              number={11}
-              title="Comparison Matrix"
-              description="Feature checklist against competing proposals"
-              icon={<CheckCircle className="h-4 w-4" />}
-            />
+            {messages.planAnatomy.documentStructure.sections.map((section, i) => (
+              <PlanSectionCard
+                key={i}
+                number={section.number}
+                title={section.title}
+                description={section.description}
+                icon={getSectionIcon(section.number)}
+              />
+            ))}
           </div>
         </div>
 
@@ -274,34 +198,17 @@ Write it to PLAN_FOR_CASS_MEMORY_SYSTEM.md"`}
         <div className="mt-8">
           <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <Lightbulb className="h-5 w-5 text-amber-400" />
-            Patterns That Make Plans Effective
+            {messages.planAnatomy.effectivePatterns.title}
           </h4>
           <div className="space-y-4">
-            <PlanPatternCard
-              title="Theory-First Approach"
-              description="Each major feature includes: schema definition → algorithm → usage examples → implementation notes. Never jumps to code before explaining the why."
-              gradient="from-violet-500/20 to-purple-500/20"
-            />
-            <PlanPatternCard
-              title="Progressive Elaboration"
-              description="Simple concepts expand into nested detail. 'Bullet maturity' starts as a concept, becomes a state machine, then includes transition rules and decay calculations."
-              gradient="from-emerald-500/20 to-teal-500/20"
-            />
-            <PlanPatternCard
-              title="Concrete Examples Throughout"
-              description="Not just 'validate inputs' but actual TypeScript interfaces, JSON outputs, bash command examples, and ASCII diagrams showing data flow."
-              gradient="from-sky-500/20 to-blue-500/20"
-            />
-            <PlanPatternCard
-              title="Edge Cases Anticipated"
-              description="The plan addresses error handling for cass timeouts, toxic bullet blocking, stale rule detection, and secret sanitization before implementation begins."
-              gradient="from-amber-500/20 to-orange-500/20"
-            />
-            <PlanPatternCard
-              title="Comparison Tables"
-              description="Key decisions contextualized against alternatives. Shows trade-offs between approaches from different model proposals."
-              gradient="from-rose-500/20 to-pink-500/20"
-            />
+            {messages.planAnatomy.effectivePatterns.patterns.map((pattern, i) => (
+              <PlanPatternCard
+                key={i}
+                title={pattern.title}
+                description={pattern.description}
+                gradient={pattern.gradient}
+              />
+            ))}
           </div>
         </div>
 
@@ -309,56 +216,43 @@ Write it to PLAN_FOR_CASS_MEMORY_SYSTEM.md"`}
         <div className="mt-8">
           <h4 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
             <Shield className="h-5 w-5 text-emerald-400" />
-            Distinctive Innovations in This Plan
+            {messages.planAnatomy.distinctiveInnovations.title}
           </h4>
           <div className="grid gap-4 sm:grid-cols-2">
-            <InnovationCard
-              title="Confidence Decay Half-Life"
-              description="Rules lose credibility over time. Harmful events weighted 4× helpful ones. Full algorithm with decay factors specified."
-            />
-            <InnovationCard
-              title="Anti-Pattern Inversion"
-              description="Harmful rules converted to 'DON'T do X' instead of deleted, preserving the learning while inverting the advice."
-            />
-            <InnovationCard
-              title="Evidence-Count Gate"
-              description="Pre-LLM heuristic filter that saves API calls. Rules need minimum evidence before promotion."
-            />
-            <InnovationCard
-              title="Cascading Config"
-              description="Global user playbooks + repo-level playbooks merged intelligently with conflict resolution."
-            />
+            {messages.planAnatomy.distinctiveInnovations.innovations.map((innovation, i) => (
+              <InnovationCard
+                key={i}
+                title={innovation.title}
+                description={innovation.description}
+              />
+            ))}
           </div>
         </div>
 
         {/* What to Include Checklist */}
         <div className="mt-8">
           <TipBox variant="tip">
-            <strong>What Your Plans Should Include:</strong>
+            <strong>{messages.planAnatomy.planChecklist.title}</strong>
             <ul className="mt-2 space-y-1 text-sm">
-              <li>• <strong>Executive summary</strong> - Problem + solution in 1 page</li>
-              <li>• <strong>Data models</strong> - TypeScript/Zod schemas for all entities</li>
-              <li>• <strong>CLI/API surface</strong> - Every command with examples</li>
-              <li>• <strong>Architecture diagrams</strong> - ASCII boxes showing data flow</li>
-              <li>• <strong>Error handling</strong> - What can go wrong, how to recover</li>
-              <li>• <strong>Implementation roadmap</strong> - Prioritized phases with dependencies</li>
-              <li>• <strong>Comparison tables</strong> - Why this approach over alternatives</li>
+              {messages.planAnatomy.planChecklist.items.map((item, i) => (
+                <li key={i}>• {item}</li>
+              ))}
             </ul>
           </TipBox>
         </div>
 
         <div className="mt-6">
           <TipBox variant="info">
-            The full plan is available at{" "}
+            {messages.planAnatomy.studyTemplate.intro}{" "}
             <a
               href="https://github.com/Dicklesworthstone/cass_memory_system/blob/main/PLAN_FOR_CASS_MEMORY_SYSTEM.md"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary underline"
             >
-              github.com/Dicklesworthstone/cass_memory_system
+              {messages.planAnatomy.studyTemplate.github}
             </a>
-            . Study it as a template for your own project plans.
+            . {messages.planAnatomy.studyTemplate.study}
           </TipBox>
         </div>
       </Section>
@@ -367,45 +261,29 @@ Write it to PLAN_FOR_CASS_MEMORY_SYSTEM.md"`}
 
       {/* Phase 3: Beads Transformation */}
       <Section
-        title="Phase 3: From Plan to Beads"
+        title={messages.phase3.title}
         icon={<LayoutDashboard className="h-5 w-5" />}
         delay={0.25}
       >
         <Paragraph>
-          A 5,600-line markdown file is great for humans, but agents need{" "}
-          <Highlight>structured, trackable tasks</Highlight>. This is where
-          beads comes in.
+          {messages.phase3.intro}{" "}
+          <Highlight>{messages.phase3.structuredTasks}</Highlight>. {messages.phase3.whereBead}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Initialize beads in the project
-bd init
-
-# Have an agent transform the plan into beads
-cc "Read PLAN_FOR_CASS_MEMORY_SYSTEM.md carefully.
-
-Transform each section, feature, and implementation detail
-into individual beads using the bd CLI.
-
-Create epics for major phases, then break them into tasks.
-Set up dependencies so blockers are clear.
-Use priorities: P0 for foundation, P1-P2 for core features,
-P3-P4 for polish and future work.
-
-Create at least 300 beads covering the full implementation."`}
+            code={messages.codeBlocks.beadsInit}
             showLineNumbers
           />
         </div>
 
         <div className="mt-8">
-          <BeadsTransformationCard />
+          <BeadsTransformationCard messages={messages} />
         </div>
 
         <div className="mt-6">
           <TipBox variant="info">
-            This transformation took multiple passes to refine. The agents
-            reviewed and improved the beads structure several times.
+            {messages.phase3.multiplePassesToRefine}
           </TipBox>
         </div>
       </Section>
@@ -414,48 +292,29 @@ Create at least 300 beads covering the full implementation."`}
 
       {/* Phase 4: Swarm Execution */}
       <Section
-        title="Phase 4: Swarm Execution"
+        title={messages.phase4.title}
         icon={<Users className="h-5 w-5" />}
         delay={0.3}
       >
         <Paragraph>
-          With 350+ beads ready, it&apos;s time to{" "}
-          <Highlight>unleash the swarm</Highlight>. Multiple agents work in
-          parallel, each picking up tasks based on what&apos;s ready.
+          {messages.phase4.intro}{" "}
+          <Highlight>{messages.phase4.unleashSwarm}</Highlight>. {messages.phase4.multipleAgents}
         </Paragraph>
 
         <div className="mt-6">
-          <SwarmSetupCard />
+          <SwarmSetupCard messages={messages} />
         </div>
 
         <div className="mt-8">
           <CodeBlock
-            code={`# Launch the swarm with NTM
-ntm spawn cass-memory --cc=6 --cod=3 --gmi=2
-
-# Each agent runs this workflow:
-# 1. Check what's ready
-bv --robot-triage
-
-# 2. Claim a task
-bd update <id> --status in_progress
-
-# 3. Implement
-# (agent does the work)
-
-# 4. Close when done
-bd close <id>
-
-# 5. Repeat`}
+            code={messages.codeBlocks.swarmWorkflow}
             showLineNumbers
           />
         </div>
 
         <div className="mt-6">
           <Paragraph>
-            The agents coordinate using <strong>bv</strong> (beads viewer) to
-            see what&apos;s ready, avoiding conflicts and ensuring the most
-            important blockers get cleared first.
+            {messages.phase4.coordination}
           </Paragraph>
         </div>
       </Section>
@@ -464,66 +323,35 @@ bd close <id>
 
       {/* Agent Coordination */}
       <Section
-        title="Agent Coordination with Agent Mail"
+        title={messages.agentCoordination.title}
         icon={<Mail className="h-5 w-5" />}
         delay={0.35}
       >
         <Paragraph>
-          When agents need to share context or coordinate on overlapping work,{" "}
-          <Highlight>Agent Mail</Highlight> provides the communication layer.
+          {messages.agentCoordination.intro}{" "}
+          <Highlight>{messages.agentCoordination.agentMail}</Highlight> {messages.agentCoordination.providesCommunication}
         </Paragraph>
 
         <div className="mt-6">
           <BulletList
-            items={[
-              <span key="1">
-                <strong>File reservations:</strong> Agents claim files before
-                editing to avoid conflicts
-              </span>,
-              <span key="2">
-                <strong>Status updates:</strong> Agents report progress so
-                others know what&apos;s happening
-              </span>,
-              <span key="3">
-                <strong>Handoffs:</strong> When one agent finishes a blocker,
-                dependent agents get notified
-              </span>,
-              <span key="4">
-                <strong>Review requests:</strong> Agents can ask each other to
-                review their work
-              </span>,
-            ]}
+            items={messages.agentCoordination.features.map((feature, i) => (
+              <span key={i}>
+                <strong>{feature.title}</strong> {feature.description}
+              </span>
+            ))}
           />
         </div>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Example Agent Mail coordination
-
-# Agent "BlueLake" reserves files before editing
-mcp.file_reservation_paths(
-  project_key="/data/projects/cass-memory",
-  agent_name="BlueLake",
-  paths=["src/playbook/*.ts"],
-  ttl_seconds=3600,
-  exclusive=true
-)
-
-# Agent "GreenCastle" messages about a blocker being cleared
-mcp.send_message(
-  project_key="/data/projects/cass-memory",
-  sender_name="GreenCastle",
-  to=["BlueLake", "RedFox"],
-  subject="Types foundation complete",
-  body_md="Zod schemas are done. You can now work on playbook and CLI."
-)`}
+            code={messages.codeBlocks.agentMailExample}
             showLineNumbers
           />
         </div>
 
         <div className="mt-6">
           <TipBox variant="tip">
-            The full Agent Mail archive from this project was{" "}
+            {messages.agentCoordination.fullArchivePublished.split("published as a static site")[0]}
             <a
               href="https://dicklesworthstone.github.io/cass-memory-system-agent-mailbox-viewer/viewer/"
               target="_blank"
@@ -531,8 +359,8 @@ mcp.send_message(
               className="text-primary underline"
             >
               published as a static site
-            </a>{" "}
-            so you can see the actual agent-to-agent communication.
+            </a>
+            {messages.agentCoordination.fullArchivePublished.split("published as a static site")[1]}
           </TipBox>
         </div>
       </Section>
@@ -541,43 +369,28 @@ mcp.send_message(
 
       {/* The Commit Cadence */}
       <Section
-        title="The Commit Cadence"
+        title={messages.commitCadence.title}
         icon={<GitBranch className="h-5 w-5" />}
         delay={0.4}
       >
         <Paragraph>
-          With many agents working simultaneously, commits need careful
-          orchestration. A dedicated{" "}
-          <Highlight>commit agent</Highlight> runs continuously.
+          {messages.commitCadence.intro}{" "}
+          <Highlight>{messages.commitCadence.commitAgent}</Highlight> {messages.commitCadence.runsContinuously}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# The commit agent pattern (runs every 15-20 minutes)
-
-# Step 1: Understand the project
-cc "First read AGENTS.md, read the README, and explore
-the project to understand what we're doing. Use ultrathink."
-
-# Step 2: Commit in logical groupings
-cc "Based on your knowledge of the project, commit all
-changed files now in a series of logically connected
-groupings with super detailed commit messages for each
-and then push.
-
-Take your time to do it right. Don't edit the code at all.
-Don't commit ephemeral files. Use ultrathink."`}
+            code={messages.codeBlocks.commitAgent}
             showLineNumbers
           />
         </div>
 
         <div className="mt-8">
-          <CommitStatsCard />
+          <CommitStatsCard messages={messages} />
         </div>
 
         <Paragraph>
-          This pattern ensures atomic, well-documented commits even when 10+
-          agents are making changes simultaneously.
+          {messages.commitCadence.atomicCommits}
         </Paragraph>
       </Section>
 
@@ -585,68 +398,41 @@ Don't commit ephemeral files. Use ultrathink."`}
 
       {/* Results & Lessons */}
       <Section
-        title="Results & Key Lessons"
+        title={messages.resultsLessons.title}
         icon={<TrendingUp className="h-5 w-5" />}
         delay={0.45}
       >
         <Paragraph>
-          After one day of flywheel-powered development, the cass-memory project
-          achieved:
+          {messages.resultsLessons.intro}
         </Paragraph>
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            value="11K+"
-            label="Lines of Code"
+            value={messages.resultsLessons.stats.linesOfCode.value}
+            label={messages.resultsLessons.stats.linesOfCode.label}
             gradient="from-emerald-500/20 to-teal-500/20"
           />
           <StatCard
-            value="282"
-            label="Day 1 Commits"
+            value={messages.resultsLessons.stats.day1Commits.value}
+            label={messages.resultsLessons.stats.day1Commits.label}
             gradient="from-sky-500/20 to-blue-500/20"
           />
           <StatCard
-            value="151"
-            label="Tests Passing"
+            value={messages.resultsLessons.stats.testsPassing.value}
+            label={messages.resultsLessons.stats.testsPassing.label}
             gradient="from-violet-500/20 to-purple-500/20"
           />
           <StatCard
-            value="85-90%"
-            label="Complete"
+            value={messages.resultsLessons.stats.complete.value}
+            label={messages.resultsLessons.stats.complete.label}
             gradient="from-amber-500/20 to-orange-500/20"
           />
         </div>
 
         <div className="mt-8">
-          <h4 className="text-lg font-semibold text-white mb-4">Key Lessons</h4>
+          <h4 className="text-lg font-semibold text-white mb-4">{messages.resultsLessons.keyLessons.title}</h4>
           <StepList
-            steps={[
-              {
-                title: "Planning is 80% of the work",
-                description:
-                  "A detailed plan makes agent execution predictable and fast",
-              },
-              {
-                title: "Multi-model synthesis beats single-model planning",
-                description:
-                  "Each model brought unique insights that improved the final design",
-              },
-              {
-                title: "Beads enable parallelism",
-                description:
-                  "Structured tasks with dependencies let many agents work without conflicts",
-              },
-              {
-                title: "Coordination tools are essential",
-                description:
-                  "Agent Mail and file reservations prevent agents from stepping on each other",
-              },
-              {
-                title: "Dedicated commit agent keeps history clean",
-                description:
-                  "Separating commit responsibility from coding ensures atomic commits",
-              },
-            ]}
+            steps={messages.resultsLessons.keyLessons.lessons}
           />
         </div>
       </Section>
@@ -655,52 +441,24 @@ Don't commit ephemeral files. Use ultrathink."`}
 
       {/* Try It Yourself */}
       <Section
-        title="Try It Yourself"
+        title={messages.tryItYourself.title}
         icon={<Play className="h-5 w-5" />}
         delay={0.5}
       >
         <Paragraph>
-          Ready to try this workflow on your own project? Here&apos;s the
-          quickstart:
+          {messages.tryItYourself.intro}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# 1. Gather proposals from multiple models
-# (Use GPT Pro, Gemini, Claude, Grok - whichever you have access to)
-# Save each as markdown in competing_proposal_plans/
-
-# 2. Synthesize into a master plan
-cc "Read all files in competing_proposal_plans/.
-Create a hybrid plan taking the best of each.
-Write to PLAN.md"
-
-# 3. Transform plan into beads
-bd init
-cc "Read PLAN.md. Transform into 100+ beads with
-dependencies and priorities. Use bd CLI."
-
-# 4. Launch the swarm
-ntm spawn myproject --cc=3 --cod=2 --gmi=1
-
-# 5. Monitor with bv
-bv --robot-triage  # See what's ready
-
-# 6. Watch the magic happen
-ntm attach myproject
-
-# 7. (Every 15-20 min) Run the commit agent
-cc "Commit all changes in logical groupings with
-detailed messages. Don't edit code. Push when done."`}
+            code={messages.codeBlocks.quickstart}
             showLineNumbers
           />
         </div>
 
         <div className="mt-6">
           <TipBox variant="info">
-            Start smaller than the cass-memory example. Try this workflow with a
-            project that would normally take you a day or two manually. Build
-            your confidence before tackling larger projects.
+            {messages.tryItYourself.tip.intro}
           </TipBox>
         </div>
       </Section>
@@ -709,9 +467,37 @@ detailed messages. Don't edit code. Push when done."`}
 }
 
 // =============================================================================
+// HELPER FUNCTION - Get icon for plan section
+// =============================================================================
+function getSectionIcon(number: number) {
+  const icons: Record<number, React.ReactNode> = {
+    1: <Rocket className="h-4 w-4" />,
+    2: <Brain className="h-4 w-4" />,
+    3: <Database className="h-4 w-4" />,
+    4: <Terminal className="h-4 w-4" />,
+    5: <Layers className="h-4 w-4" />,
+    6: <Code className="h-4 w-4" />,
+    7: <Bot className="h-4 w-4" />,
+    8: <Database className="h-4 w-4" />,
+    9: <Users className="h-4 w-4" />,
+    10: <TrendingUp className="h-4 w-4" />,
+    11: <CheckCircle className="h-4 w-4" />,
+  };
+  return icons[number] || <Layers className="h-4 w-4" />;
+}
+
+// =============================================================================
+// MESSAGE TYPE
+// =============================================================================
+type Messages = ReturnType<typeof getRealWorldCaseStudyLessonMessages>;
+
+// =============================================================================
 // RESULTS CARD - Day 1 results summary
 // =============================================================================
 function ResultsCard() {
+  const { locale } = useLocale();
+  const messages = getRealWorldCaseStudyLessonMessages(locale);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -724,25 +510,25 @@ function ResultsCard() {
       <div className="relative">
         <div className="flex items-center gap-3 mb-4">
           <Rocket className="h-6 w-6 text-emerald-400" />
-          <h4 className="text-lg font-bold text-white">Day 1 Results</h4>
+          <h4 className="text-lg font-bold text-white">{messages.dayOneResults.title}</h4>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="text-center">
             <div className="text-3xl font-bold text-emerald-400">693</div>
-            <div className="text-sm text-white/60">Total Beads</div>
+            <div className="text-sm text-white/60">{messages.dayOneResults.stats.totalBeads}</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-emerald-400">282</div>
-            <div className="text-sm text-white/60">Day 1 Commits</div>
+            <div className="text-sm text-white/60">{messages.dayOneResults.stats.day1Commits}</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-emerald-400">25+</div>
-            <div className="text-sm text-white/60">Agents Involved</div>
+            <div className="text-sm text-white/60">{messages.dayOneResults.stats.agentsInvolved}</div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-emerald-400">~5hrs</div>
-            <div className="text-sm text-white/60">To 85% Complete</div>
+            <div className="text-sm text-white/60">{messages.dayOneResults.stats.toComplete}</div>
           </div>
         </div>
       </div>
@@ -816,7 +602,7 @@ function ModelCard({
 // =============================================================================
 // SYNTHESIS RESULT CARD
 // =============================================================================
-function SynthesisResultCard() {
+function SynthesisResultCard({ messages }: { messages: Messages }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -826,23 +612,21 @@ function SynthesisResultCard() {
     >
       <h4 className="font-bold text-white mb-3 flex items-center gap-2">
         <FileText className="h-5 w-5 text-violet-400" />
-        PLAN_FOR_CASS_MEMORY_SYSTEM.md
+        {messages.phase2.synthesisResult.title}
       </h4>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="text-sm text-white/70">
-          <span className="text-violet-400 font-semibold">5,600+</span> lines
+          <span className="text-violet-400 font-semibold">5,600+</span> {messages.phase2.synthesisResult.lines}
         </div>
         <div className="text-sm text-white/70">
-          <span className="text-violet-400 font-semibold">11</span> major
-          sections
+          <span className="text-violet-400 font-semibold">11</span> {messages.phase2.synthesisResult.sections}
         </div>
         <div className="text-sm text-white/70">
-          <span className="text-violet-400 font-semibold">Best ideas</span> from
-          4 models
+          <span className="text-violet-400 font-semibold">{messages.phase2.synthesisResult.bestIdeas}</span> {messages.phase2.synthesisResult.fromModels}
         </div>
         <div className="text-sm text-white/70">
-          <span className="text-violet-400 font-semibold">Complete</span>{" "}
-          implementation roadmap
+          <span className="text-violet-400 font-semibold">{messages.phase2.synthesisResult.complete}</span>{" "}
+          {messages.phase2.synthesisResult.roadmap}
         </div>
       </div>
     </motion.div>
@@ -852,7 +636,7 @@ function SynthesisResultCard() {
 // =============================================================================
 // BEADS TRANSFORMATION CARD
 // =============================================================================
-function BeadsTransformationCard() {
+function BeadsTransformationCard({ messages }: { messages: Messages }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -862,27 +646,26 @@ function BeadsTransformationCard() {
     >
       <div className="flex items-center gap-3 mb-4">
         <LayoutDashboard className="h-5 w-5 text-sky-400" />
-        <h4 className="font-bold text-white">Beads Structure</h4>
+        <h4 className="font-bold text-white">{messages.phase3.transformation.title}</h4>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="text-center p-4 rounded-xl bg-black/20">
           <div className="text-2xl font-bold text-sky-400">14</div>
-          <div className="text-xs text-white/60">Epics</div>
+          <div className="text-xs text-white/60">{messages.phase3.transformation.epics}</div>
         </div>
         <div className="text-center p-4 rounded-xl bg-black/20">
           <div className="text-2xl font-bold text-sky-400">350+</div>
-          <div className="text-xs text-white/60">Tasks</div>
+          <div className="text-xs text-white/60">{messages.phase3.transformation.tasks}</div>
         </div>
         <div className="text-center p-4 rounded-xl bg-black/20">
           <div className="text-2xl font-bold text-sky-400">13h</div>
-          <div className="text-xs text-white/60">Avg Lead Time</div>
+          <div className="text-xs text-white/60">{messages.phase3.transformation.leadTime}</div>
         </div>
       </div>
 
       <p className="mt-4 text-sm text-white/60">
-        Tasks linked with dependencies so blockers are visible and agents know
-        what to work on next.
+        {messages.phase3.transformation.description}
       </p>
     </motion.div>
   );
@@ -891,7 +674,7 @@ function BeadsTransformationCard() {
 // =============================================================================
 // SWARM SETUP CARD
 // =============================================================================
-function SwarmSetupCard() {
+function SwarmSetupCard({ messages }: { messages: Messages }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -901,7 +684,7 @@ function SwarmSetupCard() {
     >
       <div className="flex items-center gap-3 mb-4">
         <Users className="h-5 w-5 text-amber-400" />
-        <h4 className="font-bold text-white">The Agent Swarm</h4>
+        <h4 className="font-bold text-white">{messages.phase4.swarmSetup.title}</h4>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -910,8 +693,8 @@ function SwarmSetupCard() {
             <Bot className="h-5 w-5 text-white" />
           </div>
           <div>
-            <div className="font-semibold text-white text-sm">Claude Code</div>
-            <div className="text-xs text-white/50">5-6 agents (Opus 4.5)</div>
+            <div className="font-semibold text-white text-sm">{messages.phase4.swarmSetup.claudeCode.name}</div>
+            <div className="text-xs text-white/50">{messages.phase4.swarmSetup.claudeCode.agents}</div>
           </div>
         </div>
         <div className="flex items-center gap-3 p-3 rounded-xl bg-black/20">
@@ -919,8 +702,8 @@ function SwarmSetupCard() {
             <Bot className="h-5 w-5 text-white" />
           </div>
           <div>
-            <div className="font-semibold text-white text-sm">Codex CLI</div>
-            <div className="text-xs text-white/50">3 agents (5.1 Max)</div>
+            <div className="font-semibold text-white text-sm">{messages.phase4.swarmSetup.codexCli.name}</div>
+            <div className="text-xs text-white/50">{messages.phase4.swarmSetup.codexCli.agents}</div>
           </div>
         </div>
         <div className="flex items-center gap-3 p-3 rounded-xl bg-black/20">
@@ -928,8 +711,8 @@ function SwarmSetupCard() {
             <Bot className="h-5 w-5 text-white" />
           </div>
           <div>
-            <div className="font-semibold text-white text-sm">Gemini CLI</div>
-            <div className="text-xs text-white/50">2 agents (review duty)</div>
+            <div className="font-semibold text-white text-sm">{messages.phase4.swarmSetup.geminiCli.name}</div>
+            <div className="text-xs text-white/50">{messages.phase4.swarmSetup.geminiCli.agents}</div>
           </div>
         </div>
       </div>
@@ -940,7 +723,7 @@ function SwarmSetupCard() {
 // =============================================================================
 // COMMIT STATS CARD
 // =============================================================================
-function CommitStatsCard() {
+function CommitStatsCard({ messages }: { messages: Messages }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -950,27 +733,26 @@ function CommitStatsCard() {
     >
       <div className="flex items-center gap-3 mb-4">
         <GitBranch className="h-5 w-5 text-rose-400" />
-        <h4 className="font-bold text-white">Commit Statistics</h4>
+        <h4 className="font-bold text-white">{messages.commitCadence.commitStats.title}</h4>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="text-center">
           <div className="text-2xl font-bold text-rose-400">282</div>
-          <div className="text-xs text-white/60">Day 1 Commits</div>
+          <div className="text-xs text-white/60">{messages.commitCadence.commitStats.day1Commits}</div>
         </div>
         <div className="text-center">
           <div className="text-2xl font-bold text-rose-400">~12</div>
-          <div className="text-xs text-white/60">Per Hour</div>
+          <div className="text-xs text-white/60">{messages.commitCadence.commitStats.perHour}</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-rose-400">Detailed</div>
-          <div className="text-xs text-white/60">Messages</div>
+          <div className="text-2xl font-bold text-rose-400">{messages.commitCadence.commitStats.detailed}</div>
+          <div className="text-xs text-white/60">{messages.commitCadence.commitStats.messages}</div>
         </div>
       </div>
 
       <p className="mt-4 text-sm text-white/60">
-        The commit agent ran every 15-20 minutes, grouping changes logically and
-        writing detailed commit messages.
+        {messages.commitCadence.commitStats.description}
       </p>
     </motion.div>
   );
