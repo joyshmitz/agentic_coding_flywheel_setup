@@ -22,47 +22,50 @@ import {
   InlineCode,
   BulletList,
 } from "./lesson-components";
+import { useLocale, getAgentsLoginLessonMessages } from "@/lib/i18n";
 
 export function AgentsLoginLesson() {
+  const { locale } = useLocale();
+  const messages = getAgentsLoginLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Login to your coding agents and understand the shortcuts.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* The Three Agents */}
       <Section
-        title="The Three Agents"
+        title={messages.threeAgents.title}
         icon={<Bot className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          You have three powerful coding agents installed, each from a different
-          AI company:
+          {messages.threeAgents.description}
         </Paragraph>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           <AgentInfoCard
-            name="Claude Code"
-            command="claude"
-            alias="cc"
-            company="Anthropic"
+            name={messages.threeAgents.agents.claudeCode.name}
+            command={messages.threeAgents.agents.claudeCode.command}
+            alias={messages.threeAgents.agents.claudeCode.alias}
+            company={messages.threeAgents.agents.claudeCode.company}
             gradient="from-orange-500 to-amber-500"
             delay={0.1}
           />
           <AgentInfoCard
-            name="Codex CLI"
-            command="codex"
-            alias="cod"
-            company="OpenAI"
+            name={messages.threeAgents.agents.codexCli.name}
+            command={messages.threeAgents.agents.codexCli.command}
+            alias={messages.threeAgents.agents.codexCli.alias}
+            company={messages.threeAgents.agents.codexCli.company}
             gradient="from-emerald-500 to-teal-500"
             delay={0.2}
           />
           <AgentInfoCard
-            name="Gemini CLI"
-            command="gemini"
-            alias="gmi"
-            company="Google"
+            name={messages.threeAgents.agents.geminiCli.name}
+            command={messages.threeAgents.agents.geminiCli.command}
+            alias={messages.threeAgents.agents.geminiCli.alias}
+            company={messages.threeAgents.agents.geminiCli.company}
             gradient="from-blue-500 to-indigo-500"
             delay={0.3}
           />
@@ -73,46 +76,36 @@ export function AgentsLoginLesson() {
 
       {/* What The Aliases Do */}
       <Section
-        title="What The Aliases Do"
+        title={messages.whatAliasesDo.title}
         icon={<Zap className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          The aliases are configured for <Highlight>maximum power</Highlight>{" "}
-          (vibe mode):
+          {messages.whatAliasesDo.description}
         </Paragraph>
 
         <div className="mt-8 space-y-6">
           <AliasCard
-            alias="cc"
-            name="Claude Code"
-            code={`NODE_OPTIONS="--max-old-space-size=32768" \\
-  ENABLE_BACKGROUND_TASKS=1 \\
-  claude --dangerously-skip-permissions`}
-            features={[
-              "Extra memory for large projects",
-              "Background task support",
-              "No permission prompts",
-            ]}
+            alias={messages.whatAliasesDo.aliases.claudeCode.alias}
+            name={messages.whatAliasesDo.aliases.claudeCode.name}
+            code={messages.whatAliasesDo.aliases.claudeCode.code}
+            features={messages.whatAliasesDo.aliases.claudeCode.features}
             gradient="from-orange-500/20 to-amber-500/20"
           />
 
           <AliasCard
-            alias="cod"
-            name="Codex CLI"
-            code="codex --dangerously-bypass-approvals-and-sandbox"
-            features={[
-              "Bypass safety prompts",
-              "No approval/sandbox checks",
-            ]}
+            alias={messages.whatAliasesDo.aliases.codexCli.alias}
+            name={messages.whatAliasesDo.aliases.codexCli.name}
+            code={messages.whatAliasesDo.aliases.codexCli.code}
+            features={messages.whatAliasesDo.aliases.codexCli.features}
             gradient="from-emerald-500/20 to-teal-500/20"
           />
 
           <AliasCard
-            alias="gmi"
-            name="Gemini CLI"
-            code="gemini --yolo"
-            features={["YOLO mode (no confirmations)"]}
+            alias={messages.whatAliasesDo.aliases.geminiCli.alias}
+            name={messages.whatAliasesDo.aliases.geminiCli.name}
+            code={messages.whatAliasesDo.aliases.geminiCli.code}
+            features={messages.whatAliasesDo.aliases.geminiCli.features}
             gradient="from-blue-500/20 to-indigo-500/20"
           />
         </div>
@@ -122,37 +115,37 @@ export function AgentsLoginLesson() {
 
       {/* First Login */}
       <Section
-        title="First Login"
+        title={messages.firstLogin.title}
         icon={<Key className="h-5 w-5" />}
         delay={0.2}
       >
-        <Paragraph>Each agent needs to be authenticated once:</Paragraph>
+        <Paragraph>{messages.firstLogin.description}</Paragraph>
 
         <div className="mt-8 space-y-6">
           {/* Claude Login */}
           <LoginStep
-            agent="Claude Code"
-            command="claude auth login"
-            description="Follow the browser link to authenticate with your Anthropic account."
+            agent={messages.firstLogin.loginSteps.claudeCode.agent}
+            command={messages.firstLogin.loginSteps.claudeCode.command}
+            description={messages.firstLogin.loginSteps.claudeCode.description}
             gradient="from-orange-500/10 to-amber-500/10"
           />
 
           {/* Codex Login */}
           <LoginStep
-            agent="Codex CLI"
-            command="codex login"
-            description="Follow the browser prompts to authenticate with your ChatGPT Pro/Plus/Team account."
+            agent={messages.firstLogin.loginSteps.codexCli.agent}
+            command={messages.firstLogin.loginSteps.codexCli.command}
+            description={messages.firstLogin.loginSteps.codexCli.description}
             gradient="from-emerald-500/10 to-teal-500/10"
           />
 
           {/* OpenAI Warning */}
-          <OpenAIAccountWarning />
+          <OpenAIAccountWarning messages={messages} />
 
           {/* Gemini Login */}
           <LoginStep
-            agent="Gemini CLI"
-            command="gemini"
-            description="Follow the prompts to authenticate with your Google account."
+            agent={messages.firstLogin.loginSteps.geminiCli.agent}
+            command={messages.firstLogin.loginSteps.geminiCli.command}
+            description={messages.firstLogin.loginSteps.geminiCli.description}
             gradient="from-blue-500/10 to-indigo-500/10"
           />
         </div>
@@ -162,13 +155,12 @@ export function AgentsLoginLesson() {
 
       {/* Backup Credentials */}
       <Section
-        title="Backup Your Credentials!"
+        title={messages.backupCredentials.title}
         icon={<Database className="h-5 w-5" />}
         delay={0.25}
       >
         <Paragraph>
-          After logging in, <Highlight>immediately</Highlight> back up your
-          credentials:
+          {messages.backupCredentials.description}
         </Paragraph>
 
         <div className="mt-6">
@@ -179,7 +171,7 @@ caam backup gemini my-main-account`}
           />
         </div>
 
-        <Paragraph>Now you can switch accounts later with:</Paragraph>
+        <Paragraph>{messages.backupCredentials.instructionsAfter}</Paragraph>
 
         <div className="mt-6">
           <CodeBlock code="caam activate claude my-other-account" />
@@ -187,8 +179,7 @@ caam backup gemini my-main-account`}
 
         <div className="mt-6">
           <TipBox variant="tip">
-            This is incredibly useful when you hit rate limits! Switch to a
-            backup account and keep working.
+            {messages.backupCredentials.tipBoxContent}
           </TipBox>
         </div>
       </Section>
@@ -197,11 +188,11 @@ caam backup gemini my-main-account`}
 
       {/* Test Your Agents */}
       <Section
-        title="Test Your Agents"
+        title={messages.testAgents.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.3}
       >
-        <Paragraph>Try each one to verify they&apos;re working:</Paragraph>
+        <Paragraph>{messages.testAgents.description}</Paragraph>
 
         <div className="mt-6 space-y-4">
           <CodeBlock code={`cc "Hello! Please confirm you're working."`} />
@@ -214,28 +205,17 @@ caam backup gemini my-main-account`}
 
       {/* Quick Tips */}
       <Section
-        title="Quick Tips"
+        title={messages.quickTips.title}
         icon={<Sparkles className="h-5 w-5" />}
         delay={0.35}
       >
         <div className="mt-4">
           <BulletList
-            items={[
-              <span key="1">
-                <strong>Start simple</strong> - Let agents do small tasks first
-              </span>,
-              <span key="2">
-                <strong>Be specific</strong> - Clear instructions get better
-                results
-              </span>,
-              <span key="3">
-                <strong>Check the output</strong> - Agents can make mistakes
-              </span>,
-              <span key="4">
-                <strong>Use multiple agents</strong> - Different agents have
-                different strengths
-              </span>,
-            ]}
+            items={messages.quickTips.tips.map((tip, index) => (
+              <span key={index + 1}>
+                <strong>{tip.title}</strong> - {tip.description}
+              </span>
+            ))}
           />
         </div>
       </Section>
@@ -244,11 +224,11 @@ caam backup gemini my-main-account`}
 
       {/* Practice */}
       <Section
-        title="Practice This Now"
+        title={messages.practiceNow.title}
         icon={<CheckCircle2 className="h-5 w-5" />}
         delay={0.4}
       >
-        <Paragraph>Let&apos;s verify your agents are ready:</Paragraph>
+        <Paragraph>{messages.practiceNow.description}</Paragraph>
 
         <div className="mt-6">
           <CodeBlock
@@ -266,9 +246,7 @@ $ claude auth login`}
 
         <div className="mt-6">
           <TipBox variant="tip">
-            If you set up your accounts during the wizard (Step 7: Set Up
-            Accounts), you already have the credentials ready—just run the login
-            commands!
+            {messages.practiceNow.tipBoxContent}
           </TipBox>
         </div>
       </Section>
@@ -413,7 +391,7 @@ function LoginStep({
 // =============================================================================
 // OPENAI ACCOUNT WARNING - Critical warning about account types
 // =============================================================================
-function OpenAIAccountWarning() {
+function OpenAIAccountWarning({ messages }: { messages: any }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -427,7 +405,7 @@ function OpenAIAccountWarning() {
         <div className="flex items-center gap-3 mb-4">
           <AlertTriangle className="h-5 w-5 text-amber-400" />
           <span className="font-bold text-amber-400">
-            OpenAI Has TWO Account Types
+            {messages.firstLogin.openaiWarning.title}
           </span>
         </div>
 
@@ -435,39 +413,32 @@ function OpenAIAccountWarning() {
         <div className="grid gap-4 md:grid-cols-2 mb-4">
           <div className="p-4 rounded-xl bg-black/20 border border-white/[0.06]">
             <h5 className="font-bold text-white mb-2">
-              ChatGPT (Pro/Plus/Team)
+              {messages.firstLogin.openaiWarning.chatgptType.title}
             </h5>
             <ul className="space-y-1 text-xs text-white/60">
-              <li>• For Codex CLI, ChatGPT web</li>
-              <li>• Auth via OAuth ({`\`codex login\``})</li>
-              <li>
-                • Get at{" "}
-                <span className="text-primary">chat.openai.com</span>
-              </li>
+              {messages.firstLogin.openaiWarning.chatgptType.items.map((item: string, index: number) => (
+                <li key={index}>• {item}</li>
+              ))}
             </ul>
           </div>
           <div className="p-4 rounded-xl bg-black/20 border border-white/[0.06]">
-            <h5 className="font-bold text-white mb-2">API (pay-as-you-go)</h5>
+            <h5 className="font-bold text-white mb-2">
+              {messages.firstLogin.openaiWarning.apiType.title}
+            </h5>
             <ul className="space-y-1 text-xs text-white/60">
-              <li>• For OpenAI API, libraries</li>
-              <li>• Uses OPENAI_API_KEY env var</li>
-              <li>
-                • Get at{" "}
-                <span className="text-primary">platform.openai.com</span>
-              </li>
+              {messages.firstLogin.openaiWarning.apiType.items.map((item: string, index: number) => (
+                <li key={index}>• {item}</li>
+              ))}
             </ul>
           </div>
         </div>
 
         <p className="text-sm text-white/70">
-          Codex CLI uses <strong>ChatGPT OAuth</strong>, not API keys. If you
-          have an <InlineCode>OPENAI_API_KEY</InlineCode>, that&apos;s for the
-          API—different system!
+          {messages.firstLogin.openaiWarning.description}
         </p>
 
         <p className="mt-3 text-sm text-amber-400/80">
-          <strong>If login fails:</strong> Check ChatGPT Settings → Security →
-          &quot;API/Device access&quot;
+          {messages.firstLogin.openaiWarning.troubleshooting}
         </p>
       </div>
     </motion.div>

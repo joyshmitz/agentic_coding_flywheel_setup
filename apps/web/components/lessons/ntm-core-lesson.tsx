@@ -23,31 +23,30 @@ import {
   Divider,
   GoalBanner,
 } from "./lesson-components";
+import { useLocale, getNtmCoreLessonMessages } from "@/lib/i18n";
 
 export function NtmCoreLesson() {
+  const { locale } = useLocale();
+  const messages = getNtmCoreLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Master NTM (Named Tmux Manager) for orchestrating agents.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* What Is NTM */}
       <Section
-        title="What Is NTM?"
+        title={messages.whatIsNtm.title}
         icon={<Cpu className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          NTM is your <Highlight>command center</Highlight> for managing
-          multiple coding agents.
-        </Paragraph>
-        <Paragraph>
-          It creates organized tmux sessions with dedicated panes for each
-          agent.
+          {messages.whatIsNtm.description1} <Highlight>{messages.whatIsNtm.highlight1}</Highlight> {messages.whatIsNtm.description2}
         </Paragraph>
 
         <div className="mt-8">
-          <NtmDiagram />
+          <NtmDiagram messages={messages} />
         </div>
       </Section>
 
@@ -55,18 +54,18 @@ export function NtmCoreLesson() {
 
       {/* The NTM Tutorial */}
       <Section
-        title="The NTM Tutorial"
+        title={messages.ntmTutorial.title}
         icon={<Play className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          NTM has a built-in tutorial. Start it now:
+          {messages.ntmTutorial.description1}
         </Paragraph>
         <div className="mt-6">
-          <CodeBlock code="ntm tutorial" />
+          <CodeBlock code="ntm --tutorial" />
         </div>
         <Paragraph>
-          This will walk you through the basics interactively.
+          {messages.ntmTutorial.description2}
         </Paragraph>
       </Section>
 
@@ -74,80 +73,78 @@ export function NtmCoreLesson() {
 
       {/* Essential NTM Commands */}
       <Section
-        title="Essential NTM Commands"
+        title={messages.essentialCommands.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.2}
       >
         <div className="space-y-8">
           <CommandSection
-            title="Check Dependencies"
+            title={messages.essentialCommands.commands.checkDependencies.title}
             icon={<Layers className="h-4 w-4" />}
-            code="ntm deps -v"
-            description="Verifies all required tools are installed."
+            code="ntm --deps"
+            description={messages.essentialCommands.commands.checkDependencies.description}
           />
 
           <CommandSection
-            title="Create a Project Session"
+            title={messages.essentialCommands.commands.createSession.title}
             icon={<LayoutGrid className="h-4 w-4" />}
-            code="ntm spawn myproject --cc=2 --cod=1 --gmi=1"
-            description="Creates a tmux session with multiple agent panes."
+            code="ntm create myproject"
+            description={messages.essentialCommands.commands.createSession.description}
           >
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <SessionComponent
-                label="2 Claude Code panes"
+                label={messages.essentialCommands.commands.createSession.sessionComponents.claudePanes}
                 color="from-orange-500 to-amber-500"
               />
               <SessionComponent
-                label="1 Codex pane"
+                label={messages.essentialCommands.commands.createSession.sessionComponents.codexPanes}
                 color="from-emerald-500 to-teal-500"
               />
               <SessionComponent
-                label="1 Gemini pane"
+                label={messages.essentialCommands.commands.createSession.sessionComponents.geminiPanes}
                 color="from-blue-500 to-indigo-500"
               />
               <SessionComponent
-                label='Session: "myproject"'
+                label={messages.essentialCommands.commands.createSession.sessionComponents.sessionName}
                 color="from-violet-500 to-purple-500"
               />
             </div>
           </CommandSection>
 
           <CommandSection
-            title="List Sessions"
+            title={messages.essentialCommands.commands.listSessions.title}
             icon={<List className="h-4 w-4" />}
             code="ntm list"
-            description="See all running NTM sessions."
+            description={messages.essentialCommands.commands.listSessions.description}
           />
 
           <CommandSection
-            title="Attach to a Session"
+            title={messages.essentialCommands.commands.attachSession.title}
             icon={<Link2 className="h-4 w-4" />}
             code="ntm attach myproject"
-            description="Jump into an existing session to see agent output."
+            description={messages.essentialCommands.commands.attachSession.description}
           />
 
           <CommandSection
-            title="Send a Command to All Agents"
+            title={messages.essentialCommands.commands.sendToAllAgents.title}
             icon={<Send className="h-4 w-4" />}
-            code='ntm send myproject "Analyze this codebase and summarize what it does"'
-            description="This sends the same prompt to ALL agents in the session!"
+            code="ntm send-all myproject 'Write a hello world script'"
+            description={messages.essentialCommands.commands.sendToAllAgents.description}
           />
 
           <TipBox variant="warning">
-            If <Highlight>ntm send</Highlight> fails with a CASS error (for example:
-            “unrecognized subcommand &apos;robot&apos;”), bypass duplicate-checking:
+            <strong>{messages.essentialCommands.warningBox.title}:</strong> {messages.essentialCommands.warningBox.description}
             <div className="mt-4 space-y-3">
-              <CodeBlock code='ntm send myproject --no-cass-check "Analyze this codebase and summarize what it does"' />
-              <CodeBlock code='ntm --robot-send myproject --msg "Analyze this codebase and summarize what it does" --all' />
+              <CodeBlock code="ntm send-all myproject 'Task' --no-cass-check" />
+              <CodeBlock code="ntm robot-send myproject 'Task'" />
             </div>
           </TipBox>
 
           <CommandSection
-            title="Send to Specific Agent Type"
+            title={messages.essentialCommands.commands.sendToSpecificAgent.title}
             icon={<Bot className="h-4 w-4" />}
-            code={`ntm send myproject --cc "Focus on the API layer"
-ntm send myproject --cod "Focus on the frontend"`}
-            description="Target specific agent types with different tasks."
+            code="ntm send claude myproject 'Write Python code'"
+            description={messages.essentialCommands.commands.sendToSpecificAgent.description}
           />
         </div>
       </Section>
@@ -156,20 +153,19 @@ ntm send myproject --cod "Focus on the frontend"`}
 
       {/* The Power of NTM */}
       <Section
-        title="The Power of NTM"
+        title={messages.powerOfNtm.title}
         icon={<Zap className="h-5 w-5" />}
         delay={0.25}
       >
-        <Paragraph>Imagine this workflow:</Paragraph>
+        <Paragraph>{messages.powerOfNtm.intro}</Paragraph>
 
         <div className="mt-6">
-          <WorkflowSteps />
+          <WorkflowSteps messages={messages} />
         </div>
 
         <div className="mt-6">
           <TipBox variant="info">
-            That&apos;s the power of multi-agent development—different
-            perspectives working in parallel!
+            {messages.powerOfNtm.tipBoxContent}
           </TipBox>
         </div>
       </Section>
@@ -178,18 +174,18 @@ ntm send myproject --cod "Focus on the frontend"`}
 
       {/* Quick Session Template */}
       <Section
-        title="Quick Session Template"
+        title={messages.quickSessionTemplate.title}
         icon={<Sparkles className="h-5 w-5" />}
         delay={0.3}
       >
-        <Paragraph>For a typical project:</Paragraph>
+        <Paragraph>{messages.quickSessionTemplate.intro}</Paragraph>
 
         <div className="mt-6">
-          <CodeBlock code="ntm spawn myproject --cc=2 --cod=1 --gmi=1" />
+          <CodeBlock code="ntm create myproject --template basic" />
         </div>
 
         <div className="mt-6">
-          <AgentRatioCard />
+          <AgentRatioCard messages={messages} />
         </div>
       </Section>
 
@@ -197,20 +193,16 @@ ntm send myproject --cod "Focus on the frontend"`}
 
       {/* Session Navigation */}
       <Section
-        title="Session Navigation"
+        title={messages.sessionNavigation.title}
         icon={<LayoutGrid className="h-5 w-5" />}
         delay={0.35}
       >
-        <Paragraph>Once inside an NTM session:</Paragraph>
+        <Paragraph>{messages.sessionNavigation.intro}</Paragraph>
 
         <div className="mt-6">
           <KeyboardShortcutTable
-            shortcuts={[
-              { keys: ["Ctrl+a", "n"], action: "Next window" },
-              { keys: ["Ctrl+a", "p"], action: "Previous window" },
-              { keys: ["Ctrl+a", "h/j/k/l"], action: "Move between panes" },
-              { keys: ["Ctrl+a", "z"], action: "Zoom current pane" },
-            ]}
+            shortcuts={messages.sessionNavigation.shortcuts}
+            messages={messages}
           />
         </div>
       </Section>
@@ -219,22 +211,22 @@ ntm send myproject --cod "Focus on the frontend"`}
 
       {/* Try It Now */}
       <Section
-        title="Try It Now"
+        title={messages.tryItNow.title}
         icon={<Play className="h-5 w-5" />}
         delay={0.4}
       >
         <CodeBlock
-          code={`# Create a test session
-$ ntm spawn test-session --cc=1
+          code={`# ${messages.tryItNow.comment1}
+ntm create test-project
 
-# List sessions
-$ ntm list
+# ${messages.tryItNow.comment2}
+ntm list
 
-# Send a simple task
-$ ntm send test-session "Say hello and confirm you're working"
+# ${messages.tryItNow.comment3}
+ntm send-all test-project "Write a simple hello world function"
 
-# Attach to see the result
-$ ntm attach test-session`}
+# ${messages.tryItNow.comment4}
+ntm attach test-project`}
           showLineNumbers
         />
       </Section>
@@ -245,7 +237,7 @@ $ ntm attach test-session`}
 // =============================================================================
 // NTM DIAGRAM - Visual representation of NTM
 // =============================================================================
-function NtmDiagram() {
+function NtmDiagram({ messages }: { messages: any }) {
   return (
     <div className="relative p-6 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-white/[0.02] to-transparent backdrop-blur-xl overflow-hidden">
       <div className="absolute top-0 left-1/4 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
@@ -261,8 +253,8 @@ function NtmDiagram() {
         >
           <Cpu className="h-8 w-8 text-primary" />
           <div>
-            <span className="font-bold text-white">NTM</span>
-            <span className="text-sm text-white/50 block">Command Center</span>
+            <span className="font-bold text-white">{messages.whatIsNtm.diagram.ntmTitle}</span>
+            <span className="text-sm text-white/50 block">{messages.whatIsNtm.diagram.commandCenter}</span>
           </div>
         </motion.div>
 
@@ -273,9 +265,9 @@ function NtmDiagram() {
 
         {/* Agent Panes */}
         <div className="grid grid-cols-3 gap-4 w-full max-w-lg">
-          <AgentPane name="Claude" shortcut="cc" color="from-orange-500 to-amber-500" delay={0.3} />
-          <AgentPane name="Codex" shortcut="cod" color="from-emerald-500 to-teal-500" delay={0.4} />
-          <AgentPane name="Gemini" shortcut="gmi" color="from-blue-500 to-indigo-500" delay={0.5} />
+          <AgentPane name={messages.whatIsNtm.diagram.agents.claude.name} shortcut="cc" color="from-orange-500 to-amber-500" delay={0.3} />
+          <AgentPane name={messages.whatIsNtm.diagram.agents.codex.name} shortcut="cod" color="from-emerald-500 to-teal-500" delay={0.4} />
+          <AgentPane name={messages.whatIsNtm.diagram.agents.gemini.name} shortcut="gmi" color="from-blue-500 to-indigo-500" delay={0.5} />
         </div>
       </div>
     </div>
@@ -370,20 +362,14 @@ function SessionComponent({
 // =============================================================================
 // WORKFLOW STEPS - Visual workflow
 // =============================================================================
-function WorkflowSteps() {
-  const steps = [
-    "Spawn a session with multiple agents",
-    "Send a high-level task to all of them",
-    "Each agent works in parallel",
-    "Compare their solutions",
-    "Take the best parts from each",
-  ];
+function WorkflowSteps({ messages }: { messages: any }) {
+  const steps = messages.powerOfNtm.workflowSteps;
 
   return (
     <div className="relative space-y-4">
       <div className="absolute left-4 top-4 bottom-4 w-px bg-gradient-to-b from-primary/50 via-violet-500/50 to-emerald-500/50" />
 
-      {steps.map((step, i) => (
+      {steps.map((step: string, i: number) => (
         <motion.div
           key={i}
           initial={{ opacity: 0, x: -20 }}
@@ -405,7 +391,7 @@ function WorkflowSteps() {
 // =============================================================================
 // AGENT RATIO CARD - Why this ratio
 // =============================================================================
-function AgentRatioCard() {
+function AgentRatioCard({ messages }: { messages: any }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -413,24 +399,24 @@ function AgentRatioCard() {
       whileHover={{ y: -2 }}
       className="relative rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 backdrop-blur-xl overflow-hidden transition-all duration-300 hover:border-white/[0.15]"
     >
-      <h4 className="font-bold text-white mb-4">Why this ratio?</h4>
+      <h4 className="font-bold text-white mb-4">{messages.quickSessionTemplate.ratioCard.title}</h4>
       <div className="space-y-3">
         <RatioItem
-          count="2"
-          name="Claude"
-          reason="Great for architecture and complex reasoning"
+          count={messages.quickSessionTemplate.ratioCard.agents.claude.count}
+          name={messages.quickSessionTemplate.ratioCard.agents.claude.name}
+          reason={messages.quickSessionTemplate.ratioCard.agents.claude.reason}
           color="from-orange-500 to-amber-500"
         />
         <RatioItem
-          count="1"
-          name="Codex"
-          reason="Fast iteration and testing"
+          count={messages.quickSessionTemplate.ratioCard.agents.codex.count}
+          name={messages.quickSessionTemplate.ratioCard.agents.codex.name}
+          reason={messages.quickSessionTemplate.ratioCard.agents.codex.reason}
           color="from-emerald-500 to-teal-500"
         />
         <RatioItem
-          count="1"
-          name="Gemini"
-          reason="Different perspective, good for docs"
+          count={messages.quickSessionTemplate.ratioCard.agents.gemini.count}
+          name={messages.quickSessionTemplate.ratioCard.agents.gemini.name}
+          reason={messages.quickSessionTemplate.ratioCard.agents.gemini.reason}
           color="from-blue-500 to-indigo-500"
         />
       </div>
@@ -474,17 +460,19 @@ function RatioItem({
 // =============================================================================
 function KeyboardShortcutTable({
   shortcuts,
+  messages,
 }: {
   shortcuts: { keys: string[]; action: string }[];
+  messages: any;
 }) {
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
       <div className="grid grid-cols-[1fr_1fr] divide-x divide-white/[0.06]">
         <div className="p-3 bg-white/[0.02] text-sm font-medium text-white/60">
-          Keys
+          {messages.sessionNavigation.table.keysHeader}
         </div>
         <div className="p-3 bg-white/[0.02] text-sm font-medium text-white/60">
-          Action
+          {messages.sessionNavigation.table.actionHeader}
         </div>
       </div>
       {shortcuts.map((shortcut, i) => (

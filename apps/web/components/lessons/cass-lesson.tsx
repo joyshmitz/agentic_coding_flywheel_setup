@@ -25,54 +25,55 @@ import {
   FeatureCard,
   FeatureGrid,
 } from "./lesson-components";
+import { useLocale, getCassLessonMessages } from "@/lib/i18n";
 
 export function CassLesson() {
+  const { locale } = useLocale();
+  const messages = getCassLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Search across all past agent sessions to reuse solved problems.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       {/* What Is CASS */}
       <Section
-        title="What Is CASS?"
+        title={messages.whatIsCass.title}
         icon={<Search className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>CASS (Coding Agent Session Search)</Highlight> indexes all
-          your past agent conversations—Claude Code, Codex, Gemini, Cursor, and
-          more—so you can find solutions to problems you&apos;ve already solved.
+          <Highlight>{messages.whatIsCass.highlight1}</Highlight> {messages.whatIsCass.description1}
         </Paragraph>
         <Paragraph>
-          It&apos;s like having a searchable memory of everything your agents
-          have ever done across all projects.
+          {messages.whatIsCass.description2}
         </Paragraph>
 
         <div className="mt-8">
           <FeatureGrid>
             <FeatureCard
               icon={<Database className="h-5 w-5" />}
-              title="Multi-Agent Index"
-              description="Claude, Codex, Gemini, Cursor, ChatGPT sessions"
+              title={messages.whatIsCass.features.multiAgentIndex.title}
+              description={messages.whatIsCass.features.multiAgentIndex.description}
               gradient="from-primary/20 to-violet-500/20"
             />
             <FeatureCard
               icon={<FileSearch className="h-5 w-5" />}
-              title="Full-Text Search"
-              description="Search across code, prompts, and responses"
+              title={messages.whatIsCass.features.fullTextSearch.title}
+              description={messages.whatIsCass.features.fullTextSearch.description}
               gradient="from-emerald-500/20 to-teal-500/20"
             />
             <FeatureCard
               icon={<History className="h-5 w-5" />}
-              title="Cross-Project"
-              description="Find solutions from any project or machine"
+              title={messages.whatIsCass.features.crossProject.title}
+              description={messages.whatIsCass.features.crossProject.description}
               gradient="from-amber-500/20 to-orange-500/20"
             />
             <FeatureCard
               icon={<Zap className="h-5 w-5" />}
-              title="Fast Retrieval"
-              description="Instant results with context snippets"
+              title={messages.whatIsCass.features.fastRetrieval.title}
+              description={messages.whatIsCass.features.fastRetrieval.description}
               gradient="from-blue-500/20 to-indigo-500/20"
             />
           </FeatureGrid>
@@ -83,34 +84,27 @@ export function CassLesson() {
 
       {/* Why Use CASS */}
       <Section
-        title="Why Use CASS?"
+        title={messages.whyUseCass.title}
         icon={<Sparkles className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          You&apos;ve likely solved many problems before with agents. Without
-          CASS:
+          {messages.whyUseCass.intro}
         </Paragraph>
 
         <div className="mt-6 space-y-4">
-          <UseCaseCard
-            problem="You hit an error you've seen before but can't remember the fix"
-            solution="Search CASS for the error message → find the exact solution"
-          />
-          <UseCaseCard
-            problem="New project needs auth—you've implemented it before"
-            solution="Search 'authentication' → find your past implementation"
-          />
-          <UseCaseCard
-            problem="Different agent solved a similar problem better"
-            solution="Search across all agents → find the best approach"
-          />
+          {messages.whyUseCass.useCases.map((useCase, index) => (
+            <UseCaseCard
+              key={index}
+              problem={useCase.problem}
+              solution={useCase.solution}
+            />
+          ))}
         </div>
 
         <div className="mt-6">
           <TipBox variant="info">
-            CASS helps you avoid re-solving the same problems. Your past agent
-            sessions are a goldmine of solutions!
+            {messages.whyUseCass.tipBoxContent}
           </TipBox>
         </div>
       </Section>
@@ -119,44 +113,17 @@ export function CassLesson() {
 
       {/* Essential Commands */}
       <Section
-        title="Essential Commands"
+        title={messages.essentialCommands.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.2}
       >
         <Paragraph>
-          <strong>Important:</strong> Never run bare <code>cass</code>—it
-          launches a TUI that may block your session. Always use{" "}
-          <code>--robot</code> or <code>--json</code>.
+          {messages.essentialCommands.warning}
         </Paragraph>
 
         <div className="mt-6">
           <CommandList
-            commands={[
-              {
-                command: "cass health",
-                description: "Check indexing status",
-              },
-              {
-                command: 'cass search "auth error" --robot --limit 5',
-                description: "Search with machine-readable output",
-              },
-              {
-                command: "cass view /path/to/session.jsonl -n 42 --json",
-                description: "View a specific message",
-              },
-              {
-                command: "cass expand /path/to/session.jsonl -n 42 -C 3 --json",
-                description: "View with context (3 messages before/after)",
-              },
-              {
-                command: "cass capabilities --json",
-                description: "See what agents are indexed",
-              },
-              {
-                command: "cass robot-docs guide",
-                description: "Full documentation for AI agents",
-              },
-            ]}
+            commands={messages.essentialCommands.commands}
           />
         </div>
       </Section>
@@ -165,40 +132,19 @@ export function CassLesson() {
 
       {/* Search Patterns */}
       <Section
-        title="Search Patterns"
+        title={messages.searchPatterns.title}
         icon={<Filter className="h-5 w-5" />}
         delay={0.25}
       >
         <div className="space-y-6">
-          <SearchPattern
-            title="Basic Search"
-            description="Find any mention of a term"
-            code='cass search "database migration" --robot'
-          />
-
-          <SearchPattern
-            title="Filter by Agent"
-            description="Only search Claude Code sessions"
-            code='cass search "error handling" --agent claude --robot'
-          />
-
-          <SearchPattern
-            title="Recent Only"
-            description="Search last 7 days"
-            code='cass search "docker" --days 7 --robot'
-          />
-
-          <SearchPattern
-            title="Minimal Output"
-            description="Just essential fields"
-            code='cass search "auth" --robot --fields minimal --limit 10'
-          />
-
-          <SearchPattern
-            title="Error Messages"
-            description="Find solutions to specific errors"
-            code='cass search "Cannot read property of undefined" --robot'
-          />
+          {Object.values(messages.searchPatterns.patterns).map((pattern: any, index: number) => (
+            <SearchPattern
+              key={index}
+              title={pattern.title}
+              description={pattern.description}
+              code={pattern.code}
+            />
+          ))}
         </div>
       </Section>
 
@@ -206,58 +152,35 @@ export function CassLesson() {
 
       {/* The Search Workflow */}
       <Section
-        title="The Search Workflow"
+        title={messages.searchWorkflow.title}
         icon={<Zap className="h-5 w-5" />}
         delay={0.3}
       >
-        <SearchWorkflow />
+        <SearchWorkflow messages={messages} />
       </Section>
 
       <Divider />
 
-      {/* Output Format */}
+      {/* Understanding Output */}
       <Section
-        title="Understanding Output"
+        title={messages.understandingOutput.title}
         icon={<FileSearch className="h-5 w-5" />}
         delay={0.35}
       >
         <Paragraph>
-          CASS returns structured results with session info and snippets:
+          {messages.understandingOutput.description}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`$ cass search "PostgreSQL connection" --robot --limit 2
-
-{
-  "hits": [
-    {
-      "source_path": "/home/ubuntu/.claude/projects/.../session.jsonl",
-      "line_number": 87,
-      "agent": "claude_code",
-      "workspace": "/projects/myapp",
-      "snippet": "...fixed the PostgreSQL connection by setting pool_size=20...",
-      "score": 0.92
-    },
-    {
-      "source_path": "/home/ubuntu/.codex/sessions/2025-01-12.jsonl",
-      "line_number": 45,
-      "agent": "codex",
-      "workspace": "/projects/backend",
-      "snippet": "...PostgreSQL connection string format: postgres://user:pass...",
-      "score": 0.85
-    }
-  ],
-  "_meta": { "query": "PostgreSQL connection", "took_ms": 42 }
-}`}
+            code={messages.understandingOutput.exampleOutput}
             language="json"
           />
         </div>
 
         <div className="mt-6">
           <TipBox variant="tip">
-            Use <code>cass expand</code> with the source path and line
-            number to see the full conversation context!
+            {messages.understandingOutput.tipBoxContent}
           </TipBox>
         </div>
       </Section>
@@ -266,27 +189,18 @@ export function CassLesson() {
 
       {/* Best Practices */}
       <Section
-        title="Best Practices"
+        title={messages.bestPractices.title}
         icon={<Book className="h-5 w-5" />}
         delay={0.4}
       >
         <div className="space-y-4">
-          <BestPractice
-            title="Use specific search terms"
-            description="'PostgreSQL timeout error' is better than just 'error'"
-          />
-          <BestPractice
-            title="Filter by agent for focused results"
-            description="If you remember which agent solved it, use --agent"
-          />
-          <BestPractice
-            title="Check multiple solutions"
-            description="Different agents may have solved it differently"
-          />
-          <BestPractice
-            title="Use --days for recent context"
-            description="Older solutions might use outdated patterns"
-          />
+          {Object.values(messages.bestPractices.practices).map((practice: any, index: number) => (
+            <BestPractice
+              key={index}
+              title={practice.title}
+              description={practice.description}
+            />
+          ))}
         </div>
       </Section>
 
@@ -294,7 +208,7 @@ export function CassLesson() {
 
       {/* Try It Now */}
       <Section
-        title="Try It Now"
+        title={messages.tryItNow.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.45}
       >
@@ -381,27 +295,27 @@ function SearchPattern({
 // =============================================================================
 // SEARCH WORKFLOW
 // =============================================================================
-function SearchWorkflow() {
+function SearchWorkflow({ messages }: { messages: any }) {
   const steps = [
     {
       icon: <Search className="h-5 w-5" />,
-      title: "Search",
-      desc: "Find relevant past sessions",
+      title: messages.searchWorkflow.steps.search.title,
+      desc: messages.searchWorkflow.steps.search.description,
     },
     {
       icon: <FileSearch className="h-5 w-5" />,
-      title: "Review",
-      desc: "Check snippets and scores",
+      title: messages.searchWorkflow.steps.review.title,
+      desc: messages.searchWorkflow.steps.review.description,
     },
     {
       icon: <History className="h-5 w-5" />,
-      title: "Expand",
-      desc: "View full context if needed",
+      title: messages.searchWorkflow.steps.expand.title,
+      desc: messages.searchWorkflow.steps.expand.description,
     },
     {
       icon: <Bot className="h-5 w-5" />,
-      title: "Apply",
-      desc: "Use the solution in your current work",
+      title: messages.searchWorkflow.steps.apply.title,
+      desc: messages.searchWorkflow.steps.apply.description,
     },
   ];
 
