@@ -1,0 +1,20 @@
+# UBS ignore patterns
+# Excludes generated code and non-production scripts from bug scanning
+
+# Next.js build output (generated code)
+.next/
+
+# Node modules (external dependencies)
+node_modules/
+
+# Research/scraping scripts (one-off Playwright scripts)
+research_*.mjs
+debug-site.mjs
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# Build artifacts
+dist/
+.turbo/
