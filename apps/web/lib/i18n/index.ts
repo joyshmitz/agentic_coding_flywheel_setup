@@ -29,6 +29,8 @@ export {
   getRunInstallerMessages,
   getStatusCheckMessages,
   getLaunchOnboardingMessages,
+  // Component messages
+  getSimplerGuideMessages,
   // Page messages
   getLearnMessages,
   getFlywheelMessages,

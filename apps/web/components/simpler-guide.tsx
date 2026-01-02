@@ -6,6 +6,7 @@ import { HelpCircle, ChevronDown, Lightbulb, ArrowRight, Check, Download } from 
 import { cn } from "@/lib/utils";
 import { springs } from "@/components/motion";
 import { Button } from "@/components/ui/button";
+import { useLocale, getSimplerGuideMessages } from "@/lib/i18n";
 
 interface SimplerGuideProps {
   children: ReactNode;
@@ -18,6 +19,8 @@ interface SimplerGuideProps {
  */
 export function SimplerGuide({ children, className }: SimplerGuideProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { locale } = useLocale();
+  const messages = getSimplerGuideMessages(locale);
 
   const toggle = useCallback(() => setIsOpen((prev) => !prev), []);
 
@@ -56,10 +59,10 @@ export function SimplerGuide({ children, className }: SimplerGuideProps) {
                 isOpen ? "text-[oklch(0.8_0.12_280)]" : "text-foreground"
               )}
             >
-              Make it simpler for me
+              {messages.toggle.title}
             </p>
             <p className="text-sm text-muted-foreground">
-              {isOpen ? "Click to collapse" : "New to computers? Click for extra help"}
+              {isOpen ? messages.toggle.collapseHint : messages.toggle.expandHint}
             </p>
           </div>
         </div>
@@ -177,6 +180,9 @@ export function GuideExplain({
   children: ReactNode;
   className?: string;
 }) {
+  const { locale } = useLocale();
+  const messages = getSimplerGuideMessages(locale);
+
   return (
     <div
       className={cn(
@@ -185,7 +191,7 @@ export function GuideExplain({
       )}
     >
       <p className="mb-2 font-medium text-[oklch(0.85_0.12_195)]">
-        What is &quot;{term}&quot;?
+        {messages.explain.whatIs} &quot;{term}&quot;?
       </p>
       <div className="text-sm leading-relaxed text-muted-foreground">{children}</div>
     </div>
@@ -267,6 +273,9 @@ export function GuideCaution({
   children: ReactNode;
   className?: string;
 }) {
+  const { locale } = useLocale();
+  const messages = getSimplerGuideMessages(locale);
+
   return (
     <div
       className={cn(
@@ -275,7 +284,7 @@ export function GuideCaution({
       )}
     >
       <p className="mb-2 flex items-center gap-2 font-medium text-[oklch(0.88_0.12_75)]">
-        <span className="text-lg">⚠️</span> Important
+        <span className="text-lg">⚠️</span> {messages.caution.title}
       </p>
       <div className="text-sm leading-relaxed text-muted-foreground">{children}</div>
     </div>
@@ -292,6 +301,9 @@ export function GuideTip({
   children: ReactNode;
   className?: string;
 }) {
+  const { locale } = useLocale();
+  const messages = getSimplerGuideMessages(locale);
+
   return (
     <div
       className={cn(
@@ -300,7 +312,7 @@ export function GuideTip({
       )}
     >
       <p className="mb-2 flex items-center gap-2 font-medium text-[oklch(0.82_0.12_145)]">
-        <span className="text-lg">💡</span> Tip
+        <span className="text-lg">💡</span> {messages.tip.title}
       </p>
       <div className="text-sm leading-relaxed text-muted-foreground">{children}</div>
     </div>

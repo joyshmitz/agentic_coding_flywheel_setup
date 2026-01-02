@@ -163,6 +163,10 @@ import {
   launchOnboardingMessagesUk,
 } from "../wizard-messages.uk";
 
+// SimplerGuide component messages
+import { simplerGuideMessages } from "../simpler-guide-messages";
+import { simplerGuideMessagesUk } from "../simpler-guide-messages.uk";
+
 /**
  * Get common wizard messages for the specified locale
  */
@@ -266,6 +270,13 @@ export function getStatusCheckMessages(locale: Locale) {
  */
 export function getLaunchOnboardingMessages(locale: Locale) {
   return locale === "uk" ? launchOnboardingMessagesUk : launchOnboardingMessages;
+}
+
+/**
+ * Get SimplerGuide component messages for the specified locale
+ */
+export function getSimplerGuideMessages(locale: Locale) {
+  return locale === "uk" ? simplerGuideMessagesUk : simplerGuideMessages;
 }
 
 // Page messages
