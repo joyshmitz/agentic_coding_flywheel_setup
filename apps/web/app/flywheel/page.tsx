@@ -44,6 +44,7 @@ import {
   type AgentPrompt,
 } from "@/lib/flywheel";
 import { useLocale, getFlywheelMessages } from "@/lib/i18n";
+import { Jargon } from "@/components/jargon";
 
 // ============================================================
 // ICON MAPPING
@@ -130,7 +131,9 @@ function HeroSection({ messages }: { messages: ReturnType<typeof getFlywheelMess
             </div>
             <div>
               <p className="text-xl font-bold text-foreground sm:text-2xl">{messages.stats.parallelAgents.value}</p>
-              <p className="text-[12px] text-muted-foreground sm:text-sm">{messages.stats.parallelAgents.label}</p>
+              <p className="text-[12px] text-muted-foreground sm:text-sm">
+                <Jargon term="parallel-agents">{messages.stats.parallelAgents.label}</Jargon>
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -139,7 +142,9 @@ function HeroSection({ messages }: { messages: ReturnType<typeof getFlywheelMess
             </div>
             <div>
               <p className="text-xl font-bold text-foreground sm:text-2xl">{messages.stats.projects.value}</p>
-              <p className="text-[12px] text-muted-foreground sm:text-sm">{messages.stats.projects.label}</p>
+              <p className="text-[12px] text-muted-foreground sm:text-sm">
+                <Jargon term="open-source">{messages.stats.projects.label}</Jargon>
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -157,7 +162,9 @@ function HeroSection({ messages }: { messages: ReturnType<typeof getFlywheelMess
             </div>
             <div>
               <p className="text-xl font-bold text-foreground sm:text-2xl">{messages.stats.autonomous.value}</p>
-              <p className="text-[12px] text-muted-foreground sm:text-sm">{messages.stats.autonomous.label}</p>
+              <p className="text-[12px] text-muted-foreground sm:text-sm">
+                <Jargon term="autonomous">{messages.stats.autonomous.label}</Jargon>
+              </p>
             </div>
           </div>
         </div>
@@ -656,18 +663,21 @@ function PhilosophySection({ messages }: { messages: ReturnType<typeof getFlywhe
       title: messages.philosophy.unix.title,
       description: messages.philosophy.unix.description,
       color: "from-cyan-400 to-sky-500",
+      jargonTerm: "unix-philosophy",
     },
     {
       icon: Cpu,
       title: messages.philosophy.agentFirst.title,
       description: messages.philosophy.agentFirst.description,
       color: "from-violet-400 to-purple-500",
+      jargonTerm: "agentic",
     },
     {
       icon: Workflow,
       title: messages.philosophy.selfReinforcing.title,
       description: messages.philosophy.selfReinforcing.description,
       color: "from-emerald-400 to-teal-500",
+      jargonTerm: "flywheel",
     },
     {
       icon: Shield,
@@ -709,7 +719,13 @@ function PhilosophySection({ messages }: { messages: ReturnType<typeof getFlywhe
                 <div className={`mb-4 inline-flex rounded-xl p-3 bg-gradient-to-br ${item.color}`}>
                   <item.icon className="h-5 w-5 text-white" />
                 </div>
-                <h3 className="mb-2 text-base font-bold text-foreground">{item.title}</h3>
+                <h3 className="mb-2 text-base font-bold text-foreground">
+                  {item.jargonTerm ? (
+                    <Jargon term={item.jargonTerm}>{item.title}</Jargon>
+                  ) : (
+                    item.title
+                  )}
+                </h3>
                 <p className="text-sm text-muted-foreground">{item.description}</p>
               </div>
             </div>
@@ -789,7 +805,9 @@ export default function FlywheelPage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 lg:h-9 lg:w-9">
             <Terminal className="h-4 w-4 text-primary lg:h-5 lg:w-5" />
           </div>
-          <span className="font-mono text-base font-bold tracking-tight lg:text-lg">{messages.navigation.agentFlywheel}</span>
+          <span className="font-mono text-base font-bold tracking-tight lg:text-lg">
+            <Jargon term="flywheel">{messages.navigation.agentFlywheel}</Jargon>
+          </span>
         </div>
         <div className="flex items-center gap-4">
           <Button asChild size="default" variant="outline" className="h-11 border-primary/30 hover:bg-primary/10">
@@ -826,7 +844,9 @@ export default function FlywheelPage() {
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/20">
                 <Terminal className="h-3.5 w-3.5 text-primary" />
               </div>
-              <span className="font-mono text-sm font-bold">{messages.navigation.agentFlywheel}</span>
+              <span className="font-mono text-sm font-bold">
+                <Jargon term="flywheel">{messages.navigation.agentFlywheel}</Jargon>
+              </span>
             </div>
 
             <div className="flex items-center gap-3 text-sm text-muted-foreground">

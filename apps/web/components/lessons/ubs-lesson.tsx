@@ -26,6 +26,7 @@ import {
   FeatureCard,
   FeatureGrid,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getUbsLessonMessages } from "@/lib/i18n";
 
 export function UbsLesson() {
@@ -45,7 +46,7 @@ export function UbsLesson() {
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>{messages.whatIsUbs.highlightText}</Highlight> {messages.whatIsUbs.description}
+          <Highlight><Jargon term="ubs">{messages.whatIsUbs.highlightText}</Jargon></Highlight> {messages.whatIsUbs.description}
         </Paragraph>
         <Paragraph>
           {messages.whatIsUbs.analogy}

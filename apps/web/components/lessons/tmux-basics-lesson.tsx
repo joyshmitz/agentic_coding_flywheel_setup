@@ -25,6 +25,7 @@ import {
   InlineCode,
   BulletList,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getTmuxBasicsLessonMessages } from "@/lib/i18n";
 
 export function TmuxBasicsLesson() {
@@ -42,7 +43,7 @@ export function TmuxBasicsLesson() {
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>{messages.whatIsTmux.highlight}</Highlight> {messages.whatIsTmux.description}
+          <Highlight><Jargon term="tmux">{messages.whatIsTmux.highlight}</Jargon></Highlight> {messages.whatIsTmux.description}
         </Paragraph>
         <div className="mt-6">
           <BulletList

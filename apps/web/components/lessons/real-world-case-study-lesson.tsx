@@ -35,6 +35,7 @@ import {
   BulletList,
   StepList,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getRealWorldCaseStudyLessonMessages } from "@/lib/i18n";
 
 export function RealWorldCaseStudyLesson() {
@@ -55,7 +56,7 @@ export function RealWorldCaseStudyLesson() {
       >
         <Paragraph>
           {messages.introduction.intro}{" "}
-          <Highlight>{messages.introduction.cassMemory}</Highlight> {messages.introduction.description}
+          <Highlight><Jargon term="cass">{messages.introduction.cassMemory}</Jargon></Highlight> {messages.introduction.description}
         </Paragraph>
 
         <div className="mt-8">
@@ -267,7 +268,7 @@ export function RealWorldCaseStudyLesson() {
       >
         <Paragraph>
           {messages.phase3.intro}{" "}
-          <Highlight>{messages.phase3.structuredTasks}</Highlight>. {messages.phase3.whereBead}
+          <Highlight><Jargon term="beads">{messages.phase3.structuredTasks}</Jargon></Highlight>. {messages.phase3.whereBead}
         </Paragraph>
 
         <div className="mt-6">

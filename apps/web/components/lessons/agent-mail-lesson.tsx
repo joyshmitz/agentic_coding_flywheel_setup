@@ -26,6 +26,7 @@ import {
   FeatureCard,
   FeatureGrid,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale } from "@/lib/i18n";
 import { getAgentMailLessonMessages } from "@/lib/i18n/translations";
 
@@ -46,7 +47,7 @@ export function AgentMailLesson() {
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>MCP Agent Mail</Highlight> {messages.whatIsAgentMail.mcpDescription}
+          <Highlight><Jargon term="mcp">MCP</Jargon> <Jargon term="agent-mail">Agent Mail</Jargon></Highlight> {messages.whatIsAgentMail.mcpDescription}
         </Paragraph>
         <Paragraph>
           {messages.whatIsAgentMail.thinkOfIt}
@@ -91,7 +92,9 @@ export function AgentMailLesson() {
         delay={0.15}
       >
         <Paragraph>
-          {messages.whyCoordination.intro}
+          {messages.whyCoordination.intro.split('parallel agents').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="parallel-agents">parallel agents</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-6 space-y-4">

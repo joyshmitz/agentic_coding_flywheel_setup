@@ -25,6 +25,7 @@ import {
   FeatureCard,
   FeatureGrid,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale } from "@/lib/i18n";
 import { getBeadsLessonMessages } from "@/lib/i18n/translations";
 
@@ -45,7 +46,7 @@ export function BeadsLesson() {
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>Beads</Highlight>{" "}
+          <Highlight><Jargon term="beads">Beads</Jargon></Highlight>{" "}
           {messages.whatIsBeads.beadsDescription}
         </Paragraph>
         <Paragraph>
@@ -92,7 +93,9 @@ export function BeadsLesson() {
         delay={0.15}
       >
         <Paragraph>
-          <code>bd</code> {messages.coreCommands.intro}
+          <code>bd</code> {messages.coreCommands.intro.split('CLI').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="cli">CLI</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-6">
@@ -118,7 +121,9 @@ export function BeadsLesson() {
         delay={0.2}
       >
         <Paragraph>
-          {messages.robotCommands.intro}
+          {messages.robotCommands.intro.split('JSON').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="json">JSON</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-6 space-y-6">
@@ -202,7 +207,9 @@ export function BeadsLesson() {
         delay={0.35}
       >
         <Paragraph>
-          {messages.graphMetrics.intro}
+          {messages.graphMetrics.intro.split('dependencies').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="dependency">dependencies</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-6 space-y-4">

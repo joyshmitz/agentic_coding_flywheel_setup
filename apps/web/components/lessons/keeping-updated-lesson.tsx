@@ -24,6 +24,7 @@ import {
   GoalBanner,
   BulletList,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale } from "@/lib/i18n";
 import { getKeepingUpdatedLessonMessages } from "@/lib/i18n/translations";
 
@@ -44,7 +45,9 @@ export function KeepingUpdatedLesson() {
         delay={0.1}
       >
         <Paragraph>
-          {messages.whyUpdatesMatter.intro}
+          {messages.whyUpdatesMatter.intro.split('AI agents').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="ai-agents">AI agents</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-6">
@@ -67,7 +70,9 @@ export function KeepingUpdatedLesson() {
         delay={0.15}
       >
         <Paragraph>
-          {messages.updateCommand.intro}
+          {messages.updateCommand.intro.split('package').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="package">package</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-6">
@@ -126,7 +131,9 @@ export function KeepingUpdatedLesson() {
         </div>
 
         <Paragraph>
-          {messages.automatedUpdates.description}
+          {messages.automatedUpdates.description.split('cron').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="cron">cron</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-6">
@@ -154,7 +161,11 @@ ${messages.automatedUpdates.cronExample.cronLine}`}
         icon={<FileText className="h-5 w-5" />}
         delay={0.3}
       >
-        <Paragraph>{messages.checkingLogs.intro}</Paragraph>
+        <Paragraph>
+          {messages.checkingLogs.intro.split('logs').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="logging">logs</Jargon></span> : part
+          )}
+        </Paragraph>
 
         <div className="mt-6">
           <CodeBlock

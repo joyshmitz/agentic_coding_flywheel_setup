@@ -25,6 +25,7 @@ import {
   FeatureCard,
   FeatureGrid,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getCassLessonMessages } from "@/lib/i18n";
 
 export function CassLesson() {
@@ -44,7 +45,7 @@ export function CassLesson() {
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>{messages.whatIsCass.highlight1}</Highlight> {messages.whatIsCass.description1}
+          <Highlight><Jargon term="cass">{messages.whatIsCass.highlight1}</Jargon></Highlight> {messages.whatIsCass.description1}
         </Paragraph>
         <Paragraph>
           {messages.whatIsCass.description2}
@@ -89,7 +90,9 @@ export function CassLesson() {
         delay={0.15}
       >
         <Paragraph>
-          {messages.whyUseCass.intro}
+          {messages.whyUseCass.intro.split('context window').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="context-window">context window</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-6 space-y-4">
@@ -168,7 +171,9 @@ export function CassLesson() {
         delay={0.35}
       >
         <Paragraph>
-          {messages.understandingOutput.description}
+          {messages.understandingOutput.description.split('JSON').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="json">JSON</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-6">

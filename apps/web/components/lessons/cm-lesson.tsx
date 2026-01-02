@@ -27,6 +27,7 @@ import {
   FeatureCard,
   FeatureGrid,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getCmLessonMessages } from "@/lib/i18n";
 
 export function CmLesson() {
@@ -46,7 +47,9 @@ export function CmLesson() {
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>{messages.whatIsCm.highlight}</Highlight> {messages.whatIsCm.description}
+          <Highlight>{messages.whatIsCm.highlight}</Highlight> {messages.whatIsCm.description.split('LLMs').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="llm">LLMs</Jargon></span> : part
+          )}
         </Paragraph>
         <Paragraph>
           {messages.whatIsCm.humanLearning}
@@ -138,7 +141,9 @@ export function CmLesson() {
         delay={0.3}
       >
         <Paragraph>
-          {messages.usingContext.intro}
+          {messages.usingContext.intro.split('JSON').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="json">JSON</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-6">

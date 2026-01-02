@@ -26,6 +26,7 @@ import {
   FeatureGrid,
   FeatureCard,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getSshBasicsLessonMessages } from "@/lib/i18n";
 
 export function SSHBasicsLesson() {
@@ -45,7 +46,7 @@ export function SSHBasicsLesson() {
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>{messages.whatIsSSH.highlight}</Highlight> {messages.whatIsSSH.description}
+          <Highlight><Jargon term="ssh">{messages.whatIsSSH.highlight}</Jargon></Highlight> {messages.whatIsSSH.description}
         </Paragraph>
         <Paragraph>
           {messages.whatIsSSH.tunnelDescription}
@@ -293,7 +294,7 @@ function ConnectionDiagram({ messages }: { messages: any }) {
           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-violet-500/10 border border-primary/30">
             <Lock className="h-4 w-4 text-primary" />
             <span className="text-xs font-medium text-white/70">
-              {messages.connectionDiagram.encryptedSSH}
+              <Jargon term="encryption">{messages.connectionDiagram.encryptedSSH}</Jargon>
             </span>
           </div>
           <ArrowRight className="h-5 w-5 text-emerald-400" />
@@ -310,7 +311,7 @@ function ConnectionDiagram({ messages }: { messages: any }) {
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30">
             <Server className="h-8 w-8 text-emerald-400" />
           </div>
-          <span className="text-sm font-medium text-white">{messages.connectionDiagram.yourVPS}</span>
+          <span className="text-sm font-medium text-white"><Jargon term="vps">{messages.connectionDiagram.yourVPS}</Jargon></span>
         </motion.div>
       </div>
     </div>

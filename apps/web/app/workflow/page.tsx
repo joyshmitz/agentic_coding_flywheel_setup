@@ -56,6 +56,7 @@ import {
 import { springs, fadeUp, staggerContainer } from "@/components/motion";
 import { useScrollReveal, staggerDelay } from "@/lib/hooks/useScrollReveal";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
+import { Jargon } from "@/components/jargon";
 
 // Motion-enhanced collapsible section component
 function CollapsibleSection({
@@ -380,7 +381,7 @@ const TECH_STACK = [
   { name: "TypeScript", desc: "Strict mode enabled", icon: FileCode },
   { name: "Supabase", desc: "Postgres + Auth + Storage", icon: Database },
   { name: "Drizzle ORM", desc: "Type-safe database access", icon: Database },
-  { name: "Vercel AI SDK", desc: "For AI integrations", icon: Cpu },
+  { name: "Vercel AI SDK", desc: "For LLM integrations", icon: Cpu },
   { name: "Tailwind CSS", desc: "Utility-first styling", icon: Sparkles },
   { name: "Framer Motion", desc: "Smooth animations", icon: Play },
   { name: "TanStack", desc: "Query, Router, Table, Form", icon: GitBranch },
@@ -393,14 +394,15 @@ const CLOUD_SERVICES = [
   { name: "Google Cloud", purpose: "Analytics (GA4)", tool: "gcloud", icon: BarChart3 },
 ];
 
+// Flywheel tools - each abbreviation links to its jargon definition
 const FLYWHEEL_CYCLE = [
-  { name: "NTM", desc: "Spawns agents", color: "from-sky-400 to-blue-500", icon: Terminal },
-  { name: "Mail", desc: "Coordinates", color: "from-violet-400 to-purple-500", icon: MessageSquare },
-  { name: "Beads", desc: "Prioritizes", color: "from-emerald-400 to-teal-500", icon: Target },
+  { name: "NTM", desc: "Spawns agents", color: "from-sky-400 to-blue-500", icon: Terminal, jargonKey: "ntm" },
+  { name: "Mail", desc: "Coordinates", color: "from-violet-400 to-purple-500", icon: MessageSquare, jargonKey: "agent-mail" },
+  { name: "Beads", desc: "Prioritizes", color: "from-emerald-400 to-teal-500", icon: Target, jargonKey: "beads" },
   { name: "SLB", desc: "Safety", color: "from-amber-400 to-orange-500", icon: Shield },
-  { name: "UBS", desc: "Bug scan", color: "from-rose-400 to-red-500", icon: Bug },
+  { name: "UBS", desc: "Bug scan", color: "from-rose-400 to-red-500", icon: Bug, jargonKey: "ubs" },
   { name: "CM", desc: "Remembers", color: "from-pink-400 to-fuchsia-500", icon: Brain },
-  { name: "CASS", desc: "Searches", color: "from-cyan-400 to-sky-500", icon: Search },
+  { name: "CASS", desc: "Searches", color: "from-cyan-400 to-sky-500", icon: Search, jargonKey: "cass" },
   { name: "CAAM", desc: "Auth switch", color: "from-slate-400 to-zinc-500", icon: Users },
 ];
 
@@ -581,12 +583,12 @@ export default function WorkflowPage() {
             </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
-                { icon: Brain, label: messages.overview.features[0].label, color: "text-[oklch(0.7_0.2_330)]" },
-                { icon: Target, label: messages.overview.features[1].label, color: "text-[oklch(0.72_0.19_145)]" },
-                { icon: Users, label: messages.overview.features[2].label, color: "text-[oklch(0.75_0.18_195)]" },
-                { icon: MessageSquare, label: messages.overview.features[3].label, color: "text-[oklch(0.65_0.18_290)]" },
+                { icon: Brain, label: messages.overview.features[0].label, color: "text-[oklch(0.7_0.2_330)]", jargonTerm: "extended-thinking" },
+                { icon: Target, label: messages.overview.features[1].label, color: "text-[oklch(0.72_0.19_145)]", jargonTerm: "beads" },
+                { icon: Users, label: messages.overview.features[2].label, color: "text-[oklch(0.75_0.18_195)]", jargonTerm: "parallel-agents" },
+                { icon: MessageSquare, label: messages.overview.features[3].label, color: "text-[oklch(0.65_0.18_290)]", jargonTerm: "agent-mail" },
                 { icon: Shield, label: messages.overview.features[4].label, color: "text-[oklch(0.78_0.16_75)]" },
-                { icon: RefreshCw, label: messages.overview.features[5].label, color: "text-primary" },
+                { icon: RefreshCw, label: messages.overview.features[5].label, color: "text-primary", jargonTerm: "flywheel" },
               ].map((item, i) => (
                 <motion.div
                   key={item.label}
@@ -597,7 +599,13 @@ export default function WorkflowPage() {
                   transition={{ ...springs.smooth, delay: staggerDelay(i, 0.05) }}
                 >
                   <item.icon className={cn("h-5 w-5", item.color)} />
-                  <span className="text-sm font-medium">{item.label}</span>
+                  <span className="text-sm font-medium">
+                    {item.jargonTerm ? (
+                      <Jargon term={item.jargonTerm}>{item.label}</Jargon>
+                    ) : (
+                      item.label
+                    )}
+                  </span>
                 </motion.div>
               ))}
             </div>
@@ -661,7 +669,13 @@ export default function WorkflowPage() {
                       <tool.icon className="h-6 w-6 text-white" />
                     </div>
                     <div className="text-center">
-                      <span className="text-xs font-bold block">{localizedTool.name}</span>
+                      <span className="text-xs font-bold block">
+                        {tool.jargonKey ? (
+                          <Jargon term={tool.jargonKey}>{localizedTool.name}</Jargon>
+                        ) : (
+                          localizedTool.name
+                        )}
+                      </span>
                       <span className="text-[10px] text-muted-foreground">{localizedTool.desc}</span>
                     </div>
                   </motion.div>

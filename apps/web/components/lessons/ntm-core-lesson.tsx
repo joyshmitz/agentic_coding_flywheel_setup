@@ -23,6 +23,7 @@ import {
   Divider,
   GoalBanner,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getNtmCoreLessonMessages } from "@/lib/i18n";
 
 export function NtmCoreLesson() {
@@ -42,7 +43,7 @@ export function NtmCoreLesson() {
         delay={0.1}
       >
         <Paragraph>
-          {messages.whatIsNtm.description1} <Highlight>{messages.whatIsNtm.highlight1}</Highlight> {messages.whatIsNtm.description2}
+          {messages.whatIsNtm.description1} <Highlight><Jargon term="ntm">{messages.whatIsNtm.highlight1}</Jargon></Highlight> {messages.whatIsNtm.description2}
         </Paragraph>
 
         <div className="mt-8">
@@ -93,15 +94,15 @@ export function NtmCoreLesson() {
           >
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <SessionComponent
-                label={messages.essentialCommands.commands.createSession.sessionComponents.claudePanes}
+                label={<Jargon term="claude-code">{messages.essentialCommands.commands.createSession.sessionComponents.claudePanes}</Jargon>}
                 color="from-orange-500 to-amber-500"
               />
               <SessionComponent
-                label={messages.essentialCommands.commands.createSession.sessionComponents.codexPanes}
+                label={<Jargon term="codex">{messages.essentialCommands.commands.createSession.sessionComponents.codexPanes}</Jargon>}
                 color="from-emerald-500 to-teal-500"
               />
               <SessionComponent
-                label={messages.essentialCommands.commands.createSession.sessionComponents.geminiPanes}
+                label={<Jargon term="gemini-cli">{messages.essentialCommands.commands.createSession.sessionComponents.geminiPanes}</Jargon>}
                 color="from-blue-500 to-indigo-500"
               />
               <SessionComponent
@@ -343,7 +344,7 @@ function SessionComponent({
   label,
   color,
 }: {
-  label: string;
+  label: React.ReactNode;
   color: string;
 }) {
   return (

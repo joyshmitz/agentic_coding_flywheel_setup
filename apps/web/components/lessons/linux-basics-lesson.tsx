@@ -22,6 +22,7 @@ import {
   GoalBanner,
   InlineCode,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getLinuxBasicsLessonMessages } from "@/lib/i18n";
 
 export function LinuxBasicsLesson() {
@@ -67,7 +68,7 @@ export function LinuxBasicsLesson() {
           <CodeBlock code="$ ls" />
         </div>
         <Paragraph>
-          {messages.whatsHere.aliasInfo} <InlineCode>lsd</InlineCode> {messages.whatsHere.aliasDescription}
+          {messages.whatsHere.aliasInfo} <InlineCode>lsd</InlineCode> (<Jargon term="alias">{messages.whatsHere.aliasDescription}</Jargon>)
         </Paragraph>
 
         <div className="mt-8">

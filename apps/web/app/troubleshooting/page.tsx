@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { CommandCard } from "@/components/command-card";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getTroubleshootingMessages } from "@/lib/i18n";
 
 type TroubleshootingCategory = "all" | "ssh" | "installation" | "agents" | "network";
@@ -39,11 +40,11 @@ interface TroubleshootingIssue {
 
 type CategoryMeta = { label: string; icon: React.ReactNode; color: string };
 
-function getCategoryMeta(categories: { ssh: string; installation: string; agents: string; network: string }): Record<Exclude<TroubleshootingCategory, "all">, CategoryMeta> {
+function getCategoryMeta(categories: { ssh: string; installation: string; agents: string; network: string }): Record<Exclude<TroubleshootingCategory, "all">, CategoryMeta & { jargonTerm?: string }> {
   return {
-    ssh: { label: categories.ssh, icon: <Key className="h-4 w-4" />, color: "oklch(0.75 0.18 195)" },
+    ssh: { label: categories.ssh, icon: <Key className="h-4 w-4" />, color: "oklch(0.75 0.18 195)", jargonTerm: "ssh" },
     installation: { label: categories.installation, icon: <HardDrive className="h-4 w-4" />, color: "oklch(0.78 0.16 75)" },
-    agents: { label: categories.agents, icon: <Terminal className="h-4 w-4" />, color: "oklch(0.7 0.2 330)" },
+    agents: { label: categories.agents, icon: <Terminal className="h-4 w-4" />, color: "oklch(0.7 0.2 330)", jargonTerm: "ai-agents" },
     network: { label: categories.network, icon: <Wifi className="h-4 w-4" />, color: "oklch(0.72 0.19 145)" },
   };
 }
@@ -67,7 +68,7 @@ interface IssueCardProps {
   issue: TroubleshootingIssue;
   isOpen: boolean;
   onToggle: () => void;
-  categoryMeta: CategoryMeta;
+  categoryMeta: CategoryMeta & { jargonTerm?: string };
   sectionLabels: { symptoms: string; causes: string; solutions: string; prevention: string };
 }
 
@@ -94,7 +95,11 @@ function IssueCard({ issue, isOpen, onToggle, categoryMeta, sectionLabels }: Iss
               }}
             >
               {categoryMeta.icon}
-              {categoryMeta.label}
+              {categoryMeta.jargonTerm ? (
+                <Jargon term={categoryMeta.jargonTerm}>{categoryMeta.label}</Jargon>
+              ) : (
+                categoryMeta.label
+              )}
             </span>
           </div>
           <h2 className="text-lg font-semibold text-foreground">{issue.title}</h2>
@@ -305,7 +310,11 @@ export default function TroubleshootingPage() {
                 }`}
               >
                 {meta.icon}
-                {meta.label}
+                {meta.jargonTerm ? (
+                  <Jargon term={meta.jargonTerm}>{meta.label}</Jargon>
+                ) : (
+                  meta.label
+                )}
               </button>
             );
           })}

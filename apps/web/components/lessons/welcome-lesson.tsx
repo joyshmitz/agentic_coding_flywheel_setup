@@ -28,6 +28,7 @@ import {
   Divider,
   GoalBanner,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getWelcomeLessonMessages } from "@/lib/i18n";
 
 export function WelcomeLesson() {
@@ -250,7 +251,7 @@ function ArchitectureDiagram({ messages }: { messages: any }) {
           className="space-y-4"
         >
           <DiagramBox
-            label={messages.mentalModel.diagram.yourVps.label}
+            label={<Jargon term="vps">{messages.mentalModel.diagram.yourVps.label}</Jargon>}
             sublabel={messages.mentalModel.diagram.yourVps.sublabel}
             icon={<Cloud className="h-8 w-8" />}
             gradient="from-emerald-500/20 to-teal-500/20"
@@ -260,17 +261,17 @@ function ArchitectureDiagram({ messages }: { messages: any }) {
           <div className="grid grid-cols-3 gap-3">
             <VPSComponent
               icon={<Server className="h-4 w-4" />}
-              label={messages.mentalModel.diagram.vpsComponents.tmux.label}
+              label={<Jargon term="tmux">{messages.mentalModel.diagram.vpsComponents.tmux.label}</Jargon>}
               sublabel={messages.mentalModel.diagram.vpsComponents.tmux.sublabel}
             />
             <VPSComponent
               icon={<Bot className="h-4 w-4" />}
-              label={messages.mentalModel.diagram.vpsComponents.agents.label}
+              label={<Jargon term="ai-agents">{messages.mentalModel.diagram.vpsComponents.agents.label}</Jargon>}
               sublabel={messages.mentalModel.diagram.vpsComponents.agents.sublabel}
             />
             <VPSComponent
               icon={<Cpu className="h-4 w-4" />}
-              label={messages.mentalModel.diagram.vpsComponents.ntm.label}
+              label={<Jargon term="ntm">{messages.mentalModel.diagram.vpsComponents.ntm.label}</Jargon>}
               sublabel={messages.mentalModel.diagram.vpsComponents.ntm.sublabel}
             />
           </div>
@@ -286,7 +287,7 @@ function VPSComponent({
   sublabel,
 }: {
   icon: React.ReactNode;
-  label: string;
+  label: React.ReactNode;
   sublabel: string;
 }) {
   return (

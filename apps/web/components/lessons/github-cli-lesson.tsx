@@ -25,6 +25,7 @@ import {
   FeatureGrid,
   InlineCode,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getGithubCliLessonMessages } from "@/lib/i18n";
 
 export function GithubCliLesson() {
@@ -44,7 +45,7 @@ export function GithubCliLesson() {
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>{messages.whatIsGithubCli.highlightText}</Highlight> {messages.whatIsGithubCli.description}
+          <Highlight><Jargon term="cli">{messages.whatIsGithubCli.highlightText}</Jargon></Highlight> {messages.whatIsGithubCli.description}
         </Paragraph>
 
         <div className="mt-8">
@@ -92,7 +93,9 @@ export function GithubCliLesson() {
         delay={0.15}
       >
         <Paragraph>
-          {messages.authentication.intro}
+          {messages.authentication.intro.split('OAuth').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="oauth">OAuth</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-6">
@@ -138,7 +141,9 @@ export function GithubCliLesson() {
         delay={0.25}
       >
         <Paragraph>
-          {messages.pullRequests.intro}
+          {messages.pullRequests.intro.split('PRs').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}PRs</span> : part
+          )}
         </Paragraph>
 
         <div className="mt-6">
@@ -190,7 +195,9 @@ export function GithubCliLesson() {
         delay={0.35}
       >
         <Paragraph>
-          {messages.githubActions.intro}
+          {messages.githubActions.intro.split('CI/CD').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="ci-cd">CI/CD</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-6">
@@ -229,7 +236,9 @@ export function GithubCliLesson() {
         delay={0.45}
       >
         <Paragraph>
-          {messages.directApiAccess.intro}
+          {messages.directApiAccess.intro.split('API').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="api">API</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-6">

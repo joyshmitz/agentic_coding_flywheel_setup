@@ -29,6 +29,7 @@ import {
   FeatureCard,
   FeatureGrid,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 
 export function SafetyToolsLesson() {
   const { locale } = useLocale();
@@ -77,7 +78,7 @@ export function SafetyToolsLesson() {
         delay={0.15}
       >
         <Paragraph>
-          <Highlight>{messages.slbSection.intro.highlight}</Highlight>
+          <Highlight><Jargon term="ai-agents">{messages.slbSection.intro.highlight}</Jargon></Highlight>
           {messages.slbSection.intro.text}
         </Paragraph>
 
@@ -163,7 +164,7 @@ export function SafetyToolsLesson() {
         delay={0.3}
       >
         <Paragraph>
-          <Highlight>{messages.caamSection.intro.highlight}</Highlight>
+          <Highlight><Jargon term="api-key">{messages.caamSection.intro.highlight}</Jargon></Highlight>
           {messages.caamSection.intro.text}
         </Paragraph>
 

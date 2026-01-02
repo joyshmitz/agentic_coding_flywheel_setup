@@ -32,6 +32,7 @@ import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import { sendEvent, initLessonFunnel, getLessonFunnelData } from "@/lib/analytics";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useLocale, getLessons, getLearnMessages } from "@/lib/i18n";
+import { Jargon } from "@/components/jargon";
 
 type LessonStatus = "completed" | "current" | "locked";
 
@@ -484,21 +485,21 @@ export default function LearnDashboard() {
                 {
                   href: "/learn/agent-commands",
                   icon: Terminal,
-                  title: messages.quickRef.agentCommands.title,
+                  title: <><Jargon term="ai-agents">Agent</Jargon> Commands</>,
                   desc: messages.quickRef.agentCommands.description,
                   gradient: "from-violet-500/10 to-violet-500/5",
                 },
                 {
                   href: "/learn/ntm-palette",
                   icon: BookOpen,
-                  title: messages.quickRef.ntmCommands.title,
+                  title: <><Jargon term="ntm">NTM</Jargon> Commands</>,
                   desc: messages.quickRef.ntmCommands.description,
                   gradient: "from-blue-500/10 to-blue-500/5",
                 },
                 {
                   href: "/learn/commands",
                   icon: List,
-                  title: messages.quickRef.commandReference.title,
+                  title: <><Jargon term="cli">CLI</Jargon> Reference</>,
                   desc: messages.quickRef.commandReference.description,
                   gradient: "from-emerald-500/10 to-emerald-500/5",
                 },

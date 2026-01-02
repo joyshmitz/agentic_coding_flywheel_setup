@@ -27,6 +27,7 @@ import {
   Divider,
   GoalBanner,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 
 export function FlywheelLoopLesson() {
   const { locale } = useLocale();
@@ -48,7 +49,7 @@ export function FlywheelLoopLesson() {
       >
         <Paragraph>
           {messages.flywheelSection.intro}{" "}
-          <Highlight>{messages.flywheelSection.highlight}</Highlight>:
+          <Highlight><Jargon term="flywheel">{messages.flywheelSection.highlight}</Jargon></Highlight>:
         </Paragraph>
 
         <div className="mt-8">
@@ -190,7 +191,11 @@ export function FlywheelLoopLesson() {
           delay: 0.2,
         }}
       >
-        <Paragraph>{messages.workflowSection.intro}</Paragraph>
+        <Paragraph>
+          {messages.workflowSection.intro.split('parallel agents').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="parallel-agents">parallel agents</Jargon></span> : part
+          )}
+        </Paragraph>
 
         <div className="mt-6">
           <CodeBlock

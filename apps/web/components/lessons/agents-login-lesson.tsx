@@ -22,6 +22,7 @@ import {
   InlineCode,
   BulletList,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getAgentsLoginLessonMessages } from "@/lib/i18n";
 
 export function AgentsLoginLesson() {
@@ -41,7 +42,9 @@ export function AgentsLoginLesson() {
         delay={0.1}
       >
         <Paragraph>
-          {messages.threeAgents.description}
+          {messages.threeAgents.description.split('AI agents').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="ai-agents">AI agents</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
@@ -81,7 +84,9 @@ export function AgentsLoginLesson() {
         delay={0.15}
       >
         <Paragraph>
-          {messages.whatAliasesDo.description}
+          {messages.whatAliasesDo.description.split('aliases').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="alias">aliases</Jargon></span> : part
+          )}
         </Paragraph>
 
         <div className="mt-8 space-y-6">
@@ -119,7 +124,11 @@ export function AgentsLoginLesson() {
         icon={<Key className="h-5 w-5" />}
         delay={0.2}
       >
-        <Paragraph>{messages.firstLogin.description}</Paragraph>
+        <Paragraph>
+          {messages.firstLogin.description.split('API key').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="api-key">API key</Jargon></span> : part
+          )}
+        </Paragraph>
 
         <div className="mt-8 space-y-6">
           {/* Claude Login */}
@@ -192,7 +201,11 @@ caam backup gemini my-main-account`}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.3}
       >
-        <Paragraph>{messages.testAgents.description}</Paragraph>
+        <Paragraph>
+          {messages.testAgents.description.split('CLI').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="cli">CLI</Jargon></span> : part
+          )}
+        </Paragraph>
 
         <div className="mt-6 space-y-4">
           <CodeBlock code={`cc "Hello! Please confirm you're working."`} />

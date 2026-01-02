@@ -27,6 +27,7 @@ import {
   FeatureGrid,
   InlineCode,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getGitBasicsLessonMessages } from "@/lib/i18n";
 
 export function GitBasicsLesson() {
@@ -45,7 +46,7 @@ export function GitBasicsLesson() {
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>{messages.whatIsGit.highlightText}</Highlight> {messages.whatIsGit.description}
+          <Highlight><Jargon term="git">{messages.whatIsGit.highlightText}</Jargon></Highlight> {messages.whatIsGit.description}
         </Paragraph>
 
         <div className="mt-8">
@@ -121,7 +122,7 @@ export function GitBasicsLesson() {
         delay={0.25}
       >
         <Paragraph>
-          {messages.understandingGitignore.intro}<InlineCode>.gitignore</InlineCode>{messages.understandingGitignore.description}<strong>{messages.understandingGitignore.criticalText}</strong>{messages.understandingGitignore.because}
+          {messages.understandingGitignore.intro}<InlineCode>.gitignore</InlineCode>{messages.understandingGitignore.description}<strong><Jargon term="api-key">{messages.understandingGitignore.criticalText}</Jargon></strong>{messages.understandingGitignore.because}
         </Paragraph>
 
         <div className="mt-6 space-y-3">
@@ -210,7 +211,9 @@ export function GitBasicsLesson() {
         delay={0.4}
       >
         <Paragraph>
-          {messages.recoveryTools.intro}
+          {messages.recoveryTools.intro.split('terminal').map((part, i, arr) =>
+            i < arr.length - 1 ? <span key={i}>{part}<Jargon term="terminal">terminal</Jargon></span> : part
+          )}
         </Paragraph>
 
         <CommandList

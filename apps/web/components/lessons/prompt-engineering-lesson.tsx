@@ -26,6 +26,7 @@ import {
   FeatureCard,
   FeatureGrid,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getPromptEngineeringLessonMessages } from "@/lib/i18n";
 
 export function PromptEngineeringLesson() {
@@ -45,7 +46,7 @@ export function PromptEngineeringLesson() {
         delay={0.1}
       >
         <Paragraph>
-          {messages.introduction.intro} <Highlight>{messages.introduction.howYouDirect}</Highlight>.
+          {messages.introduction.intro} <Highlight><Jargon term="prompt">{messages.introduction.howYouDirect}</Jargon></Highlight>.
           {messages.introduction.dissects}
         </Paragraph>
 

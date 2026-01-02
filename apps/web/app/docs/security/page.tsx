@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { AlertCard } from "@/components/alert-card";
+import { Jargon } from "@/components/jargon";
 import { safeGetJSON, safeSetJSON } from "@/lib/utils";
 import { useLocale, getSecurityMessages, type ChecklistItem } from "@/lib/i18n";
 
@@ -88,7 +89,11 @@ export default function SecurityDocsPage() {
       </div>
 
       <AlertCard variant="warning" icon={AlertTriangle} title={messages.scopeNote.title}>
-        {messages.scopeNote.description}
+        {messages.scopeNote.description.includes("VPS") ? (
+          <>{messages.scopeNote.description.split("VPS")[0]}<Jargon term="vps">VPS</Jargon>{messages.scopeNote.description.split("VPS")[1]}</>
+        ) : (
+          messages.scopeNote.description
+        )}
       </AlertCard>
 
       {/* Strategy */}
@@ -109,13 +114,25 @@ export default function SecurityDocsPage() {
           <div className="font-medium text-foreground/90">{messages.whyGoogleSso.modelTitle}</div>
           <div className="mt-2 font-mono text-xs leading-relaxed text-muted-foreground">
             {messages.whyGoogleSso.tree.root}
-            {messages.whyGoogleSso.tree.children.map((child, index) => (
-              <span key={index}>
-                <br />
-                {index === messages.whyGoogleSso.tree.children.length - 1 ? "└── " : "├── "}
-                {child}
-              </span>
-            ))}
+            {messages.whyGoogleSso.tree.children.map((child, index) => {
+              // Wrap VPS mention with Jargon for the Tailscale line
+              const content = child.includes("VPS") ? (
+                <>{child.split("VPS")[0]}<Jargon term="vps">VPS</Jargon>{child.split("VPS")[1]}</>
+              ) : child.includes("Claude") ? (
+                <>{child.split("Claude")[0]}<Jargon term="claude-code">Claude</Jargon>{child.split("Claude")[1]}</>
+              ) : child.includes("Codex") ? (
+                <>{child.split("Codex")[0]}<Jargon term="codex">Codex</Jargon>{child.split("Codex")[1]}</>
+              ) : child.includes("Gemini") ? (
+                <>{child.split("Gemini")[0]}<Jargon term="gemini-cli">Gemini</Jargon>{child.split("Gemini")[1]}</>
+              ) : child;
+              return (
+                <span key={index}>
+                  <br />
+                  {index === messages.whyGoogleSso.tree.children.length - 1 ? "└── " : "├── "}
+                  {content}
+                </span>
+              );
+            })}
           </div>
         </div>
       </Card>

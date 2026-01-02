@@ -24,6 +24,7 @@ import {
   InlineCode,
   BulletList,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getNtmPaletteLessonMessages } from "@/lib/i18n";
 
 export function NtmPaletteLesson() {
@@ -44,7 +45,7 @@ export function NtmPaletteLesson() {
       >
         <Paragraph>
           {messages.whatIsCommandPalette.description1.split(messages.whatIsCommandPalette.highlight1)[0]}
-          <Highlight>{messages.whatIsCommandPalette.highlight1}</Highlight>
+          <Highlight><Jargon term="ntm">{messages.whatIsCommandPalette.highlight1}</Jargon></Highlight>
           {messages.whatIsCommandPalette.description1.split(messages.whatIsCommandPalette.highlight1)[1]}
         </Paragraph>
         <Paragraph>

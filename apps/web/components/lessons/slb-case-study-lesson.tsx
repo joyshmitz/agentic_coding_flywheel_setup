@@ -30,6 +30,7 @@ import {
   BulletList,
   StepList,
 } from "./lesson-components";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getSlbCaseStudyLessonMessages } from "@/lib/i18n";
 
 type Messages = ReturnType<typeof getSlbCaseStudyLessonMessages>;
@@ -52,7 +53,7 @@ export function SlbCaseStudyLesson() {
       >
         <Paragraph>
           {messages.theSpark.tweetContext}{" "}
-          <Highlight>{messages.theSpark.peerReview}</Highlight>?
+          <Highlight><Jargon term="ai-agents">{messages.theSpark.peerReview}</Jargon></Highlight>?
         </Paragraph>
 
         <div className="mt-8">
