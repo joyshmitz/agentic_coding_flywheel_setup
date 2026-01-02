@@ -6,6 +6,7 @@ import { useCallback, useMemo } from "react";
 import { Terminal, Home, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Stepper, StepperMobile } from "@/components/stepper";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { WIZARD_STEPS, getStepBySlug } from "@/lib/wizardSteps";
 import { detectOS, getUserOS, setUserOS, getVPSIP } from "@/lib/userPreferences";
 import { withCurrentSearch } from "@/lib/utils";
@@ -124,7 +125,10 @@ export default function WizardLayout({
             </div>
 
             {/* Sidebar footer */}
-            <div className="border-t border-border/50 p-4">
+            <div className="border-t border-border/50 p-4 space-y-2">
+              <div className="flex justify-center">
+                <LanguageSwitcher />
+              </div>
               <Button
                 asChild
                 variant="ghost"
@@ -150,8 +154,11 @@ export default function WizardLayout({
               </div>
               <span className="font-mono text-sm font-bold">Agent Flywheel</span>
             </Link>
-            <div className="text-xs text-muted-foreground">
-              Step <span className="font-mono text-primary">{currentStep}</span> of {WIZARD_STEPS.length}
+            <div className="flex items-center gap-3">
+              <LanguageSwitcher />
+              <div className="text-xs text-muted-foreground">
+                Step <span className="font-mono text-primary">{currentStep}</span> of {WIZARD_STEPS.length}
+              </div>
             </div>
           </div>
 
