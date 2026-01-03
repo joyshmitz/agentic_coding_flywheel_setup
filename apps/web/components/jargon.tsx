@@ -501,3 +501,122 @@ export function JargonInline({ term, children, className }: JargonProps) {
     </Jargon>
   );
 }
+
+/**
+ * Term mapping for JargonText auto-wrapping
+ * Maps display text patterns to jargon dictionary keys
+ */
+export interface JargonTermMapping {
+  /** The text pattern to match (case-insensitive) */
+  pattern: string;
+  /** The jargon dictionary key to use */
+  term: string;
+}
+
+/**
+ * Default term mappings for common technical terms
+ * Only includes terms that exist in the jargon dictionary
+ */
+export const defaultJargonMappings: JargonTermMapping[] = [
+  { pattern: "VPS", term: "vps" },
+  { pattern: "SSH", term: "ssh" },
+  { pattern: "SSH key", term: "ssh-key" },
+  { pattern: "tmux", term: "tmux" },
+  { pattern: "ntm", term: "ntm" },
+  { pattern: "curl", term: "curl" },
+  { pattern: "API key", term: "api-key" },
+  { pattern: "sudo", term: "sudo" },
+  { pattern: "zsh", term: "zsh" },
+  { pattern: "Powerlevel10k", term: "powerlevel10k" },
+  { pattern: "P10k", term: "powerlevel10k" },
+  { pattern: "GitHub", term: "github" },
+  { pattern: "Claude", term: "claude-code" },
+  { pattern: "terminal", term: "terminal" },
+  { pattern: "bash", term: "bash" },
+];
+
+interface JargonTextProps {
+  /** The text to process for jargon terms */
+  children: string;
+  /** Optional: custom term mappings (defaults to defaultJargonMappings) */
+  mappings?: JargonTermMapping[];
+  /** Optional: additional class name for the wrapper span */
+  className?: string;
+}
+
+/**
+ * JargonText - Automatically wraps known technical terms in Jargon tooltips
+ *
+ * Takes a plain text string and replaces known terms with interactive Jargon components.
+ * Useful for data-driven content where you can't manually wrap each term.
+ *
+ * @example
+ * <JargonText>Your VPS needs SSH access on port 22.</JargonText>
+ * // Renders: Your <Jargon term="vps">VPS</Jargon> needs <Jargon term="ssh">SSH</Jargon> access on <Jargon term="port-22">port 22</Jargon>.
+ */
+export function JargonText({ children, mappings = defaultJargonMappings, className }: JargonTextProps) {
+  // Build a regex that matches any of the patterns (case-insensitive, word boundaries)
+  // Sort by pattern length descending to match longer patterns first (e.g., "API key" before "API")
+  const sortedMappings = [...mappings].sort((a, b) => b.pattern.length - a.pattern.length);
+
+  // Create a map for quick lookup
+  const patternToTerm = new Map(sortedMappings.map(m => [m.pattern.toLowerCase(), m.term]));
+
+  // Build regex pattern - escape special chars and use word boundaries
+  const escapedPatterns = sortedMappings.map(m =>
+    m.pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  );
+
+  if (escapedPatterns.length === 0) {
+    return <span className={className}>{children}</span>;
+  }
+
+  // Use word boundaries for most terms, but not for patterns with spaces
+  const regexPattern = escapedPatterns
+    .map(p => p.includes(' ') ? `(${p})` : `\\b(${p})\\b`)
+    .join('|');
+
+  const regex = new RegExp(regexPattern, 'gi');
+
+  // Split text by matches and rebuild with Jargon components
+  const parts: ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let keyIndex = 0;
+
+  while ((match = regex.exec(children)) !== null) {
+    // Add text before this match
+    if (match.index > lastIndex) {
+      parts.push(children.slice(lastIndex, match.index));
+    }
+
+    // Find which term this matched
+    const matchedText = match[0];
+    const termKey = patternToTerm.get(matchedText.toLowerCase());
+
+    if (termKey) {
+      parts.push(
+        <Jargon key={keyIndex++} term={termKey}>
+          {matchedText}
+        </Jargon>
+      );
+    } else {
+      // Fallback: just add the text
+      parts.push(matchedText);
+    }
+
+    lastIndex = match.index + matchedText.length;
+  }
+
+  // Add remaining text after last match
+  if (lastIndex < children.length) {
+    parts.push(children.slice(lastIndex));
+  }
+
+  // If no matches found, return original text
+  if (parts.length === 0) {
+    return <span className={className}>{children}</span>;
+  }
+
+  return <span className={className}>{parts}</span>;
+}

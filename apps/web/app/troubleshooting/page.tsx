@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { CommandCard } from "@/components/command-card";
-import { Jargon } from "@/components/jargon";
+import { Jargon, JargonText } from "@/components/jargon";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { useLocale, getTroubleshootingMessages } from "@/lib/i18n";
 
@@ -143,7 +143,7 @@ function IssueCard({ issue, isOpen, onToggle, categoryMeta, sectionLabels }: Iss
               {issue.causes.map((cause, i) => (
                 <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
                   <span className="text-amber-400 mt-0.5">•</span>
-                  {cause}
+                  <JargonText>{cause}</JargonText>
                 </li>
               ))}
             </ul>
@@ -170,7 +170,7 @@ function IssueCard({ issue, isOpen, onToggle, categoryMeta, sectionLabels }: Iss
                   <ul className="space-y-1 mb-3">
                     {solution.steps.map((step, j) => (
                       <li key={j} className="text-sm text-muted-foreground pl-7">
-                        {step}
+                        <JargonText>{step}</JargonText>
                       </li>
                     ))}
                   </ul>
@@ -191,7 +191,9 @@ function IssueCard({ issue, isOpen, onToggle, categoryMeta, sectionLabels }: Iss
                 <Clock className="h-4 w-4" />
                 {sectionLabels.prevention}
               </h3>
-              <p className="text-sm text-foreground">{issue.prevention}</p>
+              <p className="text-sm text-foreground">
+                <JargonText>{issue.prevention}</JargonText>
+              </p>
             </div>
           )}
         </div>
