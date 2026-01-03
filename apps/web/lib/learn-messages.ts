@@ -7,7 +7,9 @@
 export const learnMessages = {
   hero: {
     title: "Learning Hub",
-    subtitle: "Master your agentic coding environment with hands-on lessons.",
+    subtitlePrefix: "Master your ",
+    subtitleTerm: "agentic",
+    subtitleSuffix: " coding environment with hands-on lessons.",
     subtitleExtended: "Start from the basics and progress to advanced workflows.",
   },
 
@@ -51,7 +53,8 @@ export const learnMessages = {
   },
 
   footer: {
-    needSetup: "Need to set up your VPS first?",
+    needSetupPrefix: "Need to set up your ",
+    needSetupSuffix: " first?",
     startWizard: "Start the setup wizard",
   },
 

@@ -7,7 +7,9 @@
 export const learnMessagesUk = {
   hero: {
     title: "Навчальний центр",
-    subtitle: "Опануйте своє агентне середовище розробки через практичні уроки.",
+    subtitlePrefix: "Опануйте своє ",
+    subtitleTerm: "агентне",
+    subtitleSuffix: " середовище розробки через практичні уроки.",
     subtitleExtended: "Почніть з основ і прогресуйте до просунутих робочих процесів.",
   },
 
@@ -51,7 +53,8 @@ export const learnMessagesUk = {
   },
 
   footer: {
-    needSetup: "Потрібно спочатку налаштувати VPS?",
+    needSetupPrefix: "Потрібно спочатку налаштувати ",
+    needSetupSuffix: "?",
     startWizard: "Запустити майстер налаштування",
   },
 

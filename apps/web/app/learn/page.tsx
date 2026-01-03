@@ -317,7 +317,7 @@ export default function LearnDashboard() {
             {messages.hero.title}
           </h1>
           <p className="mx-auto max-w-2xl text-base text-muted-foreground/80 sm:text-lg">
-            {messages.hero.subtitle}
+            {messages.hero.subtitlePrefix}<Jargon term="agentic">{messages.hero.subtitleTerm}</Jargon>{messages.hero.subtitleSuffix}
             <span className="hidden sm:inline"> {messages.hero.subtitleExtended}</span>
           </p>
         </motion.section>
@@ -546,7 +546,7 @@ export default function LearnDashboard() {
           transition={prefersReducedMotion ? { duration: 0 } : { ...springs.smooth, delay: 0.8 }}
         >
           <p>
-            {messages.footer.needSetup}{" "}
+            {messages.footer.needSetupPrefix}<Jargon term="vps">VPS</Jargon>{messages.footer.needSetupSuffix}{" "}
             <Link href="/wizard/os-selection" className="text-primary transition-colors hover:text-primary/80 hover:underline">
               {messages.footer.startWizard} →
             </Link>
