@@ -961,7 +961,7 @@ export default function HomePage() {
         <div className="flex items-center gap-4">
           <LanguageSwitcher />
           <a
-            href="https://github.com/Dicklesworthstone/agentic_coding_flywheel_setup"
+            href="https://github.com/joyshmitz/agentic_coding_flywheel_setup"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
@@ -1042,7 +1042,7 @@ export default function HomePage() {
                 </Button>
                 <Button asChild size="lg" variant="outline" className="border-border/50 hover:bg-muted/50">
                   <a
-                    href="https://github.com/Dicklesworthstone/agentic_coding_flywheel_setup"
+                    href="https://github.com/joyshmitz/agentic_coding_flywheel_setup"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
