@@ -19,7 +19,7 @@ import {
   ChevronRight,
   Sparkles,
 } from "lucide-react";
-import { flywheelTools, flywheelDescription, getAllConnections, type FlywheelTool } from "@/lib/flywheel";
+import { flywheelTools, getFlywheelTools, getFlywheelDescription, getAllConnections, type FlywheelTool } from "@/lib/flywheel";
 import { Button } from "@/components/ui/button";
 import { useLocale, getFlywheelVizMessages } from "@/lib/i18n";
 
@@ -265,10 +265,12 @@ function ToolDetailPanel({
   tool,
   onClose,
   messages,
+  tools,
 }: {
   tool: FlywheelTool;
   onClose: () => void;
   messages: Messages;
+  tools: FlywheelTool[];
 }) {
   const Icon = iconMap[tool.icon] || Zap;
   const [copied, setCopied] = useState(false);
@@ -393,7 +395,7 @@ function ToolDetailPanel({
           <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">{messages.detail.integratesWith}</h4>
           <div className="space-y-2">
             {tool.connectsTo.map((targetId) => {
-              const targetTool = flywheelTools.find((t) => t.id === targetId);
+              const targetTool = tools.find((t) => t.id === targetId);
               if (!targetTool) return null;
               const TargetIcon = iconMap[targetTool.icon] || Zap;
 
@@ -424,7 +426,7 @@ function ToolDetailPanel({
 }
 
 // Placeholder panel
-function PlaceholderPanel({ messages }: { messages: Messages }) {
+function PlaceholderPanel({ messages, description }: { messages: Messages; description: ReturnType<typeof getFlywheelDescription> }) {
   return (
     <div className="rounded-2xl border border-border/50 bg-card/60 p-6 backdrop-blur-sm animate-scale-in">
       <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -435,7 +437,7 @@ function PlaceholderPanel({ messages }: { messages: Messages }) {
         <p className="text-sm text-muted-foreground">{messages.placeholder.description}</p>
       </div>
       <div className="rounded-xl bg-muted/30 p-4 border border-border/30">
-        <p className="text-sm leading-relaxed text-muted-foreground">{flywheelDescription.description}</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">{description.description}</p>
       </div>
     </div>
   );
@@ -446,10 +448,12 @@ function MobileBottomSheet({
   tool,
   onClose,
   messages,
+  tools,
 }: {
   tool: FlywheelTool | null;
   onClose: () => void;
   messages: Messages;
+  tools: FlywheelTool[];
 }) {
   useEffect(() => {
     if (tool) {
@@ -523,7 +527,7 @@ function MobileBottomSheet({
               <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">{messages.detail.integratesWith}</h4>
               <div className="space-y-2">
                 {tool.connectsTo.map((targetId) => {
-                  const targetTool = flywheelTools.find((t) => t.id === targetId);
+                  const targetTool = tools.find((t) => t.id === targetId);
                   if (!targetTool) return null;
                   const TargetIcon = iconMap[targetTool.icon] || Zap;
 
@@ -556,7 +560,7 @@ function MobileBottomSheet({
 }
 
 // Stats badge
-function StatsBadge({ messages }: { messages: Messages }) {
+function StatsBadge({ messages, description }: { messages: Messages; description: ReturnType<typeof getFlywheelDescription> }) {
   return (
     <div className="mt-6 flex justify-center">
       <div className="inline-flex items-center gap-3 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 backdrop-blur-sm">
@@ -564,13 +568,13 @@ function StatsBadge({ messages }: { messages: Messages }) {
           <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20">
             <Zap className="h-3 w-3 text-primary" />
           </div>
-          <span className="text-sm font-semibold text-foreground">{flywheelDescription.metrics.toolCount}</span>
+          <span className="text-sm font-semibold text-foreground">{description.metrics.toolCount}</span>
           <span className="text-xs text-muted-foreground">{messages.stats.tools}</span>
         </div>
         <div className="h-4 w-px bg-primary/30" />
         <div className="flex items-center gap-1.5">
           <Star className="h-4 w-4 text-amber-400 fill-current" />
-          <span className="text-sm font-semibold text-foreground">{flywheelDescription.metrics.totalStars}</span>
+          <span className="text-sm font-semibold text-foreground">{description.metrics.totalStars}</span>
           <span className="text-xs text-muted-foreground">{messages.stats.stars}</span>
         </div>
         <div className="h-4 w-px bg-primary/30" />
@@ -590,20 +594,22 @@ function StatsBadge({ messages }: { messages: Messages }) {
 export default function FlywheelVisualization() {
   const { locale } = useLocale();
   const messages = getFlywheelVizMessages(locale);
+  const tools = getFlywheelTools(locale);
+  const description = getFlywheelDescription(locale);
   const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
   const [hoveredToolId, setHoveredToolId] = useState<string | null>(null);
 
   const activeToolId = selectedToolId || hoveredToolId;
-  const displayedTool = flywheelTools.find((t) => t.id === activeToolId) ?? null;
-  const selectedTool = flywheelTools.find((t) => t.id === selectedToolId) ?? null;
+  const displayedTool = tools.find((t) => t.id === activeToolId) ?? null;
+  const selectedTool = tools.find((t) => t.id === selectedToolId) ?? null;
 
   // Calculate positions
   const positions = useMemo(() => {
-    return flywheelTools.reduce((acc, tool, index) => {
-      acc[tool.id] = getNodePosition(index, flywheelTools.length);
+    return tools.reduce((acc, tool, index) => {
+      acc[tool.id] = getNodePosition(index, tools.length);
       return acc;
     }, {} as Record<string, { x: number; y: number }>);
-  }, []);
+  }, [tools]);
 
   // Get connections
   const connections = useMemo(() => getAllConnections(), []);
@@ -611,23 +617,23 @@ export default function FlywheelVisualization() {
   const isConnectionHighlighted = useCallback(
     (from: string, to: string) => {
       if (!activeToolId) return false;
-      const activeTool = flywheelTools.find((t) => t.id === activeToolId);
+      const activeTool = tools.find((t) => t.id === activeToolId);
       if (!activeTool) return false;
       return (
         (from === activeToolId && activeTool.connectsTo.includes(to)) ||
         (to === activeToolId && activeTool.connectsTo.includes(from))
       );
     },
-    [activeToolId]
+    [activeToolId, tools]
   );
 
   const isToolConnected = useCallback(
     (toolId: string) => {
       if (!activeToolId || toolId === activeToolId) return false;
-      const activeTool = flywheelTools.find((t) => t.id === activeToolId);
+      const activeTool = tools.find((t) => t.id === activeToolId);
       return activeTool?.connectsTo.includes(toolId) ?? false;
     },
-    [activeToolId]
+    [activeToolId, tools]
   );
 
   const handleSelectTool = useCallback((toolId: string) => {
@@ -648,10 +654,10 @@ export default function FlywheelVisualization() {
           <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
         </div>
         <h2 className="mb-4 font-mono text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
-          {flywheelDescription.title}
+          {description.title}
         </h2>
         <p className="mx-auto max-w-2xl text-sm md:text-base text-muted-foreground">
-          {flywheelDescription.subtitle}
+          {description.subtitle}
         </p>
       </div>
 
@@ -722,7 +728,7 @@ export default function FlywheelVisualization() {
             <CenterHub />
 
             {/* Tool nodes */}
-            {flywheelTools.map((tool, index) => (
+            {tools.map((tool, index) => (
               <ToolNode
                 key={tool.id}
                 tool={tool}
@@ -739,21 +745,21 @@ export default function FlywheelVisualization() {
           </div>
 
           {/* Stats badge */}
-          <StatsBadge messages={messages} />
+          <StatsBadge messages={messages} description={description} />
         </div>
 
         {/* Detail panel (desktop) */}
         <div className="hidden lg:flex lg:flex-col">
           {displayedTool ? (
-            <ToolDetailPanel key={displayedTool.id} tool={displayedTool} onClose={handleCloseDetail} messages={messages} />
+            <ToolDetailPanel key={displayedTool.id} tool={displayedTool} onClose={handleCloseDetail} messages={messages} tools={tools} />
           ) : (
-            <PlaceholderPanel messages={messages} />
+            <PlaceholderPanel messages={messages} description={description} />
           )}
         </div>
       </div>
 
       {/* Mobile bottom sheet */}
-      <MobileBottomSheet tool={selectedTool} onClose={handleCloseDetail} messages={messages} />
+      <MobileBottomSheet tool={selectedTool} onClose={handleCloseDetail} messages={messages} tools={tools} />
     </div>
   );
 }

@@ -698,3 +698,69 @@ export function getPromptsByCategory(category: AgentPrompt["category"]): AgentPr
 export function getScenarioById(id: string): WorkflowScenario | undefined {
   return workflowScenarios.find((s) => s.id === id);
 }
+
+// ============================================================
+// LOCALE-AWARE GETTERS
+// ============================================================
+
+import type { Locale } from "./i18n/config";
+import {
+  workflowScenariosUk,
+  agentPromptsUk,
+  synergyExplanationsUk,
+  flywheelToolsUk,
+  flywheelDescriptionUk,
+} from "./flywheel.uk";
+
+/**
+ * Get workflow scenarios in the specified locale
+ */
+export function getWorkflowScenarios(locale: Locale): WorkflowScenario[] {
+  return locale === "uk" ? workflowScenariosUk : workflowScenarios;
+}
+
+/**
+ * Get agent prompts in the specified locale
+ */
+export function getAgentPrompts(locale: Locale): AgentPrompt[] {
+  return locale === "uk" ? agentPromptsUk : agentPrompts;
+}
+
+/**
+ * Get synergy explanations in the specified locale
+ */
+export function getSynergyExplanations(locale: Locale) {
+  return locale === "uk" ? synergyExplanationsUk : synergyExplanations;
+}
+
+/**
+ * Get flywheel tools with locale-specific content merged
+ * Technical fields (name, shortName, href, icon, color, connectsTo, stars, etc.) stay from English
+ * User-facing fields (tagline, description, features) come from locale
+ */
+export function getFlywheelTools(locale: Locale): FlywheelTool[] {
+  if (locale === "en") {
+    return flywheelTools;
+  }
+
+  // Merge Ukrainian translations with English base data
+  return flywheelTools.map((tool) => {
+    const ukTool = flywheelToolsUk.find((t) => t.id === tool.id);
+    if (!ukTool) return tool;
+
+    return {
+      ...tool,
+      tagline: ukTool.tagline ?? tool.tagline,
+      description: ukTool.description ?? tool.description,
+      deepDescription: ukTool.deepDescription ?? tool.deepDescription,
+      features: ukTool.features ?? tool.features,
+    };
+  });
+}
+
+/**
+ * Get flywheel description in the specified locale
+ */
+export function getFlywheelDescription(locale: Locale) {
+  return locale === "uk" ? flywheelDescriptionUk : flywheelDescription;
+}

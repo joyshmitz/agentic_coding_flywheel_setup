@@ -36,9 +36,10 @@ import { Button } from "@/components/ui/button";
 import FlywheelVisualization from "@/components/flywheel-visualization";
 import {
   flywheelTools,
-  workflowScenarios,
-  agentPrompts,
-  synergyExplanations,
+  getWorkflowScenarios,
+  getAgentPrompts,
+  getSynergyExplanations,
+  getFlywheelTools,
   type FlywheelTool,
   type WorkflowScenario,
   type AgentPrompt,
@@ -288,7 +289,9 @@ function WorkflowCard({ scenario, index, messages }: { scenario: WorkflowScenari
   );
 }
 
-function WorkflowSection({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
+function WorkflowSection({ messages, locale }: { messages: ReturnType<typeof getFlywheelMessages>; locale: "en" | "uk" }) {
+  const scenarios = getWorkflowScenarios(locale);
+
   return (
     <section className="border-t border-border/30 bg-card/20 py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-6">
@@ -310,7 +313,7 @@ function WorkflowSection({ messages }: { messages: ReturnType<typeof getFlywheel
 
         {/* Workflow cards */}
         <div className="grid gap-5 lg:grid-cols-2">
-          {workflowScenarios.map((scenario, index) => (
+          {scenarios.map((scenario, index) => (
             <WorkflowCard key={scenario.id} scenario={scenario} index={index} messages={messages} />
           ))}
         </div>
@@ -429,7 +432,9 @@ function PromptCard({ prompt, index, messages }: { prompt: AgentPrompt; index: n
   );
 }
 
-function PromptsSection({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
+function PromptsSection({ messages, locale }: { messages: ReturnType<typeof getFlywheelMessages>; locale: "en" | "uk" }) {
+  const prompts = getAgentPrompts(locale);
+
   return (
     <section className="border-t border-border/30 py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-6">
@@ -451,7 +456,7 @@ function PromptsSection({ messages }: { messages: ReturnType<typeof getFlywheelM
 
         {/* Prompts grid */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {agentPrompts.map((prompt, index) => (
+          {prompts.map((prompt, index) => (
             <PromptCard key={prompt.id} prompt={prompt} index={index} messages={messages} />
           ))}
         </div>
@@ -478,7 +483,9 @@ function SynergyDescriptionWithJargon({ messages }: { messages: ReturnType<typeo
   );
 }
 
-function SynergySection({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
+function SynergySection({ messages, locale }: { messages: ReturnType<typeof getFlywheelMessages>; locale: "en" | "uk" }) {
+  const synergies = getSynergyExplanations(locale);
+
   return (
     <section className="border-t border-border/30 bg-card/20 py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-6">
@@ -501,7 +508,7 @@ function SynergySection({ messages }: { messages: ReturnType<typeof getFlywheelM
 
         {/* Synergy cards */}
         <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
-          {synergyExplanations.map((synergy, index) => (
+          {synergies.map((synergy, index) => (
             <div
               key={synergy.title}
               className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card/50 p-5 backdrop-blur-sm transition-all duration-300 hover:border-primary/30 opacity-0 animate-slide-up"
@@ -732,7 +739,9 @@ function ToolCard({ tool, index, messages }: { tool: FlywheelTool; index: number
   );
 }
 
-function ToolsSection({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
+function ToolsSection({ messages, locale }: { messages: ReturnType<typeof getFlywheelMessages>; locale: "en" | "uk" }) {
+  const tools = getFlywheelTools(locale);
+
   return (
     <section className="border-t border-border/30 py-16 lg:py-24">
       <div className="mx-auto max-w-7xl px-6">
@@ -755,7 +764,7 @@ function ToolsSection({ messages }: { messages: ReturnType<typeof getFlywheelMes
 
         {/* Tools grid */}
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {flywheelTools.map((tool, index) => (
+          {tools.map((tool, index) => (
             <ToolCard key={tool.id} tool={tool} index={index} messages={messages} />
           ))}
         </div>
@@ -941,10 +950,10 @@ export default function FlywheelPage() {
           <FlywheelVisualization />
         </section>
 
-        <WorkflowSection messages={messages} />
-        <PromptsSection messages={messages} />
-        <SynergySection messages={messages} />
-        <ToolsSection messages={messages} />
+        <WorkflowSection messages={messages} locale={locale} />
+        <PromptsSection messages={messages} locale={locale} />
+        <SynergySection messages={messages} locale={locale} />
+        <ToolsSection messages={messages} locale={locale} />
         <PhilosophySection messages={messages} />
         <CTASection messages={messages} />
       </main>
