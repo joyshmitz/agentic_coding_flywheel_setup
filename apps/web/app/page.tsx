@@ -62,6 +62,141 @@ function HeroSubtitle({ locale }: { locale: "en" | "uk" }) {
   );
 }
 
+/**
+ * Renders feature descriptions with Jargon tooltips for technical terms
+ */
+function FeatureDescriptionWithJargon({
+  index,
+  locale,
+  linkText,
+}: {
+  index: number;
+  locale: "en" | "uk";
+  linkText?: string;
+}) {
+  // Feature 0: One-liner Install
+  if (index === 0) {
+    if (locale === "uk") {
+      return (
+        <>
+          Одна команда перетворює ваш <Jargon term="vps">VPS</Jargon>. Без ручного налаштування, без пекла залежностей.
+        </>
+      );
+    }
+    return (
+      <>
+        A single command transforms your <Jargon term="vps">VPS</Jargon>. No manual configuration, no dependency hell.
+      </>
+    );
+  }
+
+  // Feature 1: Three AI Agents
+  if (index === 1) {
+    if (locale === "uk") {
+      return (
+        <>
+          <Jargon term="claude-code">Claude Code</Jargon>, <Jargon term="codex">Codex CLI</Jargon> та{" "}
+          <Jargon term="gemini-cli">Gemini CLI</Jargon> — все налаштовано з оптимальними параметрами для кодування.
+        </>
+      );
+    }
+    return (
+      <>
+        <Jargon term="claude-code">Claude Code</Jargon>, <Jargon term="codex">Codex CLI</Jargon>, and{" "}
+        <Jargon term="gemini-cli">Gemini CLI</Jargon>, all configured with optimal settings for coding.
+      </>
+    );
+  }
+
+  // Feature 2: Idempotent & Safe
+  if (index === 2) {
+    if (locale === "uk") {
+      return (
+        <>
+          Запускайте будь-коли. <Jargon term="idempotent">Ідемпотентні</Jargon> фази відновлюються після збоїв.{" "}
+          <Jargon term="sha256">SHA256</Jargon> верифікація інсталяторів.
+        </>
+      );
+    }
+    return (
+      <>
+        Re-run anytime. <Jargon term="idempotent">Idempotent</Jargon> phases resume on failure.{" "}
+        <Jargon term="sha256">SHA256</Jargon> verified installers.
+      </>
+    );
+  }
+
+  // Feature 3: Vibe Mode
+  if (index === 3) {
+    if (locale === "uk") {
+      return (
+        <>
+          <Jargon term="sudo">Sudo</Jargon> без пароля з небезпечними прапорцями для максимальної швидкості на тимчасових{" "}
+          <Jargon term="vps">VPS</Jargon> середовищах.
+        </>
+      );
+    }
+    return (
+      <>
+        Passwordless <Jargon term="sudo">sudo</Jargon> with dangerous flags enabled for maximum velocity on throwaway{" "}
+        <Jargon term="vps">VPS</Jargon> environments.
+      </>
+    );
+  }
+
+  // Feature 4: Modern Shell
+  if (index === 4) {
+    if (locale === "uk") {
+      return (
+        <>
+          <Jargon term="zsh">zsh</Jargon> + <Jargon term="oh-my-zsh">oh-my-zsh</Jargon> +{" "}
+          <Jargon term="powerlevel10k">powerlevel10k</Jargon> з <Jargon term="lsd">lsd</Jargon>,{" "}
+          <Jargon term="atuin">atuin</Jargon>, <Jargon term="fzf">fzf</Jargon> та{" "}
+          <Jargon term="zoxide">zoxide</Jargon>; ідеальний UX розробника.
+        </>
+      );
+    }
+    return (
+      <>
+        <Jargon term="zsh">zsh</Jargon> + <Jargon term="oh-my-zsh">oh-my-zsh</Jargon> +{" "}
+        <Jargon term="powerlevel10k">powerlevel10k</Jargon> with <Jargon term="lsd">lsd</Jargon>,{" "}
+        <Jargon term="atuin">atuin</Jargon>, <Jargon term="fzf">fzf</Jargon>, and{" "}
+        <Jargon term="zoxide">zoxide</Jargon>; developer UX perfected.
+      </>
+    );
+  }
+
+  // Feature 5: Interactive Tutorial
+  if (index === 5) {
+    if (locale === "uk") {
+      return (
+        <>
+          Запустіть &apos;onboard&apos; після налаштування для покрокових уроків від основ Linux до повних{" "}
+          <Jargon term="agentic">агентних</Jargon> робочих процесів.{" "}
+          {linkText && (
+            <Link href="/learn/welcome" className="inline-flex items-center gap-1 text-primary hover:underline">
+              {linkText} <BookOpen className="h-3 w-3" />
+            </Link>
+          )}
+        </>
+      );
+    }
+    return (
+      <>
+        Run &apos;onboard&apos; after setup for guided lessons from Linux basics to full{" "}
+        <Jargon term="agentic">agentic</Jargon> workflows.{" "}
+        {linkText && (
+          <Link href="/learn/welcome" className="inline-flex items-center gap-1 text-primary hover:underline">
+            {linkText} <BookOpen className="h-3 w-3" />
+          </Link>
+        )}
+      </>
+    );
+  }
+
+  return null;
+}
+
 function AnimatedTerminal() {
   const [visibleLines, setVisibleLines] = useState(0);
   const [cursorVisible, setCursorVisible] = useState(true);
@@ -267,16 +402,11 @@ function FeaturesSection() {
             key={feature.title}
             title={feature.title}
             description={
-              feature.linkText ? (
-                <>
-                  {feature.description}{" "}
-                  <Link href="/learn/welcome" className="inline-flex items-center gap-1 text-primary hover:underline">
-                    {feature.linkText} <BookOpen className="h-3 w-3" />
-                  </Link>
-                </>
-              ) : (
-                feature.description
-              )
+              <FeatureDescriptionWithJargon
+                index={i}
+                locale={locale}
+                linkText={feature.linkText}
+              />
             }
             icon={featureIcons[i]?.icon || <Rocket className="h-6 w-6" />}
             gradient={featureIcons[i]?.gradient || "bg-[oklch(0.75_0.18_195)]"}
