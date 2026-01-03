@@ -65,7 +65,14 @@ export const flywheelMessagesUk = {
     tools: {
       badge: "Повний стек",
       title: "Усі вісім інструментів Flywheel",
-      description: "Кожен інструмент встановлюється менш ніж за 30 секунд. Написані на Go, Rust, TypeScript та Python.",
+      description: {
+        intro: "Кожен інструмент встановлюється менш ніж за 30 секунд. Написані на",
+        go: "Go",
+        rust: "Rust",
+        typescript: "TypeScript",
+        conjunction: "та",
+        python: "Python",
+      },
     },
     philosophy: {
       badge: "Філософія дизайну",

@@ -521,6 +521,70 @@ function SynergySection({ messages }: { messages: ReturnType<typeof getFlywheelM
 // TOOLS GRID SECTION
 // ============================================================
 
+/**
+ * Renders the tools section description with Jargon tooltips for programming languages
+ */
+function ToolsDescriptionWithJargon({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
+  const desc = messages.sections.tools.description;
+  return (
+    <>
+      {desc.intro}{" "}
+      <Jargon term="go">{desc.go}</Jargon>,{" "}
+      <Jargon term="rust">{desc.rust}</Jargon>,{" "}
+      {desc.typescript}, {desc.conjunction}{" "}
+      <Jargon term="python">{desc.python}</Jargon>.
+    </>
+  );
+}
+
+/**
+ * Maps tool language to jargon term (if available)
+ */
+const languageToJargonTerm: Record<string, string> = {
+  Go: "go",
+  Rust: "rust",
+  Python: "python",
+  // TypeScript has no jargon entry
+};
+
+/**
+ * Maps tool ID to jargon term (if available)
+ */
+const toolIdToJargonTerm: Record<string, string> = {
+  ntm: "ntm",
+  mail: "agent-mail",
+  bv: "beads",
+  // Other tools don't have specific jargon entries yet
+};
+
+/**
+ * Renders a language badge, optionally with Jargon tooltip
+ */
+function LanguageBadge({ language }: { language: string }) {
+  const jargonTerm = languageToJargonTerm[language];
+  const badge = (
+    <span className="rounded-full bg-muted px-2 py-0.5 text-[12px] font-medium text-muted-foreground">
+      {language}
+    </span>
+  );
+
+  if (jargonTerm) {
+    return <Jargon term={jargonTerm}>{badge}</Jargon>;
+  }
+  return badge;
+}
+
+/**
+ * Renders a tool name, optionally with Jargon tooltip
+ */
+function ToolName({ toolId, name }: { toolId: string; name: string }) {
+  const jargonTerm = toolIdToJargonTerm[toolId];
+  if (jargonTerm) {
+    return <Jargon term={jargonTerm}>{name}</Jargon>;
+  }
+  return <>{name}</>;
+}
+
 function ToolCard({ tool, index, messages }: { tool: FlywheelTool; index: number; messages: ReturnType<typeof getFlywheelMessages> }) {
   const Icon = iconMap[tool.icon] || Zap;
   const [copied, setCopied] = useState(false);
@@ -570,7 +634,9 @@ function ToolCard({ tool, index, messages }: { tool: FlywheelTool; index: number
               <Icon className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-foreground">{tool.name}</h3>
+              <h3 className="font-bold text-foreground">
+                <ToolName toolId={tool.id} name={tool.name} />
+              </h3>
               <p className="text-[12px] text-muted-foreground">{tool.tagline}</p>
             </div>
           </div>
@@ -584,9 +650,7 @@ function ToolCard({ tool, index, messages }: { tool: FlywheelTool; index: number
 
         {/* Language badge */}
         <div className="mb-3">
-          <span className="rounded-full bg-muted px-2 py-0.5 text-[12px] font-medium text-muted-foreground">
-            {tool.language}
-          </span>
+          <LanguageBadge language={tool.language} />
         </div>
 
         {/* Description */}
@@ -657,7 +721,7 @@ function ToolsSection({ messages }: { messages: ReturnType<typeof getFlywheelMes
             {messages.sections.tools.title}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground lg:text-lg">
-            {messages.sections.tools.description}
+            <ToolsDescriptionWithJargon messages={messages} />
           </p>
         </div>
 

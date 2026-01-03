@@ -65,7 +65,14 @@ export const flywheelMessages = {
     tools: {
       badge: "The Complete Stack",
       title: "All Eight Flywheel Tools",
-      description: "Each tool installs in under 30 seconds. Written in Go, Rust, TypeScript, and Python.",
+      description: {
+        intro: "Each tool installs in under 30 seconds. Written in",
+        go: "Go",
+        rust: "Rust",
+        typescript: "TypeScript",
+        conjunction: "and",
+        python: "Python",
+      },
     },
     philosophy: {
       badge: "Design Philosophy",
