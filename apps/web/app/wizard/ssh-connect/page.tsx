@@ -21,6 +21,7 @@ import {
   GuideTip,
   GuideCaution,
 } from "@/components/simpler-guide";
+import { Jargon } from "@/components/jargon";
 import { useLocale, getSshConnectMessages, getCommonMessages } from "@/lib/i18n";
 
 interface TroubleshootingItem {
@@ -174,7 +175,9 @@ export default function SSHConnectPage() {
           </div>
           <div>
             <h1 className="bg-gradient-to-r from-foreground via-foreground to-muted-foreground bg-clip-text text-2xl font-bold tracking-tight text-transparent sm:text-3xl">
-              {messages.title}
+              {messages.title.includes("SSH") ? (
+                <>{messages.title.split("SSH")[0]}<Jargon term="ssh" gradientHeading>SSH</Jargon>{messages.title.split("SSH")[1]}</>
+              ) : messages.title}
             </h1>
             <p className="text-sm text-muted-foreground">
               {messages.timeEstimate}
@@ -182,7 +185,9 @@ export default function SSHConnectPage() {
           </div>
         </div>
         <p className="text-muted-foreground">
-          {messages.description}
+          {messages.description.includes("VPS") ? (
+            <>{messages.description.split("VPS")[0]}<Jargon term="vps">VPS</Jargon>{messages.description.split("VPS")[1]}</>
+          ) : messages.description}
         </p>
       </div>
 
