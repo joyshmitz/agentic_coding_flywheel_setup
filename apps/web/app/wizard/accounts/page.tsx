@@ -38,6 +38,7 @@ import {
 } from "@/lib/services";
 import { TrackedLink } from "@/components/tracked-link";
 import { useLocale, getAccountsMessages, getCommonMessages } from "@/lib/i18n";
+import { Jargon } from "@/components/jargon";
 
 // Type for messages
 type Messages = ReturnType<typeof getAccountsMessages>;
@@ -343,20 +344,34 @@ export default function AccountsPage() {
       <AlertCard variant="warning" icon={DollarSign} title={messages.alerts.subscriptionCosts.title}>
         {messages.alerts.subscriptionCosts.intro}
         <ul className="mt-2 list-inside list-disc space-y-1 text-sm">
-          <li><span dangerouslySetInnerHTML={{ __html: messages.alerts.subscriptionCosts.claudeCode.replace(/^([^:]+):/, '<strong>$1</strong>:') }} /></li>
-          <li><span dangerouslySetInnerHTML={{ __html: messages.alerts.subscriptionCosts.codexCli.replace(/^([^:]+):/, '<strong>$1</strong>:') }} /></li>
-          <li><span dangerouslySetInnerHTML={{ __html: messages.alerts.subscriptionCosts.geminiCli.replace(/^([^:]+):/, '<strong>$1</strong>:') }} /></li>
+          <li>
+            <strong><Jargon term="claude-code">{messages.alerts.subscriptionCosts.claudeCode.name}</Jargon></strong>:{" "}
+            {messages.alerts.subscriptionCosts.claudeCode.requirement}
+          </li>
+          <li>
+            <strong><Jargon term="codex">{messages.alerts.subscriptionCosts.codexCli.name}</Jargon></strong>:{" "}
+            {messages.alerts.subscriptionCosts.codexCli.requirement}
+          </li>
+          <li>
+            <strong><Jargon term="gemini-cli">{messages.alerts.subscriptionCosts.geminiCli.name}</Jargon></strong>:{" "}
+            {messages.alerts.subscriptionCosts.geminiCli.requirement}
+          </li>
         </ul>
         <p className="mt-2 text-sm">
-          <span dangerouslySetInnerHTML={{ __html: messages.alerts.subscriptionCosts.dontNeedAll.replace(/^([^!]+!)/, '<strong>$1</strong>') }} />
+          <strong>{messages.alerts.subscriptionCosts.dontNeedAll.intro}
+          <Jargon term="claude-code">{messages.alerts.subscriptionCosts.dontNeedAll.claudeCode}</Jargon>
+          {messages.alerts.subscriptionCosts.dontNeedAll.outro.split(")")[0]})</strong>
+          {messages.alerts.subscriptionCosts.dontNeedAll.outro.split(")").slice(1).join(")")}
         </p>
       </AlertCard>
 
       {/* Google SSO tip - uses getGoogleSsoServices() to show count */}
       <AlertCard variant="tip" icon={Sparkles} title={messages.alerts.googleSso.title}>
-        {messages.alerts.googleSso.content
+        {messages.alerts.googleSso.content.intro
           .replace('{count}', String(getGoogleSsoServices().length))
-          .replace('{total}', String(SERVICES.length))}
+          .replace('{total}', String(SERVICES.length))}{" "}
+        <Jargon term="sso">{messages.alerts.googleSso.content.sso}</Jargon>
+        {messages.alerts.googleSso.content.outro}
       </AlertCard>
 
       {/* Progress indicator */}

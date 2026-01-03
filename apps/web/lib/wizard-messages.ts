@@ -1096,14 +1096,31 @@ export const accountsMessages = {
     subscriptionCosts: {
       title: "Subscription costs ahead",
       intro: "Some AI coding agents require expensive subscriptions to use after installation:",
-      claudeCode: "Claude Code: Requires Claude Max ($200/mo)",
-      codexCli: "Codex CLI: Requires ChatGPT Pro ($200/mo)",
-      geminiCli: "Gemini CLI: Requires Gemini Advanced (~$20/mo)",
-      dontNeedAll: "You don't need all of them! Start with one agent (Claude Code is recommended) and add others later if you want different AI perspectives.",
+      claudeCode: {
+        name: "Claude Code",
+        requirement: "Requires Claude Max ($200/mo)",
+      },
+      codexCli: {
+        name: "Codex CLI",
+        requirement: "Requires ChatGPT Pro ($200/mo)",
+      },
+      geminiCli: {
+        name: "Gemini CLI",
+        requirement: "Requires Gemini Advanced (~$20/mo)",
+      },
+      dontNeedAll: {
+        intro: "You don't need all of them! Start with one agent (",
+        claudeCode: "Claude Code",
+        outro: " is recommended) and add others later if you want different AI perspectives.",
+      },
     },
     googleSso: {
       title: "Quick signup with Google",
-      content: "{count} of {total} services support Google SSO. Use the same Google account for all of them to streamline your setup.",
+      content: {
+        intro: "{count} of {total} services support",
+        sso: "Google SSO",
+        outro: ". Use the same Google account for all of them to streamline your setup.",
+      },
     },
   },
 

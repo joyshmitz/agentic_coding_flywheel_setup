@@ -1096,14 +1096,31 @@ export const accountsMessagesUk = {
     subscriptionCosts: {
       title: "Попереду витрати на підписки",
       intro: "Деякі AI-агенти для кодування вимагають дорогих підписок після встановлення:",
-      claudeCode: "Claude Code: Потрібен Claude Max ($200/міс)",
-      codexCli: "Codex CLI: Потрібен ChatGPT Pro ($200/міс)",
-      geminiCli: "Gemini CLI: Потрібен Gemini Advanced (~$20/міс)",
-      dontNeedAll: "Вам не потрібні всі! Почніть з одного агента (рекомендуємо Claude Code) і додайте інші пізніше, якщо захочете різних AI-перспектив.",
+      claudeCode: {
+        name: "Claude Code",
+        requirement: "Потрібен Claude Max ($200/міс)",
+      },
+      codexCli: {
+        name: "Codex CLI",
+        requirement: "Потрібен ChatGPT Pro ($200/міс)",
+      },
+      geminiCli: {
+        name: "Gemini CLI",
+        requirement: "Потрібен Gemini Advanced (~$20/міс)",
+      },
+      dontNeedAll: {
+        intro: "Вам не потрібні всі! Почніть з одного агента (",
+        claudeCode: "Claude Code",
+        outro: " рекомендуємо) і додайте інші пізніше, якщо захочете різних AI-перспектив.",
+      },
     },
     googleSso: {
       title: "Швидка реєстрація через Google",
-      content: "{count} з {total} сервісів підтримують Google SSO. Використовуйте один Google-акаунт для всіх, щоб спростити налаштування.",
+      content: {
+        intro: "{count} з {total} сервісів підтримують",
+        sso: "Google SSO",
+        outro: ". Використовуйте один Google-акаунт для всіх, щоб спростити налаштування.",
+      },
     },
   },
 
