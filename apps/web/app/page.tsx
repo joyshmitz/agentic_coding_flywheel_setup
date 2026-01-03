@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+// import Image from "next/image"; // Hidden with AboutSection
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
@@ -14,7 +14,7 @@ import {
   Clock,
   Sparkles,
   ChevronRight,
-  MessageCircle,
+  // MessageCircle, // Hidden with AboutSection
   Check,
   X,
   Server,
@@ -567,6 +567,7 @@ function WorkflowStepsSection() {
   );
 }
 
+/* AboutSection hidden for fork - MIT License
 function AboutSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
   const { locale } = useLocale();
@@ -598,17 +599,14 @@ function AboutSection() {
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ ...springs.smooth, delay: 0.1 }}
         >
-          {/* Headshot with gradient ring */}
           <motion.div
             className="mx-auto flex items-center justify-center"
             whileHover={{ scale: 1.05 }}
             transition={springs.snappy}
           >
             <div className="relative">
-              {/* Gradient ring */}
               <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-[oklch(0.75_0.18_195)] via-[oklch(0.7_0.2_330)] to-[oklch(0.78_0.16_75)] opacity-75 blur-sm" />
               <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-[oklch(0.75_0.18_195)] via-[oklch(0.7_0.2_330)] to-[oklch(0.78_0.16_75)]" />
-              {/* Image container */}
               <div className="relative h-28 w-28 overflow-hidden rounded-full border-2 border-background sm:h-32 sm:w-32">
                 <Image
                   src="/je_headshot.jpg"
@@ -619,7 +617,6 @@ function AboutSection() {
                   priority
                 />
               </div>
-              {/* Sparkle accent */}
               <div className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-background shadow-lg">
                 <Sparkles className="h-3.5 w-3.5 text-[oklch(0.78_0.16_75)]" />
               </div>
@@ -662,6 +659,7 @@ function AboutSection() {
     </section>
   );
 }
+*/
 
 // "Why VPS?" Explainer Section
 function WhyVPSSection() {
@@ -1116,8 +1114,8 @@ export default function HomePage() {
         {/* Pricing Section */}
         <WhatDoesThisCostSection />
 
-        {/* About Section */}
-        <AboutSection />
+        {/* About Section - hidden for fork */}
+        {/* <AboutSection /> */}
 
         {/* Footer */}
         <footer className="border-t border-border/30 py-12">
@@ -1132,7 +1130,7 @@ export default function HomePage() {
 
               <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 <a
-                  href="https://github.com/Dicklesworthstone/agentic_coding_flywheel_setup"
+                  href="https://github.com/joyshmitz/agentic_coding_flywheel_setup"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="transition-colors hover:text-foreground"
@@ -1163,17 +1161,7 @@ export default function HomePage() {
                 </a>
               </div>
 
-              <p className="text-xs text-muted-foreground">
-                {messages.footer.createdBy}{" "}
-                <a
-                  href="https://jeffreyemanuel.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  {messages.footer.author}
-                </a>
-              </p>
+              {/* Author credit hidden for fork - MIT License */}
             </div>
           </div>
         </footer>
