@@ -45,6 +45,7 @@ import {
 } from "@/lib/flywheel";
 import { useLocale, getFlywheelMessages } from "@/lib/i18n";
 import { Jargon } from "@/components/jargon";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 // ============================================================
 // ICON MAPPING
@@ -810,6 +811,7 @@ export default function FlywheelPage() {
           </span>
         </div>
         <div className="flex items-center gap-4">
+          <LanguageSwitcher />
           <Button asChild size="default" variant="outline" className="h-11 border-primary/30 hover:bg-primary/10">
             <Link href="/wizard/os-selection">
               {messages.cta.getStarted}

@@ -60,7 +60,7 @@ export function Jargon({ term, children, className, gradientHeading }: JargonPro
   const jargonData = getJargon(termKey);
 
   // Check if we can use portals (client-side only after hydration)
-  const canUsePortal = mounted && typeof document !== "undefined";
+  const canUsePortal = typeof document !== "undefined";
 
   useEffect(() => {
     return () => {

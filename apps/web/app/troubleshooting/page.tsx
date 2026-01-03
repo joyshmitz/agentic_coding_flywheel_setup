@@ -19,6 +19,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { CommandCard } from "@/components/command-card";
 import { Jargon } from "@/components/jargon";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { useLocale, getTroubleshootingMessages } from "@/lib/i18n";
 
 type TroubleshootingCategory = "all" | "ssh" | "installation" | "agents" | "network";
@@ -247,13 +248,16 @@ export default function TroubleshootingPage() {
             <ArrowLeft className="h-4 w-4" />
             <span className="text-sm">{messages.navigation.home}</span>
           </Link>
-          <Link
-            href="/wizard/os-selection"
-            className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Terminal className="h-4 w-4" />
-            <span className="text-sm">{messages.navigation.setupWizard}</span>
-          </Link>
+          <div className="flex items-center gap-4">
+            <LanguageSwitcher />
+            <Link
+              href="/wizard/os-selection"
+              className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Terminal className="h-4 w-4" />
+              <span className="text-sm">{messages.navigation.setupWizard}</span>
+            </Link>
+          </div>
         </div>
 
         {/* Hero */}

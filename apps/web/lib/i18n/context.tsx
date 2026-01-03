@@ -23,19 +23,21 @@ interface LocaleProviderProps {
 }
 
 export function LocaleProvider({ children }: LocaleProviderProps) {
-  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
-  const [mounted, setMounted] = useState(false);
-
-  // Load saved locale from localStorage on mount
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: SSR hydration detection requires setState after mount
-    setMounted(true);
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    // Initialize with saved locale if available on client
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(LOCALE_STORAGE_KEY);
       if (saved && (saved === "en" || saved === "uk")) {
-        setLocaleState(saved);
+        return saved;
       }
     }
+    return DEFAULT_LOCALE;
+  });
+  const [mounted, setMounted] = useState(false);
+
+  // Set mounted flag after hydration
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   // Save locale to localStorage when changed

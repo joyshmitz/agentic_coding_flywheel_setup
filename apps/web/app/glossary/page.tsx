@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocale, getGlossaryUiMessages, getJargonDictionary } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 type GlossaryCategory = "all" | "shell" | "networking" | "tools" | "concepts";
 
@@ -183,13 +184,16 @@ export default function GlossaryPage() {
             <Home className="h-4 w-4" />
             <span className="text-sm">{messages.navigation.home}</span>
           </Link>
-          <Link
-            href="/wizard/os-selection"
-            className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Terminal className="h-4 w-4" />
-            <span className="text-sm">{messages.navigation.setupWizard}</span>
-          </Link>
+          <div className="flex items-center gap-4">
+            <LanguageSwitcher />
+            <Link
+              href="/wizard/os-selection"
+              className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Terminal className="h-4 w-4" />
+              <span className="text-sm">{messages.navigation.setupWizard}</span>
+            </Link>
+          </div>
         </div>
 
         {/* Hero */}
