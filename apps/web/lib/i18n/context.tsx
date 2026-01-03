@@ -3,7 +3,7 @@
  */
 "use client";
 
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useSyncExternalStore, type ReactNode } from "react";
 import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY, type Locale } from "./config";
 
 interface LocaleContextValue {
@@ -22,6 +22,11 @@ interface LocaleProviderProps {
   children: ReactNode;
 }
 
+// useSyncExternalStore helpers for hydration-safe mounted state
+const emptySubscribe = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 export function LocaleProvider({ children }: LocaleProviderProps) {
   const [locale, setLocaleState] = useState<Locale>(() => {
     // Initialize with saved locale if available on client
@@ -33,12 +38,9 @@ export function LocaleProvider({ children }: LocaleProviderProps) {
     }
     return DEFAULT_LOCALE;
   });
-  const [mounted, setMounted] = useState(false);
 
-  // Set mounted flag after hydration
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // Hydration-safe mounted state without setState in useEffect
+  const mounted = useSyncExternalStore(emptySubscribe, getClientSnapshot, getServerSnapshot);
 
   // Save locale to localStorage when changed
   const setLocale = (newLocale: Locale) => {

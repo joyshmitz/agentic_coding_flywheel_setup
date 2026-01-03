@@ -638,11 +638,11 @@ export default function FlywheelVisualization() {
 
   const handleSelectTool = useCallback((toolId: string) => {
     setSelectedToolId((prev) => (prev === toolId ? null : toolId));
-  }, []);
+  }, [setSelectedToolId]);
 
   const handleCloseDetail = useCallback(() => {
     setSelectedToolId(null);
-  }, []);
+  }, [setSelectedToolId]);
 
   return (
     <div className="relative">
