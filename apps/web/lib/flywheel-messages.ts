@@ -40,7 +40,17 @@ export const flywheelMessages = {
     workflow: {
       badge: "Real Workflows",
       title: "How the Tools Work Together",
-      description: "These aren't hypothetical scenarios. These are actual daily workflows running across 8+ projects with multiple AI agents.",
+      description: {
+        intro: "These aren't hypothetical scenarios. These are actual daily workflows running",
+        agents: "Claude Code, Codex CLI, and Gemini CLI",
+        middle: "across 8+ projects. Powered by",
+        tmux: "tmux",
+        tmuxDesc: "for persistent sessions,",
+        git: "git",
+        gitDesc: "for version control, and",
+        ripgrep: "ripgrep",
+        ripgrepDesc: "for lightning-fast code search.",
+      },
     },
     prompts: {
       badge: "Battle-Tested Prompts",

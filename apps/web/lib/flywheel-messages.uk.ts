@@ -40,7 +40,17 @@ export const flywheelMessagesUk = {
     workflow: {
       badge: "Реальні робочі процеси",
       title: "Як інструменти працюють разом",
-      description: "Це не гіпотетичні сценарії. Це реальні щоденні робочі процеси, що виконуються на 8+ проєктах з кількома AI-агентами.",
+      description: {
+        intro: "Це не гіпотетичні сценарії. Це реальні щоденні робочі процеси з",
+        agents: "Claude Code, Codex CLI та Gemini CLI",
+        middle: "на 8+ проєктах. Працює на",
+        tmux: "tmux",
+        tmuxDesc: "для постійних сесій,",
+        git: "git",
+        gitDesc: "для контролю версій та",
+        ripgrep: "ripgrep",
+        ripgrepDesc: "для блискавичного пошуку коду.",
+      },
     },
     prompts: {
       badge: "Перевірені промпти",

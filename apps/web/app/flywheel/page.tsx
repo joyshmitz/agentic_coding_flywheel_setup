@@ -178,6 +178,25 @@ function HeroSection({ messages }: { messages: ReturnType<typeof getFlywheelMess
 // WORKFLOW SECTION
 // ============================================================
 
+/**
+ * Renders the workflow section description with Jargon tooltips
+ */
+function WorkflowDescriptionWithJargon({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
+  const desc = messages.sections.workflow.description;
+  return (
+    <>
+      {desc.intro}{" "}
+      <Jargon term="claude-code">Claude Code</Jargon>,{" "}
+      <Jargon term="codex">Codex CLI</Jargon>,{" "}
+      <Jargon term="gemini-cli">Gemini CLI</Jargon>{" "}
+      {desc.middle}{" "}
+      <Jargon term="tmux">{desc.tmux}</Jargon> {desc.tmuxDesc}{" "}
+      <Jargon term="git">{desc.git}</Jargon> {desc.gitDesc}{" "}
+      <Jargon term="ripgrep">{desc.ripgrep}</Jargon> {desc.ripgrepDesc}
+    </>
+  );
+}
+
 function WorkflowCard({ scenario, index, messages }: { scenario: WorkflowScenario; index: number; messages: ReturnType<typeof getFlywheelMessages> }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -285,7 +304,7 @@ function WorkflowSection({ messages }: { messages: ReturnType<typeof getFlywheel
             {messages.sections.workflow.title}
           </h2>
           <p className="mt-4 text-base text-muted-foreground lg:text-lg">
-            {messages.sections.workflow.description}
+            <WorkflowDescriptionWithJargon messages={messages} />
           </p>
         </div>
 
