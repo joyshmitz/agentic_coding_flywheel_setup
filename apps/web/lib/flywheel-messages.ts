@@ -55,12 +55,20 @@ export const flywheelMessages = {
     prompts: {
       badge: "Battle-Tested Prompts",
       title: "The Prompts That Power the Workflow",
-      description: "Copy these prompts to your Stream Deck or command palette. Each takes under a second to execute with a single button press.",
+      description: {
+        intro: "Copy these prompts to your",
+        streamDeck: "Stream Deck",
+        middle: "or command palette. Each takes under a second to execute with a single button press.",
+      },
     },
     synergy: {
       badge: "The Flywheel Effect",
       title: "Using Three Tools is 10x Better Than One",
-      description: "Each tool amplifies the others. The synergies compound over time.",
+      description: {
+        intro: "Each tool amplifies the others. The",
+        synergies: "synergies",
+        outro: "compound over time.",
+      },
     },
     tools: {
       badge: "The Complete Stack",

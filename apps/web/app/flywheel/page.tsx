@@ -323,6 +323,20 @@ function WorkflowSection({ messages }: { messages: ReturnType<typeof getFlywheel
 // PROMPTS SECTION
 // ============================================================
 
+/**
+ * Renders the prompts section description with Jargon tooltips
+ */
+function PromptsDescriptionWithJargon({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
+  const desc = messages.sections.prompts.description;
+  return (
+    <>
+      {desc.intro}{" "}
+      <Jargon term="stream-deck">{desc.streamDeck}</Jargon>{" "}
+      {desc.middle}
+    </>
+  );
+}
+
 function PromptCard({ prompt, index, messages }: { prompt: AgentPrompt; index: number; messages: ReturnType<typeof getFlywheelMessages> }) {
   const [copied, setCopied] = useState(false);
 
@@ -431,7 +445,7 @@ function PromptsSection({ messages }: { messages: ReturnType<typeof getFlywheelM
             {messages.sections.prompts.title}
           </h2>
           <p className="mt-4 text-base text-muted-foreground lg:text-lg">
-            {messages.sections.prompts.description}
+            <PromptsDescriptionWithJargon messages={messages} />
           </p>
         </div>
 
@@ -450,6 +464,20 @@ function PromptsSection({ messages }: { messages: ReturnType<typeof getFlywheelM
 // SYNERGY SECTION
 // ============================================================
 
+/**
+ * Renders the synergy section description with Jargon tooltips
+ */
+function SynergyDescriptionWithJargon({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
+  const desc = messages.sections.synergy.description;
+  return (
+    <>
+      {desc.intro}{" "}
+      <Jargon term="flywheel">{desc.synergies}</Jargon>{" "}
+      {desc.outro}
+    </>
+  );
+}
+
 function SynergySection({ messages }: { messages: ReturnType<typeof getFlywheelMessages> }) {
   return (
     <section className="border-t border-border/30 bg-card/20 py-16 lg:py-24">
@@ -467,7 +495,7 @@ function SynergySection({ messages }: { messages: ReturnType<typeof getFlywheelM
             {messages.sections.synergy.title}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground lg:text-lg">
-            {messages.sections.synergy.description}
+            <SynergyDescriptionWithJargon messages={messages} />
           </p>
         </div>
 
