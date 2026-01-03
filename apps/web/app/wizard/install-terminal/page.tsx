@@ -23,6 +23,7 @@ import {
   DirectDownloadButton,
 } from "@/components/simpler-guide";
 import { useLocale, getInstallTerminalMessages } from "@/lib/i18n";
+import { Jargon } from "@/components/jargon";
 
 // Type for messages
 type Messages = ReturnType<typeof getInstallTerminalMessages>;
@@ -85,7 +86,7 @@ function MacContent({ messages }: { messages: Messages }) {
       </div>
 
       <AlertCard variant="success" icon={Check} title={m.sshReady.title}>
-        {m.sshReady.content}
+        macOS includes <Jargon term="ssh">SSH</Jargon> by default, so you&apos;re ready to connect to your <Jargon term="vps">VPS</Jargon>.
       </AlertCard>
 
       {/* Beginner Guide for Mac */}
@@ -206,7 +207,7 @@ function TerminalBasicsSection({ os, messages }: { os: "mac" | "windows" | "linu
 
       {/* Copy/Paste in Terminal */}
       <div className="space-y-3">
-        <h3 className="font-semibold">{tb.copyPaste.title}</h3>
+        <h3 className="font-semibold">Copy/Paste in <Jargon term="terminal">Terminal</Jargon></h3>
         <p className="text-sm text-muted-foreground">
           {tb.copyPaste.intro}
         </p>
@@ -284,9 +285,9 @@ function WindowsContent({ messages }: { messages: Messages }) {
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-medium">{m.verifySsh.title}</h3>
+        <h3 className="font-medium">Verify <Jargon term="ssh">SSH</Jargon> is available</h3>
         <p className="text-sm text-muted-foreground">
-          {m.verifySsh.content}
+          Open Windows <Jargon term="terminal">Terminal</Jargon> and run this command. You should see a version number.
         </p>
         <CommandCard
           command="ssh -V"

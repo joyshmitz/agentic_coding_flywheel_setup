@@ -25,6 +25,7 @@ import {
 } from "@/components/simpler-guide";
 import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
 import { useLocale, getWindowsTerminalSetupMessages } from "@/lib/i18n";
+import { Jargon } from "@/components/jargon";
 
 export default function WindowsTerminalSetupPage() {
   const router = useRouter();
@@ -110,12 +111,12 @@ export default function WindowsTerminalSetupPage() {
       <AlertCard variant="success" icon={Terminal} title={messages.whySetup.title}>
         <div className="space-y-2">
           <p>
-            {messages.whySetup.intro}
+            Instead of opening PowerShell and typing your <Jargon term="ssh">SSH</Jargon> command every time, you can:
           </p>
           <ul className="list-disc list-inside space-y-1 text-sm">
-            {messages.whySetup.benefits.map((benefit, i) => (
-              <li key={i}>{benefit}</li>
-            ))}
+            <li>Click a tab in Windows <Jargon term="terminal">Terminal</Jargon> to instantly connect to your <Jargon term="vps">VPS</Jargon></li>
+            <li>Give it a custom name like &quot;My VPS&quot; or &quot;ACFS Server&quot;</li>
+            <li>Optionally set it as your default profile</li>
           </ul>
         </div>
       </AlertCard>
@@ -200,7 +201,7 @@ export default function WindowsTerminalSetupPage() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {messages.steps.step3.commandLine.hint.replace("{ip}", displayIP)}
+                This is your personalized <Jargon term="ssh">SSH</Jargon> command with your <Jargon term="vps">VPS</Jargon> IP ({displayIP}).
               </p>
             </div>
             <div>
@@ -287,21 +288,21 @@ export default function WindowsTerminalSetupPage() {
           <GuideSection title={messages.guide.troubleshooting.title}>
             <div className="space-y-4">
               <div>
-                <p className="font-medium">{messages.guide.troubleshooting.permissionDenied.title}</p>
+                <p className="font-medium">&quot;Permission denied&quot; error</p>
                 <p className="text-sm text-muted-foreground">
-                  {messages.guide.troubleshooting.permissionDenied.content}
+                  Make sure your <Jargon term="ssh">SSH</Jargon> key file exists at %USERPROFILE%\.ssh\acfs_ed25519. If you used a different key name, update the command line accordingly.
                 </p>
               </div>
               <div>
-                <p className="font-medium">{messages.guide.troubleshooting.connectionRefused.title}</p>
+                <p className="font-medium">&quot;Connection refused&quot; error</p>
                 <p className="text-sm text-muted-foreground">
-                  {messages.guide.troubleshooting.connectionRefused.content.replace("{ip}", displayIP)}
+                  Double-check that your <Jargon term="vps">VPS</Jargon> IP ({displayIP}) is correct and the server is running.
                 </p>
               </div>
               <div>
-                <p className="font-medium">{messages.guide.troubleshooting.hostKeyFailed.title}</p>
+                <p className="font-medium">&quot;Host key verification failed&quot;</p>
                 <p className="text-sm text-muted-foreground">
-                  {messages.guide.troubleshooting.hostKeyFailed.content}
+                  This can happen if you rebuilt your <Jargon term="vps">VPS</Jargon>. You may need to remove the old key from %USERPROFILE%\.ssh\known_hosts.
                 </p>
               </div>
             </div>
