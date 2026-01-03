@@ -489,6 +489,51 @@ export const jargonDictionary: Record<string, JargonTerm> = {
     related: ["ai-agents", "ntm", "agent-mail", "git"],
   },
 
+  ubs: {
+    term: "UBS",
+    short: "Ultimate Bug Scanner, polyglot static analysis with unified JSON output",
+    long: "UBS (Ultimate Bug Scanner) wraps best-in-class static analyzers (ESLint, Ruff, Clippy, golangci-lint) with consistent JSON output. Supports 7 languages with 18 detection categories including null safety, async bugs, security vulnerabilities, and memory leaks. Zero configuration required. Sub-5-second feedback loops make it perfect as a pre-commit hook or agent post-processor.",
+    analogy: "UBS is like having a team of expert code reviewers for every programming language, all speaking the same language when they report issues. Instead of learning different tools and output formats for JavaScript, Python, Go, and Rust, UBS gives you one unified view of all problems.",
+    why: "AI agents write code fast but can introduce bugs. UBS catches issues before they're committed: security vulnerabilities, null pointer errors, async bugs. The unified JSON output makes it easy for other tools and agents to process results automatically.",
+    related: ["slb", "beads", "ai-agents"],
+  },
+
+  cass: {
+    term: "CASS",
+    short: "Coding Agent Session Search, instant search across all AI coding sessions",
+    long: "CASS (Coding Agent Session Search) unifies search for all AI coding sessions. It indexes Claude Code, Codex CLI, Cursor, Gemini CLI, ChatGPT, Cline, and more into a single searchable timeline. Tantivy-powered search delivers <60ms prefix queries. Six ranking modes balance relevance, recency, and match quality. Robot mode with cursor pagination and token budgeting makes it perfect for AI agents.",
+    analogy: "CASS is like having a perfect memory of every conversation you've ever had with any AI coding assistant. Instead of thinking 'I solved this problem before, but which AI did I use and when?', you just search and instantly find the answer.",
+    why: "When you or your agents have worked on similar problems before, that knowledge is valuable. CASS makes all that history instantly searchable. Agents can search 'how did we handle authentication?' and find the answer in 60ms, avoiding reinventing solutions.",
+    related: ["cm", "ntm", "beads", "ai-agents"],
+  },
+
+  cm: {
+    term: "CM",
+    short: "CASS Memory System, persistent procedural memory for AI agents",
+    long: "CM (CASS Memory System) implements human-like memory for AI agents using the ACE (Agentic Context Engineering) framework. It provides procedural playbooks (how to do things), episodic session logs (what happened), and semantic facts (what we know). Four-stage pipeline: Generator → Reflector → Validator → Curator. Playbook bullets decay over 90 days. The Curator has NO LLM to prevent context collapse.",
+    analogy: "CM is like giving AI agents a brain that remembers across sessions. Just like humans learn from experience (remembering that 'last time I did X, Y happened'), CM lets agents build up procedural knowledge: what approaches work, what mistakes to avoid, what patterns are successful.",
+    why: "Without CM, every AI session starts fresh. The agent might repeat past mistakes or rediscover solutions from scratch. CM provides that continuity: 'Last time we tried this approach and it failed because...' This compounds over time into genuine expertise.",
+    related: ["cass", "beads", "agent-mail", "ai-agents"],
+  },
+
+  caam: {
+    term: "CAAM",
+    short: "Coding Agent Account Manager, instant API key switching for multiple accounts",
+    long: "CAAM (Coding Agent Account Manager) manages multiple API keys for Claude, Codex, and Gemini. Sub-100ms account switching. Smart rotation considers cooldown state, health, recency, and plan type. Transparent failover with auto-retry. AES-256-GCM encryption with Argon2id key derivation for secure credential export.",
+    analogy: "CAAM is like having a receptionist who knows all your accounts and can instantly switch which one you're using. Hit rate limits on one Claude account? The receptionist seamlessly switches to another. No manual credential juggling required.",
+    why: "When running multiple AI agents in parallel, rate limits become a bottleneck. CAAM solves this by managing multiple accounts and automatically routing requests to available capacity. The result: more agents running simultaneously without hitting limits.",
+    related: ["ntm", "ai-agents", "rate-limits"],
+  },
+
+  slb: {
+    term: "SLB",
+    short: "Simultaneous Launch Button, two-person rule safety for autonomous agents",
+    long: "SLB (Simultaneous Launch Button) implements nuclear-launch-style safety for AI agents. Three-tier risk classification: CRITICAL commands need 2+ approvals from different AI models, DANGEROUS needs 1 approval, CAUTION auto-approves after 30 seconds. Cryptographic command binding with SHA-256+HMAC ensures commands can't be modified after review. Self-review protection prevents agents from approving their own requests.",
+    analogy: "SLB is like the two-key system for launching missiles: no single person can do it alone. When an AI agent wants to run 'git reset --hard' or 'rm -rf', SLB requires another agent to review and approve. This prevents catastrophic mistakes from autonomous agents operating unsupervised.",
+    why: "Autonomous agents are powerful but can make catastrophic mistakes. SLB adds friction exactly where it's needed: dangerous commands require review. This enables aggressive automation with guardrails. You can let agents run unsupervised knowing the dangerous stuff will be caught.",
+    related: ["ubs", "agent-mail", "ntm", "ai-agents"],
+  },
+
   "open-source": {
     term: "Open-source",
     short: "Software whose code is publicly available for anyone to inspect, use, and improve",

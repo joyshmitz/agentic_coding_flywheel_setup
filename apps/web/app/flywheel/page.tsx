@@ -589,7 +589,11 @@ const toolIdToJargonTerm: Record<string, string> = {
   ntm: "ntm",
   mail: "agent-mail",
   bv: "beads",
-  // Other tools don't have specific jargon entries yet
+  ubs: "ubs",
+  cass: "cass",
+  cm: "cm",
+  caam: "caam",
+  slb: "slb",
 };
 
 /**
