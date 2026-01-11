@@ -73,6 +73,12 @@ import { promptEngineeringLessonMessagesUk } from "../lessons/prompt-engineering
 import { realWorldCaseStudyLessonMessages } from "../lessons/real-world-case-study-messages.en";
 import { realWorldCaseStudyLessonMessagesUk } from "../lessons/real-world-case-study-messages.uk";
 
+// Wave 7 Safety Tools Lessons
+import { ruLessonMessages } from "../lessons/ru.en";
+import { ruLessonMessagesUk } from "../lessons/ru.uk";
+import { dcgLessonMessages } from "../lessons/dcg.en";
+import { dcgLessonMessagesUk } from "../lessons/dcg.uk";
+
 /**
  * Get lessons for the specified locale
  */
@@ -589,4 +595,18 @@ export function getPromptEngineeringLessonMessages(locale: Locale) {
  */
 export function getRealWorldCaseStudyLessonMessages(locale: Locale) {
   return locale === "uk" ? realWorldCaseStudyLessonMessagesUk : realWorldCaseStudyLessonMessages;
+}
+
+/**
+ * Get RU lesson messages for the specified locale
+ */
+export function getRuLessonMessages(locale: Locale) {
+  return locale === "uk" ? ruLessonMessagesUk : ruLessonMessages;
+}
+
+/**
+ * Get DCG lesson messages for the specified locale
+ */
+export function getDcgLessonMessages(locale: Locale) {
+  return locale === "uk" ? dcgLessonMessagesUk : dcgLessonMessages;
 }

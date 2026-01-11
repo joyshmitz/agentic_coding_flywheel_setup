@@ -168,4 +168,20 @@ export const LESSONS_UK: Lesson[] = [
     duration: "12 хв",
     file: "19_slb_case_study.md",
   },
+  {
+    id: 20,
+    slug: "ru",
+    title: "RU: Майстерність багатьох репозиторіїв",
+    description: "Синхронізація репозиторіїв та автоматизація комітів з AI",
+    duration: "10 хв",
+    file: "20_ru.md",
+  },
+  {
+    id: 21,
+    slug: "dcg",
+    title: "DCG: Безпека перед виконанням",
+    description: "Блокування небезпечних команд до того як вони завдадуть шкоди",
+    duration: "8 хв",
+    file: "21_dcg.md",
+  },
 ];

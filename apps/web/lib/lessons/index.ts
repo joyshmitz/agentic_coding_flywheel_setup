@@ -44,3 +44,9 @@ export { promptEngineeringLessonMessages } from './prompt-engineering-messages.e
 export { promptEngineeringLessonMessagesUk } from './prompt-engineering-messages.uk';
 export { realWorldCaseStudyLessonMessages } from './real-world-case-study-messages.en';
 export { realWorldCaseStudyLessonMessagesUk } from './real-world-case-study-messages.uk';
+
+// Wave 7 lessons (RU and DCG)
+export { ruLessonMessages } from './ru.en';
+export { ruLessonMessagesUk } from './ru.uk';
+export { dcgLessonMessages } from './dcg.en';
+export { dcgLessonMessagesUk } from './dcg.uk';

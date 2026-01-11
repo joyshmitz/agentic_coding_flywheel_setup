@@ -23,54 +23,55 @@ import {
   FeatureGrid,
   BulletList,
 } from "./lesson-components";
+import { useLocale } from "@/lib/i18n";
+import { getDcgLessonMessages } from "@/lib/i18n/translations";
 
 export function DcgLesson() {
+  const { locale } = useLocale();
+  const messages = getDcgLessonMessages(locale);
+
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Use DCG to block destructive commands before they do damage.
+        {messages.goalBanner.content}
       </GoalBanner>
 
       <Section
-        title="What Is DCG?"
+        title={messages.whatIsDcg.title}
         icon={<ShieldAlert className="h-5 w-5" />}
         delay={0.1}
       >
         <Paragraph>
-          <Highlight>DCG (Destructive Command Guard)</Highlight> is a Claude
-          Code hook that blocks dangerous commands before they execute. It
-          protects your repos from hard resets, recursive deletes, destructive
-          database commands, and more.
+          <Highlight>DCG (Destructive Command Guard)</Highlight> {messages.whatIsDcg.description}
         </Paragraph>
         <Paragraph>
-          Think of it as a safety interlock: if a command looks destructive,
-          DCG stops it and suggests a safer alternative.
+          {messages.whatIsDcg.thinkOfIt}
         </Paragraph>
 
         <div className="mt-8">
           <FeatureGrid>
             <FeatureCard
               icon={<ShieldCheck className="h-5 w-5" />}
-              title="Pre-Execution Blocking"
-              description="Stops damage before it happens"
+              title={messages.whatIsDcg.features.preExecutionBlocking.title}
+              description={messages.whatIsDcg.features.preExecutionBlocking.description}
               gradient="from-red-500/20 to-rose-500/20"
             />
             <FeatureCard
               icon={<Layers className="h-5 w-5" />}
-              title="Protection Packs"
-              description="Git, filesystem, database, cloud, and more"
+              title={messages.whatIsDcg.features.protectionPacks.title}
+              description={messages.whatIsDcg.features.protectionPacks.description}
               gradient="from-amber-500/20 to-orange-500/20"
             />
             <FeatureCard
               icon={<KeyRound className="h-5 w-5" />}
-              title="Allow-Once Codes"
-              description="Explicit bypass when you know it is safe"
+              title={messages.whatIsDcg.features.allowOnceCodes.title}
+              description={messages.whatIsDcg.features.allowOnceCodes.description}
               gradient="from-primary/20 to-violet-500/20"
             />
             <FeatureCard
               icon={<Zap className="h-5 w-5" />}
-              title="Fail-Open Design"
-              description="Errors never block your workflow"
+              title={messages.whatIsDcg.features.failOpenDesign.title}
+              description={messages.whatIsDcg.features.failOpenDesign.description}
               gradient="from-emerald-500/20 to-teal-500/20"
             />
           </FeatureGrid>
@@ -80,23 +81,18 @@ export function DcgLesson() {
       <Divider />
 
       <Section
-        title="How DCG Intercepts Commands"
+        title={messages.howItWorks.title}
         icon={<ShieldCheck className="h-5 w-5" />}
         delay={0.15}
       >
         <Paragraph>
-          DCG runs as a <Highlight>PreToolUse hook</Highlight> inside Claude
-          Code. Every command is checked against a set of rules before it runs.
+          {messages.howItWorks.description}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Example: test a command before running it
-$ dcg test "git reset --hard" --explain
-> BLOCKED: git.reset.hard
-> Why: hard reset discards uncommitted work
-> Safer: git restore --staged .`}
-            language="bash"
+            code={messages.howItWorks.example.code}
+            language={messages.howItWorks.example.language}
           />
         </div>
 
@@ -109,69 +105,28 @@ $ dcg test "git reset --hard" --explain
       <Divider />
 
       <Section
-        title="Essential Commands"
+        title={messages.essentialCommands.title}
         icon={<Terminal className="h-5 w-5" />}
         delay={0.2}
       >
-        <CommandList
-          commands={[
-            {
-              command: "dcg test '<command>'",
-              description: "Check if a command would be blocked",
-            },
-            {
-              command: "dcg test '<command>' --explain",
-              description: "Explain why a command is unsafe",
-            },
-            {
-              command: "dcg packs",
-              description: "List available protection packs",
-            },
-            {
-              command: "dcg install",
-              description: "Register the Claude Code hook",
-            },
-            {
-              command: "dcg uninstall",
-              description: "Remove the hook (use --purge for full removal)",
-            },
-            {
-              command: "dcg allow-once <code>",
-              description: "Bypass for a single approved command",
-            },
-            {
-              command: "dcg doctor",
-              description: "Check installation and hook status",
-            },
-          ]}
-        />
+        <CommandList commands={messages.essentialCommands.commands} />
       </Section>
 
       <Divider />
 
       <Section
-        title="Uninstalling DCG"
+        title={messages.uninstalling.title}
         icon={<ShieldAlert className="h-5 w-5" />}
         delay={0.23}
       >
         <Paragraph>
-          If you need to remove DCG, you can uninstall the hook and optionally
-          purge the binary and config. You can always re-enable it later with{" "}
-          <Highlight>dcg install</Highlight>.
+          {messages.uninstalling.description}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Remove hook only (keeps dcg installed)
-$ dcg uninstall
-
-# Full removal (hook + binary + config)
-$ dcg uninstall --purge
-
-# Verify removal
-$ dcg doctor
-$ claude /hooks`}
-            language="bash"
+            code={messages.uninstalling.example.code}
+            language={messages.uninstalling.example.language}
           />
         </div>
 
@@ -184,22 +139,19 @@ $ claude /hooks`}
       <Divider />
 
       <Section
-        title="Protection Packs"
+        title={messages.protectionPacks.title}
         icon={<Layers className="h-5 w-5" />}
         delay={0.25}
       >
         <Paragraph>
-          Packs let you enable or disable rules based on your workflow. Keep the
-          ones you need to avoid false positives.
+          {messages.protectionPacks.description}
         </Paragraph>
 
         <div className="mt-6">
           <CodeBlock
-            code={`# ~/.config/dcg/config.toml
-[packs]
-enabled = ["git", "filesystem", "database.postgresql", "containers.docker"]`}
-            language="toml"
-            filename="config.toml"
+            code={messages.protectionPacks.example.code}
+            language={messages.protectionPacks.example.language}
+            filename={messages.protectionPacks.example.filename}
           />
         </div>
 
@@ -213,27 +165,20 @@ enabled = ["git", "filesystem", "database.postgresql", "containers.docker"]`}
       <Divider />
 
       <Section
-        title="When You See a Block"
+        title={messages.whenBlocked.title}
         icon={<AlertTriangle className="h-5 w-5" />}
         delay={0.3}
       >
         <Paragraph>
-          A block is a warning, not a dead end. Use it as a checkpoint:
+          {messages.whenBlocked.description}
         </Paragraph>
-        <BulletList
-          items={[
-            "Read the explanation carefully.",
-            "Prefer the safer alternative when possible.",
-            "Use allow-once only if you are confident.",
-            "Document the decision in your commit or notes.",
-          ]}
-        />
+        <BulletList items={messages.whenBlocked.steps} />
       </Section>
 
       <Divider />
 
       <Section
-        title="DCG + SLB"
+        title={messages.dcgPlusSLB.title}
         icon={<Zap className="h-5 w-5" />}
         delay={0.35}
       >
@@ -243,9 +188,7 @@ enabled = ["git", "filesystem", "database.postgresql", "containers.docker"]`}
           className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6"
         >
           <Paragraph>
-            DCG blocks obvious destructive commands instantly. SLB handles
-            contextual risk that needs human approval. Together, they form a
-            layered safety system.
+            {messages.dcgPlusSLB.description}
           </Paragraph>
         </motion.div>
       </Section>

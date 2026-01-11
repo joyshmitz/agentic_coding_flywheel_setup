@@ -292,4 +292,20 @@ export const COMMANDS_UK: CommandRef[] = [
     category: "cloud",
     example: "vault status",
   },
+  {
+    name: "dcg",
+    fullName: "Destructive Command Guard",
+    description: "Hook для Claude Code, що блокує небезпечні git/fs команди перед виконанням.",
+    category: "stack",
+    example: "dcg test 'rm -rf /' --explain",
+    aliases: ["destructive-command-guard"],
+  },
+  {
+    name: "ru",
+    fullName: "Repo Updater",
+    description: "Синхронізація багатьох репозиторіїв з AI-driven автоматизацією комітів.",
+    category: "stack",
+    example: "ru sync --parallel 4",
+    aliases: ["repo-updater"],
+  },
 ];

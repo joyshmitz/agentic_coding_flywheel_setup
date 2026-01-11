@@ -70,5 +70,8 @@ export {
   getSlbCaseStudyLessonMessages,
   getPromptEngineeringLessonMessages,
   getRealWorldCaseStudyLessonMessages,
+  // Wave 7 Safety Tools Lesson messages
+  getRuLessonMessages,
+  getDcgLessonMessages,
   type ChecklistItem,
 } from "./translations";
