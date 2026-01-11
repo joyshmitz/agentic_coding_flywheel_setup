@@ -145,7 +145,7 @@ get_version() {
         vercel)
             version=$(vercel --version 2>/dev/null || echo "unknown")
             ;;
-        ntm|ubs|bv|cass|cm|caam|slb)
+        ntm|ubs|bv|cass|cm|caam|slb|ru|dcg)
             version=$("$tool" --version 2>/dev/null | head -1 || echo "unknown")
             ;;
         atuin)
@@ -1021,127 +1021,6 @@ update_go() {
     log_to_file "Go version: $go_version (path: $go_path)"
 }
 
-ensure_cass_robot_compat_wrapper() {
-    cmd_exists cass || return 0
-
-    # Nothing to do if cass already supports `robot` subcommand.
-    if cass robot --help >/dev/null 2>&1; then
-        return 0
-    fi
-
-    local cass_path
-    cass_path="$(command -v cass 2>/dev/null || true)"
-    if [[ -z "$cass_path" ]]; then
-        log_item "warn" "CASS robot wrapper" "cass not found"
-        return 0
-    fi
-
-    local cass_dir
-    cass_dir="$(cd "$(dirname "$cass_path")" 2>/dev/null && pwd -P || true)"
-    if [[ -z "$cass_dir" ]]; then
-        log_item "warn" "CASS robot wrapper" "could not resolve cass directory"
-        return 0
-    fi
-
-    local cass_real="${cass_dir}/cass.real"
-
-    # Idempotency: wrapper already installed.
-    if [[ -x "$cass_real" ]] && head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
-        return 0
-    fi
-
-    if [[ ! -f "$cass_path" ]]; then
-        log_item "warn" "CASS robot wrapper" "cass path is not a regular file: $cass_path"
-        return 0
-    fi
-    if [[ ! -w "$cass_path" ]]; then
-        log_item "warn" "CASS robot wrapper" "cannot write to: $cass_path"
-        return 0
-    fi
-
-    # Safety: if cass is already our wrapper but cass.real is missing, do not
-    # "move" the wrapper into place (it would create an infinite exec loop).
-    if [[ ! -e "$cass_real" ]] && head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
-        log_item "warn" "CASS robot wrapper" "cass wrapper present but cass.real missing (skipping)"
-        return 0
-    fi
-
-    # Move the real binary aside, then install the wrapper at the original path.
-    # Handle both fresh install and the case where CASS was updated (replaced wrapper with new binary).
-    if [[ ! -e "$cass_real" ]]; then
-        # First time: move original binary to cass.real
-        if ! mv "$cass_path" "$cass_real" 2>/dev/null; then
-            log_item "warn" "CASS robot wrapper" "failed to move cass to cass.real"
-            return 0
-        fi
-        chmod +x "$cass_real" 2>/dev/null || true
-    elif ! head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
-        # cass.real exists but current cass is NOT our wrapper.
-        # Only update cass.real if cass is a binary (not a script).
-        # Safety: if it's a script (starts with #!), don't overwrite the real binary.
-        if [[ "$(head -c 2 "$cass_path" 2>/dev/null || true)" == "#!" ]]; then
-            log_item "warn" "CASS robot wrapper" "cass is a script but not our wrapper (skipping cass.real update)"
-        else
-            # cass is a binary - safe to update cass.real
-            if ! mv "$cass_path" "$cass_real" 2>/dev/null; then
-                log_item "warn" "CASS robot wrapper" "failed to update cass.real with new binary"
-                return 0
-            fi
-            chmod +x "$cass_real" 2>/dev/null || true
-        fi
-    fi
-
-    cat > "$cass_path" <<'EOF'
-#!/usr/bin/env bash
-# ACFS CASS WRAPPER (compat): adds `cass robot <subcommand>` support for older NTM.
-set -euo pipefail
-
-real="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P)/cass.real"
-if [[ ! -x "$real" ]]; then
-  echo "ERROR: cass.real not found at: $real" >&2
-  exit 127
-fi
-
-if [[ $# -gt 0 && "${1:-}" == "robot" ]]; then
-  shift || true
-
-  if [[ $# -eq 0 || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-    cat <<'EOT'
-Usage: cass robot <subcommand> [args...]
-
-Compat wrapper installed by ACFS.
-Translates:
-  cass robot <subcommand> ...  ->  cass <subcommand> ... --robot
-
-Examples:
-  cass robot search "error handling" --limit 10
-  cass search "error handling" --robot --limit 10
-EOT
-    exit 0
-  fi
-
-  for arg in "$@"; do
-    if [[ "$arg" == "--robot" ]]; then
-      exec "$real" "$@"
-    fi
-  done
-
-  exec "$real" "$@" --robot
-fi
-
-exec "$real" "$@"
-EOF
-    chmod +x "$cass_path" 2>/dev/null || true
-
-    if cass robot --help >/dev/null 2>&1; then
-        log_item "ok" "CASS robot wrapper" "installed"
-    else
-        log_item "warn" "CASS robot wrapper" "installed but cass robot still failing"
-    fi
-
-    return 0
-}
-
 update_stack() {
     log_section "Dicklesworthstone Stack"
 
@@ -1153,6 +1032,31 @@ update_stack() {
     if ! update_require_security; then
         log_item "fail" "stack updates" "security verification unavailable (missing security.sh/checksums.yaml)"
         return 0
+    fi
+
+    # DCG migration: offer install for existing users who don't have it yet
+    if ! cmd_exists dcg; then
+        log_item "warn" "DCG not installed" "new safety tool available in the ACFS stack"
+
+        if [[ "$YES_MODE" == "true" || "$FORCE_MODE" == "true" ]]; then
+            run_cmd "DCG (install)" update_run_verified_installer dcg --easy-mode
+            if cmd_exists dcg && cmd_exists claude; then
+                run_cmd "DCG Hook" dcg install --force 2>/dev/null || true
+            fi
+        elif [[ -t 0 ]]; then
+            [[ "$QUIET" != "true" ]] && echo ""
+            read -r -p "Install DCG now? [Y/n] " response || true
+            if [[ -z "$response" || "$response" =~ ^[Yy] ]]; then
+                run_cmd "DCG (install)" update_run_verified_installer dcg --easy-mode
+                if cmd_exists dcg && cmd_exists claude; then
+                    run_cmd "DCG Hook" dcg install --force 2>/dev/null || true
+                fi
+            else
+                log_item "skip" "DCG" "skipped (install later: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh | bash)"
+            fi
+        else
+            log_item "skip" "DCG" "not installed (non-interactive; run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh | bash)"
+        fi
     fi
 
     # NTM
@@ -1220,7 +1124,6 @@ update_stack() {
     # CASS
     if cmd_exists cass; then
         run_cmd "CASS" update_run_verified_installer cass --easy-mode --verify
-        ensure_cass_robot_compat_wrapper
     fi
 
     # CASS Memory
@@ -1236,6 +1139,20 @@ update_stack() {
     # SLB
     if cmd_exists slb; then
         run_cmd "SLB" update_run_verified_installer slb
+    fi
+
+    # RU (Repo Updater)
+    if cmd_exists ru; then
+        run_cmd "RU" update_run_verified_installer ru --easy-mode
+    fi
+
+    # DCG (Destructive Command Guard)
+    if cmd_exists dcg; then
+        run_cmd "DCG" update_run_verified_installer dcg --easy-mode
+        # Re-register hook after update to ensure latest version is active
+        if cmd_exists claude; then
+            run_cmd "DCG Hook" dcg install --force 2>/dev/null || true
+        fi
     fi
 }
 
@@ -1643,18 +1560,6 @@ EOF
 }
 
 main() {
-    # Guard against running as root (unless ACFS is actually installed in /root)
-    if [[ $EUID -eq 0 ]] && [[ "${HOME}" != "/root" ]]; then
-        echo -e "${YELLOW}Warning: Running as root but HOME is $HOME.${NC}"
-        echo "ACFS update should typically be run as the target user (e.g. ubuntu)."
-        if [[ "$YES_MODE" != "true" ]]; then
-            read -r -p "Continue anyway? [y/N] " response
-            if [[ ! "$response" =~ ^[Yy] ]]; then
-                exit 1
-            fi
-        fi
-    fi
-
     # Ensure PATH includes user tool directories
     ensure_path
 
@@ -1769,6 +1674,19 @@ main() {
                 ;;
         esac
     done
+
+    # Guard against running as root (unless ACFS is actually installed in /root)
+    # This check is placed after argument parsing so --yes works correctly
+    if [[ $EUID -eq 0 ]] && [[ "${HOME}" != "/root" ]]; then
+        echo -e "${YELLOW}Warning: Running as root but HOME is $HOME.${NC}"
+        echo "ACFS update should typically be run as the target user (e.g. ubuntu)."
+        if [[ "$YES_MODE" != "true" ]]; then
+            read -r -p "Continue anyway? [y/N] " response
+            if [[ ! "$response" =~ ^[Yy] ]]; then
+                exit 1
+            fi
+        fi
+    fi
 
     # Initialize logging
     init_logging

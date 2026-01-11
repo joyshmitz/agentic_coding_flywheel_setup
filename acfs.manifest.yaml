@@ -311,6 +311,53 @@ modules:
       Then log in with your Google account at the URL shown.
       Once connected, you can access your VPS via its Tailscale IP or hostname.
 
+  - id: network.ssh_keepalive
+    description: Configure SSH server keepalive to prevent VPN/NAT disconnects
+    category: network
+    phase: 5
+    run_as: root
+    optional: true
+    enabled_by_default: true
+    tags: [networking, remote-dev, ssh]
+    dependencies:
+      - base.system
+    installed_check:
+      run_as: current
+      command: |
+        # Check if ClientAliveInterval is configured (non-zero)
+        grep -qE '^ClientAliveInterval[[:space:]]+[1-9]' /etc/ssh/sshd_config 2>/dev/null
+    install:
+      - |
+        # Backup original sshd_config if not already backed up
+        if [[ ! -f /etc/ssh/sshd_config.acfs.bak ]]; then
+          cp /etc/ssh/sshd_config /etc/ssh/sshd_config.acfs.bak
+        fi
+
+        # Configure SSH keepalive settings
+        # ClientAliveInterval: send keepalive every 60 seconds
+        # ClientAliveCountMax: disconnect after 3 missed (3 minutes of real disconnect)
+
+        # Remove any existing ClientAlive settings
+        sed -i '/^#*ClientAliveInterval/d' /etc/ssh/sshd_config
+        sed -i '/^#*ClientAliveCountMax/d' /etc/ssh/sshd_config
+
+        # Add new settings at the end
+        echo "" >> /etc/ssh/sshd_config
+        echo "# ACFS: SSH keepalive for VPN/NAT resilience" >> /etc/ssh/sshd_config
+        echo "ClientAliveInterval 60" >> /etc/ssh/sshd_config
+        echo "ClientAliveCountMax 3" >> /etc/ssh/sshd_config
+
+        # Reload sshd (doesn't kill existing connections)
+        systemctl reload sshd || systemctl reload ssh || true
+    verify:
+      - grep -E '^ClientAliveInterval[[:space:]]+60' /etc/ssh/sshd_config
+      - grep -E '^ClientAliveCountMax[[:space:]]+3' /etc/ssh/sshd_config
+    docs_url: https://man.openbsd.org/sshd_config#ClientAliveInterval
+    post_install_message: |
+      SSH keepalive configured! Your connections will now survive VPN/NAT timeouts.
+      Settings: ClientAliveInterval 60, ClientAliveCountMax 3
+      Original config backed up to /etc/ssh/sshd_config.acfs.bak
+
   # ============================================================
   # PHASE 6: Language runtimes
   # ============================================================
@@ -912,129 +959,8 @@ modules:
       tool: cass
       runner: bash
       args: ["--easy-mode", "--verify"]
-    install:
-      - |
-        # Install a small compatibility wrapper for older tooling (e.g., NTM v1.2.0)
-        # that expects `cass robot <subcommand>`. Modern CASS uses `cass <subcommand> --robot`.
-        # Best-effort: never fail install if we cannot write the wrapper.
-        if cass robot --help >/dev/null 2>&1; then
-          exit 0
-        fi
-
-        cass_path="$(command -v cass 2>/dev/null || true)"
-        if [[ -z "$cass_path" ]]; then
-          echo "WARN: cass not found for wrapper setup" >&2
-          exit 0
-        fi
-
-        cass_dir="$(cd "$(dirname "$cass_path")" 2>/dev/null && pwd -P || echo "")"
-        if [[ -z "$cass_dir" ]]; then
-          echo "WARN: could not resolve cass directory for wrapper setup" >&2
-          exit 0
-        fi
-
-        cass_real="${cass_dir}/cass.real"
-
-        # Idempotency: wrapper already installed.
-        if [[ -x "$cass_real" ]] && head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
-          exit 0
-        fi
-
-        if [[ ! -f "$cass_path" ]]; then
-          echo "WARN: cass path is not a regular file: $cass_path" >&2
-          exit 0
-        fi
-        if [[ ! -w "$cass_path" ]]; then
-          echo "WARN: cannot write to cass binary path (skipping wrapper): $cass_path" >&2
-          exit 0
-        fi
-
-        # Safety: if cass is already our wrapper but cass.real is missing, do not
-        # "move" the wrapper into place (it would create an infinite exec loop).
-        if [[ ! -e "$cass_real" ]] && head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
-          echo "WARN: cass wrapper detected but cass.real is missing; skipping wrapper setup" >&2
-          exit 0
-        fi
-
-        # Move the real binary aside, then install the wrapper at the original path.
-        # Handle both fresh install and the case where CASS was updated (replaced wrapper with new binary).
-        if [[ ! -e "$cass_real" ]]; then
-          # First time: move original binary to cass.real
-          if ! mv "$cass_path" "$cass_real" 2>/dev/null; then
-            echo "WARN: failed to move cass to cass.real (skipping wrapper)" >&2
-            exit 0
-          fi
-          chmod +x "$cass_real" 2>/dev/null || true
-        elif ! head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
-          # cass.real exists but current cass is NOT our wrapper.
-          # Only update cass.real if cass is a binary (not a script).
-          # Safety: if it's a script (starts with #!), don't overwrite the real binary.
-          if [[ "$(head -c 2 "$cass_path" 2>/dev/null || true)" == "#!" ]]; then
-            echo "WARN: cass is a script but not our wrapper (skipping cass.real update)" >&2
-          else
-            # cass is a binary - safe to update cass.real
-            if ! mv "$cass_path" "$cass_real" 2>/dev/null; then
-              echo "WARN: failed to update cass.real with new binary (skipping wrapper)" >&2
-              exit 0
-            fi
-            chmod +x "$cass_real" 2>/dev/null || true
-          fi
-        fi
-
-        if ! cat > "$cass_path" <<'EOF'
-        #!/usr/bin/env bash
-        # ACFS CASS WRAPPER (compat): adds `cass robot <subcommand>` support for older NTM.
-        set -euo pipefail
-
-        real="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P)/cass.real"
-        if [[ ! -x "$real" ]]; then
-          echo "ERROR: cass.real not found at: $real" >&2
-          exit 127
-        fi
-
-        if [[ $# -gt 0 && "${1:-}" == "robot" ]]; then
-          shift || true
-
-          if [[ $# -eq 0 || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-            cat <<'EOT'
-        Usage: cass robot <subcommand> [args...]
-
-        Compat wrapper installed by ACFS.
-        Translates:
-          cass robot <subcommand> ...  ->  cass <subcommand> ... --robot
-
-        Examples:
-          cass robot search "error handling" --limit 10
-          cass search "error handling" --robot --limit 10
-        EOT
-            exit 0
-          fi
-
-          for arg in "$@"; do
-            if [[ "$arg" == "--robot" ]]; then
-              exec "$real" "$@"
-            fi
-          done
-
-          exec "$real" "$@" --robot
-        fi
-
-        exec "$real" "$@"
-        EOF
-        then
-          echo "WARN: failed to write cass wrapper (skipping)" >&2
-          exit 0
-        fi
-        chmod +x "$cass_path" 2>/dev/null || true
-
-        if ! cass robot --help >/dev/null 2>&1; then
-          echo "WARN: cass wrapper installed, but cass robot still failing" >&2
-        fi
-
-        exit 0
     verify:
       - cass --help || cass --version
-      - cass robot --help || true
 
   - id: stack.cm
     description: Procedural memory for agents (cass-memory)
@@ -1112,6 +1038,102 @@ modules:
       # Use 'slb' alone (shows quick reference) since --help may have exit code issues
       # Need to source updated PATH for verification
       - export PATH="$HOME/go/bin:$PATH" && slb >/dev/null 2>&1 || slb --help >/dev/null 2>&1
+
+  - id: stack.dcg
+    description: Destructive Command Guard - Claude Code hook blocking dangerous git/fs commands
+    category: stack
+    phase: 9
+    run_as: target_user
+    optional: false
+    enabled_by_default: true
+    tags: [recommended, safety]
+    dependencies:
+      - agents.claude   # dcg is a Claude Code hook, only useful if Claude is installed
+    installed_check:
+      run_as: target_user
+      command: "command -v dcg"
+    verified_installer:
+      tool: dcg
+      runner: bash
+      args: ["--easy-mode"]
+    install: []
+    verify:
+      - dcg --version
+      - |
+          settings="$HOME/.claude/settings.json"
+          alt_settings="$HOME/.config/claude/settings.json"
+          if [[ -f "$settings" ]]; then
+            grep -q "dcg" "$settings"
+          elif [[ -f "$alt_settings" ]]; then
+            grep -q "dcg" "$alt_settings"
+          else
+            exit 1
+          fi
+
+  - id: stack.ru
+    description: Repo Updater - multi-repo sync + AI-driven commit automation
+    category: stack
+    phase: 9
+    run_as: target_user
+    optional: false
+    enabled_by_default: true
+    tags: [recommended]
+    dependencies:
+      - cli.modern   # for gh, tmux
+      - stack.ntm    # for session management
+    installed_check:
+      run_as: target_user
+      command: "command -v ru"
+    verified_installer:
+      tool: ru
+      runner: bash
+      args: ["--easy-mode"]
+    install: []
+    verify:
+      - ru --version
+
+  # ============================================================
+  # PHASE 9B: Utilities (giil, csctf)
+  # ============================================================
+  - id: utils.giil
+    description: Get Image from Internet Link - download cloud images for visual debugging
+    category: tools
+    phase: 9
+    run_as: target_user
+    optional: true
+    enabled_by_default: true
+    tags: [utility]
+    dependencies:
+      - base.system   # giil installer auto-installs Node.js + Playwright if needed
+    installed_check:
+      run_as: target_user
+      command: "command -v giil"
+    verified_installer:
+      tool: giil
+      runner: bash
+    install: []
+    verify:
+      - giil --help || giil --version
+
+  - id: utils.csctf
+    description: Chat Shared Conversation to File - convert AI share links to Markdown/HTML
+    category: tools
+    phase: 9
+    run_as: target_user
+    optional: true
+    enabled_by_default: true
+    tags: [utility]
+    dependencies:
+      - base.system   # csctf provides prebuilt binaries; installer handles deps
+    installed_check:
+      run_as: target_user
+      command: "command -v csctf"
+    verified_installer:
+      tool: csctf
+      runner: bash
+    install: []
+    verify:
+      - csctf --help || csctf --version
 
   # ============================================================
   # PHASE 10: Finalization (onboard, doctor, verification)

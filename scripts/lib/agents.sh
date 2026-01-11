@@ -84,7 +84,7 @@ _agent_check_bun() {
 
     if [[ ! -x "$bun_bin" ]]; then
         log_warn "Bun not found at $bun_bin"
-        log_warn "Install bun first by re-running the ACFS installer (language runtimes phase)"
+        log_warn "Install bun first: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 5"
         return 1
     fi
     return 0
@@ -244,12 +244,75 @@ upgrade_codex_cli() {
     fi
 
     log_detail "Upgrading Codex CLI..."
-    _agent_run_as_user "\"$bun_bin\" install -g --trust $CODEX_PACKAGE" && log_success "Codex CLI upgraded"
+    if _agent_run_as_user "\"$bun_bin\" install -g --trust $CODEX_PACKAGE"; then
+        log_success "Codex CLI upgraded"
+        return 0
+    else
+        log_warn "Codex CLI upgrade failed"
+        return 1
+    fi
 }
 
 # ============================================================
 # Gemini CLI Installation (Google)
 # ============================================================
+
+# Configure Gemini CLI settings for tmux/agent compatibility
+# Sets enableInteractiveShell: false to avoid node-pty issues in tmux panes
+_configure_gemini_settings() {
+    local target_home="$1"
+    local settings_dir="$target_home/.gemini"
+    local settings_file="$settings_dir/settings.json"
+
+    # Create settings directory if needed
+    _agent_run_as_user "mkdir -p '$settings_dir'" || return 1
+
+    # If settings file doesn't exist, create it with tmux-compatible defaults
+    if [[ ! -f "$settings_file" ]]; then
+        log_detail "Creating Gemini settings for tmux compatibility..."
+        # Write default settings - the JSON is simple enough to inline
+        # Note: Using double quotes for variable expansion, escaping inner quotes
+        _agent_run_as_user "cat > '$settings_file' << 'GEMINI_EOF'
+{
+  \"tools\": {
+    \"shell\": {
+      \"enableInteractiveShell\": false
+    }
+  }
+}
+GEMINI_EOF"
+        return $?
+    fi
+
+    # Settings file exists - merge our settings if jq is available
+    if command -v jq &>/dev/null; then
+        # Check if enableInteractiveShell is already set (use has() to properly detect false values)
+        local current_value
+        current_value=$(_agent_run_as_user "jq -r 'if .tools.shell | has(\"enableInteractiveShell\") then .tools.shell.enableInteractiveShell | tostring else \"unset\" end' '$settings_file'" 2>/dev/null || echo "error")
+
+        if [[ "$current_value" == "false" ]]; then
+            # Already configured correctly for tmux
+            log_detail "Gemini shell settings already configured (enableInteractiveShell=false)"
+        elif [[ "$current_value" == "unset" || "$current_value" == "error" || "$current_value" == "true" ]]; then
+            # Need to add or fix the setting
+            log_detail "Configuring Gemini shell settings for tmux compatibility..."
+            local tmp_file="$settings_dir/.settings.tmp.$$"
+            # Run jq and redirect INSIDE the _agent_run_as_user command so file is owned by target user
+            if _agent_run_as_user "jq '.tools = (.tools // {}) | .tools.shell = (.tools.shell // {}) | .tools.shell.enableInteractiveShell = false' '$settings_file' > '$tmp_file' && mv '$tmp_file' '$settings_file'" 2>/dev/null; then
+                : # Success
+            else
+                _agent_run_as_user "rm -f '$tmp_file'" 2>/dev/null
+                log_warn "Could not update Gemini settings automatically"
+            fi
+        else
+            log_detail "Gemini shell settings already configured (enableInteractiveShell=$current_value)"
+        fi
+    else
+        log_detail "jq not available; skipping Gemini settings merge"
+    fi
+
+    return 0
+}
 
 # Install Gemini CLI via bun
 # The official package is @google/gemini-cli
@@ -264,12 +327,16 @@ install_gemini_cli() {
     # Check if already installed (wrapper takes precedence)
     if [[ -x "$gemini_wrapper" ]]; then
         log_detail "Gemini CLI already installed at $gemini_wrapper"
+        # Ensure tmux-compatible settings are configured
+        _configure_gemini_settings "$target_home"
         return 0
     fi
     if [[ -x "$gemini_bin" ]]; then
         log_detail "Gemini CLI already installed at $gemini_bin"
         # Create wrapper if missing (fixes node PATH issues)
         _agent_create_bun_wrapper "$target_home" "gemini"
+        # Ensure tmux-compatible settings are configured
+        _configure_gemini_settings "$target_home"
         return 0
     fi
 
@@ -285,6 +352,8 @@ install_gemini_cli() {
         if [[ -x "$gemini_bin" ]]; then
             # Create wrapper script that uses bun as runtime (avoids node PATH issues)
             _agent_create_bun_wrapper "$target_home" "gemini"
+            # Configure settings for tmux/agent compatibility
+            _configure_gemini_settings "$target_home"
             log_success "Gemini CLI installed"
             log_detail "Note: Run 'gemini' to complete Google login"
             return 0
@@ -306,7 +375,13 @@ upgrade_gemini_cli() {
     fi
 
     log_detail "Upgrading Gemini CLI..."
-    _agent_run_as_user "\"$bun_bin\" install -g --trust $GEMINI_PACKAGE" && log_success "Gemini CLI upgraded"
+    if _agent_run_as_user "\"$bun_bin\" install -g --trust $GEMINI_PACKAGE"; then
+        log_success "Gemini CLI upgraded"
+        return 0
+    else
+        log_warn "Gemini CLI upgrade failed"
+        return 1
+    fi
 }
 
 # ============================================================
@@ -427,14 +502,32 @@ get_agent_versions() {
 # ============================================================
 
 # Upgrade all agents to latest versions
+# Returns: 0 if all succeeded, 1 if any failed
 upgrade_all_agents() {
     log_detail "Upgrading all coding agents..."
 
-    upgrade_claude_code
-    upgrade_codex_cli
-    upgrade_gemini_cli
+    local failed=0
 
-    log_success "All coding agents upgraded"
+    if ! upgrade_claude_code; then
+        ((failed++))
+    fi
+    if ! upgrade_codex_cli; then
+        ((failed++))
+    fi
+    if ! upgrade_gemini_cli; then
+        ((failed++))
+    fi
+
+    if ((failed == 0)); then
+        log_success "All coding agents upgraded"
+        return 0
+    elif ((failed == 3)); then
+        log_error "All agent upgrades failed"
+        return 1
+    else
+        log_warn "Some agent upgrades failed ($failed of 3)"
+        return 1
+    fi
 }
 
 # ============================================================

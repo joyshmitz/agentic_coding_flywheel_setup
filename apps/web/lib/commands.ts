@@ -233,6 +233,22 @@ export const COMMANDS: CommandRef[] = [
     example: "slb",
   },
   {
+    name: "dcg",
+    fullName: "Destructive Command Guard",
+    description: "Claude Code hook blocking dangerous git/fs commands before execution.",
+    category: "stack",
+    example: "dcg test 'rm -rf /'",
+    aliases: ["destructive-command-guard"],
+  },
+  {
+    name: "ru",
+    fullName: "Repo Updater",
+    description: "Multi-repo sync with AI-driven commit automation.",
+    category: "stack",
+    example: "ru sync -j4",
+    aliases: ["repo-updater"],
+  },
+  {
     name: "am",
     fullName: "Agent Mail",
     description: "Agent coordination and messaging.",

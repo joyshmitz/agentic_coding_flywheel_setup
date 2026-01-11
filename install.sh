@@ -43,9 +43,10 @@ export DEBCONF_NONINTERACTIVE_SEEN=true
 # ============================================================
 # Configuration
 # ============================================================
-ACFS_VERSION="0.1.0"
-ACFS_REPO_OWNER="Dicklesworthstone"
-ACFS_REPO_NAME="agentic_coding_flywheel_setup"
+ACFS_VERSION="0.3.0"
+# Allow fork installations by overriding these via environment variables
+ACFS_REPO_OWNER="${ACFS_REPO_OWNER:-Dicklesworthstone}"
+ACFS_REPO_NAME="${ACFS_REPO_NAME:-agentic_coding_flywheel_setup}"
 ACFS_REF="${ACFS_REF:-main}"
 ACFS_RAW="https://raw.githubusercontent.com/${ACFS_REPO_OWNER}/${ACFS_REPO_NAME}/${ACFS_REF}"
 export ACFS_RAW ACFS_VERSION
@@ -1435,7 +1436,6 @@ run_as_target() {
 declare -A ACFS_UPSTREAM_URLS=()
 declare -A ACFS_UPSTREAM_SHA256=()
 ACFS_UPSTREAM_LOADED=false
-ACFS_CHECKSUMS_SOURCE=""  # Tracks where checksums were loaded from (bootstrap, local, github-api, raw-cdn)
 
 acfs_calculate_sha256() {
     if command_exists sha256sum; then
@@ -1606,13 +1606,10 @@ acfs_load_upstream_checksums() {
         [[ "$checksums_source" == "unknown" ]] && checksums_source="github-api"
     fi
 
-    # Store source for debugging
-    ACFS_CHECKSUMS_SOURCE="$checksums_source"
-
     acfs_parse_checksums_content "$content"
 
     local required_tools=(
-        atuin bun bv caam cass claude cm mcp_agent_mail ntm ohmyzsh rust slb ubs uv zoxide
+        atuin bun bv caam cass claude cm dcg mcp_agent_mail ntm ohmyzsh rust slb ubs uv zoxide
     )
     local missing_required_tools=false
     local tool
@@ -1788,7 +1785,10 @@ acfs_chown_tree() {
     fi
 
     # GNU coreutils: -h = do not dereference symlinks; -R = recursive.
-    $SUDO chown -hR "$owner_group" "$resolved"
+    if ! $SUDO chown -hR "$owner_group" "$resolved"; then
+        log_error "acfs_chown_tree: chown failed for $resolved"
+        return 1
+    fi
 }
 
 confirm_or_exit() {
@@ -3520,129 +3520,6 @@ install_stack_phase() {
         try_step "Installing CASS" acfs_run_verified_upstream_script_as_target "cass" "bash" --easy-mode --verify || log_warn "CASS installation may have failed"
     fi
 
-    # NTM↔CASS compatibility:
-    # NTM v1.2.0 calls `cass robot search ...`, but modern CASS uses `cass search ... --robot`.
-    # Install a small, idempotent wrapper so `cass robot <subcommand>` works.
-    if binary_installed "cass"; then
-        log_detail "Ensuring CASS 'robot' compatibility wrapper"
-        # Best-effort: do not fail the full install if we cannot write a wrapper.
-        run_as_target_shell <<'ACFS_CASS_ROBOT_COMPAT' || log_warn "CASS 'robot' wrapper setup failed (ntm send may still fail)"
-if cass robot --help >/dev/null 2>&1; then
-  exit 0
-fi
-
-cass_path="$(command -v cass 2>/dev/null || true)"
-if [[ -z "$cass_path" ]]; then
-  echo "WARN: cass not found for wrapper setup" >&2
-  exit 0
-fi
-
-cass_dir="$(cd "$(dirname "$cass_path")" 2>/dev/null && pwd -P || echo "")"
-if [[ -z "$cass_dir" ]]; then
-  echo "WARN: could not resolve cass directory for wrapper setup" >&2
-  exit 0
-fi
-
-cass_real="${cass_dir}/cass.real"
-
-# Idempotency: if wrapper is already installed, do nothing.
-if [[ -x "$cass_real" ]] && head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
-  exit 0
-fi
-
-# Only wrap when we can write to the installed binary location.
-if [[ ! -f "$cass_path" ]]; then
-  echo "WARN: cass path is not a regular file: $cass_path" >&2
-  exit 0
-fi
-if [[ ! -w "$cass_path" ]]; then
-  echo "WARN: cannot write to cass binary path (skipping wrapper): $cass_path" >&2
-  exit 0
-fi
-
-# Safety: if cass is already our wrapper but cass.real is missing, do not try
-# to "move" the wrapper into place (it would create an infinite exec loop).
-if [[ ! -e "$cass_real" ]] && head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
-  echo "WARN: cass wrapper detected but cass.real is missing; skipping wrapper setup" >&2
-  exit 0
-fi
-
-# Move the real binary aside, then install the wrapper at the original path.
-# Handle both fresh install and the case where CASS was updated (replaced wrapper with new binary).
-if [[ ! -e "$cass_real" ]]; then
-  # First time: move original binary to cass.real
-  if ! mv "$cass_path" "$cass_real" 2>/dev/null; then
-    echo "WARN: failed to move cass to cass.real (skipping wrapper)" >&2
-    exit 0
-  fi
-  chmod +x "$cass_real" 2>/dev/null || true
-elif ! head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
-  # cass.real exists but current cass is NOT our wrapper.
-  # Only update cass.real if cass is a binary (not a script).
-  # Safety: if it's a script (starts with #!), don't overwrite the real binary.
-  if [[ "$(head -c 2 "$cass_path" 2>/dev/null || true)" == "#!" ]]; then
-    echo "WARN: cass is a script but not our wrapper (skipping cass.real update)" >&2
-  else
-    # cass is a binary - safe to update cass.real
-    if ! mv "$cass_path" "$cass_real" 2>/dev/null; then
-      echo "WARN: failed to update cass.real with new binary (skipping wrapper)" >&2
-      exit 0
-    fi
-    chmod +x "$cass_real" 2>/dev/null || true
-  fi
-fi
-
-cat > "$cass_path" <<'EOF'
-#!/usr/bin/env bash
-# ACFS CASS WRAPPER (compat): adds `cass robot <subcommand>` support for older NTM.
-set -euo pipefail
-
-real="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P)/cass.real"
-if [[ ! -x "$real" ]]; then
-  echo "ERROR: cass.real not found at: $real" >&2
-  exit 127
-fi
-
-if [[ $# -gt 0 && "${1:-}" == "robot" ]]; then
-  shift || true
-
-  if [[ $# -eq 0 || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-    cat <<'EOT'
-Usage: cass robot <subcommand> [args...]
-
-Compat wrapper installed by ACFS.
-Translates:
-  cass robot <subcommand> ...  ->  cass <subcommand> ... --robot
-
-Examples:
-  cass robot search "error handling" --limit 10
-  cass search "error handling" --robot --limit 10
-EOT
-    exit 0
-  fi
-
-  for arg in "$@"; do
-    if [[ "$arg" == "--robot" ]]; then
-      exec "$real" "$@"
-    fi
-  done
-
-  exec "$real" "$@" --robot
-fi
-
-exec "$real" "$@"
-EOF
-chmod +x "$cass_path" 2>/dev/null || true
-
-# Smoke check; do not fail if it still errors (wrapper is best-effort).
-if ! cass robot --help >/dev/null 2>&1; then
-  echo "WARN: cass wrapper installed, but cass robot still failing" >&2
-fi
-
-exit 0
-ACFS_CASS_ROBOT_COMPAT
-    fi
-
     # CASS Memory System
     if binary_installed "cm"; then
         log_detail "CASS Memory System already installed"
@@ -3665,6 +3542,42 @@ ACFS_CASS_ROBOT_COMPAT
     else
         log_detail "Installing SLB"
         try_step "Installing SLB" acfs_run_verified_upstream_script_as_target "slb" "bash" || log_warn "SLB installation may have failed"
+    fi
+
+    # DCG (Destructive Command Guard)
+    if binary_installed "dcg"; then
+        log_detail "DCG already installed"
+    else
+        log_info "Installing DCG (Destructive Command Guard)..."
+        log_detail "DCG blocks destructive git/fs commands before they run"
+        if try_step "Installing DCG" acfs_run_verified_upstream_script_as_target "dcg" "bash"; then
+            log_success "DCG installed. Run 'dcg doctor' to verify."
+        else
+            log_warn "DCG installation may have failed"
+            log_detail "Recovery: re-run the installer or run the DCG installer manually, then run: dcg install"
+        fi
+    fi
+
+    # Best-effort hook registration (Claude Code)
+    local dcg_bin=""
+    if [[ -x "$TARGET_HOME/.local/bin/dcg" ]]; then
+        dcg_bin="$TARGET_HOME/.local/bin/dcg"
+    elif [[ -x "$TARGET_HOME/.cargo/bin/dcg" ]]; then
+        dcg_bin="$TARGET_HOME/.cargo/bin/dcg"
+    elif [[ -x "/usr/local/bin/dcg" ]]; then
+        dcg_bin="/usr/local/bin/dcg"
+    fi
+
+    if [[ -n "$dcg_bin" ]]; then
+        if try_step "Registering DCG hook" run_as_target "$dcg_bin" install; then
+            log_success "DCG hook registered with Claude Code"
+        else
+            log_warn "DCG hook registration failed"
+            log_detail "Next steps: run: dcg install and check with: dcg doctor"
+        fi
+    else
+        log_warn "DCG hook not registered (dcg binary not found in standard paths)"
+        log_detail "Install DCG first, then run: dcg install"
     fi
 
     log_success "Dicklesworthstone stack installed"
@@ -3707,6 +3620,8 @@ finalize() {
         "06_ntm_command_palette.md"
         "07_flywheel_loop.md"
         "08_keeping_updated.md"
+        "09_ru.md"
+        "10_dcg.md"
     )
     local lesson
     for lesson in "${lesson_files[@]}"; do
@@ -3725,10 +3640,6 @@ finalize() {
     log_detail "Installing acfs scripts"
     try_step "Creating ACFS scripts directory" $SUDO mkdir -p "$ACFS_HOME/scripts/lib" || return 1
     
-    # Install Claude hooks
-    try_step "Creating ACFS claude directory" $SUDO mkdir -p "$ACFS_HOME/claude/hooks" || return 1
-    try_step "Installing git_safety_guard.py" install_asset "acfs/claude/hooks/git_safety_guard.py" "$ACFS_HOME/claude/hooks/git_safety_guard.py" || return 1
-
     # Install script libraries
     try_step "Installing logging.sh" install_asset "scripts/lib/logging.sh" "$ACFS_HOME/scripts/lib/logging.sh" || return 1
     try_step "Installing gum_ui.sh" install_asset "scripts/lib/gum_ui.sh" "$ACFS_HOME/scripts/lib/gum_ui.sh" || return 1
@@ -3892,7 +3803,7 @@ run_smoke_test() {
         ((critical_passed += 1))
     else
         echo "✖ Languages: missing ${missing_lang[*]}" >&2
-        echo "    Fix: re-run installer (phase 5) and check $ACFS_LOG_DIR/install.log" >&2
+        echo "    Fix: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 5" >&2
         ((critical_failed += 1))
     fi
 
@@ -3906,7 +3817,7 @@ run_smoke_test() {
         ((critical_passed += 1))
     else
         echo "✖ Agents: missing ${missing_agents[*]}" >&2
-        echo "    Fix: re-run installer (phase 6) to install agent CLIs" >&2
+        echo "    Fix: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 6" >&2
         ((critical_failed += 1))
     fi
 
@@ -3916,7 +3827,7 @@ run_smoke_test() {
         ((critical_passed += 1))
     else
         echo "✖ NTM: not working" >&2
-        echo "    Fix: re-run installer (phase 8) and check $ACFS_LOG_DIR/install.log" >&2
+        echo "    Fix: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 8" >&2
         ((critical_failed += 1))
     fi
 
@@ -3926,7 +3837,7 @@ run_smoke_test() {
         ((critical_passed += 1))
     else
         echo "✖ Onboard: missing" >&2
-        echo "    Fix: re-run installer (phase 9) or install onboard to $TARGET_HOME/.local/bin/onboard" >&2
+        echo "    Fix: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 9" >&2
         ((critical_failed += 1))
     fi
 
@@ -3934,7 +3845,7 @@ run_smoke_test() {
     if [[ -x "$TARGET_HOME/mcp_agent_mail/scripts/run_server_with_token.sh" ]]; then
         echo "✅ Agent Mail: installed (run 'am' to start)" >&2
     else
-        echo "⚠️ Agent Mail: not installed (re-run installer phase 8)" >&2
+        echo "⚠️ Agent Mail: not installed (re-run: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 8)" >&2
         ((warnings += 1))
     fi
 

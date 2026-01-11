@@ -93,7 +93,7 @@ acfs_security_init() {
 }
 
 # Category: stack
-# Modules: 8
+# Modules: 10
 
 # Named tmux manager (agent cockpit)
 install_stack_ntm() {
@@ -144,7 +144,7 @@ install_stack_ntm() {
                 log_error "stack.ntm: acfs_security_init failed - check security.sh and checksums.yaml"
             fi
 
-            # No unverified fallback: verified install is required
+            # Verified install is required - no fallback
             if [[ "$install_success" = "true" ]]; then
                 true
             else
@@ -303,7 +303,7 @@ install_stack_ultimate_bug_scanner() {
                 log_error "stack.ultimate_bug_scanner: acfs_security_init failed - check security.sh and checksums.yaml"
             fi
 
-            # No unverified fallback: verified install is required
+            # Verified install is required - no fallback
             if [[ "$install_success" = "true" ]]; then
                 true
             else
@@ -391,7 +391,7 @@ install_stack_beads_viewer() {
                 log_error "stack.beads_viewer: acfs_security_init failed - check security.sh and checksums.yaml"
             fi
 
-            # No unverified fallback: verified install is required
+            # Verified install is required - no fallback
             if [[ "$install_success" = "true" ]]; then
                 true
             else
@@ -469,7 +469,7 @@ install_stack_cass() {
                 log_error "stack.cass: acfs_security_init failed - check security.sh and checksums.yaml"
             fi
 
-            # No unverified fallback: verified install is required
+            # Verified install is required - no fallback
             if [[ "$install_success" = "true" ]]; then
                 true
             else
@@ -478,134 +478,6 @@ install_stack_cass() {
             fi
         }; then
             log_error "stack.cass: verified installer failed"
-            return 1
-        fi
-    fi
-    if [[ "${DRY_RUN:-false}" = "true" ]]; then
-        log_info "dry-run: install: # Install a small compatibility wrapper for older tooling (e.g., NTM v1.2.0) (target_user)"
-    else
-        if ! run_as_target_shell <<'INSTALL_STACK_CASS'
-# Install a small compatibility wrapper for older tooling (e.g., NTM v1.2.0)
-# that expects `cass robot <subcommand>`. Modern CASS uses `cass <subcommand> --robot`.
-# Best-effort: never fail install if we cannot write the wrapper.
-if cass robot --help >/dev/null 2>&1; then
-  exit 0
-fi
-
-cass_path="$(command -v cass 2>/dev/null || true)"
-if [[ -z "$cass_path" ]]; then
-  echo "WARN: cass not found for wrapper setup" >&2
-  exit 0
-fi
-
-cass_dir="$(cd "$(dirname "$cass_path")" 2>/dev/null && pwd -P || echo "")"
-if [[ -z "$cass_dir" ]]; then
-  echo "WARN: could not resolve cass directory for wrapper setup" >&2
-  exit 0
-fi
-
-cass_real="${cass_dir}/cass.real"
-
-# Idempotency: wrapper already installed.
-if [[ -x "$cass_real" ]] && head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
-  exit 0
-fi
-
-if [[ ! -f "$cass_path" ]]; then
-  echo "WARN: cass path is not a regular file: $cass_path" >&2
-  exit 0
-fi
-if [[ ! -w "$cass_path" ]]; then
-  echo "WARN: cannot write to cass binary path (skipping wrapper): $cass_path" >&2
-  exit 0
-fi
-
-# Safety: if cass is already our wrapper but cass.real is missing, do not
-# "move" the wrapper into place (it would create an infinite exec loop).
-if [[ ! -e "$cass_real" ]] && head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
-  echo "WARN: cass wrapper detected but cass.real is missing; skipping wrapper setup" >&2
-  exit 0
-fi
-
-# Move the real binary aside, then install the wrapper at the original path.
-# Handle both fresh install and the case where CASS was updated (replaced wrapper with new binary).
-if [[ ! -e "$cass_real" ]]; then
-  # First time: move original binary to cass.real
-  if ! mv "$cass_path" "$cass_real" 2>/dev/null; then
-    echo "WARN: failed to move cass to cass.real (skipping wrapper)" >&2
-    exit 0
-  fi
-  chmod +x "$cass_real" 2>/dev/null || true
-elif ! head -n 2 "$cass_path" 2>/dev/null | grep -q "ACFS CASS WRAPPER"; then
-  # cass.real exists but current cass is NOT our wrapper.
-  # Only update cass.real if cass is a binary (not a script).
-  # Safety: if it's a script (starts with #!), don't overwrite the real binary.
-  if [[ "$(head -c 2 "$cass_path" 2>/dev/null || true)" == "#!" ]]; then
-    echo "WARN: cass is a script but not our wrapper (skipping cass.real update)" >&2
-  else
-    # cass is a binary - safe to update cass.real
-    if ! mv "$cass_path" "$cass_real" 2>/dev/null; then
-      echo "WARN: failed to update cass.real with new binary (skipping wrapper)" >&2
-      exit 0
-    fi
-    chmod +x "$cass_real" 2>/dev/null || true
-  fi
-fi
-
-if ! cat > "$cass_path" <<'EOF'
-#!/usr/bin/env bash
-# ACFS CASS WRAPPER (compat): adds `cass robot <subcommand>` support for older NTM.
-set -euo pipefail
-
-real="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd -P)/cass.real"
-if [[ ! -x "$real" ]]; then
-  echo "ERROR: cass.real not found at: $real" >&2
-  exit 127
-fi
-
-if [[ $# -gt 0 && "${1:-}" == "robot" ]]; then
-  shift || true
-
-  if [[ $# -eq 0 || "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-    cat <<'EOT'
-Usage: cass robot <subcommand> [args...]
-
-Compat wrapper installed by ACFS.
-Translates:
-  cass robot <subcommand> ...  ->  cass <subcommand> ... --robot
-
-Examples:
-  cass robot search "error handling" --limit 10
-  cass search "error handling" --robot --limit 10
-EOT
-    exit 0
-  fi
-
-  for arg in "$@"; do
-    if [[ "$arg" == "--robot" ]]; then
-      exec "$real" "$@"
-    fi
-  done
-
-  exec "$real" "$@" --robot
-fi
-
-exec "$real" "$@"
-EOF
-then
-  echo "WARN: failed to write cass wrapper (skipping)" >&2
-  exit 0
-fi
-chmod +x "$cass_path" 2>/dev/null || true
-
-if ! cass robot --help >/dev/null 2>&1; then
-  echo "WARN: cass wrapper installed, but cass robot still failing" >&2
-fi
-
-exit 0
-INSTALL_STACK_CASS
-        then
-            log_error "stack.cass: install command failed: # Install a small compatibility wrapper for older tooling (e.g., NTM v1.2.0)"
             return 1
         fi
     fi
@@ -620,16 +492,6 @@ INSTALL_STACK_CASS
         then
             log_error "stack.cass: verify failed: cass --help || cass --version"
             return 1
-        fi
-    fi
-    if [[ "${DRY_RUN:-false}" = "true" ]]; then
-        log_info "dry-run: verify (optional): cass robot --help (target_user)"
-    else
-        if ! run_as_target_shell <<'INSTALL_STACK_CASS'
-cass robot --help
-INSTALL_STACK_CASS
-        then
-            log_warn "Optional verify failed: stack.cass"
         fi
     fi
 
@@ -685,7 +547,7 @@ install_stack_cm() {
                 log_error "stack.cm: acfs_security_init failed - check security.sh and checksums.yaml"
             fi
 
-            # No unverified fallback: verified install is required
+            # Verified install is required - no fallback
             if [[ "$install_success" = "true" ]]; then
                 true
             else
@@ -773,7 +635,7 @@ install_stack_caam() {
                 log_error "stack.caam: acfs_security_init failed - check security.sh and checksums.yaml"
             fi
 
-            # No unverified fallback: verified install is required
+            # Verified install is required - no fallback
             if [[ "$install_success" = "true" ]]; then
                 true
             else
@@ -856,6 +718,181 @@ INSTALL_STACK_SLB
     log_success "stack.slb installed"
 }
 
+# Destructive Command Guard - Claude Code hook blocking dangerous git/fs commands
+install_stack_dcg() {
+    local module_id="stack.dcg"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing stack.dcg"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verified installer: stack.dcg"
+    else
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
+                if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="dcg"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "stack.dcg: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s' '--' '--easy-mode'; then
+                            install_success=true
+                        else
+                            log_error "stack.dcg: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "stack.dcg: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "stack.dcg: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "stack.dcg: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "stack.dcg: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # Verified install is required - no fallback
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for stack.dcg"
+                false
+            fi
+        }; then
+            log_error "stack.dcg: verified installer failed"
+            return 1
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: dcg --version (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_DCG'
+dcg --version
+INSTALL_STACK_DCG
+        then
+            log_error "stack.dcg: verify failed: dcg --version"
+            return 1
+        fi
+    fi
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: settings=\"\$HOME/.claude/settings.json\" (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_DCG'
+settings="$HOME/.claude/settings.json"
+alt_settings="$HOME/.config/claude/settings.json"
+if [[ -f "$settings" ]]; then
+  grep -q "dcg" "$settings"
+elif [[ -f "$alt_settings" ]]; then
+  grep -q "dcg" "$alt_settings"
+else
+  exit 1
+fi
+INSTALL_STACK_DCG
+        then
+            log_error "stack.dcg: verify failed: settings=\"\$HOME/.claude/settings.json\""
+            return 1
+        fi
+    fi
+
+    log_success "stack.dcg installed"
+}
+
+# Repo Updater - multi-repo sync + AI-driven commit automation
+install_stack_ru() {
+    local module_id="stack.ru"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing stack.ru"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verified installer: stack.ru"
+    else
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
+                if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="ru"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "stack.ru: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s' '--' '--easy-mode'; then
+                            install_success=true
+                        else
+                            log_error "stack.ru: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "stack.ru: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "stack.ru: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "stack.ru: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "stack.ru: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # Verified install is required - no fallback
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for stack.ru"
+                false
+            fi
+        }; then
+            log_error "stack.ru: verified installer failed"
+            return 1
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: ru --version (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_RU'
+ru --version
+INSTALL_STACK_RU
+        then
+            log_error "stack.ru: verify failed: ru --version"
+            return 1
+        fi
+    fi
+
+    log_success "stack.ru installed"
+}
+
 # Install all stack modules
 install_stack() {
     log_section "Installing stack modules"
@@ -867,6 +904,8 @@ install_stack() {
     install_stack_cm
     install_stack_caam
     install_stack_slb
+    install_stack_dcg
+    install_stack_ru
 }
 
 # Run if executed directly

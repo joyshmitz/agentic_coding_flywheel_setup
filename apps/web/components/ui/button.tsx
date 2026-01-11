@@ -4,8 +4,10 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { m, type HTMLMotionProps } from "framer-motion";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { springs } from "@/components/motion";
+import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 
 /**
  * Button variants with Apple HIG compliant sizing:
@@ -57,6 +59,10 @@ interface ButtonProps
   children?: React.ReactNode;
   /** Disable motion animations (for server components or reduced motion) */
   disableMotion?: boolean;
+  /** Show loading spinner and disable button */
+  loading?: boolean;
+  /** Optional text to show alongside spinner when loading (if omitted, only spinner shown) */
+  loadingText?: string;
 }
 
 /**
@@ -77,11 +83,36 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       size = "default",
       asChild = false,
       disableMotion = false,
+      loading = false,
+      loadingText,
       children,
+      disabled,
       ...props
     },
     ref
   ) => {
+    const isDisabled = disabled || loading;
+    const prefersReducedMotion = useReducedMotion();
+    const shouldDisableMotion = disableMotion || prefersReducedMotion;
+
+    // Loading spinner component
+    const LoadingSpinner = () => (
+      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+    );
+
+    // Render content with optional loading state
+    const renderContent = () => {
+      if (loading) {
+        return (
+          <>
+            <LoadingSpinner />
+            {loadingText && <span>{loadingText}</span>}
+          </>
+        );
+      }
+      return children;
+    };
+
     // For asChild, use Slot without motion
     if (asChild) {
       return (
@@ -95,16 +126,19 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       );
     }
 
-    // For link variant or disableMotion, render without animations
-    if (variant === "link" || disableMotion) {
+    // For link variant or when motion should be disabled, render without animations
+    // This respects both the explicit disableMotion prop and user's reduced motion preference
+    if (variant === "link" || shouldDisableMotion) {
       return (
         <button
           type="button"
           ref={ref}
+          disabled={isDisabled}
+          aria-busy={loading}
           className={cn(buttonVariants({ variant, size, className }))}
           {...(props as React.ComponentPropsWithoutRef<"button">)}
         >
-          {children}
+          {renderContent()}
         </button>
       );
     }
@@ -115,13 +149,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <m.button
         type="button"
         ref={ref}
+        disabled={isDisabled}
+        aria-busy={loading}
         className={cn(buttonVariants({ variant, size, className }))}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={isDisabled ? {} : { scale: 1.02 }}
+        whileTap={isDisabled ? {} : { scale: 0.98 }}
         transition={springs.snappy}
         {...props}
       >
-        {children}
+        {renderContent()}
       </m.button>
     );
   }

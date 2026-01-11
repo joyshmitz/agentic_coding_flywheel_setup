@@ -144,6 +144,7 @@ print_acfs_help() {
     echo "  cheatsheet          Command reference (aliases, shortcuts)"
     echo "  continue [options]  View installation/upgrade progress"
     echo "  dashboard <command> Generate/view a static HTML dashboard"
+    echo "  newproj <name>      Create new project with git, bd, claude settings"
     echo "  update [options]    Update ACFS tools to latest versions"
     echo "  services-setup      Configure AI agents and cloud services"
     echo "  session <command>   Export/import/share agent sessions"
@@ -568,51 +569,6 @@ check_optional_command() {
     fi
 }
 
-# Check NTM ↔ CASS compatibility.
-#
-# NTM v1.2.0 calls `cass robot search ...`, but modern CASS uses `cass search ... --robot`.
-# This can break `ntm send` when the CASS duplicate-check path is enabled.
-check_ntm_cass_compat() {
-    # Only relevant when both tools exist.
-    command -v ntm >/dev/null 2>&1 || return 0
-    command -v cass >/dev/null 2>&1 || return 0
-
-    local ntm_version_line=""
-    ntm_version_line="$(ntm --version 2>/dev/null | head -n 1 || true)"
-    [[ -z "$ntm_version_line" ]] && ntm_version_line="$(ntm version 2>/dev/null | head -n 1 || true)"
-
-    local ntm_semver=""
-    if [[ "$ntm_version_line" =~ ([0-9]+\.[0-9]+\.[0-9]+) ]]; then
-        ntm_semver="${BASH_REMATCH[1]}"
-    fi
-
-    # Only flag the known-bad release; newer NTM releases should fix this.
-    [[ -n "$ntm_semver" ]] || return 0
-    [[ "$ntm_semver" == "1.2.0" ]] || return 0
-
-    local output=""
-    local status=0
-    output="$(cass robot --help 2>&1)" || status=$?
-
-    if (( status == 0 )); then
-        check "stack.ntm_cass_compat" "NTM↔CASS compatibility" "pass" "ok"
-        return 0
-    fi
-
-    if echo "$output" | grep -qiE "unrecognized subcommand|unknown subcommand|unknown command"; then
-        check "stack.ntm_cass_compat" "NTM↔CASS compatibility" "warn" \
-            "ntm send may fail (CASS has no 'robot' subcommand)" \
-            "Workarounds: ntm send <session> --no-cass-check --all \"...\"  OR  ntm --robot-send <session> --msg \"...\" --all"
-        return 0
-    fi
-
-    local first_line=""
-    first_line="$(printf '%s\n' "$output" | head -n 1)"
-    [[ -z "$first_line" ]] && first_line="cass robot --help failed"
-    check "stack.ntm_cass_compat" "NTM↔CASS compatibility" "warn" "could not verify ($first_line)" \
-        "Try: cass robot --help"
-}
-
 # Check identity
 check_identity() {
     section "Identity"
@@ -666,7 +622,7 @@ check_shell() {
     if [[ -d "$HOME/.oh-my-zsh" ]]; then
         check "shell.ohmyzsh" "Oh My Zsh" "pass"
     else
-        check "shell.ohmyzsh" "Oh My Zsh" "fail" "not installed" "Re-run the ACFS installer (shell setup phase)"
+        check "shell.ohmyzsh" "Oh My Zsh" "fail" "not installed" "Re-run: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 3"
     fi
 
     local p10k_dir="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
@@ -681,13 +637,15 @@ check_shell() {
     if [[ -d "$plugins_dir/zsh-autosuggestions" ]]; then
         check "shell.plugins.zsh_autosuggestions" "zsh-autosuggestions" "pass"
     else
-        check "shell.plugins.zsh_autosuggestions" "zsh-autosuggestions" "warn"
+        check "shell.plugins.zsh_autosuggestions" "zsh-autosuggestions" "warn" "not installed" \
+            "git clone https://github.com/zsh-users/zsh-autosuggestions \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
     fi
 
     if [[ -d "$plugins_dir/zsh-syntax-highlighting" ]]; then
         check "shell.plugins.zsh_syntax_highlighting" "zsh-syntax-highlighting" "pass"
     else
-        check "shell.plugins.zsh_syntax_highlighting" "zsh-syntax-highlighting" "warn"
+        check "shell.plugins.zsh_syntax_highlighting" "zsh-syntax-highlighting" "warn" "not installed" \
+            "git clone https://github.com/zsh-users/zsh-syntax-highlighting \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
     fi
 
     # Check modern CLI tools
@@ -699,9 +657,10 @@ check_shell() {
         check "shell.lsd_or_eza" "lsd/eza" "warn" "neither installed" "sudo apt install lsd"
     fi
 
-    check_command "shell.atuin" "Atuin" "atuin" "Re-run the ACFS installer (language runtimes phase)"
+    check_command "shell.atuin" "Atuin" "atuin" "Re-run: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 5"
     check_command "shell.fzf" "fzf" "fzf" "sudo apt install fzf"
-    check_command "shell.zoxide" "zoxide" "zoxide"
+    check_command "shell.zoxide" "zoxide" "zoxide" \
+        "Re-run: curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash"
     check_command "shell.direnv" "direnv" "direnv" "sudo apt install direnv"
 
     blank_line
@@ -711,9 +670,9 @@ check_shell() {
 check_core_tools() {
     section "Core tools"
 
-    check_command "tool.bun" "Bun" "bun" "Re-run the ACFS installer (language runtimes phase)"
-    check_command "tool.uv" "uv" "uv" "Re-run the ACFS installer (language runtimes phase)"
-    check_command "tool.cargo" "Cargo (Rust)" "cargo" "Re-run the ACFS installer (language runtimes phase)"
+    check_command "tool.bun" "Bun" "bun" "Re-run: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 5"
+    check_command "tool.uv" "uv" "uv" "Re-run: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 5"
+    check_command "tool.cargo" "Cargo (Rust)" "cargo" "Re-run: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 5"
     check_command "tool.go" "Go" "go" "sudo apt install golang-go"
     check_command "tool.tmux" "tmux" "tmux" "sudo apt install tmux"
     check_command "tool.rg" "ripgrep" "rg" "sudo apt install ripgrep"
@@ -733,7 +692,8 @@ check_core_tools() {
 check_agents() {
     section "Agents"
 
-    check_command "agent.claude" "Claude Code" "claude"
+    check_command "agent.claude" "Claude Code" "claude" \
+        "Re-run: curl -fsSL https://claude.ai/install.sh | bash"
     check_command "agent.codex" "Codex CLI" "codex" "bun install -g --trust @openai/codex@latest"
     check_command "agent.gemini" "Gemini CLI" "gemini" "bun install -g --trust @google/gemini-cli@latest"
 
@@ -759,9 +719,6 @@ check_agents() {
     # Check for PATH conflicts (bead hi7)
     # Claude Code native install should be in ~/.local/bin, not bun/npm
     check_agent_path_conflicts
-
-    # Check git safety guard (bead hi7)
-    check_git_safety_guard
 
     blank_line
 }
@@ -796,41 +753,41 @@ check_agent_path_conflicts() {
     fi
 }
 
-# Check git safety guard hook (bead hi7)
-# Verifies the PreToolUse hook is installed for destructive command protection
-check_git_safety_guard() {
-    local hook_script="$HOME/.claude/hooks/git_safety_guard.py"
-    local settings_file="$HOME/.claude/settings.json"
-
-    # Check if hook script exists
-    if [[ ! -f "$hook_script" ]]; then
-        check "agent.git_safety" "Git safety guard" "warn" \
-            "hook not installed" \
-            "mkdir -p ~/.claude/hooks && cp ~/.acfs/claude/hooks/git_safety_guard.py ~/.claude/hooks/ && chmod +x ~/.claude/hooks/git_safety_guard.py"
+# Check DCG hook registration status
+check_dcg_hook_status() {
+    if ! command -v dcg &>/dev/null; then
+        check "stack.dcg" "DCG" "warn" "not installed" \
+            "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh | bash && dcg install"
         return
     fi
 
-    # Check if executable
-    if [[ ! -x "$hook_script" ]]; then
-        check "agent.git_safety" "Git safety guard" "warn" \
-            "hook not executable" \
-            "chmod +x $hook_script"
+    local version
+    version=$(get_version_line "dcg")
+
+    if ! command -v claude &>/dev/null; then
+        check "stack.dcg" "DCG ($version)" "warn" "Claude Code not found for hook registration" \
+            "Install Claude Code, then run: dcg install"
         return
     fi
 
-    # Check if settings.json references the hook
-    if [[ -f "$settings_file" ]]; then
-        if grep -q "git_safety_guard" "$settings_file" 2>/dev/null; then
-            check "agent.git_safety" "Git safety guard" "pass" "installed"
-        else
-            check "agent.git_safety" "Git safety guard" "warn" \
-                "hook exists but not in settings.json" \
-                "Add PreToolUse hook to ~/.claude/settings.json"
-        fi
+    local settings_file=""
+    if [[ -f "$HOME/.claude/settings.json" ]]; then
+        settings_file="$HOME/.claude/settings.json"
+    elif [[ -f "$HOME/.config/claude/settings.json" ]]; then
+        settings_file="$HOME/.config/claude/settings.json"
+    fi
+
+    if [[ -z "$settings_file" ]]; then
+        check "stack.dcg" "DCG ($version)" "warn" "hook not registered (settings.json missing)" \
+            "Run: dcg install"
+        return
+    fi
+
+    if grep -q "dcg" "$settings_file" 2>/dev/null; then
+        check "stack.dcg" "DCG ($version)" "pass" "installed + hook registered"
     else
-        check "agent.git_safety" "Git safety guard" "warn" \
-            "hook exists but no settings.json" \
-            "Create ~/.claude/settings.json with hook config"
+        check "stack.dcg" "DCG ($version)" "warn" "binary installed but hook not registered" \
+            "Run: dcg install"
     fi
 }
 
@@ -882,6 +839,22 @@ check_cloud() {
         fi
     fi
 
+    # SSH keepalive configuration (prevents VPN/NAT disconnects)
+    if [[ -f /etc/ssh/sshd_config ]]; then
+        local keepalive_interval
+        keepalive_interval=$(grep -E '^ClientAliveInterval[[:space:]]+[0-9]+' /etc/ssh/sshd_config 2>/dev/null | awk '{print $2}')
+        keepalive_interval="${keepalive_interval:-0}"
+        if [[ "$keepalive_interval" -gt 0 ]] 2>/dev/null; then
+            check "network.ssh_keepalive" "SSH keepalive" "pass" "ClientAliveInterval ${keepalive_interval}s"
+        else
+            if [[ "$doctor_ci" == "true" ]]; then
+                check "network.ssh_keepalive" "SSH keepalive (not configured)" "pass" "ok in CI"
+            else
+                check "network.ssh_keepalive" "SSH keepalive" "warn" "not configured (optional)" "Install: curl --proto '=https' --proto-redir '=https' -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only network.ssh_keepalive"
+            fi
+        fi
+    fi
+
     blank_line
 }
 
@@ -889,8 +862,10 @@ check_cloud() {
 check_stack() {
     section "Dicklesworthstone stack"
 
-    check_command "stack.ntm" "NTM" "ntm"
-    check_command "stack.slb" "SLB" "slb"
+    check_command "stack.ntm" "NTM" "ntm" \
+        "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/ntm/main/install.sh | bash"
+    check_command "stack.slb" "SLB" "slb" \
+        "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh | bash"
 
     # UBS - custom check
     if command -v ubs &>/dev/null; then
@@ -902,7 +877,8 @@ check_stack() {
             "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh | bash"
     fi
 
-    check_command "stack.bv" "Beads Viewer" "bv"
+    check_command "stack.bv" "Beads Viewer" "bv" \
+        "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh | bash"
 
     # CASS - custom check
     if command -v cass &>/dev/null; then
@@ -914,16 +890,31 @@ check_stack() {
             "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh | bash -s -- --easy-mode"
     fi
 
-    check_ntm_cass_compat
-    check_command "stack.cm" "CASS Memory" "cm"
-    check_command "stack.caam" "CAAM" "caam"
+    check_command "stack.cm" "CASS Memory" "cm" \
+        "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/cass_memory_system/main/install.sh | bash -s -- --easy-mode"
+    check_command "stack.caam" "CAAM" "caam" \
+        "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_account_manager/main/install.sh | bash"
 
     # Check MCP Agent Mail
     if command -v am &>/dev/null || [[ -d "$HOME/mcp_agent_mail" ]]; then
         check "stack.mcp_agent_mail" "MCP Agent Mail" "pass"
     else
-        check "stack.mcp_agent_mail" "MCP Agent Mail" "warn"
+        check "stack.mcp_agent_mail" "MCP Agent Mail" "warn" "not installed" \
+            "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail/main/scripts/install.sh | bash"
     fi
+
+    # Check RU (Repo Updater)
+    if command -v ru &>/dev/null; then
+        local version
+        version=$(get_version_line "ru")
+        check "stack.ru" "RU ($version)" "pass" "installed"
+    else
+        check "stack.ru" "RU (Repo Updater)" "warn" "not installed" \
+            "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/repo_updater/main/install.sh | bash"
+    fi
+
+    # Check DCG (Destructive Command Guard)
+    check_dcg_hook_status
 
     blank_line
 }
@@ -1122,6 +1113,8 @@ deep_check_agent_auth() {
 # check_claude_auth - Thorough Claude Code authentication check
 # Returns via check(): pass (auth OK), warn (partial/skipped), fail (auth broken)
 # Related: bead 325
+# Fixed: Check correct credentials file (.credentials.json, not config.json)
+# Fixed: Removed non-existent --print-system-info flag
 check_claude_auth() {
     # Skip if not installed
     if ! command -v claude &>/dev/null; then
@@ -1135,19 +1128,32 @@ check_claude_auth() {
         return
     fi
 
-    # Check for config file (indicates previous auth)
-    local config_file="$HOME/.claude/config.json"
-    if [[ ! -f "$config_file" ]]; then
-        check "deep.agent.claude_auth" "Claude Code auth" "warn" "no config file" "Run: claude to authenticate"
+    # Check for credentials file (indicates previous auth)
+    # Claude Code stores OAuth credentials in ~/.claude/.credentials.json (note leading dot)
+    local creds_file="$HOME/.claude/.credentials.json"
+    if [[ ! -f "$creds_file" ]]; then
+        check "deep.agent.claude_auth" "Claude Code auth" "warn" "not authenticated" "Run: claude to authenticate"
         return
     fi
 
-    # Try low-cost API check: --print-system-info doesn't make API calls but verifies setup
-    if timeout 5 claude --print-system-info &>/dev/null; then
-        check "deep.agent.claude_auth" "Claude Code auth" "pass" "authenticated"
+    # Verify OAuth token exists in credentials file
+    local has_token=false
+    if command -v jq &>/dev/null; then
+        # Use jq for reliable JSON parsing
+        if jq -e '.claudeAiOauth.accessToken // empty' "$creds_file" >/dev/null 2>&1; then
+            has_token=true
+        fi
     else
-        # Config exists but system info fails - partial setup
-        check "deep.agent.claude_auth" "Claude Code auth" "warn" "config exists, verify failed" "Run: claude to re-authenticate"
+        # Fallback: basic grep check (less reliable but works without jq)
+        if grep -q '"accessToken"' "$creds_file" 2>/dev/null; then
+            has_token=true
+        fi
+    fi
+
+    if [[ "$has_token" == "true" ]]; then
+        check "deep.agent.claude_auth" "Claude Code auth" "pass" "OAuth authenticated"
+    else
+        check "deep.agent.claude_auth" "Claude Code auth" "warn" "credentials file exists but no valid token" "Run: claude to re-authenticate"
     fi
 }
 
@@ -1290,33 +1296,55 @@ check_postgres_connection() {
 
 # check_postgres_role - Verify target user role exists in PostgreSQL
 # Related: bead azw
+# Fixed: Try current user first before postgres user (pg_roles is readable by any authenticated user)
+# Fixed: Provide actionable fix message (createuser, not systemctl status)
+# Fixed: Use parameterized queries to prevent SQL injection (ACFS_TARGET_USER is passed via -v)
 check_postgres_role() {
     # Skip if not installed
     if ! command -v psql &>/dev/null; then
         return  # Already reported in connection check
     fi
 
+    # Validate target user - PostgreSQL identifiers must match this pattern
+    # SECURITY: Prevents SQL injection by validating input before use
+    local target_user="${ACFS_TARGET_USER:-}"
+    if [[ -z "$target_user" ]]; then
+        check "deep.db.postgres_role" "PostgreSQL role check" "warn" "ACFS_TARGET_USER not set"
+        return
+    fi
+    if [[ ! "$target_user" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]]; then
+        check "deep.db.postgres_role" "PostgreSQL role check" "fail" "invalid username format"
+        return
+    fi
+
     # Try to check if target user role exists
+    # pg_roles view is readable by any authenticated user - no superuser required
+    # SECURITY: Use psql -v to pass variable and :'var' syntax for safe interpolation
     local role_check
     local connect_success=false
+    local sql_query="SELECT 1 FROM pg_roles WHERE rolname=:'target_user'"
 
-    # Try localhost first
-    if role_check=$(timeout 5 psql -w -h localhost -U postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='${ACFS_TARGET_USER}'" 2>/dev/null); then
+    # Try connecting as current user first (mirrors check_postgres_connection behavior)
+    # This works when pg_hba.conf allows peer auth for local users
+    if role_check=$(timeout 5 psql -w -tAc "$sql_query" -v target_user="$target_user" 2>/dev/null); then
         connect_success=true
-    # Try unix socket fallback
-    elif role_check=$(timeout 5 psql -w -h /var/run/postgresql -U postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='${ACFS_TARGET_USER}'" 2>/dev/null); then
+    # Try localhost with postgres user as fallback
+    elif role_check=$(timeout 5 psql -w -h localhost -U postgres -tAc "$sql_query" -v target_user="$target_user" 2>/dev/null); then
+        connect_success=true
+    # Try unix socket with postgres user as last resort
+    elif role_check=$(timeout 5 psql -w -h /var/run/postgresql -U postgres -tAc "$sql_query" -v target_user="$target_user" 2>/dev/null); then
         connect_success=true
     fi
 
     if [[ "$connect_success" == "true" ]]; then
         if [[ "$role_check" == "1" ]]; then
-            check "deep.db.postgres_role" "PostgreSQL ${ACFS_TARGET_USER} role" "pass" "role exists"
+            check "deep.db.postgres_role" "PostgreSQL $target_user role" "pass" "role exists"
         else
-            check "deep.db.postgres_role" "PostgreSQL ${ACFS_TARGET_USER} role" "warn" "role missing" "sudo -u postgres createuser -s ${ACFS_TARGET_USER}"
+            check "deep.db.postgres_role" "PostgreSQL $target_user role" "warn" "role missing" "sudo -u postgres createuser -s $target_user"
         fi
     else
-        # Connection failed
-        check "deep.db.postgres_role" "PostgreSQL ${ACFS_TARGET_USER} role" "warn" "could not verify (connection failed)" "sudo systemctl status postgresql"
+        # Connection failed - provide actionable fix
+        check "deep.db.postgres_role" "PostgreSQL $target_user role" "warn" "could not verify (connection failed)" "sudo -u postgres createuser -s $target_user"
     fi
 }
 
@@ -1494,7 +1522,7 @@ check_wrangler_auth() {
             cache_result "wrangler_auth" "CLOUDFLARE_API_TOKEN"
             check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "pass" "CLOUDFLARE_API_TOKEN set"
         else
-            check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "warn" "not authenticated" "wrangler login"
+            check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "warn" "not authenticated" "wrangler login (or set CLOUDFLARE_API_TOKEN for headless)"
         fi
     fi
 }
@@ -1522,12 +1550,12 @@ check_supabase_auth() {
         if [[ -s "$access_token_file" || -s "$alt_access_token_file" ]]; then
             check "deep.cloud.supabase" "Supabase CLI auth" "pass" "access token exists"
         else
-            check "deep.cloud.supabase" "Supabase CLI auth" "warn" "empty access token" "supabase login"
+            check "deep.cloud.supabase" "Supabase CLI auth" "warn" "empty access token" "supabase login (or set SUPABASE_ACCESS_TOKEN for headless)"
         fi
     elif [[ -n "${SUPABASE_ACCESS_TOKEN:-}" ]]; then
         check "deep.cloud.supabase" "Supabase CLI auth" "pass" "SUPABASE_ACCESS_TOKEN set"
     else
-        check "deep.cloud.supabase" "Supabase CLI auth" "warn" "not authenticated" "supabase login"
+        check "deep.cloud.supabase" "Supabase CLI auth" "warn" "not authenticated" "supabase login (or set SUPABASE_ACCESS_TOKEN for headless)"
     fi
 }
 
@@ -1573,7 +1601,7 @@ check_vercel_auth() {
             cache_result "vercel_auth" "auth file present"
             check "deep.cloud.vercel_auth" "Vercel auth" "pass" "auth file present"
         else
-            check "deep.cloud.vercel_auth" "Vercel auth" "warn" "not authenticated" "vercel login"
+            check "deep.cloud.vercel_auth" "Vercel auth" "warn" "not authenticated" "vercel login (or use --token for headless)"
         fi
     fi
 }
@@ -1776,6 +1804,22 @@ main() {
             fi
 
             echo "Error: update.sh not found" >&2
+            return 1
+            ;;
+        newproj|new-project|new)
+            shift
+            local newproj_script=""
+            if [[ -f "$HOME/.acfs/scripts/lib/newproj.sh" ]]; then
+                newproj_script="$HOME/.acfs/scripts/lib/newproj.sh"
+            elif [[ -f "$SCRIPT_DIR/newproj.sh" ]]; then
+                newproj_script="$SCRIPT_DIR/newproj.sh"
+            fi
+
+            if [[ -n "$newproj_script" ]]; then
+                exec bash "$newproj_script" "$@"
+            fi
+
+            echo "Error: newproj.sh not found" >&2
             return 1
             ;;
         services-setup|services|setup)

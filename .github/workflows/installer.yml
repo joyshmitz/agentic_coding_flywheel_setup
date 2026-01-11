@@ -9,7 +9,7 @@ on:
       - 'acfs.manifest.yaml'
       - 'checksums.yaml'
       - 'packages/manifest/**'
-      - '.github/workflows/installer.yml'
+      - '.github/workflows/*.yml'
       - '.shellcheckrc'
       - 'tests/**/*.sh'
   pull_request:
@@ -20,11 +20,45 @@ on:
       - 'acfs.manifest.yaml'
       - 'checksums.yaml'
       - 'packages/manifest/**'
-      - '.github/workflows/installer.yml'
+      - '.github/workflows/*.yml'
       - '.shellcheckrc'
       - 'tests/**/*.sh'
 
 jobs:
+  yaml-lint:
+    name: Workflow YAML Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Lint workflow YAML files
+        run: |
+          # Create minimal config that catches critical YAML syntax errors
+          cat > /tmp/yamllint.yml << 'EOF'
+          extends: default
+          rules:
+            line-length:
+              max: 200
+            key-ordering: disable
+            comments:
+              min-spaces-from-content: 1
+            document-start: disable
+            document-end: disable
+            indentation:
+              spaces: 2
+              indent-sequences: whatever
+            truthy:
+              allowed-values: ['true', 'false', 'on', 'off']
+          EOF
+
+          echo "Validating YAML syntax for all workflow files..."
+          yamllint -c /tmp/yamllint.yml .github/workflows/*.yml
+          echo "✅ All workflow YAML files have valid syntax"
+
   shellcheck:
     name: ShellCheck
     runs-on: ubuntu-latest
@@ -77,8 +111,8 @@ jobs:
 
           echo "Verifying checksums against upstream installer scripts..."
 
-          # Run verification and capture result
-          if ./scripts/lib/security.sh --verify --json > result.json 2>&1; then
+          # Run verification and capture result (stderr separate to avoid corrupting JSON)
+          if ./scripts/lib/security.sh --verify --json > result.json 2>verify-errors.log; then
             echo "✅ All checksums match upstream"
             echo "status=ok" >> $GITHUB_OUTPUT
           else
@@ -124,6 +158,11 @@ jobs:
 
       - name: Run install helpers tests
         run: bash scripts/lib/test_install_helpers.sh
+
+      - name: Run RU integration tests
+        run: |
+          bash scripts/tests/test_ru_update.sh
+          bash scripts/tests/test_ru_doctor.sh
 
   test-installer:
     name: Test installer (Ubuntu ${{ matrix.ubuntu }}, mode ${{ matrix.mode }})
@@ -194,6 +233,9 @@ jobs:
           su - ubuntu -c "zsh -ic 'cm --help'"
           su - ubuntu -c "zsh -ic 'caam --help'"
           su - ubuntu -c "zsh -ic 'slb --help'"
+          su - ubuntu -c "zsh -ic 'dcg --version'"
+          su - ubuntu -c "zsh -ic 'dcg doctor'"
+          su - ubuntu -c "zsh -ic 'ru --version'"
           su - ubuntu -c "zsh -ic 'onboard --help'"
           su - ubuntu -c "zsh -ic 'claude --version'"
           su - ubuntu -c "zsh -ic 'codex --version'"

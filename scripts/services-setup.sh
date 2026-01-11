@@ -124,8 +124,10 @@ find_user_bin() {
 
     local candidates=(
         "$TARGET_HOME/.local/bin/$name"
+        "$TARGET_HOME/.cargo/bin/$name"
         "$TARGET_HOME/.bun/bin/$name"
         "$TARGET_HOME/.atuin/bin/$name"
+        "/usr/local/bin/$name"
     )
 
     local candidate
@@ -137,6 +139,192 @@ find_user_bin() {
     done
 
     return 1
+}
+
+dcg_hook_registered() {
+    local settings_file="$TARGET_HOME/.claude/settings.json"
+    local alt_settings_file="$TARGET_HOME/.config/claude/settings.json"
+
+    if [[ -f "$settings_file" ]] && grep -q "dcg" "$settings_file" 2>/dev/null; then
+        return 0
+    fi
+
+    if [[ -f "$alt_settings_file" ]] && grep -q "dcg" "$alt_settings_file" 2>/dev/null; then
+        return 0
+    fi
+
+    return 1
+}
+
+select_dcg_packs() {
+    local -a options=(
+        "database.postgresql (PostgreSQL guard pack)"
+        "kubernetes (kubectl + cluster safety)"
+        "cloud.aws (AWS CLI guard pack)"
+    )
+
+    local selected_lines=""
+
+    if [[ "$HAS_GUM" == "true" ]]; then
+        if [[ -r /dev/tty ]]; then
+            selected_lines=$(gum choose --no-limit \
+                --header "Select additional DCG packs (space to toggle, enter to confirm)" \
+                --cursor.foreground "$ACFS_ACCENT" \
+                --selected.foreground "$ACFS_SUCCESS" \
+                "${options[@]}" < /dev/tty) || true
+        elif [[ -t 0 ]]; then
+            selected_lines=$(gum choose --no-limit \
+                --header "Select additional DCG packs (space to toggle, enter to confirm)" \
+                --cursor.foreground "$ACFS_ACCENT" \
+                --selected.foreground "$ACFS_SUCCESS" \
+                "${options[@]}") || true
+        else
+            echo "ERROR: --yes is required when no TTY is available" >&2
+            return 1
+        fi
+    else
+        echo "Select additional DCG packs (enter numbers separated by spaces, or 'all')"
+        local i=1
+        for opt in "${options[@]}"; do
+            echo "  $i) $opt"
+            ((i++))
+        done
+
+        local input=""
+        if [[ -t 0 ]]; then
+            read -r -p "Select: " input
+        elif [[ -r /dev/tty ]]; then
+            read -r -p "Select: " input < /dev/tty
+        else
+            echo "ERROR: --yes is required when no TTY is available" >&2
+            return 1
+        fi
+
+        if [[ "$input" == "all" ]]; then
+            for opt in "${options[@]}"; do
+                selected_lines+="${opt}"$'\n'
+            done
+        else
+            for num in $input; do
+                if [[ "$num" =~ ^[0-9]+$ ]] && [[ "$num" -ge 1 ]] && [[ "$num" -le ${#options[@]} ]]; then
+                    selected_lines+="${options[$((num - 1))]}"$'\n'
+                fi
+            done
+        fi
+    fi
+
+    local -a packs=()
+    local line
+    while IFS= read -r line; do
+        [[ -n "$line" ]] || continue
+        packs+=("${line%% *}")
+    done <<< "$selected_lines"
+
+    printf '%s' "${packs[*]}"
+}
+
+remove_dcg_hook_from_settings() {
+    local settings_file="$1"
+
+    if [[ -L "$settings_file" ]]; then
+        gum_warn "Skipping DCG hook cleanup (symlink): $settings_file"
+        return 1
+    fi
+
+    if ! command -v jq &>/dev/null; then
+        gum_warn "jq not available; cannot remove DCG hook automatically"
+        gum_detail "Remove the dcg hook entry from: $settings_file"
+        return 1
+    fi
+
+    local settings_dir
+    settings_dir="$(dirname "$settings_file")"
+
+    local tmp
+    tmp="$(run_as_user mktemp "${settings_dir}/.acfs_dcg_cleanup.XXXXXX" 2>/dev/null || true)"
+    if [[ -z "$tmp" ]]; then
+        gum_warn "Could not update $settings_file (mktemp failed)"
+        return 1
+    fi
+
+    local jq_program
+    jq_program="$(cat <<'JQ'
+def strip_dcg:
+  if (type == "object" and has("hooks") and (.hooks | type) == "array") then
+    .hooks |= [ .[]? | select(.type != "command" or ((.command // "") | test("dcg") | not)) ] |
+    select((.hooks | length) > 0)
+  else
+    select(.type != "command" or ((.command // "") | test("dcg") | not))
+  end;
+
+.hooks = (.hooks // {}) |
+if (.hooks.PreToolUse | type) != "array" then
+  .hooks.PreToolUse = []
+else
+  .hooks.PreToolUse = [
+    .hooks.PreToolUse[]?
+    | strip_dcg
+  ]
+end
+JQ
+)"
+
+    if run_as_user jq "$jq_program" "$settings_file" 2>/dev/null | run_as_user tee "$tmp" >/dev/null; then
+        run_as_user mv -- "$tmp" "$settings_file" 2>/dev/null || {
+            run_as_user rm -f -- "$tmp" 2>/dev/null || true
+            gum_warn "Could not update $settings_file (mv failed)"
+            return 1
+        }
+    else
+        run_as_user rm -f -- "$tmp" 2>/dev/null || true
+        gum_warn "Could not update $settings_file (invalid JSON?)"
+        return 1
+    fi
+
+    return 0
+}
+
+cleanup_stale_dcg_hook() {
+    if user_command_exists dcg; then
+        return 0
+    fi
+
+    if ! dcg_hook_registered; then
+        return 0
+    fi
+
+    gum_warn "DCG hook registered but dcg binary is missing"
+    gum_detail "You can reinstall DCG or remove the hook registration."
+
+    if [[ "$SERVICES_SETUP_NONINTERACTIVE" == "true" ]]; then
+        gum_detail "Skipping cleanup (noninteractive)"
+        return 0
+    fi
+
+    if ! gum_confirm "Remove stale DCG hook from Claude settings?"; then
+        gum_warn "Skipped removing DCG hook"
+        return 0
+    fi
+
+    local cleaned_any="false"
+    local settings_file=""
+    local settings_files=(
+        "$TARGET_HOME/.claude/settings.json"
+        "$TARGET_HOME/.config/claude/settings.json"
+    )
+
+    for settings_file in "${settings_files[@]}"; do
+        if [[ -f "$settings_file" ]]; then
+            if remove_dcg_hook_from_settings "$settings_file"; then
+                cleaned_any="true"
+                gum_success "Removed DCG hook from $settings_file"
+            fi
+        fi
+    done
+
+    if [[ "$cleaned_any" != "true" ]]; then
+        gum_warn "No DCG hook entries removed"
+    fi
 }
 
 # ============================================================
@@ -272,6 +460,24 @@ check_postgres_status() {
     fi
 }
 
+check_dcg_status() {
+    if ! user_command_exists dcg; then
+        SERVICE_STATUS[dcg]="not_installed"
+        return
+    fi
+
+    if ! user_command_exists claude; then
+        SERVICE_STATUS[dcg]="installed"
+        return
+    fi
+
+    if dcg_hook_registered; then
+        SERVICE_STATUS[dcg]="configured"
+    else
+        SERVICE_STATUS[dcg]="installed"
+    fi
+}
+
 check_all_status() {
     check_claude_status
     check_codex_status
@@ -280,6 +486,7 @@ check_all_status() {
     check_supabase_status
     check_wrangler_status
     check_postgres_status
+    check_dcg_status
 }
 
 # ============================================================
@@ -335,6 +542,18 @@ print_status_table() {
             table_data+="$icon $label,$category,$status,$action\n"
         done
 
+        local dcg_status="${SERVICE_STATUS[dcg]:-unknown}"
+        local dcg_icon
+        dcg_icon=$(get_status_icon "$dcg_status")
+        local dcg_action=""
+        case "$dcg_status" in
+            configured) dcg_action="Ready" ;;
+            installed) dcg_action="Needs setup" ;;
+            not_installed) dcg_action="Install first" ;;
+            *) dcg_action="Check" ;;
+        esac
+        table_data+="$dcg_icon DCG (Destructive Command Guard),Safety,$dcg_status,$dcg_action\n"
+
         echo -e "$table_data" | gum table \
             --border.foreground "$ACFS_MUTED" \
             --header.foreground "$ACFS_PRIMARY"
@@ -353,6 +572,15 @@ print_status_table() {
                 *) echo -e "\033[31m  $icon $label: $status\033[0m" ;;
             esac
         done
+
+        local dcg_status="${SERVICE_STATUS[dcg]:-unknown}"
+        local dcg_icon
+        dcg_icon=$(get_status_icon "$dcg_status")
+        case "$dcg_status" in
+            configured) echo -e "\033[32m  $dcg_icon DCG (Destructive Command Guard): $dcg_status\033[0m" ;;
+            running|installed) echo -e "\033[33m  $dcg_icon DCG (Destructive Command Guard): $dcg_status\033[0m" ;;
+            *) echo -e "\033[31m  $dcg_icon DCG (Destructive Command Guard): $dcg_status\033[0m" ;;
+        esac
     fi
     echo ""
 }
@@ -425,266 +653,119 @@ We'll launch the login flow in your terminal/browser."
     fi
 }
 
-setup_claude_git_guard() {
-    local settings_dir="$TARGET_HOME/.claude"
-    local hooks_dir="$settings_dir/hooks"
-    local guard_path_py="$hooks_dir/git_safety_guard.py"
-    local guard_path_sh="$hooks_dir/git_safety_guard.sh"
-    local settings_file="$settings_dir/settings.json"
-    local source_py="$TARGET_HOME/.acfs/claude/hooks/git_safety_guard.py"
+configure_dcg() {
+    cleanup_stale_dcg_hook
 
-    if [[ "$SERVICES_SETUP_NONINTERACTIVE" != "true" ]] && { [[ -t 0 ]] || [[ -r /dev/tty ]]; }; then
-        gum_box "Claude Git Safety Guard" "This installs a Claude Code PreToolUse hook that blocks destructive git/filesystem commands before they run.
+    local dcg_bin
+    dcg_bin="$(find_user_bin "dcg" 2>/dev/null || true)"
 
-It helps prevent accidental loss of uncommitted work from commands like:
-  • git checkout -- <files>
-  • git restore <files>
+    if [[ -z "$dcg_bin" || ! -x "$dcg_bin" ]]; then
+        gum_error "DCG not installed. Run the main installer first."
+        gum_detail "Then run: dcg install (or re-run acfs services-setup)"
+        return 1
+    fi
+
+    if [[ "$SERVICES_SETUP_NONINTERACTIVE" != "true" ]]; then
+        gum_box "DCG Safety Primer" "DCG (Destructive Command Guard) blocks dangerous commands before they run.
+
+Examples it will block:
   • git reset --hard
-  • git clean -f
-  • git push --force / -f
-  • rm -rf (except temp dirs)
-  • git stash drop/clear
+  • rm -rf ./src
+  • DROP TABLE users
 
-Recommended if you run Claude in dangerous mode (ACFS vibe aliases).
+When blocked, you'll see:
+  • Why it matched
+  • A safer alternative
+  • An allow-once code for legit bypasses
 
-Press Enter to install the guard..."
+Try it:
+  dcg test 'git status'
+  dcg test 'git reset --hard' --explain"
+    fi
 
-        if [[ -r /dev/tty ]]; then
-            read -r < /dev/tty || true
+    gum_box "DCG Setup" "DCG blocks destructive git/filesystem commands before they execute.
+It also supports optional protection packs (database, Kubernetes, cloud)."
+
+    if user_command_exists claude; then
+        if dcg_hook_registered; then
+            gum_success "DCG hook already registered with Claude Code"
         else
-            read -r || true
-        fi
-    else
-        gum_detail "Installing Claude Git Safety Guard (noninteractive)"
-    fi
-
-    # Safety: refuse to follow symlinks under ~/.claude.
-    # This prevents writing outside $TARGET_HOME when invoked as root.
-    if [[ -L "$settings_dir" ]]; then
-        gum_error "Refusing to operate: $settings_dir is a symlink"
-        return 1
-    fi
-    if [[ -e "$settings_dir" && ! -d "$settings_dir" ]]; then
-        gum_error "Refusing to operate: $settings_dir exists and is not a directory"
-        return 1
-    fi
-    if [[ -L "$hooks_dir" ]]; then
-        gum_error "Refusing to operate: $hooks_dir is a symlink"
-        return 1
-    fi
-    if [[ -e "$hooks_dir" && ! -d "$hooks_dir" ]]; then
-        gum_error "Refusing to operate: $hooks_dir exists and is not a directory"
-        return 1
-    fi
-    if [[ -L "$guard_path_py" || -L "$guard_path_sh" || -L "$settings_file" ]]; then
-        gum_error "Refusing to operate: one or more ~/.claude paths are symlinks"
-        return 1
-    fi
-
-    # If older runs left root-owned files, fix ownership before writing as $TARGET_USER.
-    if [[ "$(whoami)" == "root" ]]; then
-        chown -hR "$TARGET_USER:$TARGET_USER" "$settings_dir" 2>/dev/null || true
-    fi
-
-    run_as_user mkdir -p "$hooks_dir"
-
-    # Prefer Python implementation if available
-    local installed_guard="$guard_path_sh"
-    
-    if [[ -f "$source_py" ]] && command -v python3 &>/dev/null; then
-        gum_detail "Installing Python implementation..."
-        run_as_user cp -- "$source_py" "$guard_path_py"
-        run_as_user chmod +x "$guard_path_py"
-        installed_guard="$guard_path_py"
-    else
-        gum_detail "Installing Bash implementation (fallback)..."
-        cat << 'EOF' | run_as_user tee "$guard_path_sh" >/dev/null
-#!/usr/bin/env bash
-#
-# git_safety_guard.sh
-# Claude Code PreToolUse hook: blocks destructive git/filesystem commands.
-#
-# Behavior:
-#   - Exit 0 with no output = allow
-#   - Exit 0 with JSON permissionDecision=deny = block
-#
-set -euo pipefail
-
-input="$(cat 2>/dev/null || true)"
-[[ -n "$input" ]] || exit 0
-
-tool_name="$(printf '%s' "$input" | jq -r '.tool_name // empty' 2>/dev/null || true)"
-command="$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null || true)"
-
-[[ "$tool_name" == "Bash" ]] || exit 0
-[[ -n "$command" ]] || exit 0
-
-SAFE_PATTERNS=(
-  'git[[:space:]]+checkout[[:space:]]+-b[[:space:]]+'
-  'git[[:space:]]+checkout[[:space:]]+--orphan[[:space:]]+'
-  'git[[:space:]]+restore[[:space:]]+--staged[[:space:]]+'
-  'git[[:space:]]+clean[[:space:]]+-n([[:space:]]|$)'
-  'git[[:space:]]+clean[[:space:]]+--dry-run([[:space:]]|$)'
-  # Allow rm -rf on temp directories (ephemeral by design)
-  'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*([[:space:]]+--)?[[:space:]]+/tmp/'
-  'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*([[:space:]]+--)?[[:space:]]+\"/tmp/'
-  'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*([[:space:]]+--)?[[:space:]]+/var/tmp/'
-  'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*([[:space:]]+--)?[[:space:]]+\"/var/tmp/'
-)
-
-for pat in "${SAFE_PATTERNS[@]}"; do
-  if printf '%s' "$command" | grep -Eiq -- "$pat"; then
-    exit 0
-  fi
-done
-
-deny() {
-  local reason="$1"
-  jq -n --arg reason "$reason" --arg cmd "$command" '{
-    hookSpecificOutput: {
-      hookEventName: "PreToolUse",
-      permissionDecision: "deny",
-      permissionDecisionReason: ("BLOCKED by git_safety_guard.sh\n\nReason: " + $reason + "\n\nCommand: " + $cmd + "\n\nIf this operation is truly needed, ask the user for explicit permission and have them run the command manually.")
-    }
-  }'
-  exit 0
-}
-
-# git checkout -- / git checkout <ref> -- <path>
-if printf '%s' "$command" | grep -Eiq -- 'git[[:space:]]+checkout[[:space:]]+.*--[[:space:]]+'; then
-  deny "git checkout ... -- can overwrite/discard uncommitted changes. Use 'git stash' first."
-fi
-
-# git restore (except --staged)
-if printf '%s' "$command" | grep -Eiq -- 'git[[:space:]]+restore([[:space:]]|$)'; then
-  deny "git restore can discard uncommitted changes. Use 'git diff' and 'git stash' first."
-fi
-
-# git reset hard/merge
-if printf '%s' "$command" | grep -Eiq -- 'git[[:space:]]+reset[[:space:]]+--hard([[:space:]]|$)'; then
-  deny "git reset --hard destroys uncommitted changes. Use 'git stash' first."
-fi
-if printf '%s' "$command" | grep -Eiq -- 'git[[:space:]]+reset[[:space:]]+--merge([[:space:]]|$)'; then
-  deny "git reset --merge can lose uncommitted changes."
-fi
-
-# git clean -f / -fd / etc (except -n / --dry-run handled above)
-if printf '%s' "$command" | grep -Eiq -- 'git[[:space:]]+clean[[:space:]]+-[a-z]*f'; then
-  deny "git clean -f removes untracked files permanently. Review with 'git clean -n' first."
-fi
-
-# force push
-if printf '%s' "$command" | grep -Eiq -- 'git[[:space:]]+push([[:space:]]|$)'; then
-  if printf '%s' "$command" | grep -Eiq -- '--force-with-lease'; then
-    exit 0
-  fi
-  if printf '%s' "$command" | grep -Eiq -- '(^|[[:space:]])(--force|-f)([[:space:]]|$)'; then
-    deny "Force push can destroy remote history. Prefer --force-with-lease if absolutely necessary."
-  fi
-fi
-
-# branch delete
-if printf '%s' "$command" | grep -Eiq -- 'git[[:space:]]+branch[[:space:]]+-D([[:space:]]|$)'; then
-  deny "git branch -D force-deletes without merge check. Use -d for safety."
-fi
-
-# git stash drop/clear
-if printf '%s' "$command" | grep -Eiq -- 'git[[:space:]]+stash[[:space:]]+drop([[:space:]]|$)'; then
-  deny "git stash drop permanently deletes stashed changes. List stashes first."
-fi
-if printf '%s' "$command" | grep -Eiq -- 'git[[:space:]]+stash[[:space:]]+clear([[:space:]]|$)'; then
-  deny "git stash clear permanently deletes ALL stashed changes."
-fi
-
-# rm -rf (except temp dirs handled above)
-if printf '%s' "$command" | grep -Eiq -- '(^|[[:space:]])rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*([[:space:]]|$)'; then
-  if printf '%s' "$command" | grep -Eiq -- 'rm[[:space:]]+-[a-z]*r[a-z]*f[a-z]*[[:space:]]+[/~]([[:space:]]|$)'; then
-    deny "rm -rf on root/home paths is extremely dangerous."
-  fi
-  deny "rm -rf is destructive. List files first, then delete individually with explicit permission."
-fi
-
-exit 0
-EOF
-        run_as_user chmod +x "$guard_path_sh"
-    fi
-
-    # Create or merge settings.json
-    if [[ ! -f "$settings_file" ]]; then
-        run_as_user tee "$settings_file" >/dev/null <<EOF
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          { "type": "command", "command": "$installed_guard" }
-        ]
-      }
-    ]
-  }
-}
-EOF
-    else
-        local tmp
-        if command -v jq &>/dev/null; then
-            # Create temp file in the same directory for atomic replacement (cross-device mv can fail).
-            tmp="$(run_as_user mktemp "${settings_dir}/.acfs_services.XXXXXX" 2>/dev/null || true)"
-            if [[ -z "$tmp" ]]; then
-                gum_warn "Could not update $settings_file automatically (mktemp failed)"
-                gum_detail "Manually add this hook command:"
-                gum_detail "  $installed_guard"
+            if [[ "$SERVICES_SETUP_NONINTERACTIVE" == "true" ]]; then
+                gum_detail "Registering DCG hook (noninteractive)"
+                run_as_user "$dcg_bin" install || gum_warn "DCG hook registration failed"
             else
-                local jq_program
-                jq_program="$(cat <<'JQ'
-.hooks = (.hooks // {}) |
-.hooks.PreToolUse = (.hooks.PreToolUse // []) |
-if (.hooks.PreToolUse | type) != "array" then
-  .hooks.PreToolUse = []
-else .
-end |
-if ( [ .hooks.PreToolUse[]? | .hooks[]? | select(.type=="command") | .command ] | index($cmd) ) != null then
-  .
-else
-  ( [ .hooks.PreToolUse | to_entries[] | select(.value.matcher=="Bash") | (.key | tonumber) ] | first ) as $bashKey |
-  if $bashKey == null then
-    .hooks.PreToolUse += [{ "matcher":"Bash", "hooks":[ { "type":"command", "command":$cmd } ] }]
-  else
-    .hooks.PreToolUse[$bashKey].hooks = ((.hooks.PreToolUse[$bashKey].hooks // []) | if type=="array" then . else [] end) |
-    .hooks.PreToolUse[$bashKey].hooks += [{ "type":"command", "command":$cmd }]
-  end
-end
-JQ
-)"
-                if run_as_user jq --arg cmd "$installed_guard" "$jq_program" "$settings_file" 2>/dev/null | run_as_user tee "$tmp" >/dev/null; then
-                    run_as_user mv -- "$tmp" "$settings_file" 2>/dev/null || {
-                        run_as_user rm -f -- "$tmp" 2>/dev/null || true
-                        gum_warn "Could not update $settings_file automatically (mv failed)"
-                        gum_detail "Manually add this hook command:"
-                        gum_detail "  $installed_guard"
-                    }
+                if gum_confirm "Register DCG hook for Claude Code?"; then
+                    run_as_user "$dcg_bin" install || gum_warn "DCG hook registration failed"
                 else
-                    run_as_user rm -f -- "$tmp" 2>/dev/null || true
-                    gum_warn "Could not update $settings_file automatically (invalid JSON?)"
-                    gum_detail "Manually add this hook command:"
-                    gum_detail "  $installed_guard"
+                    gum_warn "Skipped DCG hook registration"
+                    gum_detail "You can enable later with: dcg install"
                 fi
             fi
+        fi
+    else
+        gum_warn "Claude Code not detected; skipping hook registration"
+        gum_detail "Install Claude Code, then run: dcg install"
+    fi
+
+    if user_command_exists claude && ! run_as_user "$dcg_bin" doctor &>/dev/null; then
+        gum_warn "DCG doctor reported issues"
+        if [[ "$SERVICES_SETUP_NONINTERACTIVE" == "true" ]]; then
+            gum_detail "Attempting DCG repair (noninteractive)"
+            run_as_user "$dcg_bin" install --force || gum_warn "DCG repair failed"
         else
-            gum_warn "jq not found; cannot update $settings_file automatically"
-            gum_detail "Manually add this hook command:"
-            gum_detail "  $installed_guard"
+            if gum_confirm "Attempt DCG repair by re-registering the hook?"; then
+                run_as_user "$dcg_bin" install --force || gum_warn "DCG repair failed"
+            else
+                gum_warn "Skipped DCG repair"
+            fi
         fi
     fi
 
-    # Ensure ownership if run via sudo/root
-    if [[ "$(whoami)" == "root" ]]; then
-        chown -hR "$TARGET_USER:$TARGET_USER" "$settings_dir" 2>/dev/null || true
+    if [[ "$SERVICES_SETUP_NONINTERACTIVE" == "true" ]]; then
+        gum_detail "Skipping pack selection (noninteractive)"
+        return 0
     fi
 
-    gum_success "Installed Claude Git Safety Guard"
-    gum_warn "Restart Claude Code for hooks to take effect"
+    if ! gum_confirm "Enable additional DCG protection packs?"; then
+        return 0
+    fi
+
+    local selected
+    selected="$(select_dcg_packs)"
+    if [[ -z "$selected" ]]; then
+        gum_warn "No packs selected"
+        return 0
+    fi
+
+    local config_dir="$TARGET_HOME/.config/dcg"
+    local config_file="$config_dir/config.toml"
+
+    if [[ -L "$config_dir" || -L "$config_file" ]]; then
+        gum_error "Refusing to operate: $config_dir or $config_file is a symlink"
+        return 1
+    fi
+
+    if [[ -f "$config_file" ]]; then
+        if ! gum_confirm "Update existing DCG config at $config_file?"; then
+            gum_warn "Skipped DCG config update"
+            return 0
+        fi
+    fi
+
+    run_as_user mkdir -p "$config_dir"
+
+    {
+        echo "[packs]"
+        echo "enabled = ["
+        for pack in $selected; do
+            echo "    \"${pack}\","
+        done
+        echo "]"
+    } | run_as_user tee "$config_file" >/dev/null
+
+    gum_success "DCG config written to $config_file"
 }
+
 
 print_cli_help() {
     cat << 'EOF'
@@ -693,21 +774,18 @@ ACFS services-setup
 Interactive:
   acfs services-setup
 
-Noninteractive actions:
-  services-setup.sh --install-claude-guard --yes
+Options:
+  --yes, -y    Non-interactive mode
+  --help, -h   Show this help
 EOF
 }
 
 maybe_run_cli_action() {
     local arg
-    local install_claude_guard="false"
 
     while [[ $# -gt 0 ]]; do
         arg="$1"
         case "$arg" in
-            --install-claude-guard)
-                install_claude_guard="true"
-                ;;
             --yes|-y)
                 SERVICES_SETUP_NONINTERACTIVE="true"
                 ;;
@@ -722,12 +800,6 @@ maybe_run_cli_action() {
 
     if [[ "${SERVICES_SETUP_ACTION:-}" == "help" ]]; then
         print_cli_help
-        return 0
-    fi
-
-    if [[ "$install_claude_guard" == "true" ]]; then
-        init_target_context || return 1
-        setup_claude_git_guard
         return 0
     fi
 
@@ -903,9 +975,9 @@ show_menu() {
     if [[ "$HAS_GUM" == "true" ]]; then
         # Build menu items with status indicators
         local -a items=()
-        local services=("claude" "codex" "gemini" "vercel" "supabase" "wrangler" "postgres")
-        local labels=("Claude Code" "Codex CLI" "Gemini CLI" "Vercel" "Supabase" "Cloudflare Wrangler" "PostgreSQL")
-        local descs=("AI coding assistant" "OpenAI assistant" "Google AI assistant" "Deployment platform" "Database platform" "Edge platform" "Local database")
+        local services=("claude" "codex" "gemini" "dcg" "vercel" "supabase" "wrangler" "postgres")
+        local labels=("Claude Code" "Codex CLI" "Gemini CLI" "DCG" "Vercel" "Supabase" "Cloudflare Wrangler" "PostgreSQL")
+        local descs=("AI coding assistant" "OpenAI assistant" "Google AI assistant" "Destructive command guard" "Deployment platform" "Database platform" "Edge platform" "Local database")
 
         for i in "${!services[@]}"; do
             local svc="${services[$i]}"
@@ -918,7 +990,6 @@ show_menu() {
         done
 
         items+=("─────────────────────────────────────────")
-        items+=("🛡 Install Claude destructive-command guard (recommended)")
         items+=("⚡ Configure ALL unconfigured services")
         items+=("🔄 Refresh status")
         items+=("👋 Exit")
@@ -934,10 +1005,10 @@ show_menu() {
             --height 12)
 
         case "$choice" in
-            *"destructive-command guard"*) setup_claude_git_guard ;;
             *"Claude"*)    setup_claude ;;
             *"Codex"*)     setup_codex ;;
             *"Gemini"*)    setup_gemini ;;
+            *"DCG"*)       configure_dcg ;;
             *"Vercel"*)    setup_vercel ;;
             *"Supabase"*)  setup_supabase ;;
             *"Wrangler"*)  setup_wrangler ;;
@@ -953,20 +1024,20 @@ show_menu() {
             "1. Claude Code (AI coding assistant)" \
             "2. Codex CLI (OpenAI coding assistant)" \
             "3. Gemini CLI (Google AI assistant)" \
-            "4. Vercel (deployment platform)" \
-            "5. Supabase (database platform)" \
-            "6. Cloudflare Wrangler (edge platform)" \
-            "7. PostgreSQL (check database)" \
-            "8. Install Claude destructive-command guard (recommended)" \
+            "4. DCG (destructive command guard)" \
+            "5. Vercel (deployment platform)" \
+            "6. Supabase (database platform)" \
+            "7. Cloudflare Wrangler (edge platform)" \
+            "8. PostgreSQL (check database)" \
             "9. Configure ALL unconfigured services" \
             "10. Refresh status" \
             "0. Exit")
 
         case "$choice" in
-            *"destructive-command guard"*) setup_claude_git_guard ;;
             *"Claude"*)    setup_claude ;;
             *"Codex"*)     setup_codex ;;
             *"Gemini"*)    setup_gemini ;;
+            *"DCG"*)       configure_dcg ;;
             *"Vercel"*)    setup_vercel ;;
             *"Supabase"*)  setup_supabase ;;
             *"Cloudflare"*) setup_wrangler ;;
@@ -982,9 +1053,9 @@ show_menu() {
 setup_all_unconfigured() {
     gum_section "Configuring All Unconfigured Services"
 
-    local services=("claude" "codex" "gemini" "vercel" "supabase" "wrangler")
-    local labels=("Claude Code" "Codex CLI" "Gemini CLI" "Vercel" "Supabase" "Cloudflare Wrangler")
-    local setup_funcs=("setup_claude" "setup_codex" "setup_gemini" "setup_vercel" "setup_supabase" "setup_wrangler")
+    local services=("claude" "codex" "gemini" "dcg" "vercel" "supabase" "wrangler")
+    local labels=("Claude Code" "Codex CLI" "Gemini CLI" "DCG (Destructive Command Guard)" "Vercel" "Supabase" "Cloudflare Wrangler")
+    local setup_funcs=("setup_claude" "setup_codex" "setup_gemini" "configure_dcg" "setup_vercel" "setup_supabase" "setup_wrangler")
 
     # Count services needing setup
     local needs_setup=0

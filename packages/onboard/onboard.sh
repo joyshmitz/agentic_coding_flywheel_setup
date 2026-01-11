@@ -2,12 +2,12 @@
 #
 # onboard - ACFS Interactive Onboarding TUI
 #
-# Teaches users the ACFS workflow through 9 interactive lessons.
+# Teaches users the ACFS workflow through interactive lessons.
 # Uses gum for TUI elements with fallback to basic bash menus.
 #
 # Usage:
 #   onboard           # Launch interactive menu
-#   onboard N         # Jump to lesson N (1-9)
+#   onboard N         # Jump to lesson N (1-based)
 #   onboard reset     # Reset progress
 #   onboard status    # Show completion status
 #
@@ -20,6 +20,7 @@ set -euo pipefail
 
 LESSONS_DIR="${ACFS_LESSONS_DIR:-$HOME/.acfs/onboard/lessons}"
 PROGRESS_FILE="${ACFS_PROGRESS_FILE:-$HOME/.acfs/onboard_progress.json}"
+PROGRESS_LOCK_FILE="${PROGRESS_FILE}.lock"
 VERSION="0.1.0"
 
 # Source gum_ui library if available for consistent theming
@@ -35,7 +36,7 @@ for candidate in \
     fi
 done
 
-# Lesson titles (indexed 0-8)
+# Lesson titles (indexed 0-10)
 declare -a LESSON_TITLES=(
     "Welcome & Overview"
     "Linux Navigation"
@@ -46,9 +47,11 @@ declare -a LESSON_TITLES=(
     "NTM Prompt Palette"
     "The Flywheel Loop"
     "Keeping Updated"
+    "RU: Multi-Repo Mastery"
+    "DCG: Destructive Command Guard"
 )
 
-# Lesson files (indexed 0-8)
+# Lesson files (indexed 0-10)
 declare -a LESSON_FILES=(
     "00_welcome.md"
     "01_linux_basics.md"
@@ -59,6 +62,8 @@ declare -a LESSON_FILES=(
     "06_ntm_command_palette.md"
     "07_flywheel_loop.md"
     "08_keeping_updated.md"
+    "09_ru.md"
+    "10_dcg.md"
 )
 
 # Lesson summaries - key learning points for celebration screen (pipe-separated)
@@ -72,7 +77,12 @@ declare -gA LESSON_SUMMARIES=(
     [6]="Using the prompt palette|Common prompts and shortcuts|Customizing your workflow"
     [7]="The agentic development loop|Continuous improvement|Measuring productivity"
     [8]="Keeping tools updated|Staying current with AI agents|Community resources"
+    [9]="Multi-repo sync with ru sync|AI-driven commits via agent-sweep|Parallel workflow automation"
+    [10]="DCG command safety|Protection packs|Allow-once workflow"
 )
+
+# Number of lessons (derived from array length for maintainability)
+NUM_LESSONS=${#LESSON_TITLES[@]}
 
 # Service definitions for authentication flow
 declare -a AUTH_SERVICES=(
@@ -207,48 +217,66 @@ get_current() {
     fi
 }
 
-# Get the next recommended lesson index (first incomplete, 0-8).
+# Get the next recommended lesson index (first incomplete, 0-10).
 get_next_incomplete() {
     local i
-    for i in {0..8}; do
+    for i in {0..10}; do
         if ! is_completed "$i"; then
             echo "$i"
             return 0
         fi
     done
-    echo "8"
+    echo "10"
 }
 
 # Mark a lesson as completed
+# Uses file locking to prevent race conditions with concurrent calls.
 mark_completed() {
     local lesson=$1
 
     if command -v jq &>/dev/null; then
         local tmp
         local progress_dir
+        local lock_fd
         progress_dir="$(dirname "$PROGRESS_FILE")"
         mkdir -p "$progress_dir" 2>/dev/null || true
+
+        # Acquire exclusive lock (wait up to 5 seconds)
+        exec {lock_fd}>"$PROGRESS_LOCK_FILE"
+        if ! flock -x -w 5 "$lock_fd" 2>/dev/null; then
+            echo -e "${YELLOW}Warning: could not acquire progress lock.${NC}"
+            exec {lock_fd}>&- 2>/dev/null || true
+            return 0
+        fi
+
         tmp=$(mktemp "${progress_dir}/.acfs_onboard.XXXXXX" 2>/dev/null) || {
             echo -e "${YELLOW}Warning: could not save progress (mktemp failed).${NC}"
+            exec {lock_fd}>&- 2>/dev/null || true
             return 0
         }
 
-        if jq --argjson lesson "$lesson" '
+        if jq --argjson lesson "$lesson" --argjson num_lessons "$NUM_LESSONS" '
             .completed = (.completed + [$lesson] | unique | sort) |
             . as $o |
             .current = (
-                [range(0;9) as $i | select(($o.completed | index($i)) == null) | $i] | first // 8
+                [range(0;$num_lessons) as $i | select(($o.completed | index($i)) == null) | $i] | first // ($num_lessons - 1)
             ) |
             .last_accessed = (now | todateiso8601)
         ' "$PROGRESS_FILE" > "$tmp"; then
             mv -- "$tmp" "$PROGRESS_FILE" 2>/dev/null || {
                 rm -f -- "$tmp" 2>/dev/null || true
                 echo -e "${YELLOW}Warning: could not save progress (mv failed).${NC}"
+                exec {lock_fd}>&- 2>/dev/null || true
                 return 0
             }
         else
             rm -f -- "$tmp" 2>/dev/null || true
+            exec {lock_fd}>&- 2>/dev/null || true
+            return 0
         fi
+
+        # Release lock
+        exec {lock_fd}>&- 2>/dev/null || true
     else
         # Fallback: warn user that progress is not saved
         echo -e "${YELLOW}Warning: 'jq' not found. Progress will NOT be saved.${NC}"
@@ -257,16 +285,28 @@ mark_completed() {
 }
 
 # Update current lesson without marking complete
+# Uses file locking to prevent race conditions with concurrent calls.
 set_current() {
     local lesson=$1
 
     if command -v jq &>/dev/null; then
         local tmp
         local progress_dir
+        local lock_fd
         progress_dir="$(dirname "$PROGRESS_FILE")"
         mkdir -p "$progress_dir" 2>/dev/null || true
+
+        # Acquire exclusive lock (wait up to 5 seconds)
+        exec {lock_fd}>"$PROGRESS_LOCK_FILE"
+        if ! flock -x -w 5 "$lock_fd" 2>/dev/null; then
+            echo -e "${YELLOW}Warning: could not acquire progress lock.${NC}"
+            exec {lock_fd}>&- 2>/dev/null || true
+            return 0
+        fi
+
         tmp=$(mktemp "${progress_dir}/.acfs_onboard.XXXXXX" 2>/dev/null) || {
             echo -e "${YELLOW}Warning: could not update progress (mktemp failed).${NC}"
+            exec {lock_fd}>&- 2>/dev/null || true
             return 0
         }
 
@@ -277,19 +317,35 @@ set_current() {
             mv -- "$tmp" "$PROGRESS_FILE" 2>/dev/null || {
                 rm -f -- "$tmp" 2>/dev/null || true
                 echo -e "${YELLOW}Warning: could not update progress (mv failed).${NC}"
+                exec {lock_fd}>&- 2>/dev/null || true
                 return 0
             }
         else
             rm -f -- "$tmp" 2>/dev/null || true
+            exec {lock_fd}>&- 2>/dev/null || true
+            return 0
         fi
+
+        # Release lock
+        exec {lock_fd}>&- 2>/dev/null || true
     fi
 }
 
 # Reset progress
+# Uses file locking to prevent race conditions with concurrent calls.
 reset_progress() {
     local progress_dir
+    local lock_fd
     progress_dir="$(dirname "$PROGRESS_FILE")"
     mkdir -p "$progress_dir" 2>/dev/null || true
+
+    # Acquire exclusive lock (wait up to 5 seconds)
+    exec {lock_fd}>"$PROGRESS_LOCK_FILE"
+    if ! flock -x -w 5 "$lock_fd" 2>/dev/null; then
+        echo -e "${YELLOW}Warning: could not acquire progress lock.${NC}"
+        exec {lock_fd}>&- 2>/dev/null || true
+        return 0
+    fi
 
     if [[ -f "$PROGRESS_FILE" ]]; then
         local backup
@@ -305,6 +361,7 @@ reset_progress() {
     local tmp
     tmp=$(mktemp "${progress_dir}/.acfs_onboard.XXXXXX" 2>/dev/null) || {
         echo -e "${YELLOW}Warning: could not reset progress (mktemp failed).${NC}"
+        exec {lock_fd}>&- 2>/dev/null || true
         return 0
     }
     if cat > "$tmp" <<EOF
@@ -319,13 +376,18 @@ EOF
         mv -- "$tmp" "$PROGRESS_FILE" 2>/dev/null || {
             rm -f -- "$tmp" 2>/dev/null || true
             echo -e "${YELLOW}Warning: could not reset progress (mv failed).${NC}"
+            exec {lock_fd}>&- 2>/dev/null || true
             return 0
         }
     else
         rm -f -- "$tmp" 2>/dev/null || true
         echo -e "${YELLOW}Warning: could not reset progress (write failed).${NC}"
+        exec {lock_fd}>&- 2>/dev/null || true
         return 0
     fi
+
+    # Release lock
+    exec {lock_fd}>&- 2>/dev/null || true
     echo -e "${GREEN}Progress reset!${NC}"
 }
 
@@ -637,12 +699,12 @@ show_auth_service() {
 # Returns: completed_count|total|percent|est_minutes_remaining
 calc_progress_stats() {
     local completed_count=0
-    for i in {0..8}; do
+    for i in {0..10}; do
         if is_completed "$i"; then
             ((completed_count += 1))
         fi
     done
-    local total=9
+    local total=11
     local percent=$((completed_count * 100 / total))
     local remaining=$((total - completed_count))
     local est_minutes=$((remaining * 5))  # ~5 min per lesson average
@@ -742,7 +804,7 @@ show_menu_gum() {
 
     # Build menu items with styled status indicators
     local -a items=()
-    for i in {0..8}; do
+    for i in {0..10}; do
         local status=""
         if is_completed "$i"; then
             status="✓"
@@ -759,7 +821,7 @@ show_menu_gum() {
     items+=("📊 [s] Show status")
     # Show certificate option only when all lessons complete
     local all_complete=true
-    for i in {0..8}; do
+    for i in {0..10}; do
         is_completed "$i" || { all_complete=false; break; }
     done
     if [[ "$all_complete" == "true" ]]; then
@@ -775,8 +837,8 @@ show_menu_gum() {
         --header.foreground "$ACFS_PRIMARY" \
         --header "Select a lesson:")
 
-    # Parse choice
-    if [[ "$choice" =~ \[([0-9])\] ]]; then
+    # Parse choice (handles single and double digit lesson numbers)
+    if [[ "$choice" =~ \[([0-9]+)\] ]]; then
         echo "${BASH_REMATCH[1]}"
     elif [[ "$choice" =~ \[a\] ]]; then
         echo "a"
@@ -796,7 +858,7 @@ show_menu_basic() {
     echo -e "${BOLD}Choose a lesson:${NC}"
     echo ""
 
-    for i in {0..8}; do
+    for i in {0..10}; do
         echo -e "  $(format_lesson "$i")"
     done
 
@@ -806,7 +868,7 @@ show_menu_basic() {
     echo -e "  ${DIM}[s] Show status${NC}"
     # Show certificate option only when all lessons complete
     local all_complete=true
-    for i in {0..8}; do
+    for i in {0..10}; do
         is_completed "$i" || { all_complete=false; break; }
     done
     if [[ "$all_complete" == "true" ]]; then
@@ -815,12 +877,12 @@ show_menu_basic() {
     echo -e "  ${DIM}[q] Quit${NC}"
     echo ""
 
-    local prompt_opts="1-9, a, r, s, q"
-    [[ "$all_complete" == "true" ]] && prompt_opts="1-9, a, r, s, t, q"
+    local prompt_opts="1-11, a, r, s, q"
+    [[ "$all_complete" == "true" ]] && prompt_opts="1-11, a, r, s, t, q"
     read -rp "$(echo -e "${CYAN}Choose [$prompt_opts]:${NC} ")" choice
 
     case "$choice" in
-        [1-9]) echo "$choice" ;;
+        [1-9]|1[01]) echo "$choice" ;;
         a|A) echo "a" ;;
         r|R) echo "r" ;;
         s|S) echo "s" ;;
@@ -886,7 +948,7 @@ show_celebration() {
             "$(gum style --foreground "$ACFS_MUTED" 'You learned:')" \
             "$summary_text" \
             "" \
-            "$(gum style --foreground "$ACFS_ACCENT" "Progress: $((idx + 1))/9 lessons")"
+            "$(gum style --foreground "$ACFS_ACCENT" "Progress: $((idx + 1))/$NUM_LESSONS lessons")"
 
         sleep 2
     else
@@ -907,7 +969,7 @@ show_celebration() {
         fi
 
         echo ""
-        echo -e "${CYAN}Progress: $((idx + 1))/9 lessons${NC}"
+        echo -e "${CYAN}Progress: $((idx + 1))/$NUM_LESSONS lessons${NC}"
         echo ""
         sleep 2
     fi
@@ -933,7 +995,7 @@ show_completion_certificate() {
             "" \
             "$(gum style --foreground "$ACFS_SUCCESS" --bold '🏆 ACFS Onboarding Complete! 🏆')" \
             "" \
-            "$(gum style --foreground "$ACFS_PINK" "You have successfully completed all 9 lessons")" \
+            "$(gum style --foreground "$ACFS_PINK" "You have successfully completed all $NUM_LESSONS lessons")" \
             "$(gum style --foreground "$ACFS_PINK" "of the Agentic Coding Flywheel Setup tutorial.")" \
             "" \
             "$(gum style --foreground "$ACFS_TEAL" "Skills Mastered:")" \
@@ -943,6 +1005,8 @@ show_completion_certificate() {
             "$(gum style --foreground "$ACFS_MUTED" "  • AI Coding Agents (Claude, Codex, Gemini)")" \
             "$(gum style --foreground "$ACFS_MUTED" "  • NTM Dashboard & Prompt Palette")" \
             "$(gum style --foreground "$ACFS_MUTED" "  • The Agentic Development Flywheel")" \
+            "$(gum style --foreground "$ACFS_MUTED" "  • Multi-Repo Sync with RU")" \
+            "$(gum style --foreground "$ACFS_MUTED" "  • Destructive Command Guard (DCG)")" \
             "" \
             "$(gum style --foreground "$ACFS_PRIMARY" "Completed: $completed_at")" \
             "" \
@@ -958,7 +1022,7 @@ show_completion_certificate() {
         echo ""
         echo -e "${GREEN}${BOLD}         🏆 ACFS Onboarding Complete! 🏆${NC}"
         echo ""
-        echo -e "  You have successfully completed all 9 lessons"
+        echo -e "  You have successfully completed all $NUM_LESSONS lessons"
         echo -e "  of the Agentic Coding Flywheel Setup tutorial."
         echo ""
         echo -e "${CYAN}${BOLD}  Skills Mastered:${NC}"
@@ -968,6 +1032,8 @@ show_completion_certificate() {
         echo -e "    • AI Coding Agents (Claude, Codex, Gemini)"
         echo -e "    • NTM Dashboard & Prompt Palette"
         echo -e "    • The Agentic Development Flywheel"
+        echo -e "    • Multi-Repo Sync with RU"
+        echo -e "    • Destructive Command Guard (DCG)"
         echo ""
         echo -e "${DIM}  Completed: $completed_at${NC}"
         echo ""
@@ -998,7 +1064,7 @@ show_lesson() {
     if has_gum; then
         # Build progress dots
         local dots=""
-        for ((i = 0; i < 9; i++)); do
+        for ((i = 0; i < 11; i++)); do
             if is_completed "$i"; then
                 dots+="$(gum style --foreground "$ACFS_SUCCESS" "●") "
             elif [[ $i -eq $idx ]]; then
@@ -1013,7 +1079,7 @@ show_lesson() {
             --border-foreground "$ACFS_PRIMARY" \
             --padding "1 2" \
             --margin "0 0 1 0" \
-            "$(gum style --foreground "$ACFS_ACCENT" "Lesson $((idx + 1)) of 9")
+            "$(gum style --foreground "$ACFS_ACCENT" "Lesson $((idx + 1)) of 11")
 $dots
 $(gum style --foreground "$ACFS_PINK" --bold "${LESSON_TITLES[$idx]}")"
     else
@@ -1035,7 +1101,7 @@ $(gum style --foreground "$ACFS_PINK" --bold "${LESSON_TITLES[$idx]}")"
         local -a nav_items=()
         nav_items+=("📋 [m] Menu")
         [[ $idx -gt 0 ]] && nav_items+=("⬅️  [p] Previous")
-        [[ $idx -lt 8 ]] && nav_items+=("➡️  [n] Next")
+        [[ $idx -lt 10 ]] && nav_items+=("➡️  [n] Next")
         nav_items+=("✅ [c] Mark complete")
         nav_items+=("👋 [q] Quit")
 
@@ -1054,7 +1120,7 @@ $(gum style --foreground "$ACFS_PINK" --bold "${LESSON_TITLES[$idx]}")"
                 fi
                 ;;
             *"[n]"*)
-                if [[ $idx -lt 8 ]]; then
+                if [[ $idx -lt 10 ]]; then
                     set_current $((idx + 1))
                     show_lesson $((idx + 1))
                     return $?
@@ -1063,7 +1129,7 @@ $(gum style --foreground "$ACFS_PINK" --bold "${LESSON_TITLES[$idx]}")"
             *"[c]"*)
                 mark_completed "$idx"
                 show_celebration "$idx"
-                if [[ $idx -lt 8 ]]; then
+                if [[ $idx -lt 10 ]]; then
                     show_lesson $((idx + 1))
                     return $?
                 else
@@ -1081,7 +1147,7 @@ $(gum style --foreground "$ACFS_PINK" --bold "${LESSON_TITLES[$idx]}")"
         if [[ $idx -gt 0 ]]; then
             nav_options+="  [p] Previous"
         fi
-        if [[ $idx -lt 8 ]]; then
+        if [[ $idx -lt 10 ]]; then
             nav_options+="  [n] Next"
         fi
         nav_options+="  [c] Mark complete  [q] Quit"
@@ -1101,7 +1167,7 @@ $(gum style --foreground "$ACFS_PINK" --bold "${LESSON_TITLES[$idx]}")"
                     fi
                     ;;
                 n|N)
-                    if [[ $idx -lt 8 ]]; then
+                    if [[ $idx -lt 10 ]]; then
                         set_current $((idx + 1))
                         show_lesson $((idx + 1))
                         return $?
@@ -1110,7 +1176,7 @@ $(gum style --foreground "$ACFS_PINK" --bold "${LESSON_TITLES[$idx]}")"
                 c|C)
                     mark_completed "$idx"
                     show_celebration "$idx"
-                    if [[ $idx -lt 8 ]]; then
+                    if [[ $idx -lt 10 ]]; then
                         show_lesson $((idx + 1))
                         return $?
                     else
@@ -1131,7 +1197,7 @@ show_status() {
     print_header
 
     local completed_count=0
-    for i in {0..8}; do
+    for i in {0..10}; do
         if is_completed "$i"; then
             ((completed_count += 1))
         fi
@@ -1139,7 +1205,7 @@ show_status() {
 
     if has_gum; then
         # Styled progress display with gum
-        local percent=$((completed_count * 100 / 9))
+        local percent=$((completed_count * 100 / 11))
         local filled=$((percent / 2))
         local empty=$((50 - filled))
 
@@ -1152,13 +1218,13 @@ show_status() {
             --border-foreground "$ACFS_ACCENT" \
             --padding "1 2" \
             --margin "0 0 1 0" \
-            "$(gum style --foreground "$ACFS_PINK" --bold "📊 Progress: $completed_count/9 lessons")
+            "$(gum style --foreground "$ACFS_PINK" --bold "📊 Progress: $completed_count/$NUM_LESSONS lessons")
 
 $(gum style --foreground "$ACFS_PRIMARY" "$bar") $(gum style --foreground "$ACFS_SUCCESS" --bold "$percent%")"
 
         # Lesson list with styled status
         echo ""
-        for i in {0..8}; do
+        for i in {0..10}; do
             local status_icon status_color
             if is_completed "$i"; then
                 status_icon="✓"
@@ -1175,7 +1241,7 @@ $(gum style --foreground "$ACFS_PRIMARY" "$bar") $(gum style --foreground "$ACFS
 
         echo ""
 
-        if [[ $completed_count -eq 9 ]]; then
+        if [[ $completed_count -eq 11 ]]; then
             gum style \
                 --foreground "$ACFS_SUCCESS" \
                 --bold \
@@ -1189,11 +1255,11 @@ $(gum style --foreground "$ACFS_PRIMARY" "$bar") $(gum style --foreground "$ACFS
         echo ""
         gum confirm --affirmative "Continue" --negative "" "Ready to continue?" || true
     else
-        echo -e "${BOLD}Progress: $completed_count/9 lessons completed${NC}"
+        echo -e "${BOLD}Progress: $completed_count/$NUM_LESSONS lessons completed${NC}"
         echo ""
 
-        # Progress bar
-        local filled=$((completed_count * 5))
+        # Progress bar (width based on lesson count)
+        local filled=$((completed_count * 45 / NUM_LESSONS))
         local empty=$((45 - filled))
         local i
         printf '%s' "${GREEN}"
@@ -1201,16 +1267,16 @@ $(gum style --foreground "$ACFS_PRIMARY" "$bar") $(gum style --foreground "$ACFS
         printf '%s' "${DIM}"
         for ((i = 0; i < empty; i++)); do printf '░'; done
         printf '%s' "${NC}"
-        echo " $((completed_count * 100 / 9))%"
+        echo " $((completed_count * 100 / 11))%"
         echo ""
 
-        for i in {0..8}; do
+        for i in {0..10}; do
             echo -e "  $(format_lesson "$i")"
         done
 
         echo ""
 
-        if [[ $completed_count -eq 9 ]]; then
+        if [[ $completed_count -eq 11 ]]; then
             echo -e "${GREEN}${BOLD}All lessons complete! You're ready to fly!${NC}"
         else
             local next_idx
@@ -1239,7 +1305,7 @@ main_menu() {
         fi
 
         case "$choice" in
-            [1-9])
+            [1-9]|1[01])
                 local idx=$((choice - 1))
                 set_current "$idx"
                 show_lesson "$idx"
@@ -1317,7 +1383,7 @@ ACFS Onboarding Tutorial
 
 Usage:
   onboard           Launch interactive menu
-  onboard N         Jump to lesson N (1-9)
+  onboard N         Jump to lesson N (1-$NUM_LESSONS)
   onboard reset     Reset all progress
   onboard status    Show completion status
   onboard --cheatsheet [query]  Show ACFS command cheatsheet
@@ -1333,6 +1399,8 @@ Lessons:
   7 - NTM Prompt Palette
   8 - The Flywheel Loop
   9 - Keeping Updated
+  10 - RU: Multi-Repo Mastery
+  11 - DCG: Destructive Command Guard
 
 Environment:
   ACFS_LESSONS_DIR   Path to lesson files (default: ~/.acfs/onboard/lessons)
@@ -1343,7 +1411,7 @@ EOF
         init_progress
         main_menu
         ;;
-    [1-9])
+    [1-9]|1[01])
         init_progress
         idx=$(( $1 - 1 ))
         show_lesson "$idx"

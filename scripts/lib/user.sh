@@ -143,35 +143,35 @@ migrate_ssh_keys() {
     if [[ -z "$source_keys" ]]; then
         if [[ "${ACFS_CI:-false}" == "true" ]]; then
             log_detail "No SSH keys found to migrate (CI)"
-	        else
-	            log_warn "No SSH keys found to migrate to $target user"
-	            log_warn "You connected with password - SSH key not configured for $target"
-	            echo ""
-	            echo "════════════════════════════════════════════════════════════"
-	            echo "  ⚠  SSH KEY SETUP REQUIRED FOR USER: $target"
-	            echo "════════════════════════════════════════════════════════════"
-	            echo ""
-	            echo "  You connected with a password, so no SSH key was migrated."
-	            echo "  After installation, you'll need to set up SSH access."
-	            echo ""
-	            echo "  EASIEST FIX - from your LOCAL machine, run:"
-	            echo ""
-	            echo "    ssh-copy-id ${target}@YOUR_SERVER_IP"
-	            echo ""
-	            echo "  Or manually: SSH in as root and run these commands:"
-	            echo ""
-	            echo "    mkdir -p ${ACFS_TARGET_HOME}/.ssh"
-	            echo "    cat >> ${ACFS_TARGET_HOME}/.ssh/authorized_keys << 'EOF'"
-	            echo "    YOUR_PUBLIC_KEY_HERE"
-	            echo "    EOF"
-	            echo "    chown -R ${target}:${target} ${ACFS_TARGET_HOME}/.ssh"
-	            echo "    chmod 700 ${ACFS_TARGET_HOME}/.ssh"
-	            echo "    chmod 600 ${ACFS_TARGET_HOME}/.ssh/authorized_keys"
-	            echo ""
-	            echo "════════════════════════════════════════════════════════════"
-	            echo ""
-	            # Set a flag for the final summary
-	            export ACFS_SSH_KEY_WARNING="true"
+        else
+            log_warn "No SSH keys found to migrate to $target user"
+            log_warn "You connected with password - SSH key not configured for $target"
+            echo ""
+            echo "════════════════════════════════════════════════════════════"
+            echo "  ⚠  SSH KEY SETUP REQUIRED FOR USER: $target"
+            echo "════════════════════════════════════════════════════════════"
+            echo ""
+            echo "  You connected with a password, so no SSH key was migrated."
+            echo "  After installation, you'll need to set up SSH access."
+            echo ""
+            echo "  EASIEST FIX - from your LOCAL machine, run:"
+            echo ""
+            echo "    ssh-copy-id ${target}@YOUR_SERVER_IP"
+            echo ""
+            echo "  Or manually: SSH in as root and run these commands:"
+            echo ""
+            echo "    mkdir -p ${ACFS_TARGET_HOME}/.ssh"
+            echo "    cat >> ${ACFS_TARGET_HOME}/.ssh/authorized_keys << 'EOF'"
+            echo "    YOUR_PUBLIC_KEY_HERE"
+            echo "    EOF"
+            echo "    chown -R ${target}:${target} ${ACFS_TARGET_HOME}/.ssh"
+            echo "    chmod 700 ${ACFS_TARGET_HOME}/.ssh"
+            echo "    chmod 600 ${ACFS_TARGET_HOME}/.ssh/authorized_keys"
+            echo ""
+            echo "════════════════════════════════════════════════════════════"
+            echo ""
+            # Set a flag for the final summary
+            export ACFS_SSH_KEY_WARNING="true"
         fi
         return 0
     fi
@@ -269,6 +269,12 @@ can_sudo_nopasswd() {
 # Called when running as root with no existing key
 # Returns 0 on success or skip, 1 on invalid key
 prompt_ssh_key() {
+    # Skip entirely in CI mode - no TTY available and no need for SSH keys
+    if [[ "${ACFS_CI:-false}" == "true" ]]; then
+        log_detail "Skipping SSH key prompt (CI mode)"
+        return 0
+    fi
+
     local authorized_keys="/root/.ssh/authorized_keys"
     local has_existing_key=false
     local existing_key_info=""

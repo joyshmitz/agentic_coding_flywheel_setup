@@ -7,6 +7,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { parse as parseYaml, YAMLParseError } from 'yaml';
 import { ZodError } from 'zod';
 import { ManifestSchema } from './schema.js';
+import { detectDependencyCycles as detectDependencyCyclesValidate } from './validate.js';
 import type {
   Manifest,
   ParseResult,
@@ -230,9 +231,14 @@ export function validateManifest(manifest: unknown): ValidationResult {
     }
   }
 
-  // Check for dependency cycles
-  const cycleErrors = detectDependencyCycles(data.modules);
-  errors.push(...cycleErrors);
+  // Check for dependency cycles (using consolidated implementation from validate.ts)
+  const cycleResults = detectDependencyCyclesValidate(data);
+  for (const e of cycleResults) {
+    errors.push({
+      path: `modules.${e.moduleId}.dependencies`,
+      message: e.message,
+    });
+  }
 
   // Check for phase ordering violations (deps must be same or earlier phase)
   // Related: bead mjt.3.2
@@ -258,64 +264,6 @@ export function validateManifest(manifest: unknown): ValidationResult {
     errors,
     warnings,
   };
-}
-
-/**
- * Detect dependency cycles in modules
- */
-function detectDependencyCycles(modules: Manifest['modules']): ValidationError[] {
-  const errors: ValidationError[] = [];
-  const moduleMap = new Map(modules.map((m) => [m.id, m]));
-  const processed = new Set<string>();
-  const visiting = new Set<string>();
-
-  function visit(moduleId: string, path: string[]): string[] | null {
-    if (processed.has(moduleId)) {
-      return null;
-    }
-    if (visiting.has(moduleId)) {
-      const cycleStart = path.indexOf(moduleId);
-      return path.slice(cycleStart);
-    }
-
-    const module = moduleMap.get(moduleId);
-    if (!module || !module.dependencies) {
-      processed.add(moduleId);
-      return null;
-    }
-
-    visiting.add(moduleId);
-    path.push(moduleId);
-
-    for (const dep of module.dependencies) {
-      const cycle = visit(dep, path);
-      if (cycle) {
-        return cycle;
-      }
-    }
-
-    visiting.delete(moduleId);
-    path.pop();
-    processed.add(moduleId);
-    return null;
-  }
-
-  for (const module of modules) {
-    if (processed.has(module.id)) continue;
-    
-    const cycle = visit(module.id, []);
-    if (cycle) {
-      errors.push({
-        path: `modules.${module.id}.dependencies`,
-        message: `Dependency cycle detected: ${cycle.join(' -> ')} -> ${cycle[0]}`,
-      });
-      // We can stop after finding one cycle, or continue to find disjoint cycles.
-      // For now, reporting one is sufficient to fail validation.
-      break; 
-    }
-  }
-
-  return errors;
 }
 
 /**

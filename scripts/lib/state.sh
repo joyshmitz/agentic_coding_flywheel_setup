@@ -285,8 +285,9 @@ state_write_atomic() {
 
     # Write content to temp file
     # Using printf for more reliable output than echo
-    if ! printf '%s\n' "$content" > "$temp_file" 2>/dev/null; then
-        local write_err=$?
+    printf '%s\n' "$content" > "$temp_file" 2>/dev/null
+    local write_err=$?
+    if [[ $write_err -ne 0 ]]; then
         rm -f "$temp_file" 2>/dev/null || true
 
         if [[ ! -w "$target_dir" ]]; then
@@ -310,8 +311,9 @@ state_write_atomic() {
 
     # Atomic rename: on POSIX filesystems, rename() is guaranteed atomic
     # when source and target are on the same filesystem
-    if ! mv -f "$temp_file" "$file_path" 2>/dev/null; then
-        local mv_err=$?
+    mv -f "$temp_file" "$file_path" 2>/dev/null
+    local mv_err=$?
+    if [[ $mv_err -ne 0 ]]; then
         rm -f "$temp_file" 2>/dev/null || true
 
         # Check for permission issues
@@ -433,7 +435,10 @@ state_save() {
         fi
     fi
 
-    state_write_atomic "$state_file" "$content"
+    if ! state_write_atomic "$state_file" "$content"; then
+        declare -f log_error &>/dev/null && log_error "state_save: state_write_atomic failed"
+        return 1
+    fi
 }
 
 # Update specific fields in state
@@ -487,13 +492,19 @@ state_phase_start() {
         new_state=$(echo "$state" | jq --arg phase "$phase_id" --arg step "$step" --argjson start "$start_time" '
             .current_phase = $phase |
             .current_step = $step |
-            .phase_start_time = $start
+            .phase_start_time = $start |
+            .failed_phase = null |
+            .failed_step = null |
+            .failed_error = null
         ') || return 1
     else
         new_state=$(echo "$state" | jq --arg phase "$phase_id" --argjson start "$start_time" '
             .current_phase = $phase |
             .current_step = null |
-            .phase_start_time = $start
+            .phase_start_time = $start |
+            .failed_phase = null |
+            .failed_step = null |
+            .failed_error = null
         ') || return 1
     fi
 
@@ -1714,22 +1725,34 @@ state_upgrade_init() {
     local now
     now="$(date -Iseconds)"
 
-    # Initialize the ubuntu_upgrade section
-    state_update "
+    # Load current state
+    local state
+    state=$(state_load) || return 1
+
+    # Use jq --arg to safely escape all variables (prevent JSON injection)
+    local new_state
+    new_state=$(echo "$state" | jq \
+        --arg now "$now" \
+        --arg orig "$original_version" \
+        --arg target "$target_version" \
+        --argjson path "$upgrade_path" \
+        '
         .ubuntu_upgrade = {
-            \"enabled\": true,
-            \"started_at\": \"$now\",
-            \"original_version\": \"$original_version\",
-            \"target_version\": \"$target_version\",
-            \"upgrade_path\": $upgrade_path,
-            \"current_stage\": \"initializing\",
-            \"completed_upgrades\": [],
-            \"current_upgrade\": null,
-            \"needs_reboot\": false,
-            \"resume_after_reboot\": false,
-            \"last_error\": null
+            "enabled": true,
+            "started_at": $now,
+            "original_version": $orig,
+            "target_version": $target,
+            "upgrade_path": $path,
+            "current_stage": "initializing",
+            "completed_upgrades": [],
+            "current_upgrade": null,
+            "needs_reboot": false,
+            "resume_after_reboot": false,
+            "last_error": null
         }
-    "
+    ') || return 1
+
+    state_save "$new_state"
 }
 
 # Mark current upgrade step as starting
@@ -1745,14 +1768,26 @@ state_upgrade_start() {
     local now
     now="$(date -Iseconds)"
 
-    state_update "
-        .ubuntu_upgrade.current_stage = \"upgrading\" |
+    # Load current state
+    local state
+    state=$(state_load) || return 1
+
+    # Use jq --arg to safely escape all variables (prevent JSON injection)
+    local new_state
+    new_state=$(echo "$state" | jq \
+        --arg now "$now" \
+        --arg from "$from_version" \
+        --arg to "$to_version" \
+        '
+        .ubuntu_upgrade.current_stage = "upgrading" |
         .ubuntu_upgrade.current_upgrade = {
-            \"from\": \"$from_version\",
-            \"to\": \"$to_version\",
-            \"started_at\": \"$now\"
+            "from": $from,
+            "to": $to,
+            "started_at": $now
         }
-    "
+    ') || return 1
+
+    state_save "$new_state"
 }
 
 # Mark current upgrade step as completed
@@ -1774,15 +1809,23 @@ state_upgrade_complete() {
     local from_version
     from_version=$(echo "$state" | jq -r '.ubuntu_upgrade.current_upgrade.from // ""')
 
-    state_update "
+    # Use jq --arg to safely escape all variables (prevent JSON injection)
+    local new_state
+    new_state=$(echo "$state" | jq \
+        --arg now "$now" \
+        --arg from "$from_version" \
+        --arg to "$to_version" \
+        '
         .ubuntu_upgrade.completed_upgrades += [{
-            \"from\": \"$from_version\",
-            \"to\": \"$to_version\",
-            \"completed_at\": \"$now\"
+            "from": $from,
+            "to": $to,
+            "completed_at": $now
         }] |
         .ubuntu_upgrade.current_upgrade = null |
-        .ubuntu_upgrade.current_stage = \"step_complete\"
-    "
+        .ubuntu_upgrade.current_stage = "step_complete"
+    ') || return 1
+
+    state_save "$new_state"
 }
 
 # Mark that system needs reboot before continuing
