@@ -207,7 +207,7 @@ _check_ntm() {
         _smoke_pass "NTM: installed"
         return 0
     else
-        _smoke_fail "NTM: not found" "Re-run: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 8"
+        _smoke_fail "NTM: not found" "Re-run: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 8"
         return 1
     fi
 }

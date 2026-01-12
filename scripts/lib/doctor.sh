@@ -622,7 +622,7 @@ check_shell() {
     if [[ -d "$HOME/.oh-my-zsh" ]]; then
         check "shell.ohmyzsh" "Oh My Zsh" "pass"
     else
-        check "shell.ohmyzsh" "Oh My Zsh" "fail" "not installed" "Re-run: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 3"
+        check "shell.ohmyzsh" "Oh My Zsh" "fail" "not installed" "Re-run: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 3"
     fi
 
     local p10k_dir="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
@@ -657,7 +657,7 @@ check_shell() {
         check "shell.lsd_or_eza" "lsd/eza" "warn" "neither installed" "sudo apt install lsd"
     fi
 
-    check_command "shell.atuin" "Atuin" "atuin" "Re-run: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 5"
+    check_command "shell.atuin" "Atuin" "atuin" "Re-run: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 5"
     check_command "shell.fzf" "fzf" "fzf" "sudo apt install fzf"
     check_command "shell.zoxide" "zoxide" "zoxide" \
         "Re-run: curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash"
@@ -670,9 +670,9 @@ check_shell() {
 check_core_tools() {
     section "Core tools"
 
-    check_command "tool.bun" "Bun" "bun" "Re-run: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 5"
-    check_command "tool.uv" "uv" "uv" "Re-run: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 5"
-    check_command "tool.cargo" "Cargo (Rust)" "cargo" "Re-run: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 5"
+    check_command "tool.bun" "Bun" "bun" "Re-run: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 5"
+    check_command "tool.uv" "uv" "uv" "Re-run: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 5"
+    check_command "tool.cargo" "Cargo (Rust)" "cargo" "Re-run: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 5"
     check_command "tool.go" "Go" "go" "sudo apt install golang-go"
     check_command "tool.tmux" "tmux" "tmux" "sudo apt install tmux"
     check_command "tool.rg" "ripgrep" "rg" "sudo apt install ripgrep"
@@ -835,7 +835,7 @@ check_cloud() {
         if [[ "$doctor_ci" == "true" ]]; then
             check "network.tailscale" "Tailscale (not installed)" "pass" "ok in CI"
         else
-            check "network.tailscale" "Tailscale" "warn" "not installed (optional)" "Install: curl --proto '=https' --proto-redir '=https' -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only network.tailscale"
+            check "network.tailscale" "Tailscale" "warn" "not installed (optional)" "Install: curl --proto '=https' --proto-redir '=https' -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only network.tailscale"
         fi
     fi
 
@@ -850,7 +850,7 @@ check_cloud() {
             if [[ "$doctor_ci" == "true" ]]; then
                 check "network.ssh_keepalive" "SSH keepalive (not configured)" "pass" "ok in CI"
             else
-                check "network.ssh_keepalive" "SSH keepalive" "warn" "not configured (optional)" "Install: curl --proto '=https' --proto-redir '=https' -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only network.ssh_keepalive"
+                check "network.ssh_keepalive" "SSH keepalive" "warn" "not configured (optional)" "Install: curl --proto '=https' --proto-redir '=https' -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only network.ssh_keepalive"
             fi
         fi
     fi

@@ -33,7 +33,7 @@ export const homeMessagesUk = {
   terminal: {
     prompt: "ubuntu@vps ~",
     lines: [
-      { type: "command", text: "curl -fsSL https://agent-flywheel.com/install | bash" },
+      { type: "command", text: "curl -fsSL https://acfsw.oblik.io/install | bash" },
       { type: "output", text: "▸ Виявлено Ubuntu 24.04... ✓" },
       { type: "output", text: "▸ Встановлення zsh + oh-my-zsh + powerlevel10k..." },
       { type: "output", text: "▸ Встановлення bun, uv, rust, go..." },

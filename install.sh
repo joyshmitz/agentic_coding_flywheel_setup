@@ -3803,7 +3803,7 @@ run_smoke_test() {
         ((critical_passed += 1))
     else
         echo "✖ Languages: missing ${missing_lang[*]}" >&2
-        echo "    Fix: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 5" >&2
+        echo "    Fix: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 5" >&2
         ((critical_failed += 1))
     fi
 
@@ -3817,7 +3817,7 @@ run_smoke_test() {
         ((critical_passed += 1))
     else
         echo "✖ Agents: missing ${missing_agents[*]}" >&2
-        echo "    Fix: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 6" >&2
+        echo "    Fix: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 6" >&2
         ((critical_failed += 1))
     fi
 
@@ -3827,7 +3827,7 @@ run_smoke_test() {
         ((critical_passed += 1))
     else
         echo "✖ NTM: not working" >&2
-        echo "    Fix: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 8" >&2
+        echo "    Fix: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 8" >&2
         ((critical_failed += 1))
     fi
 
@@ -3837,7 +3837,7 @@ run_smoke_test() {
         ((critical_passed += 1))
     else
         echo "✖ Onboard: missing" >&2
-        echo "    Fix: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 9" >&2
+        echo "    Fix: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 9" >&2
         ((critical_failed += 1))
     fi
 
@@ -3845,7 +3845,7 @@ run_smoke_test() {
     if [[ -x "$TARGET_HOME/mcp_agent_mail/scripts/run_server_with_token.sh" ]]; then
         echo "✅ Agent Mail: installed (run 'am' to start)" >&2
     else
-        echo "⚠️ Agent Mail: not installed (re-run: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only-phase 8)" >&2
+        echo "⚠️ Agent Mail: not installed (re-run: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 8)" >&2
         ((warnings += 1))
     fi
 

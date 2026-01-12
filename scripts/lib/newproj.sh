@@ -745,7 +745,7 @@ EOF
             fi
         else
             echo -e "${YELLOW}Warning: bd not found, skipping beads initialization${NC}"
-            echo -e "${YELLOW}Install with: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only stack.beads_viewer${NC}"
+            echo -e "${YELLOW}Install with: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only stack.beads_viewer${NC}"
         fi
     fi
 

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
  * GET /install
  *
  * Redirects to the raw install.sh script on GitHub.
- * This allows users to run: curl -fsSL https://agent-flywheel.com/install | bash
+ * This allows users to run: curl -fsSL https://acfsw.oblik.io/install | bash
  *
  * The -L flag in curl follows redirects, so this works seamlessly.
  */
