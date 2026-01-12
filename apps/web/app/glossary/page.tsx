@@ -1,19 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { BookOpen, ChevronDown, Home, Search, Terminal, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { BookOpen, ChevronDown, ChevronRight, Home, Search, Terminal, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLocale, getGlossaryUiMessages, getJargonDictionary } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
+// TanStack imports for the new implementation
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  getExpandedRowModel,
+  createColumnHelper,
+  flexRender,
+  Row,
+  ExpandedState,
+} from '@tanstack/react-table';
+import { useVirtualizer } from '@tanstack/react-virtual';
+
 type GlossaryCategory = "all" | "shell" | "networking" | "tools" | "concepts";
 
 const CATEGORY_ORDER: GlossaryCategory[] = [
   "all",
-  "networking",
+  "networking", 
   "shell",
   "tools",
   "concepts",
@@ -50,72 +64,71 @@ type GlossaryEntry = {
   searchable: string;
 };
 
-function categorizeKey(key: string): Exclude<GlossaryCategory, "all"> {
-  const k = key.toLowerCase();
-
-  if (
-    /(ssh|vps|ip-address|hostname|port|tailscale|dns|firewall|fingerprint)/.test(k)
-  ) {
-    return "networking";
-  }
-
-  if (
-    /(terminal|command-line|shell|zsh|bash|oh-my-zsh|p10k|powerlevel10k|alias|path|env|tmux|session|zoxide|atuin|fzf)/.test(
-      k
-    )
-  ) {
-    return "shell";
-  }
-
-  if (
-    /(git|github|repo|repository|clone|branch|commit|pull-request)/.test(k) ||
-    /(bun|uv|rust|cargo|go|docker|wrangler|supabase|vercel|vault|jq|rg|ripgrep|lazygit|ast-grep)/.test(k)
-  ) {
-    return "tools";
-  }
-
-  return "concepts";
-}
-
-function buildSearchable(entry: Omit<GlossaryEntry, "searchable">): string {
-  return [
-    entry.key,
-    entry.term,
-    entry.short,
-    entry.long,
-    entry.analogy ?? "",
-    entry.why ?? "",
-    ...(entry.related ?? []),
-  ]
-    .join(" ")
-    .toLowerCase();
-}
+const columnHelper = createColumnHelper<GlossaryEntry>();
 
 export default function GlossaryPage() {
   const { locale } = useLocale();
   const messages = getGlossaryUiMessages(locale);
   const localizedJargon = getJargonDictionary(locale);
-
-  const [query, setQuery] = useState("");
+  
+  const [globalFilter, setGlobalFilter] = useState("");
   const [category, setCategory] = useState<GlossaryCategory>("all");
+  const [expanded, setExpanded] = useState<ExpandedState>({});
+  
+  const parentRef = useRef<HTMLDivElement>(null);
 
-  const entries = useMemo<GlossaryEntry[]>(() => {
-    const all: GlossaryEntry[] = Object.entries(localizedJargon).map(
-      ([key, value]) => {
-        const base: Omit<GlossaryEntry, "searchable"> = {
-          key,
-          category: categorizeKey(key),
-          term: value.term,
-          short: value.short,
-          long: value.long,
-          analogy: value.analogy,
-          why: value.why,
-          related: value.related,
-          learnMoreKey: LEARN_MORE_MAP[key] ? key : undefined,
-        };
-        return { ...base, searchable: buildSearchable(base) };
-      }
-    );
+  // Build entries with searchable strings for filtering
+  const entries = useMemo(() => {
+    const all: GlossaryEntry[] = [];
+
+    Object.entries(localizedJargon).forEach(([key, term]) => {
+      const categoryMap = {
+        vcpu: "networking", ram: "networking", nvme: "networking", vps: "networking",
+        ssh: "networking", "ssh-key": "networking", sftp: "networking",
+        "port-forwarding": "networking", vpn: "networking", firewall: "networking",
+        domain: "networking", subdomain: "networking", dns: "networking",
+        "cloud-server": "networking", tailscale: "networking", wireguard: "networking",
+        shell: "shell", bash: "shell", zsh: "shell", terminal: "shell",
+        cli: "shell", gui: "shell", tui: "shell", repl: "shell",
+        stdin: "shell", stdout: "shell", stderr: "shell", pipe: "shell",
+        redirect: "shell", glob: "shell", regex: "shell", grep: "shell",
+        "exit-code": "shell", sudo: "shell", chmod: "shell", chown: "shell",
+        symlink: "shell", hardlink: "shell", inode: "shell", filesystem: "shell",
+        mount: "shell", umount: "shell", fstab: "shell",
+        git: "tools", github: "tools", "version-control": "tools",
+        commit: "tools", branch: "tools", merge: "tools", rebase: "tools",
+        "pull-request": "tools", fork: "tools", clone: "tools", pull: "tools",
+        push: "tools", remote: "tools", origin: "tools", upstream: "tools",
+        dockerfile: "tools", "docker-image": "tools", container: "tools",
+        kubernetes: "tools", k8s: "tools", helm: "tools", kubectl: "tools",
+        api: "concepts", rest: "concepts", http: "concepts", https: "concepts",
+        json: "concepts", yaml: "concepts", xml: "concepts", csv: "concepts",
+        database: "concepts", sql: "concepts", nosql: "concepts",
+        "ai-agents": "concepts", "claude-code": "concepts", codex: "concepts",
+        "gemini-cli": "concepts", cursor: "concepts", "prompt-engineering": "concepts",
+        "context-window": "concepts", "token-limit": "concepts", temperature: "concepts",
+        "system-prompt": "concepts", "few-shot": "concepts", "chain-of-thought": "concepts",
+        "open-source": "concepts", mit: "concepts", gpl: "concepts", apache: "concepts",
+        "self-hosted": "concepts", saas: "concepts", paas: "concepts", iaas: "concepts",
+      };
+
+      const category = (categoryMap[key as keyof typeof categoryMap] || "concepts") as Exclude<GlossaryCategory, "all">;
+      
+      const searchable = `${term.term} ${term.short} ${term.long} ${term.analogy || ""} ${term.why || ""} ${(term.related || []).join(" ")}`.toLowerCase();
+
+      all.push({
+        key,
+        category,
+        term: term.term,
+        short: term.short,
+        long: term.long,
+        analogy: term.analogy,
+        why: term.why,
+        related: term.related,
+        learnMoreKey: LEARN_MORE_MAP[key]?.labelKey,
+        searchable,
+      });
+    });
 
     all.sort((a, b) =>
       a.term.localeCompare(b.term, undefined, { sensitivity: "base" })
@@ -124,20 +137,167 @@ export default function GlossaryPage() {
     return all;
   }, [localizedJargon]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+  // React Table columns definition
+  const columns = [
+    columnHelper.accessor("term", {
+      header: "Term",
+      cell: ({ getValue, row }) => {
+        const entry = row.original;
+        const isExpanded = row.getIsExpanded();
+        
+        return (
+          <div className="w-full">
+            {/* Term header row */}
+            <div 
+              className="flex cursor-pointer items-start justify-between gap-4 p-4 transition-colors hover:bg-muted/20"
+              onClick={() => row.toggleExpanded()}
+              id={entry.key}
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {getValue()}
+                  </h3>
+                  <span className="rounded-full border border-border/60 bg-muted/30 px-2 py-0.5 text-[11px] text-muted-foreground">
+                    #{entry.key}
+                  </span>
+                  <span className="rounded-full border border-border/60 bg-muted/30 px-2 py-0.5 text-[11px] text-muted-foreground">
+                    {messages.categories[entry.category]}
+                  </span>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {entry.short}
+                </p>
+              </div>
+              {isExpanded ? (
+                <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
+              )}
+            </div>
+            
+            {/* Expanded content */}
+            {isExpanded && (
+              <div className="space-y-4 border-t border-border/40 p-5">
+                <div>
+                  <h4 className="mb-2 text-sm font-medium text-foreground">
+                    {messages.sections.whatItMeans}
+                  </h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {entry.long}
+                  </p>
+                </div>
+
+                {entry.analogy && (
+                  <div>
+                    <h4 className="mb-2 text-sm font-medium text-foreground">
+                      {messages.sections.thinkOfItLike}
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {entry.analogy}
+                    </p>
+                  </div>
+                )}
+
+                {entry.why && (
+                  <div>
+                    <h4 className="mb-2 text-sm font-medium text-foreground">
+                      {messages.sections.whyWeUseIt}
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {entry.why}
+                    </p>
+                  </div>
+                )}
+
+                {entry.related && entry.related.length > 0 && (
+                  <div>
+                    <h4 className="mb-2 text-sm font-medium text-foreground">
+                      {messages.sections.relatedTerms}
+                    </h4>
+                    <div className="flex flex-wrap gap-2">
+                      {entry.related.map((relatedKey) => (
+                        <a
+                          key={relatedKey}
+                          href={`#${relatedKey}`}
+                          className="rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs text-primary transition-colors hover:bg-primary/10"
+                        >
+                          {localizedJargon[relatedKey]?.term || relatedKey}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {entry.learnMoreKey && LEARN_MORE_MAP[entry.key] && (
+                  <div>
+                    <h4 className="mb-2 text-sm font-medium text-foreground">
+                      Learn More
+                    </h4>
+                    <Link
+                      href={LEARN_MORE_MAP[entry.key]?.href || "#"}
+                      className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      {messages.learnMore[entry.learnMoreKey as keyof typeof messages.learnMore] || "Learn more"}
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      },
+    }),
+  ];
+
+  // Category filtering logic
+  const filteredData = useMemo(() => {
     return entries.filter((entry) => {
       if (category !== "all" && entry.category !== category) {
         return false;
       }
-      if (q.length === 0) return true;
-      return entry.searchable.includes(q);
+      return true;
     });
-  }, [entries, query, category]);
+  }, [entries, category]);
 
-  const clearQuery = useCallback(() => setQuery(""), []);
+  // React Table instance
+  const table = useReactTable({
+    data: filteredData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    state: {
+      globalFilter,
+      expanded,
+    },
+    onGlobalFilterChange: setGlobalFilter,
+    onExpandedChange: setExpanded,
+    globalFilterFn: (row, columnId, filterValue) => {
+      const entry = row.original;
+      if (!filterValue) return true;
+      return entry.searchable.includes(filterValue.toLowerCase());
+    },
+    getRowCanExpand: () => true,
+  });
 
-  // If the user lands on /glossary#some-key, scroll to it and open the entry.
+  // Virtualization
+  const rowVirtualizer = useVirtualizer({
+    count: table.getFilteredRowModel().rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 120, // Base height estimate
+    overscan: 5,
+    getItemKey: (index) => table.getFilteredRowModel().rows[index]?.original.key || index,
+  });
+
+  const clearQuery = useCallback(() => {
+    setGlobalFilter("");
+    setCategory("all");
+  }, []);
+
+  // Hash-based deep linking (preserved functionality)
   useEffect(() => {
     const openFromHash = () => {
       const raw = window.location.hash.replace(/^#/, "");
@@ -149,232 +309,154 @@ export default function GlossaryPage() {
       } catch {
         return;
       }
-      const target = document.getElementById(key);
-      if (!target) return;
 
-      // Open the <details> element if the id is set on the wrapper.
-      if (target instanceof HTMLDetailsElement) {
-        target.open = true;
-      } else {
-        const details = target.closest("details");
-        if (details) details.open = true;
+      // Find the row and expand it
+      const rowIndex = table.getFilteredRowModel().rows.findIndex(row => row.original.key === key);
+      if (rowIndex >= 0) {
+        setExpanded(prev => ({ ...prev, [rowIndex]: true }));
+        
+        // Scroll to the element
+        setTimeout(() => {
+          const target = document.getElementById(key);
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 100);
       }
-
-      target.scrollIntoView({ behavior: "smooth", block: "start" });
     };
 
     openFromHash();
     window.addEventListener("hashchange", openFromHash);
     return () => window.removeEventListener("hashchange", openFromHash);
-  }, []);
+  }, [table]);
 
   return (
-    <div className="relative min-h-screen bg-background">
-      {/* Background effects */}
-      <div className="pointer-events-none fixed inset-0 bg-gradient-cosmic opacity-50" />
-      <div className="pointer-events-none fixed inset-0 bg-grid-pattern opacity-20" />
-
-      <div className="relative mx-auto max-w-5xl px-6 py-8 md:px-12 md:py-12">
+    <div className="mx-auto min-h-screen max-w-4xl px-4 py-6">
+      <div className="mb-8 space-y-6">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <Home className="h-4 w-4" />
-            <span className="text-sm">{messages.navigation.home}</span>
+        <div className="flex items-center gap-3">
+          <Link href="/" className="text-muted-foreground hover:text-foreground">
+            <Home className="h-5 w-5" />
           </Link>
-          <div className="flex items-center gap-4">
+          <span className="text-muted-foreground">/</span>
+          <span className="text-foreground">{messages.hero.title}</span>
+          <div className="ml-auto">
             <LanguageSwitcher />
-            <Link
-              href="/wizard/os-selection"
-              className="flex items-center gap-2 text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <Terminal className="h-4 w-4" />
-              <span className="text-sm">{messages.navigation.setupWizard}</span>
-            </Link>
           </div>
         </div>
 
-        {/* Hero */}
-        <div className="mb-10 text-center">
-          <div className="mb-4 flex justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 shadow-lg shadow-primary/20">
-              <BookOpen className="h-8 w-8 text-primary" />
-            </div>
-          </div>
-          <h1 className="mb-3 text-3xl font-bold tracking-tight md:text-4xl">
+        {/* Title and description */}
+        <div>
+          <h1 className="flex items-center gap-3 text-3xl font-bold">
+            <Terminal className="h-8 w-8 text-primary" />
             {messages.hero.title}
           </h1>
-          <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-            {messages.hero.topLevelDescription}
-          </p>
-          <p className="mt-3 text-sm text-muted-foreground">
-            {messages.hero.tip}{" "}
-            <span className="decoration-primary/40 decoration-dotted underline underline-offset-4">
-              {messages.hero.tipHighlight}
-            </span>{" "}
-            {messages.hero.tipSuffix}
+          <p className="mt-2 text-lg text-muted-foreground">
+            {messages.hero.description}
           </p>
         </div>
+      </div>
 
-        {/* Search + filters */}
-        <Card className="mb-8 border-border/50 bg-card/60 p-5">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={messages.search.searchTermsExample}
-                className="w-full rounded-xl border border-border/50 bg-background px-9 py-2 text-sm outline-none transition-colors focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
-              />
-              {query.length > 0 && (
-                <button
-                  type="button"
-                  onClick={clearQuery}
-                  className="absolute right-2 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-                  aria-label="Clear search"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {CATEGORY_ORDER.map((cat) => (
-                <Button
-                  key={cat}
-                  size="sm"
-                  variant={category === cat ? "default" : "outline"}
-                  onClick={() => setCategory(cat)}
-                  disableMotion
-                >
-                  {messages.categories[cat]}
-                </Button>
-              ))}
-            </div>
+      {/* Search and filters */}
+      <Card className="mb-6 border-border/50 bg-card/60 p-6">
+        <div className="space-y-4">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder={messages.search.placeholder}
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="w-full rounded-lg border border-border/60 bg-background pl-10 pr-10 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+            {globalFilter && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-2 top-1/2 h-6 w-6 -translate-y-1/2 p-0 hover:bg-muted"
+                onClick={() => setGlobalFilter("")}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
           </div>
 
-          <div className="mt-4 text-sm text-muted-foreground">
-            {messages.stats.showing} <span className="font-medium text-foreground">{filtered.length}</span>{" "}
+          {/* Category filters */}
+          <div className="flex flex-wrap gap-2">
+            {CATEGORY_ORDER.map((cat) => (
+              <Button
+                key={cat}
+                variant={category === cat ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCategory(cat)}
+                className={cn(
+                  "h-8 transition-colors",
+                  category === cat
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted"
+                )}
+              >
+                {messages.categories[cat]}
+              </Button>
+            ))}
+          </div>
+
+          {/* Stats */}
+          <div className="text-xs text-muted-foreground">
+            {messages.stats.showing} <span className="font-medium text-foreground">{table.getFilteredRowModel().rows.length}</span>{" "}
             {messages.stats.of}{" "}
             <span className="font-medium text-foreground">{entries.length}</span>{" "}
             {messages.stats.terms}
           </div>
-        </Card>
-
-        {/* Results */}
-        <div className="space-y-3">
-          {filtered.length === 0 ? (
-            <Card className="border-border/50 bg-card/60 p-6 text-center">
-              <p className="text-sm text-muted-foreground">
-                {messages.noResults.title}.{" "}
-                <button
-                  type="button"
-                  onClick={() => { setQuery(""); setCategory("all"); }}
-                  className="text-primary hover:underline"
-                >
-                  {messages.noResults.clearFilters}
-                </button>
-              </p>
-            </Card>
-          ) : (
-            filtered.map((entry) => (
-              <details
-                key={entry.key}
-                id={entry.key}
-                className="group overflow-hidden rounded-2xl border border-border/50 bg-card/60"
-              >
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 p-5 transition-colors hover:bg-muted/20">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-lg font-semibold text-foreground">
-                        {entry.term}
-                      </h2>
-                      <span className="rounded-full border border-border/60 bg-muted/30 px-2 py-0.5 text-[11px] text-muted-foreground">
-                        #{entry.key}
-                      </span>
-                      <span className="rounded-full border border-border/60 bg-muted/30 px-2 py-0.5 text-[11px] text-muted-foreground">
-                        {messages.categories[entry.category]}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {entry.short}
-                    </p>
-                  </div>
-                  <ChevronDown className="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
-                </summary>
-
-                <div className="space-y-4 border-t border-border/40 p-5">
-                  <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                      {messages.sections.whatItMeans}
-                    </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-foreground">
-                      {entry.long}
-                    </p>
-                  </div>
-
-                  {entry.why && (
-                    <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
-                      <p className="mb-1 text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                        {messages.sections.whyWeUseIt}
-                      </p>
-                      <p className="text-sm leading-relaxed text-foreground">
-                        {entry.why}
-                      </p>
-                    </div>
-                  )}
-
-                  {entry.analogy && (
-                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
-                      <p className="mb-1 text-xs font-bold uppercase tracking-wider text-primary">
-                        {messages.sections.thinkOfItLike}
-                      </p>
-                      <p className="text-sm leading-relaxed text-foreground">
-                        {entry.analogy}
-                      </p>
-                    </div>
-                  )}
-
-                  {(entry.related?.length ?? 0) > 0 && (
-                    <div>
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                        {messages.sections.relatedTerms}
-                      </h3>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {entry.related!.map((key) => (
-                          <Link
-                            key={key}
-                            href={`/glossary#${encodeURIComponent(key)}`}
-                            className="rounded-full border border-border/60 bg-muted/30 px-3 py-1 text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-foreground"
-                          >
-                            {key}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {entry.learnMoreKey && LEARN_MORE_MAP[entry.learnMoreKey] && (
-                    <div className="pt-1">
-                      <Link
-                        href={LEARN_MORE_MAP[entry.learnMoreKey]!.href}
-                        className={cn(
-                          "text-sm font-medium text-primary underline-offset-4 hover:underline",
-                          "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-sm"
-                        )}
-                      >
-                        {messages.learnMore[LEARN_MORE_MAP[entry.learnMoreKey]!.labelKey]} →
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              </details>
-            ))
-          )}
         </div>
+      </Card>
+
+      {/* Results with virtual scrolling */}
+      <div 
+        ref={parentRef}
+        className="h-[600px] overflow-auto space-y-3"
+        style={{ contain: "strict" }}
+      >
+        {table.getFilteredRowModel().rows.length === 0 ? (
+          <Card className="border-border/50 bg-card/60 p-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              {messages.noResults.title}.{" "}
+              <button
+                type="button"
+                onClick={clearQuery}
+                className="text-primary hover:underline"
+              >
+                {messages.noResults.clearFilters}
+              </button>
+            </p>
+          </Card>
+        ) : (
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              position: "relative",
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const row = table.getFilteredRowModel().rows[virtualRow.index] as Row<GlossaryEntry>;
+              return (
+                <div
+                  key={row.original.key}
+                  className="absolute w-full"
+                  style={{
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <div className="overflow-hidden rounded-2xl border border-border/50 bg-card/60">
+                    {flexRender(row.getVisibleCells()[0].column.columnDef.cell, row.getVisibleCells()[0].getContext())}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
