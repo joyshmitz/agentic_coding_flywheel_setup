@@ -398,6 +398,38 @@ export const flywheelToolsUk: Partial<FlywheelTool>[] = [
       "SQLite audit trails",
     ],
   },
+  {
+    id: "dcg",
+    tagline: "Захист перед виконанням",
+    description:
+      "Hook для Claude Code, що блокує небезпечні команди ДО їх виконання. Ловить git reset, force push, rm -rf, DROP TABLE та інше. Fail-open дизайн гарантує, що ви ніколи не будете заблоковані помилками.",
+    deepDescription:
+      "DCG — це рівень безпеки, що захищає вашу кодову базу від деструктивних операцій. Перехоплює команди як PreToolUse hook в Claude Code, перевіряючи за 50+ пакетами захисту для git, файлової системи, баз даних, Kubernetes та хмарних операцій. Коли виявляється небезпечна команда, DCG блокує її та пропонує безпечніші альтернативи. Workflow allow-once дозволяє легітимні обходи з тимчасовими короткими кодами.",
+    features: [
+      "Блокування перед виконанням: Ловить команди до пошкодження",
+      "50+ пакетів захисту: git, database, k8s, cloud, filesystem",
+      "Fail-open: Помилки не блокують роботу",
+      "Allow-once workflow з тимчасовими short codes",
+      "Пропозиції безпечніших альтернатив",
+      "Інтеграція з Claude Code PreToolUse hooks",
+    ],
+  },
+  {
+    id: "ru",
+    tagline: "Мульти-репо синхронізація + AI автоматизація",
+    description:
+      "Синхронізуйте десятки GitHub репозиторіїв однією командою. AI-керована автоматизація комітів. Паралельні worker'и, підтримка resume, нульовий парсинг рядків.",
+    deepDescription:
+      "RU вирішує проблему розростання репозиторіїв. Чистий Bash з git plumbing (без locale проблем). Паралельна work-stealing синхронізація з портативним locking. Agent Sweep: трифазний AI workflow (розуміння → планування → виконання) розумно комітить брудні репозиторії. Система перегляду оркеструє code reviews через ntm.",
+    features: [
+      "Паралельна синхронізація: ru sync -j4 (work-stealing queue)",
+      "Resume з checkpoint: ru sync --resume",
+      "Agent sweep: Трифазний AI commit workflow",
+      "Review orchestration через ntm",
+      "Портативний locking (flock + mkdir fallback)",
+      "Zero string parsing (git plumbing only)",
+    ],
+  },
 ];
 
 // ============================================================
@@ -406,7 +438,7 @@ export const flywheelToolsUk: Partial<FlywheelTool>[] = [
 
 export const flywheelDescriptionUk = {
   title: "The Agentic Coding Flywheel",
-  subtitle: "Вісім інструментів, що створюють нечувану швидкість",
+  subtitle: "Десять інструментів, що створюють нечувану швидкість",
   description:
     "Самопідсилювальна система, яка дозволяє кільком AI агентам працювати паралельно на 8+ проєктах, перевіряти роботу одне одного, створювати та виконувати задачі, і досягати неймовірного автономного прогресу поки вас немає.",
   philosophy: [
@@ -433,7 +465,7 @@ export const flywheelDescriptionUk = {
   ],
   metrics: {
     totalStars: "2K+",
-    toolCount: 8,
+    toolCount: 10,
     languages: ["Go", "Rust", "TypeScript", "Python"],
     avgInstallTime: "< 30с кожен",
     projectsSimultaneous: "8+",
