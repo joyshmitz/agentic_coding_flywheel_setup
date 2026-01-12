@@ -53,5 +53,11 @@ export const toolPageMessages = {
     slb: {
       tagline: "Two-person rule for dangerous commands - safety first",
     },
+    dcg: {
+      tagline: "Pre-execution safety net - blocks dangerous commands before damage",
+    },
+    ru: {
+      tagline: "Multi-repo sync + AI-driven commit automation",
+    },
   },
 };
