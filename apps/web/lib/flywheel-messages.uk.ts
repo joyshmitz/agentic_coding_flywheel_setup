@@ -72,7 +72,7 @@ export const flywheelMessagesUk = {
     },
     tools: {
       badge: "Повний стек",
-      title: "Усі вісім інструментів Flywheel",
+      title: "Усі десять інструментів Flywheel",
       description: {
         intro: "Кожен інструмент встановлюється менш ніж за 30 секунд. Написані на",
         go: "Go",
