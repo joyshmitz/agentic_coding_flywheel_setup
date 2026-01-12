@@ -89,7 +89,7 @@ export const homeMessages = {
   flywheel: {
     badge: "Ecosystem",
     title: "The Agentic Coding Flywheel",
-    subtitle: "Eight interconnected tools that transform multi-agent workflows. Each tool enhances the others.",
+    subtitle: "Ten interconnected tools that transform multi-agent workflows. Each tool enhances the others.",
     cta: "Explore the Flywheel",
     tools: [
       { name: "NTM", desc: "Agent Orchestration" },
@@ -100,6 +100,8 @@ export const homeMessages = {
       { name: "CM", desc: "Memory" },
       { name: "CAAM", desc: "Auth" },
       { name: "SLB", desc: "Safety" },
+      { name: "DCG", desc: "Command Guard" },
+      { name: "RU", desc: "Repo Sync" },
     ],
   },
 
