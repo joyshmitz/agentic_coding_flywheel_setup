@@ -4,7 +4,7 @@
 //
 // A self-reinforcing system that enables remarkable velocity in
 // complex software development. Multiple AI agents working in
-// parallel across 8+ projects, reviewing each other's work,
+// parallel across 10+ projects, reviewing each other's work,
 // creating and executing tasks, making incredible autonomous
 // progress.
 //
@@ -820,7 +820,7 @@ export const flywheelDescription = {
     {
       title: "Battle-Tested",
       description:
-        "Born from daily use across 8+ projects with multiple AI agents running simultaneously.",
+        "Born from daily use across 10+ projects with multiple AI agents running simultaneously.",
     },
   ],
   metrics: {
@@ -828,7 +828,7 @@ export const flywheelDescription = {
     toolCount: 10,
     languages: ["Go", "Rust", "TypeScript", "Python", "Bash"],
     avgInstallTime: "< 30s each",
-    projectsSimultaneous: "8+",
+    projectsSimultaneous: "10+",
     agentsParallel: "6+",
   },
   keyInsight:

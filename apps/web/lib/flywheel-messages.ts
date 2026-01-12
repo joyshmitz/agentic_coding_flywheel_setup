@@ -5,14 +5,14 @@
  */
 
 export const flywheelMessages = {
-  badge: "8+ projects \u2022 6+ agents \u2022 Autonomous progress",
+  badge: "10+ projects \u2022 6+ agents \u2022 Autonomous progress",
 
   hero: {
     title: {
       line1: "Unheard-of Velocity",
       line2: "in Complex Software",
     },
-    subtitle: "Eight interconnected tools that enable multiple AI agents to work in parallel, review each other's work, and make incredible autonomous progress, all",
+    subtitle: "Ten interconnected tools that enable multiple AI agents to work in parallel, review each other's work, and make incredible autonomous progress, all",
     subtitleHighlight: "while you're away",
     quote: "The magic isn't in any single tool. It's in how they work together. Using three tools is 10x better than using one.",
   },
@@ -23,7 +23,7 @@ export const flywheelMessages = {
       label: "Parallel agents",
     },
     projects: {
-      value: "8+",
+      value: "10+",
       label: "Projects simultaneously",
     },
     stars: {
@@ -43,7 +43,7 @@ export const flywheelMessages = {
       description: {
         intro: "These aren't hypothetical scenarios. These are actual daily workflows running",
         agents: "Claude Code, Codex CLI, and Gemini CLI",
-        middle: "across 8+ projects. Powered by",
+        middle: "across 10+ projects. Powered by",
         tmux: "tmux",
         tmuxDesc: "for persistent sessions,",
         git: "git",
@@ -72,7 +72,7 @@ export const flywheelMessages = {
     },
     tools: {
       badge: "The Complete Stack",
-      title: "All Eight Flywheel Tools",
+      title: "All Ten Flywheel Tools",
       description: {
         intro: "Each tool installs in under 30 seconds. Written in",
         go: "Go",
