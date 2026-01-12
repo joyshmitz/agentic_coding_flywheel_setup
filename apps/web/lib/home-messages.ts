@@ -238,7 +238,7 @@ export const homeMessages = {
       ],
     },
     comparison:
-      "Consider: a junior developer costs $5,000+/month. For under $700, you get 10+ AI agents working 24/7, writing code while you sleep.",
+      "Consider: a junior developer costs $1,000+/month. For under $700, you get 10+ AI agents working 24/7, writing code while you sleep.",
     cta: "Start Your Setup",
   },
 
