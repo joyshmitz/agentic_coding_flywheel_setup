@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback } from "react";
 import { Copy, Check } from "lucide-react";
-import { motion, useReducedMotion, useInView } from "framer-motion";
+import { m, useReducedMotion, useInView } from "framer-motion";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { TldrHero } from "@/components/tldr/tldr-hero";
 import { TldrToolGrid } from "@/components/tldr/tldr-tool-grid";
@@ -39,7 +39,7 @@ function FlywheelExplanation() {
       <div className="container relative mx-auto px-4 sm:px-6">
         <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
           {/* Text content */}
-          <motion.div
+          <m.div
             initial={reducedMotion ? {} : { opacity: 0, x: -20 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: reducedMotion ? 0 : 0.5 }}
@@ -49,7 +49,7 @@ function FlywheelExplanation() {
             </h2>
             <div className="mt-4 space-y-3 sm:mt-6 sm:space-y-4">
               {flywheelExplanation.paragraphs.map((paragraph, index) => (
-                <motion.p
+                <m.p
                   key={paragraph.slice(0, 50)}
                   initial={reducedMotion ? {} : { opacity: 0, y: 10 }}
                   animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -60,20 +60,20 @@ function FlywheelExplanation() {
                   className="text-sm leading-relaxed text-muted-foreground sm:text-base"
                 >
                   {paragraph}
-                </motion.p>
+                </m.p>
               ))}
             </div>
-          </motion.div>
+          </m.div>
 
           {/* Synergy diagram */}
-          <motion.div
+          <m.div
             initial={reducedMotion ? {} : { opacity: 0, x: 20 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: reducedMotion ? 0 : 0.5, delay: reducedMotion ? 0 : 0.2 }}
             className="mx-auto max-w-sm lg:max-w-none"
           >
             <TldrSynergyDiagram tools={tools} />
-          </motion.div>
+          </m.div>
         </div>
       </div>
     </section>
