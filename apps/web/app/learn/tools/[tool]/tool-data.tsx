@@ -25,7 +25,12 @@ export type ToolId =
   | "caam"
   | "slb"
   | "dcg"
-  | "ru";
+  | "ru"
+  | "ms"
+  | "apr"
+  | "jfp"
+  | "pt"
+  | "xf";
 
 export type ToolCard = {
   id: ToolId;
@@ -193,6 +198,66 @@ export const TOOLS: Record<ToolId, ToolCard> = {
     docsLabel: "GitHub",
     quickCommand: "ru sync --parallel 4",
     relatedTools: ["ntm", "beads", "agent-mail"],
+  },
+  ms: {
+    id: "ms",
+    title: "Meta Skill",
+    tagline: "Local-first knowledge management with hybrid semantic search and Git-backed audit trails",
+    icon: <GraduationCap className="h-8 w-8" aria-hidden="true" />,
+    gradient: "from-purple-500/20 via-violet-500/20 to-purple-500/20",
+    glowColor: "rgba(139,92,246,0.4)",
+    docsUrl: "https://github.com/Dicklesworthstone/meta_skill",
+    docsLabel: "GitHub",
+    quickCommand: "ms install my-skill",
+    relatedTools: ["jfp", "claude-code", "agent-mail"],
+  },
+  apr: {
+    id: "apr",
+    title: "Automated Plan Reviser",
+    tagline: "Automated iterative spec refinement with 15+ AI review rounds",
+    icon: <Wrench className="h-8 w-8" aria-hidden="true" />,
+    gradient: "from-teal-500/20 via-cyan-500/20 to-teal-500/20",
+    glowColor: "rgba(45,212,191,0.4)",
+    docsUrl: "https://github.com/Dicklesworthstone/automated_plan_reviser_pro",
+    docsLabel: "GitHub",
+    quickCommand: "apr refine plan.md",
+    relatedTools: ["beads", "claude-code", "ntm"],
+  },
+  jfp: {
+    id: "jfp",
+    title: "JeffreysPrompts",
+    tagline: "Battle-tested prompt library for AI agents with one-click skill install",
+    icon: <GraduationCap className="h-8 w-8" aria-hidden="true" />,
+    gradient: "from-amber-500/20 via-yellow-500/20 to-amber-500/20",
+    glowColor: "rgba(245,158,11,0.4)",
+    docsUrl: "https://jeffreysprompts.com",
+    docsLabel: "Website",
+    quickCommand: "jfp list",
+    relatedTools: ["ms", "claude-code", "codex-cli"],
+  },
+  pt: {
+    id: "pt",
+    title: "Process Triage",
+    tagline: "Find and kill stuck/zombie processes with Bayesian scoring and decision memory",
+    icon: <Wrench className="h-8 w-8" aria-hidden="true" />,
+    gradient: "from-lime-500/20 via-green-500/20 to-lime-500/20",
+    glowColor: "rgba(132,204,22,0.4)",
+    docsUrl: "https://github.com/Dicklesworthstone/process_triage",
+    docsLabel: "GitHub",
+    quickCommand: "pt --help",
+    relatedTools: ["ntm", "slb", "dcg"],
+  },
+  xf: {
+    id: "xf",
+    title: "X Archive Search",
+    tagline: "Blazingly fast local search across your X/Twitter archive",
+    icon: <Search className="h-8 w-8" aria-hidden="true" />,
+    gradient: "from-slate-500/20 via-gray-500/20 to-slate-500/20",
+    glowColor: "rgba(148,163,184,0.4)",
+    docsUrl: "https://github.com/Dicklesworthstone/xf",
+    docsLabel: "GitHub",
+    quickCommand: "xf search 'keyword'",
+    relatedTools: ["cass", "cm"],
   },
 };
 

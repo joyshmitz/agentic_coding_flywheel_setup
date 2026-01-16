@@ -933,6 +933,14 @@ export default function HomePage() {
             <BookOpen className="h-4 w-4" />
             <span className="hidden text-sm sm:inline">Learn</span>
           </Link>
+          <Link
+            href="/tldr"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-auto sm:w-auto sm:gap-1 sm:rounded-none sm:bg-transparent sm:hover:bg-transparent"
+            aria-label="TL;DR"
+          >
+            <Zap className="h-4 w-4" />
+            <span className="hidden text-sm sm:inline">TL;DR</span>
+          </Link>
           <Button asChild size="sm" variant="outline" className="border-primary/30 hover:bg-primary/10">
             <Link href="/wizard/os-selection">
               <span className="hidden sm:inline">Get Started</span>
@@ -1105,6 +1113,12 @@ export default function HomePage() {
                   className="transition-colors hover:text-foreground"
                 >
                   Learning Hub
+                </Link>
+                <Link
+                  href="/tldr"
+                  className="transition-colors hover:text-foreground"
+                >
+                  TL;DR
                 </Link>
                 <a
                   href="https://github.com/Dicklesworthstone/ntm"

@@ -93,7 +93,7 @@ acfs_security_init() {
 }
 
 # Category: stack
-# Modules: 10
+# Modules: 14
 
 # Named tmux manager (agent cockpit)
 install_stack_ntm() {
@@ -252,6 +252,349 @@ install_stack_mcp_agent_mail() {
     log_info "Attach with: tmux attach -t acfs-services"
 
     log_success "stack.mcp_agent_mail installed"
+}
+
+# Local-first knowledge management with hybrid semantic search (ms)
+install_stack_meta_skill() {
+    local module_id="stack.meta_skill"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing stack.meta_skill"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verified installer: stack.meta_skill"
+    else
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
+                if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="ms"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "stack.meta_skill: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s' '--' '--easy-mode'; then
+                            install_success=true
+                        else
+                            log_error "stack.meta_skill: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "stack.meta_skill: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "stack.meta_skill: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "stack.meta_skill: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "stack.meta_skill: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # Verified install is required - no fallback
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for stack.meta_skill"
+                false
+            fi
+        }; then
+            log_error "stack.meta_skill: verified installer failed"
+            return 1
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: ms --version (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_META_SKILL'
+ms --version
+INSTALL_STACK_META_SKILL
+        then
+            log_error "stack.meta_skill: verify failed: ms --version"
+            return 1
+        fi
+    fi
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify (optional): ms doctor --json (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_META_SKILL'
+ms doctor --json
+INSTALL_STACK_META_SKILL
+        then
+            log_warn "Optional verify failed: stack.meta_skill"
+        fi
+    fi
+
+    log_success "stack.meta_skill installed"
+}
+
+# Automated iterative spec refinement with extended AI reasoning (apr)
+install_stack_automated_plan_reviser() {
+    local module_id="stack.automated_plan_reviser"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing stack.automated_plan_reviser"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verified installer: stack.automated_plan_reviser"
+    else
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
+                if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="apr"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "stack.automated_plan_reviser: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s' '--' '--easy-mode'; then
+                            install_success=true
+                        else
+                            log_error "stack.automated_plan_reviser: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "stack.automated_plan_reviser: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "stack.automated_plan_reviser: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "stack.automated_plan_reviser: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "stack.automated_plan_reviser: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # Verified install is required - no fallback
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for stack.automated_plan_reviser"
+                false
+            fi
+        }; then
+            log_warn "stack.automated_plan_reviser: verified installer failed"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.automated_plan_reviser" "verified installer failed"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.automated_plan_reviser"
+            fi
+            return 0
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: apr --help (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_AUTOMATED_PLAN_REVISER'
+apr --help
+INSTALL_STACK_AUTOMATED_PLAN_REVISER
+        then
+            log_warn "stack.automated_plan_reviser: verify failed: apr --help"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.automated_plan_reviser" "verify failed: apr --help"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.automated_plan_reviser"
+            fi
+            return 0
+        fi
+    fi
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify (optional): apr --version (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_AUTOMATED_PLAN_REVISER'
+apr --version
+INSTALL_STACK_AUTOMATED_PLAN_REVISER
+        then
+            log_warn "Optional verify failed: stack.automated_plan_reviser"
+        fi
+    fi
+
+    log_success "stack.automated_plan_reviser installed"
+}
+
+# Curated battle-tested prompts for AI agents - browse and install as skills (jfp)
+install_stack_jeffreysprompts() {
+    local module_id="stack.jeffreysprompts"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing stack.jeffreysprompts"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: install: JFP_DIR=\"\${HOME}/.local/share/jeffreysprompts.com\" (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_JEFFREYSPROMPTS'
+JFP_DIR="${HOME}/.local/share/jeffreysprompts.com"
+mkdir -p "${HOME}/.local/share"
+cd "$JFP_DIR" 2>/dev/null || git clone https://github.com/Dicklesworthstone/jeffreysprompts.com.git "$JFP_DIR"
+cd "$JFP_DIR" && bun install && bun run build:cli
+cp "$JFP_DIR/jfp" ~/.local/bin/jfp
+chmod +x ~/.local/bin/jfp
+INSTALL_STACK_JEFFREYSPROMPTS
+        then
+            log_warn "stack.jeffreysprompts: install command failed: JFP_DIR=\"\${HOME}/.local/share/jeffreysprompts.com\""
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.jeffreysprompts" "install command failed: JFP_DIR=\"\${HOME}/.local/share/jeffreysprompts.com\""
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.jeffreysprompts"
+            fi
+            return 0
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: jfp --help (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_JEFFREYSPROMPTS'
+jfp --help
+INSTALL_STACK_JEFFREYSPROMPTS
+        then
+            log_warn "stack.jeffreysprompts: verify failed: jfp --help"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.jeffreysprompts" "verify failed: jfp --help"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.jeffreysprompts"
+            fi
+            return 0
+        fi
+    fi
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify (optional): jfp status (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_JEFFREYSPROMPTS'
+jfp status
+INSTALL_STACK_JEFFREYSPROMPTS
+        then
+            log_warn "Optional verify failed: stack.jeffreysprompts"
+        fi
+    fi
+
+    log_success "stack.jeffreysprompts installed"
+}
+
+# Find and terminate stuck/zombie processes with intelligent scoring (pt)
+install_stack_process_triage() {
+    local module_id="stack.process_triage"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing stack.process_triage"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verified installer: stack.process_triage"
+    else
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
+                if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="pt"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "stack.process_triage: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s'; then
+                            install_success=true
+                        else
+                            log_error "stack.process_triage: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "stack.process_triage: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "stack.process_triage: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "stack.process_triage: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "stack.process_triage: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # Verified install is required - no fallback
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for stack.process_triage"
+                false
+            fi
+        }; then
+            log_warn "stack.process_triage: verified installer failed"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.process_triage" "verified installer failed"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.process_triage"
+            fi
+            return 0
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: pt --help (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_PROCESS_TRIAGE'
+pt --help
+INSTALL_STACK_PROCESS_TRIAGE
+        then
+            log_warn "stack.process_triage: verify failed: pt --help"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.process_triage" "verify failed: pt --help"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.process_triage"
+            fi
+            return 0
+        fi
+    fi
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify (optional): pt --version (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_PROCESS_TRIAGE'
+pt --version
+INSTALL_STACK_PROCESS_TRIAGE
+        then
+            log_warn "Optional verify failed: stack.process_triage"
+        fi
+    fi
+
+    log_success "stack.process_triage installed"
 }
 
 # UBS bug scanning (easy-mode)
@@ -675,10 +1018,12 @@ install_stack_slb() {
     else
         if ! run_as_target_shell <<'INSTALL_STACK_SLB'
 mkdir -p ~/go/bin
-cd /tmp && rm -rf slb_build
-git clone --depth 1 https://github.com/Dicklesworthstone/simultaneous_launch_button.git slb_build
-cd slb_build && go build -o ~/go/bin/slb ./cmd/slb
-rm -rf /tmp/slb_build
+SLB_TMP="$(mktemp -d "${TMPDIR:-/tmp}/slb_build.XXXXXX")"
+cd "$SLB_TMP"
+git clone --depth 1 https://github.com/Dicklesworthstone/simultaneous_launch_button.git .
+go build -o ~/go/bin/slb ./cmd/slb
+cd ..
+rm -rf "$SLB_TMP"
 # Add ~/go/bin to PATH if not already present
 if ! grep -q 'export PATH=.*\$HOME/go/bin' ~/.zshrc 2>/dev/null; then
   echo '' >> ~/.zshrc
@@ -898,6 +1243,10 @@ install_stack() {
     log_section "Installing stack modules"
     install_stack_ntm
     install_stack_mcp_agent_mail
+    install_stack_meta_skill
+    install_stack_automated_plan_reviser
+    install_stack_jeffreysprompts
+    install_stack_process_triage
     install_stack_ultimate_bug_scanner
     install_stack_beads_viewer
     install_stack_cass

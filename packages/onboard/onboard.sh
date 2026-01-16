@@ -217,16 +217,18 @@ get_current() {
     fi
 }
 
-# Get the next recommended lesson index (first incomplete, 0-10).
+# Get the next recommended lesson index (first incomplete, 0 to NUM_LESSONS-1).
 get_next_incomplete() {
     local i
-    for i in {0..10}; do
+    # Use C-style for loop since brace expansion {0..N} is evaluated at parse time
+    for (( i = 0; i < NUM_LESSONS; i++ )); do
         if ! is_completed "$i"; then
             echo "$i"
             return 0
         fi
     done
-    echo "10"
+    # All lessons complete - return the last lesson index
+    echo "$((NUM_LESSONS - 1))"
 }
 
 # Mark a lesson as completed
@@ -699,12 +701,13 @@ show_auth_service() {
 # Returns: completed_count|total|percent|est_minutes_remaining
 calc_progress_stats() {
     local completed_count=0
-    for i in {0..10}; do
+    local i
+    for (( i = 0; i < NUM_LESSONS; i++ )); do
         if is_completed "$i"; then
             ((completed_count += 1))
         fi
     done
-    local total=11
+    local total="$NUM_LESSONS"
     local percent=$((completed_count * 100 / total))
     local remaining=$((total - completed_count))
     local est_minutes=$((remaining * 5))  # ~5 min per lesson average
@@ -799,12 +802,12 @@ format_lesson() {
 
 # Show lesson menu with gum
 show_menu_gum() {
-    local current
+    local current i
     current=$(get_current)
 
     # Build menu items with styled status indicators
     local -a items=()
-    for i in {0..10}; do
+    for (( i = 0; i < NUM_LESSONS; i++ )); do
         local status=""
         if is_completed "$i"; then
             status="✓"
@@ -821,7 +824,7 @@ show_menu_gum() {
     items+=("📊 [s] Show status")
     # Show certificate option only when all lessons complete
     local all_complete=true
-    for i in {0..10}; do
+    for (( i = 0; i < NUM_LESSONS; i++ )); do
         is_completed "$i" || { all_complete=false; break; }
     done
     if [[ "$all_complete" == "true" ]]; then
@@ -855,10 +858,11 @@ show_menu_gum() {
 
 # Show lesson menu with basic bash
 show_menu_basic() {
+    local i
     echo -e "${BOLD}Choose a lesson:${NC}"
     echo ""
 
-    for i in {0..10}; do
+    for (( i = 0; i < NUM_LESSONS; i++ )); do
         echo -e "  $(format_lesson "$i")"
     done
 
@@ -868,7 +872,7 @@ show_menu_basic() {
     echo -e "  ${DIM}[s] Show status${NC}"
     # Show certificate option only when all lessons complete
     local all_complete=true
-    for i in {0..10}; do
+    for (( i = 0; i < NUM_LESSONS; i++ )); do
         is_completed "$i" || { all_complete=false; break; }
     done
     if [[ "$all_complete" == "true" ]]; then
@@ -877,8 +881,8 @@ show_menu_basic() {
     echo -e "  ${DIM}[q] Quit${NC}"
     echo ""
 
-    local prompt_opts="1-11, a, r, s, q"
-    [[ "$all_complete" == "true" ]] && prompt_opts="1-11, a, r, s, t, q"
+    local prompt_opts="1-${NUM_LESSONS}, a, r, s, q"
+    [[ "$all_complete" == "true" ]] && prompt_opts="1-${NUM_LESSONS}, a, r, s, t, q"
     read -rp "$(echo -e "${CYAN}Choose [$prompt_opts]:${NC} ")" choice
 
     case "$choice" in
@@ -1196,8 +1200,8 @@ $(gum style --foreground "$ACFS_PINK" --bold "${LESSON_TITLES[$idx]}")"
 show_status() {
     print_header
 
-    local completed_count=0
-    for i in {0..10}; do
+    local completed_count=0 i
+    for (( i = 0; i < NUM_LESSONS; i++ )); do
         if is_completed "$i"; then
             ((completed_count += 1))
         fi
@@ -1205,7 +1209,7 @@ show_status() {
 
     if has_gum; then
         # Styled progress display with gum
-        local percent=$((completed_count * 100 / 11))
+        local percent=$((completed_count * 100 / NUM_LESSONS))
         local filled=$((percent / 2))
         local empty=$((50 - filled))
 
@@ -1224,7 +1228,7 @@ $(gum style --foreground "$ACFS_PRIMARY" "$bar") $(gum style --foreground "$ACFS
 
         # Lesson list with styled status
         echo ""
-        for i in {0..10}; do
+        for (( i = 0; i < NUM_LESSONS; i++ )); do
             local status_icon status_color
             if is_completed "$i"; then
                 status_icon="✓"
@@ -1241,7 +1245,7 @@ $(gum style --foreground "$ACFS_PRIMARY" "$bar") $(gum style --foreground "$ACFS
 
         echo ""
 
-        if [[ $completed_count -eq 11 ]]; then
+        if [[ $completed_count -eq $NUM_LESSONS ]]; then
             gum style \
                 --foreground "$ACFS_SUCCESS" \
                 --bold \
@@ -1267,16 +1271,16 @@ $(gum style --foreground "$ACFS_PRIMARY" "$bar") $(gum style --foreground "$ACFS
         printf '%s' "${DIM}"
         for ((i = 0; i < empty; i++)); do printf '░'; done
         printf '%s' "${NC}"
-        echo " $((completed_count * 100 / 11))%"
+        echo " $((completed_count * 100 / NUM_LESSONS))%"
         echo ""
 
-        for i in {0..10}; do
+        for (( i = 0; i < NUM_LESSONS; i++ )); do
             echo -e "  $(format_lesson "$i")"
         done
 
         echo ""
 
-        if [[ $completed_count -eq 11 ]]; then
+        if [[ $completed_count -eq $NUM_LESSONS ]]; then
             echo -e "${GREEN}${BOLD}All lessons complete! You're ready to fly!${NC}"
         else
             local next_idx

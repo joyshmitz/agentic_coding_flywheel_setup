@@ -271,7 +271,7 @@ section() {
                 "󰋊 $1"
         else
             echo ""
-            echo -e "${CYAN}━━━ $1 ━━━${NC}"
+            printf "${CYAN}━━━ %s ━━━${NC}\n" "$1"
         fi
     fi
 }
@@ -642,9 +642,9 @@ check_shell() {
     fi
 
     if [[ -d "$plugins_dir/zsh-syntax-highlighting" ]]; then
-        check "shell.plugins.zsh_syntax_highlighting" "zsh-syntax-highlighting" "pass"
+        check "shell.plugins.zsh_syntax_highlightinging" "zsh-syntax-highlighting" "pass"
     else
-        check "shell.plugins.zsh_syntax_highlighting" "zsh-syntax-highlighting" "warn" "not installed" \
+        check "shell.plugins.zsh_syntax_highlightinging" "zsh-syntax-highlighting" "warn" "not installed" \
             "git clone https://github.com/zsh-users/zsh-syntax-highlighting \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
     fi
 
@@ -809,7 +809,7 @@ check_cloud() {
         if command -v jq &>/dev/null; then
             ts_status=$(tailscale status --json 2>/dev/null | jq -r '.BackendState // "unknown"' 2>/dev/null || echo "unknown")
         else
-            ts_status=$(tailscale status --json 2>/dev/null | sed -n 's/.*"BackendState"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+            ts_status=$(tailscale status --json 2>/dev/null | sed -n 's/.*"BackendState"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -n 1)
             ts_status="${ts_status:-unknown}"
         fi
         case "$ts_status" in
@@ -1036,6 +1036,7 @@ run_deep_checks() {
     start_time=$(date +%s)
 
     if [[ "$JSON_MODE" != "true" ]]; then
+        # Log cache status (bead lz1)
         local cache_status=""
         if [[ "$NO_CACHE" == "true" ]]; then
             cache_status=" (cache disabled)"
@@ -1221,6 +1222,7 @@ check_codex_auth() {
 # check_gemini_auth - Thorough Gemini CLI authentication check
 # Returns via check(): pass (auth OK), warn (partial/skipped), fail (auth broken)
 # Related: bead 325
+# Fixed: Check actual Gemini CLI credential files (mcp-oauth-tokens-v2.json, google_accounts.json)
 check_gemini_auth() {
     # Skip if not installed
     if ! command -v gemini &>/dev/null; then
@@ -1236,10 +1238,20 @@ check_gemini_auth() {
 
     # Gemini CLI uses OAuth web login (like Claude Code and Codex CLI)
     # Users authenticate via `gemini` command which opens browser login
-    # Credentials are stored in config files, NOT via API keys
+    # Credentials are stored in ~/.gemini/ directory
     local found_auth=false
 
-    # Check for Gemini CLI credentials
+    # Check for actual Gemini CLI OAuth tokens (primary auth method)
+    if [[ -f "$HOME/.gemini/mcp-oauth-tokens-v2.json" ]]; then
+        found_auth=true
+    fi
+
+    # Check for Google accounts file (secondary auth evidence)
+    if [[ -f "$HOME/.gemini/google_accounts.json" ]]; then
+        found_auth=true
+    fi
+
+    # Fallback checks for other potential credential locations
     if [[ -f "$HOME/.config/gemini/credentials.json" ]]; then
         found_auth=true
     fi
@@ -1298,7 +1310,7 @@ check_postgres_connection() {
 # Related: bead azw
 # Fixed: Try current user first before postgres user (pg_roles is readable by any authenticated user)
 # Fixed: Provide actionable fix message (createuser, not systemctl status)
-# Fixed: Use parameterized queries to prevent SQL injection (ACFS_TARGET_USER is passed via -v)
+# Fixed: Use bash variable substitution with validated input (:'var' syntax is unreliable across psql versions)
 check_postgres_role() {
     # Skip if not installed
     if ! command -v psql &>/dev/null; then
@@ -1319,20 +1331,20 @@ check_postgres_role() {
 
     # Try to check if target user role exists
     # pg_roles view is readable by any authenticated user - no superuser required
-    # SECURITY: Use psql -v to pass variable and :'var' syntax for safe interpolation
+    # SECURITY: target_user is validated above with regex, safe for bash substitution
     local role_check
     local connect_success=false
-    local sql_query="SELECT 1 FROM pg_roles WHERE rolname=:'target_user'"
+    local sql_query="SELECT 1 FROM pg_roles WHERE rolname='$target_user'"
 
     # Try connecting as current user first (mirrors check_postgres_connection behavior)
     # This works when pg_hba.conf allows peer auth for local users
-    if role_check=$(timeout 5 psql -w -tAc "$sql_query" -v target_user="$target_user" 2>/dev/null); then
+    if role_check=$(timeout 5 psql -w -tAc "$sql_query" 2>/dev/null); then
         connect_success=true
     # Try localhost with postgres user as fallback
-    elif role_check=$(timeout 5 psql -w -h localhost -U postgres -tAc "$sql_query" -v target_user="$target_user" 2>/dev/null); then
+    elif role_check=$(timeout 5 psql -w -h localhost -U postgres -tAc "$sql_query" 2>/dev/null); then
         connect_success=true
     # Try unix socket with postgres user as last resort
-    elif role_check=$(timeout 5 psql -w -h /var/run/postgresql -U postgres -tAc "$sql_query" -v target_user="$target_user" 2>/dev/null); then
+    elif role_check=$(timeout 5 psql -w -h /var/run/postgresql -U postgres -tAc "$sql_query" 2>/dev/null); then
         connect_success=true
     fi
 
@@ -1514,75 +1526,6 @@ check_wrangler_auth() {
     if ((status == 124)); then
         check_with_timeout_status "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "timeout" "check timed out" "Check network, then: wrangler login"
     elif ((status == 0)); then
-        cache_result "wrangler_auth" "authenticated"
-        check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "pass" "authenticated"
-    else
-        # Check for CLOUDFLARE_API_TOKEN as alternative
-        if [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
-            cache_result "wrangler_auth" "CLOUDFLARE_API_TOKEN"
-            check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "pass" "CLOUDFLARE_API_TOKEN set"
-        else
-            check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "warn" "not authenticated" "wrangler login (or set CLOUDFLARE_API_TOKEN for headless)"
-        fi
-    fi
-}
-
-# check_supabase_auth - Supabase CLI authentication check
-# Related: bead azw
-check_supabase_auth() {
-    if ! command -v supabase &>/dev/null; then
-        check "deep.cloud.supabase" "Supabase CLI" "warn" "not installed" "acfs update --cloud-only --force"
-        return
-    fi
-
-    # Check if binary works
-    if ! timeout 5 supabase --version &>/dev/null; then
-        check "deep.cloud.supabase" "Supabase CLI" "fail" "binary error" "Reinstall: acfs update --cloud-only --force"
-        return
-    fi
-
-    # Check for access token in config directory
-    local access_token_file="$HOME/.supabase/access-token"
-    local alt_access_token_file="$HOME/.config/supabase/access-token"
-
-    if [[ -f "$access_token_file" || -f "$alt_access_token_file" ]]; then
-        # Check if token is not empty
-        if [[ -s "$access_token_file" || -s "$alt_access_token_file" ]]; then
-            check "deep.cloud.supabase" "Supabase CLI auth" "pass" "access token exists"
-        else
-            check "deep.cloud.supabase" "Supabase CLI auth" "warn" "empty access token" "supabase login (or set SUPABASE_ACCESS_TOKEN for headless)"
-        fi
-    elif [[ -n "${SUPABASE_ACCESS_TOKEN:-}" ]]; then
-        check "deep.cloud.supabase" "Supabase CLI auth" "pass" "SUPABASE_ACCESS_TOKEN set"
-    else
-        check "deep.cloud.supabase" "Supabase CLI auth" "warn" "not authenticated" "supabase login (or set SUPABASE_ACCESS_TOKEN for headless)"
-    fi
-}
-
-# check_vercel_auth - Vercel CLI authentication check
-# Related: bead azw
-# Enhanced: Caching and timeout support (bead lz1)
-check_vercel_auth() {
-    if ! command -v vercel &>/dev/null; then
-        check "deep.cloud.vercel_auth" "Vercel CLI" "warn" "not installed" "bun install -g --trust vercel@latest"
-        return
-    fi
-
-    # Try cache first (bead lz1)
-    local cached_result
-    if cached_result=$(get_cached_result "vercel_auth"); then
-        check "deep.cloud.vercel_auth" "Vercel auth" "pass" "$cached_result (cached)"
-        return
-    fi
-
-    # Run with timeout
-    local result
-    result=$(run_with_timeout "$DEEP_CHECK_TIMEOUT" "Vercel auth" vercel whoami 2>&1)
-    local status=$?
-
-    if ((status == 124)); then
-        check_with_timeout_status "deep.cloud.vercel_auth" "Vercel auth" "timeout" "check timed out" "Check network, then: vercel login"
-    elif ((status == 0)); then
         # Get the authenticated user/team for more detail
         local vercel_user
         vercel_user=$(timeout 5 vercel whoami 2>/dev/null) || vercel_user="authenticated"
@@ -1601,7 +1544,7 @@ check_vercel_auth() {
             cache_result "vercel_auth" "auth file present"
             check "deep.cloud.vercel_auth" "Vercel auth" "pass" "auth file present"
         else
-            check "deep.cloud.vercel_auth" "Vercel auth" "warn" "not authenticated" "vercel login (or use --token for headless)"
+            check "deep.cloud.vercel_auth" "Vercel auth" "warn" "not authenticated" "vercel login (or set SUPABASE_ACCESS_TOKEN for headless)"
         fi
     fi
 }
@@ -1616,59 +1559,8 @@ print_summary() {
         if [[ "$HAS_GUM" == "true" ]]; then
             gum style --foreground "$ACFS_MUTED" "  Legend: $(gum style --foreground "$ACFS_SUCCESS" "✓") installed  $(gum style --foreground "$ACFS_MUTED" "○") skipped  $(gum style --foreground "$ACFS_ERROR" "✖") missing  $(gum style --foreground "$ACFS_WARNING" "⚠") warning  $(gum style --foreground "$ACFS_WARNING" "?") timeout"
         else
-            echo -e "  Legend: ${GREEN}✓${NC} installed  ${CYAN}○${NC} skipped  ${RED}✖${NC} missing  ${YELLOW}⚠${NC} warning  ${YELLOW}?${NC} timeout"
-        fi
-    fi
-
-    if [[ "$HAS_GUM" == "true" ]]; then
-        # Beautiful gum-styled summary
-        local status_line=""
-        status_line="$(gum style --foreground "$ACFS_SUCCESS" --bold "$PASS_COUNT passed") "
-        [[ $SKIP_COUNT -gt 0 ]] && status_line+="$(gum style --foreground "$ACFS_MUTED" "$SKIP_COUNT skipped") "
-        status_line+="$(gum style --foreground "$ACFS_WARNING" "$WARN_COUNT warnings") "
-        status_line+="$(gum style --foreground "$ACFS_ERROR" "$FAIL_COUNT failed")"
-
-        if [[ $FAIL_COUNT -eq 0 ]]; then
-            gum style \
-                --border double \
-                --border-foreground "$ACFS_SUCCESS" \
-                --padding "1 3" \
-                --margin "1 0" \
-                --align center \
-                "$(gum style --foreground "$ACFS_SUCCESS" --bold '✓ ACFS Health Check Passed')
-
-$status_line
-
-$(gum style --foreground "$ACFS_MUTED" "Next: run 'onboard' to learn how to use your new setup")"
-        else
-            gum style \
-                --border double \
-                --border-foreground "$ACFS_ERROR" \
-                --padding "1 3" \
-                --margin "1 0" \
-                --align center \
-                "$(gum style --foreground "$ACFS_ERROR" --bold '✖ Some Checks Failed')
-
-$status_line
-
-$(gum style --foreground "$ACFS_MUTED" "Run the suggested fix commands, then 'acfs doctor' again")"
-        fi
-    else
-        echo "============================================================"
-        local summary_line="Checks: ${GREEN}$PASS_COUNT passed${NC}"
-        [[ $SKIP_COUNT -gt 0 ]] && summary_line+=", ${CYAN}$SKIP_COUNT skipped${NC}"
-        summary_line+=", ${YELLOW}$WARN_COUNT warnings${NC}, ${RED}$FAIL_COUNT failed${NC}"
-        echo -e "$summary_line"
-        echo ""
-
-        if [[ $FAIL_COUNT -eq 0 ]]; then
-            echo -e "${GREEN}All critical checks passed!${NC}"
-            echo ""
-            echo "Next: run 'onboard' to learn how to use your new setup"
-        else
-            echo -e "${RED}Some checks failed. Run the suggested fix commands.${NC}"
-            echo ""
-            echo "After fixing, run 'acfs doctor' again to verify."
+            echo -e "  ${CYAN}○ SKIP${NC} $label"
+            echo -e "        Reason: $reason"
         fi
     fi
 }

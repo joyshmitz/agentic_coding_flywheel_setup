@@ -28,6 +28,7 @@ Options:
   --ubuntu <version>   Ubuntu tag (e.g. 24.04, 25.04). Repeatable.
   --all                Run on 24.04 and 25.04.
   --mode <mode>        Install mode: vibe or safe (default: vibe).
+  --strict             Enable strict installer mode (checksum mismatches fail).
   --help               Show help.
 
 Examples:
@@ -53,6 +54,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 declare -a ubuntus=()
 MODE="vibe"
+STRICT=false
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --ubuntu)
@@ -74,6 +76,10 @@ while [[ $# -gt 0 ]]; do
       esac
       shift 2
       ;;
+    --strict)
+      STRICT=true
+      shift
+      ;;
     --help)
       usage
       exit 0
@@ -93,10 +99,16 @@ fi
 run_one() {
   local ubuntu_version="$1"
   local image="ubuntu:${ubuntu_version}"
+  local timestamp
+  timestamp=$(date +%Y%m%d_%H%M%S)
+  local log_dir="${REPO_ROOT}/tests/logs/vm_test_${ubuntu_version}_${timestamp}"
+
+  mkdir -p "$log_dir"
 
   echo "" >&2
   echo "============================================================" >&2
   echo "[ACFS Test] Ubuntu ${ubuntu_version} (mode=${MODE})" >&2
+  echo "Logs: ${log_dir}" >&2
   echo "============================================================" >&2
 
   docker pull "$image" >/dev/null
@@ -104,9 +116,45 @@ run_one() {
   docker run --rm -t \
     -e DEBIAN_FRONTEND=noninteractive \
     -e ACFS_TEST_MODE="$MODE" \
+    -e ACFS_TEST_STRICT="$STRICT" \
+    -e ACFS_CHECKSUMS_REF="${ACFS_CHECKSUMS_REF:-}" \
+    -e ACFS_REF="${ACFS_REF:-}" \
     -v "${REPO_ROOT}:/repo:ro" \
+    -v "${log_dir}:/logs:rw" \
     "$image" bash -lc '
+      # Capture everything to log file while showing on screen
+      exec > >(tee -a /logs/install.log) 2>&1
+
       set -euo pipefail
+
+      echo "Starting ACFS E2E Test on Ubuntu ${ubuntu_version}"
+      echo "Start Time: $(date)"
+
+      # Cleanup function to save artifacts
+      cleanup() {
+        local exit_code=$?
+        echo "Test finished with exit code: $exit_code"
+        
+        # Save state.json if it exists
+        if [[ -f /home/ubuntu/.acfs/state.json ]]; then
+            cp /home/ubuntu/.acfs/state.json /logs/state.json
+            echo "Saved state.json to /logs/state.json"
+        else
+            echo "No state.json found to save"
+        fi
+
+        # Generate simple report
+        cat <<JSON > /logs/report.json
+{
+  "ubuntu_version": "${ubuntu_version}",
+  "exit_code": $exit_code,
+  "timestamp": "$(date -Iseconds)",
+  "mode": "${ACFS_TEST_MODE}"
+}
+JSON
+        exit $exit_code
+      }
+      trap cleanup EXIT
 
       apt-get update
       apt-get install -y sudo curl git ca-certificates jq unzip tar xz-utils gnupg
@@ -115,7 +163,12 @@ run_one() {
       bash /repo/tests/vm/selection_checks.sh
 
       cd /repo
-      bash install.sh --yes --mode "${ACFS_TEST_MODE}"
+      STRICT_FLAG=""
+      if [[ "${ACFS_TEST_STRICT}" == "true" ]]; then
+        STRICT_FLAG="--strict"
+      fi
+
+      bash install.sh --yes --mode "${ACFS_TEST_MODE}" ${STRICT_FLAG}
 
       su - ubuntu -c "zsh -ic '\''acfs doctor'\''"
       su - ubuntu -c "zsh -ic '\''test -f ~/.acfs/VERSION'\''"
@@ -133,6 +186,7 @@ run_one() {
       su - ubuntu -c "zsh -ic '\''codex --version >/dev/null'\''"
       su - ubuntu -c "zsh -ic '\''gemini --version >/dev/null'\''"
       su - ubuntu -c "zsh -ic '\''claude --version >/dev/null'\''"
+      su - ubuntu -c "zsh -ic '\''ru --version >/dev/null'\''"
       su - ubuntu -c "zsh -ic '\''dcg --version >/dev/null'\''"
       su - ubuntu -c "zsh -ic '\''set -o pipefail; dcg doctor --format json 2>/dev/null | jq -e \".hook_registered == true\" >/dev/null || dcg doctor 2>/dev/null | grep -qi \"hook wiring.*OK\"'\''"
       su - ubuntu -c "zsh -ic '\''dcg test \"git reset --hard\" | grep -Eqi \"deny|block\"'\''"

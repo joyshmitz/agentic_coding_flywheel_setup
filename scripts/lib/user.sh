@@ -19,12 +19,12 @@ _ACFS_USER_SH_LOADED=1
 
 # Fallback logging if logging.sh not sourced
 if ! declare -f log_fatal &>/dev/null; then
-    log_fatal() { echo "FATAL: $1" >&2; exit 1; }
-    log_detail() { echo "  $1" >&2; }
-    log_warn() { echo "WARN: $1" >&2; }
-    log_success() { echo "OK: $1" >&2; }
-    log_error() { echo "ERROR: $1" >&2; }
-    log_step() { echo "[$1] $2" >&2; }
+    log_fatal() { printf "FATAL: %s\n" "$1" >&2; exit 1; }
+    log_detail() { printf "  %s\n" "$1" >&2; }
+    log_warn() { printf "WARN: %s\n" "$1" >&2; }
+    log_success() { printf "OK: %s\n" "$1" >&2; }
+    log_error() { printf "ERROR: %s\n" "$1" >&2; }
+    log_step() { printf "[%s] %s\n" "$1" "$2" >&2; }
 fi
 
 # Ensure SUDO is set (empty string for root, "sudo" otherwise)
@@ -232,7 +232,7 @@ set_default_shell() {
     local target="$ACFS_TARGET_USER"
 
     if [[ -z "$shell" ]]; then
-        shell=$(which zsh)
+        shell=$(command -v zsh)
     fi
 
     if [[ ! -x "$shell" ]]; then
