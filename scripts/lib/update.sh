@@ -145,7 +145,10 @@ get_version() {
         vercel)
             version=$(vercel --version 2>/dev/null || echo "unknown")
             ;;
-        ntm|ubs|bv|cass|cm|caam|slb|ru|dcg)
+        ntm|ubs|bv|cass|cm|caam|slb|ru|dcg|apr|pt|xf|jfp|ms)
+            version=$("$tool" --version 2>/dev/null | head -1 || echo "unknown")
+            ;;
+        sg|lsd|dust|tldr)
             version=$("$tool" --version 2>/dev/null | head -1 || echo "unknown")
             ;;
         atuin)
@@ -225,27 +228,27 @@ log_item() {
 
     case "$status" in
         ok)
-            [[ "$QUIET" != "true" ]] && echo -e "  ${GREEN}[ok]${NC} $msg"
-            [[ -n "$details" && "$VERBOSE" == "true" && "$QUIET" != "true" ]] && echo -e "       ${DIM}$details${NC}"
+            [[ "$QUIET" != "true" ]] && printf "  ${GREEN}[ok]${NC} %s\n" "$msg"
+            [[ -n "$details" && "$VERBOSE" == "true" && "$QUIET" != "true" ]] && printf "       ${DIM}%s${NC}\n" "$details"
             ((SUCCESS_COUNT += 1))
             ;;
         skip)
-            [[ "$QUIET" != "true" ]] && echo -e "  ${DIM}[skip]${NC} $msg"
-            [[ -n "$details" && "$QUIET" != "true" ]] && echo -e "       ${DIM}$details${NC}"
+            [[ "$QUIET" != "true" ]] && printf "  ${DIM}[skip]${NC} %s\n" "$msg"
+            [[ -n "$details" && "$QUIET" != "true" ]] && printf "       ${DIM}%s${NC}\n" "$details"
             ((SKIP_COUNT += 1))
             ;;
         fail)
             # Always show failures even in quiet mode
-            echo -e "  ${RED}[fail]${NC} $msg"
-            [[ -n "$details" ]] && echo -e "       ${DIM}$details${NC}"
+            printf "  ${RED}[fail]${NC} %s\n" "$msg"
+            [[ -n "$details" ]] && printf "       ${DIM}%s${NC}\n" "$details"
             ((FAIL_COUNT += 1))
             ;;
         run)
-            [[ "$QUIET" != "true" ]] && echo -e "  ${YELLOW}[...]${NC} $msg"
+            [[ "$QUIET" != "true" ]] && printf "  ${YELLOW}[...]${NC} %s\n" "$msg"
             ;;
         warn)
-            [[ "$QUIET" != "true" ]] && echo -e "  ${YELLOW}[warn]${NC} $msg"
-            [[ -n "$details" && "$QUIET" != "true" ]] && echo -e "       ${DIM}$details${NC}"
+            [[ "$QUIET" != "true" ]] && printf "  ${YELLOW}[warn]${NC} %s\n" "$msg"
+            [[ -n "$details" && "$QUIET" != "true" ]] && printf "       ${DIM}%s${NC}\n" "$details"
             ;;
     esac
 }
@@ -307,18 +310,18 @@ run_cmd() {
     if [[ $exit_code -eq 0 ]]; then
         # Move cursor up and overwrite (only in non-verbose, non-quiet mode)
         if [[ "$QUIET" != "true" ]] && [[ "$VERBOSE" != "true" ]]; then
-            echo -e "\033[1A\033[2K  ${GREEN}[ok]${NC} $desc"
+            printf "\033[1A\033[2K  ${GREEN}[ok]${NC} %s\n" "$desc"
         elif [[ "$QUIET" != "true" ]]; then
-            echo -e "  ${GREEN}[ok]${NC} $desc"
+            printf "  ${GREEN}[ok]${NC} %s\n" "$desc"
         fi
         log_to_file "Success: $desc"
         ((SUCCESS_COUNT += 1))
         return 0
     else
         if [[ "$QUIET" != "true" ]] && [[ "$VERBOSE" != "true" ]]; then
-            echo -e "\033[1A\033[2K  ${RED}[fail]${NC} $desc"
+            printf "\033[1A\033[2K  ${RED}[fail]${NC} %s\n" "$desc"
         else
-            echo -e "  ${RED}[fail]${NC} $desc"
+            printf "  ${RED}[fail]${NC} %s\n" "$desc"
         fi
         log_to_file "Failed: $desc (exit code: $exit_code)"
         ((FAIL_COUNT += 1))
@@ -567,7 +570,7 @@ update_bun() {
 
     # Capture version after and log if changed (don't use log_item "ok" to avoid double-counting)
     if capture_version_after "bun"; then
-        [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[bun]} → ${VERSION_AFTER[bun]}${NC}"
+        [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[bun]}" "${VERSION_AFTER[bun]}"
     fi
 }
 
@@ -638,17 +641,17 @@ update_agents() {
 
         # Show version change without double-counting (run_cmd already incremented SUCCESS_COUNT)
         if capture_version_after "claude"; then
-            [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[claude]} → ${VERSION_AFTER[claude]}${NC}"
+            [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[claude]}" "${VERSION_AFTER[claude]}"
         fi
     elif [[ "$FORCE_MODE" == "true" ]]; then
         capture_version_before "claude"
         if update_require_security; then
             run_cmd "Claude Code (install)" update_run_verified_installer claude stable
             if capture_version_after "claude"; then
-                [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[claude]} → ${VERSION_AFTER[claude]}${NC}"
+                [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[claude]}" "${VERSION_AFTER[claude]}"
             fi
         else
-            log_item "fail" "Claude Code" "not installed and install unavailable (missing security.sh)"
+            log_item "fail" "Claude Code" "not installed and install unavailable (missing security.sh/checksums.yaml)"
         fi
     else
         log_item "skip" "Claude Code" "not installed (use --force to install)"
@@ -666,7 +669,7 @@ update_agents() {
         run_cmd "Codex CLI" "$bun_bin" install -g --trust @openai/codex@latest
         # Show version change without double-counting
         if capture_version_after "codex"; then
-            [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[codex]} → ${VERSION_AFTER[codex]}${NC}"
+            [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[codex]}" "${VERSION_AFTER[codex]}"
         fi
     else
         log_item "skip" "Codex CLI" "not installed (use --force to install)"
@@ -678,7 +681,7 @@ update_agents() {
         run_cmd "Gemini CLI" "$bun_bin" install -g --trust @google/gemini-cli@latest
         # Show version change without double-counting
         if capture_version_after "gemini"; then
-            [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[gemini]} → ${VERSION_AFTER[gemini]}${NC}"
+            [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[gemini]}" "${VERSION_AFTER[gemini]}"
         fi
     else
         log_item "skip" "Gemini CLI" "not installed (use --force to install)"
@@ -893,7 +896,7 @@ update_cloud() {
         # Refresh PATH in case ~/.local/bin was created during install.
         ensure_path
         if capture_version_after "supabase"; then
-            [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[supabase]} → ${VERSION_AFTER[supabase]}${NC}"
+            [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[supabase]}" "${VERSION_AFTER[supabase]}"
         fi
     else
         log_item "skip" "Supabase CLI" "not installed"
@@ -942,13 +945,51 @@ update_rust() {
 
     # Show version change without double-counting
     if capture_version_after "rust"; then
-        [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[rust]} → ${VERSION_AFTER[rust]}${NC}"
+        [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[rust]}" "${VERSION_AFTER[rust]}"
     fi
 
     # Log installed toolchains
     local toolchains
     toolchains=$("$rustup_bin" toolchain list 2>/dev/null | tr '\n' ', ' | sed 's/, $//')
     log_to_file "Installed toolchains: $toolchains"
+}
+
+update_cargo_tools() {
+    log_section "Cargo Tools"
+
+    if [[ "$UPDATE_RUNTIME" != "true" ]]; then
+        log_item "skip" "Cargo tools" "disabled via --no-runtime / category selection"
+        return 0
+    fi
+
+    local cargo_bin="$HOME/.cargo/bin/cargo"
+    if [[ ! -x "$cargo_bin" ]]; then
+        log_item "skip" "Cargo tools" "cargo not found"
+        return 0
+    fi
+
+    # Tools to update via cargo install
+    # Format: package_name|binary_name
+    local tools=("ast-grep|sg" "lsd|lsd" "du-dust|dust" "tealdeer|tldr")
+
+    for entry in "${tools[@]}"; do
+        local tool="${entry%|*}"
+        local binary_name="${entry#*|}"
+
+        if ! command -v "$binary_name" &>/dev/null && [[ ! -x "$HOME/.cargo/bin/$binary_name" ]]; then
+            continue
+        fi
+
+        capture_version_before "$binary_name"
+        
+        # force is required to update existing install with cargo
+        # Use run_cmd to log and handle errors
+        run_cmd "Update $tool" "$cargo_bin" install "$tool" --locked --force
+
+        if capture_version_after "$binary_name"; then
+             [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[$binary_name]}" "${VERSION_AFTER[$binary_name]}"
+        fi
+    done
 }
 
 update_uv() {
@@ -973,7 +1014,7 @@ update_uv() {
 
     # Show version change without double-counting
     if capture_version_after "uv"; then
-        [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[uv]} → ${VERSION_AFTER[uv]}${NC}"
+        [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[uv]}" "${VERSION_AFTER[uv]}"
     fi
 }
 
@@ -1094,7 +1135,7 @@ update_stack() {
                         # Confirm session exists before printing "running" hint (avoids misleading output on failure).
                         if tmux has-session -t "$tmux_session" 2>/dev/null; then
                             log_to_file "Started MCP Agent Mail update in tmux session: $tmux_session"
-                            [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}Update running in tmux session '$tmux_session'${NC}"
+                            [[ "$QUIET" != "true" ]] && printf "       ${DIM}Update running in tmux session '%s'${NC}\n" "$tmux_session"
                         fi
 
                         # Cleanup happens when system tmp is cleaned
@@ -1108,6 +1149,39 @@ update_stack() {
             fi
         else
             log_item "skip" "MCP Agent Mail" "tmux not found (required for update)"
+        fi
+    fi
+
+    # Meta Skill (ms)
+    if cmd_exists ms; then
+        run_cmd "Meta Skill" update_run_verified_installer ms --easy-mode
+    fi
+
+    # APR (Automated Plan Reviser Pro)
+    if cmd_exists apr; then
+        run_cmd "APR" update_run_verified_installer apr --easy-mode
+    fi
+
+    # Process Triage (pt)
+    if cmd_exists pt; then
+        run_cmd "Process Triage" update_run_verified_installer pt
+    fi
+
+    # xf (X Archive Search)
+    if cmd_exists xf; then
+        run_cmd "xf" update_run_verified_installer xf --easy-mode
+    fi
+
+    # JeffreysPrompts (jfp) - built from source, update via git pull + rebuild
+    if cmd_exists jfp; then
+        local jfp_dir="${HOME}/.local/share/jeffreysprompts.com"
+        if [[ -d "$jfp_dir/.git" ]]; then
+            run_cmd "JeffreysPrompts (git)" git -C "$jfp_dir" pull --ff-only
+            if [[ $? -eq 0 ]] && cmd_exists bun; then
+                run_cmd "JeffreysPrompts (build)" bash -c "cd $jfp_dir && bun install && bun run build:cli && cp jfp ~/.local/bin/jfp"
+            fi
+        else
+            log_item "skip" "JeffreysPrompts" "source directory not found at $jfp_dir"
         fi
     fi
 
@@ -1191,7 +1265,7 @@ update_omz() {
 
     # Show version change without double-counting
     if capture_version_after "omz"; then
-        [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[omz]} → ${VERSION_AFTER[omz]}${NC}"
+        [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[omz]}" "${VERSION_AFTER[omz]}"
     fi
 }
 
@@ -1329,7 +1403,7 @@ update_atuin() {
 
     # Show version change without double-counting
     if capture_version_after "atuin"; then
-        [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[atuin]} → ${VERSION_AFTER[atuin]}${NC}"
+        [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[atuin]}" "${VERSION_AFTER[atuin]}"
     fi
 }
 
@@ -1360,7 +1434,7 @@ update_zoxide() {
 
     # Show version change without double-counting
     if capture_version_after "zoxide"; then
-        [[ "$QUIET" != "true" ]] && echo -e "       ${DIM}${VERSION_BEFORE[zoxide]} → ${VERSION_AFTER[zoxide]}${NC}"
+        [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[zoxide]}" "${VERSION_AFTER[zoxide]}"
     fi
 }
 
@@ -1411,38 +1485,38 @@ print_summary() {
     if [[ "$QUIET" != "true" ]]; then
         echo ""
         echo "============================================================"
-        echo -e "Summary: ${GREEN}$SUCCESS_COUNT updated${NC}, ${DIM}$SKIP_COUNT skipped${NC}, ${RED}$FAIL_COUNT failed${NC}"
+        printf "Summary: ${GREEN}%d updated${NC}, ${DIM}%d skipped${NC}, ${RED}%d failed${NC}\n" "$SUCCESS_COUNT" "$SKIP_COUNT" "$FAIL_COUNT"
         echo ""
 
         if [[ $FAIL_COUNT -eq 0 ]]; then
-            echo -e "${GREEN}All updates completed successfully!${NC}"
+            printf "${GREEN}All updates completed successfully!${NC}\n"
         else
-            echo -e "${YELLOW}Some updates failed. Check output above.${NC}"
+            printf "${YELLOW}Some updates failed. Check output above.${NC}\n"
         fi
 
         # Reboot warning
         if [[ "$REBOOT_REQUIRED" == "true" ]]; then
             echo ""
-            echo -e "${YELLOW}${BOLD}⚠ System reboot required${NC}"
-            echo -e "${DIM}Run: sudo reboot${NC}"
+            printf "${YELLOW}${BOLD}⚠ System reboot required${NC}\n"
+            printf "${DIM}Run: sudo reboot${NC}\n"
         fi
 
         if [[ "$DRY_RUN" == "true" ]]; then
             echo ""
-            echo -e "${DIM}(dry-run mode - no changes were made)${NC}"
+            printf "${DIM}(dry-run mode - no changes were made)${NC}\n"
         fi
 
         # Show log location
         if [[ -n "$UPDATE_LOG_FILE" ]]; then
             echo ""
-            echo -e "${DIM}Log: $UPDATE_LOG_FILE${NC}"
+            printf "${DIM}Log: %s${NC}\n" "$UPDATE_LOG_FILE"
         fi
     elif [[ $FAIL_COUNT -gt 0 ]]; then
         # In quiet mode, still report failures
         echo ""
-        echo -e "${RED}Update failed: $FAIL_COUNT error(s)${NC}"
+        printf "${RED}Update failed: %d error(s)${NC}\n" "$FAIL_COUNT"
         if [[ -n "$UPDATE_LOG_FILE" ]]; then
-            echo -e "${DIM}See: $UPDATE_LOG_FILE${NC}"
+            printf "${DIM}See: %s${NC}\n" "$UPDATE_LOG_FILE"
         fi
     fi
 }
@@ -1714,6 +1788,7 @@ main() {
     update_agents
     update_cloud
     update_rust
+    update_cargo_tools
     update_uv
     update_go
     update_shell
@@ -1729,4 +1804,6 @@ main() {
     exit 0
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi

@@ -91,6 +91,19 @@ export function AgentsLoginLesson() {
 
         <div className="mt-8 space-y-6">
           <AliasCard
+            alias="cc"
+            name="Claude Code"
+            code={`NODE_OPTIONS="--max-old-space-size=32768" \\
+  claude --dangerously-skip-permissions`}
+            features={[
+              "Extra memory for large projects",
+              "Background tasks enabled by default",
+              "No permission prompts",
+            ]}
+            gradient="from-orange-500/20 to-amber-500/20"
+          />
+
+          <AliasCard
             alias={messages.whatAliasesDo.aliases.claudeCode.alias}
             name={messages.whatAliasesDo.aliases.claudeCode.name}
             code={messages.whatAliasesDo.aliases.claudeCode.code}

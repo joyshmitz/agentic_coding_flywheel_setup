@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-01-12T06:08:29+00:00
+# checksums.yaml - Auto-generated 2026-01-16T09:01:40+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -20,7 +20,7 @@ installers:
 
   dcg:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh"
-    sha256: "860759b44b6609f69a947da9f22ae657370d5aca48775b2e9eaceeaf6686aab4"
+    sha256: "34979289f40a42f593246638da4d9a949401bf5c2423073e799ae3996f2922c6"
 
   claude:
     url: "https://claude.ai/install.sh"
@@ -36,11 +36,11 @@ installers:
 
   uv:
     url: "https://astral.sh/uv/install.sh"
-    sha256: "f6e468855afb4e653fa96ed68a7cad0b2534794ece25ec202f6543c589eb04dc"
+    sha256: "09ace6a888bd5941b5d44f1177a9a8a6145552ec8aa81c51b1b57ff73e6b9e18"
 
   ntm:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/ntm/main/install.sh"
-    sha256: "0818e7c3e43d7b1c03ffcadbdc1f8fb2dce4611e17dae2a612c37b7d6954a725"
+    sha256: "667fcb725e3a22a1b4e6317f8bd470bab9e1a4e6175df6e69e71c99d58dd727a"
 
   cm:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/cass_memory_system/main/install.sh"

@@ -48,6 +48,10 @@ const QUICK_CHECKS = [
     description: "Check bun is installed",
   },
   {
+    command: "ms --version",
+    description: "Check Meta Skill is installed",
+  },
+  {
     command: "which tmux",
     description: "Check tmux is installed",
   },

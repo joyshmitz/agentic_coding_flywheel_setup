@@ -460,7 +460,7 @@ export const flywheelTools: FlywheelTool[] = [
     description:
       "A complete coordination system for multi-agent workflows. Agents register identities, send/receive messages, search conversations, and declare file reservations to prevent edit conflicts.",
     deepDescription:
-      "Agent Mail is the nervous system of the flywheel. It provides: agent identities (adjective+noun names like 'BlueLake'), threaded markdown messages, full-text search, and advisory file locks. Git-backed storage means complete audit trails. 20+ MCP tools for programmatic access.",
+      "Agent Mail is the nervous system of the flywheel. It provides: agent identities (adjective+noun names like 'BlueLake'), threaded markdown messages, full-text search, and advisory file locks. SQLite-backed storage means complete audit trails. 20+ MCP tools for programmatic access.",
     connectsTo: ["bv", "cm", "slb", "ntm", "ru"],
     connectionDescriptions: {
       bv: "Task IDs link conversations to Beads issues",
@@ -496,11 +496,11 @@ export const flywheelTools: FlywheelTool[] = [
     href: "https://github.com/Dicklesworthstone/ultimate_bug_scanner",
     icon: "Bug",
     color: "from-rose-400 to-red-500",
-    tagline: "Polyglot static analysis",
+    tagline: "AST-based pattern detection",
     description:
-      "Wraps best-in-class static analyzers (ESLint, Ruff, Clippy, golangci-lint) with consistent JSON output. Sub-5-second feedback loops. Perfect as pre-commit hook or agent post-processor.",
+      "Custom AST-grep patterns detecting subtle bugs across 7+ languages. Designed to have false positives for AI agents to evaluate. Sub-5-second feedback loops. Perfect as pre-commit hook or agent post-processor.",
     deepDescription:
-      "UBS v5.0 supports 7 languages with 18 detection categories including null safety, async bugs, security vulnerabilities, and memory leaks. Zero configuration required. Unified JSON/JSONL/SARIF output for automation. Supply chain secured with SHA-256 checksums.",
+      "UBS uses ast-grep for AST-based pattern matching that tolerates false positives for AI agent review. 18 detection categories including null safety, async bugs, security vulnerabilities, and memory leaks. Zero configuration required. Unified JSON/JSONL/SARIF output for automation.",
     connectsTo: ["bv", "slb"],
     connectionDescriptions: {
       bv: "Creates Beads issues for discovered bugs",
@@ -790,6 +790,43 @@ export const flywheelTools: FlywheelTool[] = [
       'curl --proto \'=https\' --proto-redir \'=https\' -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/repo_updater/main/install.sh" | bash',
     language: "Bash",
   },
+  {
+    id: "ms",
+    name: "Meta Skill",
+    shortName: "MS",
+    href: "https://github.com/Dicklesworthstone/meta_skill",
+    icon: "Sparkles",
+    color: "from-teal-500 to-emerald-600",
+    tagline: "Complete skill management platform",
+    description:
+      "Store skills, search them, track effectiveness, package for sharing, and integrate with AI agents via MCP server. Skills come from hand-written files, CASS mining, bundles, or guided workflows.",
+    deepDescription:
+      "MS is the skill management layer for AI agents. Thompson sampling learns which skills work best over time. The MCP server exposes 6 native tools (search, load, evidence, list, show, doctor) so any AI agent can query skills directly. Multi-layer security: ACIP detects prompt injection, DCG classifies command safety, path policy prevents escapes, secret scanner redacts sensitive data.",
+    connectsTo: ["cass", "cm", "bv"],
+    connectionDescriptions: {
+      cass: "One input source for skill extraction (among several)",
+      cm: "Skills and CM memories are complementary knowledge layers",
+      bv: "Graph analysis via bv for PageRank, betweenness, cycles",
+    },
+    stars: 10,
+    features: [
+      "MCP server: Native AI agent integration (6 tools)",
+      "Thompson sampling: Learns from usage to optimize suggestions",
+      "ACIP: Prompt-injection detection with quarantine",
+      "DCG: Command safety tiers (Safe/Caution/Danger/Critical)",
+      "Hybrid search: BM25 + hash embeddings with RRF fusion",
+      "Token packing: Optimize skill loading for context budgets",
+    ],
+    cliCommands: [
+      "ms mcp serve              # Start MCP server for AI agents",
+      "ms search 'error handling' # Hybrid search",
+      "ms load <skill> --pack 2000 # Token-packed loading",
+      "ms security scan <file>   # ACIP prompt injection check",
+      "ms graph insights         # Dependency analysis via bv",
+    ],
+    installCommand: "cargo install --git https://github.com/Dicklesworthstone/meta_skill",
+    language: "Rust",
+  },
 ];
 
 // ============================================================
@@ -798,7 +835,7 @@ export const flywheelTools: FlywheelTool[] = [
 
 export const flywheelDescription = {
   title: "The Agentic Coding Flywheel",
-  subtitle: "Ten tools plus utilities that create unheard-of velocity",
+  subtitle: "Eleven tools plus utilities that create unheard-of velocity",
   description:
     "A self-reinforcing system that enables multiple AI agents to work in parallel across 10+ projects, reviewing each other's work, creating and executing tasks, and making incredible autonomous progress while you're away.",
   philosophy: [
@@ -825,7 +862,7 @@ export const flywheelDescription = {
   ],
   metrics: {
     totalStars: "2K+",
-    toolCount: 10,
+    toolCount: 11,
     languages: ["Go", "Rust", "TypeScript", "Python", "Bash"],
     avgInstallTime: "< 30s each",
     projectsSimultaneous: "10+",
