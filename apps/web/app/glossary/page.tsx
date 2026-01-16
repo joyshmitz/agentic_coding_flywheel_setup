@@ -313,7 +313,7 @@ export default function GlossaryPage() {
       // Find the row and expand it
       const rowIndex = table.getFilteredRowModel().rows.findIndex(row => row.original.key === key);
       if (rowIndex >= 0) {
-        setExpanded(prev => ({ ...prev, [rowIndex]: true }));
+        setExpanded(prev => ({ ...(prev as Record<string, boolean>), [rowIndex]: true }));
         
         // Scroll to the element
         setTimeout(() => {

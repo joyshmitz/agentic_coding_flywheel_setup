@@ -59,5 +59,20 @@ export const toolPageMessages = {
     ru: {
       tagline: "Multi-repo sync + AI-driven commit automation",
     },
+    ms: {
+      tagline: "Local-first knowledge management with hybrid semantic search and Git-backed audit trails",
+    },
+    apr: {
+      tagline: "Automated iterative spec refinement with 15+ AI review rounds",
+    },
+    jfp: {
+      tagline: "Battle-tested prompt library for AI agents with one-click skill install",
+    },
+    pt: {
+      tagline: "Find and kill stuck/zombie processes with Bayesian scoring and decision memory",
+    },
+    xf: {
+      tagline: "Blazingly fast local search across your X/Twitter archive",
+    },
   },
 };
