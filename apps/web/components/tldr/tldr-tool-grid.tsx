@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect, memo } from "react";
-import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
+import { m, useReducedMotion, AnimatePresence } from "framer-motion";
 import { Layers, Wrench, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TldrToolCard } from "./tldr-tool-card";
@@ -40,7 +40,7 @@ const ToolSearchBar = memo(function ToolSearchBar({
   messages: ReturnType<typeof getTldrMessages>;
 }) {
   return (
-    <motion.div
+    <m.div
       initial={reducedMotion ? {} : { opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: reducedMotion ? 0 : 0.3 }}
@@ -85,7 +85,7 @@ const ToolSearchBar = memo(function ToolSearchBar({
         {/* Results count */}
         <AnimatePresence>
           {query && (
-            <motion.div
+            <m.div
               initial={reducedMotion ? {} : { opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
               exit={reducedMotion ? {} : { opacity: 0, y: -5 }}
@@ -110,11 +110,11 @@ const ToolSearchBar = memo(function ToolSearchBar({
                   </>
                 )}
               </span>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>
-    </motion.div>
+    </m.div>
   );
 });
 
@@ -134,7 +134,7 @@ const EmptySearchState = memo(function EmptySearchState({
   messages: ReturnType<typeof getTldrMessages>;
 }) {
   return (
-    <motion.div
+    <m.div
       initial={reducedMotion ? {} : { opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: reducedMotion ? 0 : 0.3 }}
@@ -156,7 +156,7 @@ const EmptySearchState = memo(function EmptySearchState({
         <X className="h-4 w-4" />
         {messages.toolGrid.search.clearButtonText}
       </button>
-    </motion.div>
+    </m.div>
   );
 });
 
@@ -178,7 +178,7 @@ const SectionHeader = memo(function SectionHeader({
   reducedMotion: boolean;
 }) {
   return (
-    <motion.div
+    <m.div
       initial={reducedMotion ? {} : { opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
@@ -203,7 +203,7 @@ const SectionHeader = memo(function SectionHeader({
           </p>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 });
 
@@ -320,7 +320,7 @@ export function TldrToolGrid({ tools, className }: TldrToolGridProps) {
           <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence mode="popLayout">
               {coreTools.map((tool, index) => (
-                <motion.div
+                <m.div
                   key={tool.id}
                   layout={!reducedMotion}
                   initial={reducedMotion ? {} : { opacity: 0, scale: 0.9 }}
@@ -336,7 +336,7 @@ export function TldrToolGrid({ tools, className }: TldrToolGridProps) {
                     tool={tool}
                     allTools={tools}
                   />
-                </motion.div>
+                </m.div>
               ))}
             </AnimatePresence>
           </div>
@@ -356,7 +356,7 @@ export function TldrToolGrid({ tools, className }: TldrToolGridProps) {
           <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence mode="popLayout">
               {supportingTools.map((tool, index) => (
-                <motion.div
+                <m.div
                   key={tool.id}
                   layout={!reducedMotion}
                   initial={reducedMotion ? {} : { opacity: 0, scale: 0.9 }}
@@ -372,7 +372,7 @@ export function TldrToolGrid({ tools, className }: TldrToolGridProps) {
                     tool={tool}
                     allTools={tools}
                   />
-                </motion.div>
+                </m.div>
               ))}
             </AnimatePresence>
           </div>

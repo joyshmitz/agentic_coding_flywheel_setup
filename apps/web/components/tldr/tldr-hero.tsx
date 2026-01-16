@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { motion, useReducedMotion, useInView, AnimatePresence } from "framer-motion";
+import { m, useReducedMotion, useInView, AnimatePresence } from "framer-motion";
 import { Cog, Zap, GitBranch, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { tldrPageData } from "@/lib/tldr-content";
@@ -36,7 +36,7 @@ function AnimatedStat({
   isInView: boolean;
 }) {
   return (
-    <motion.div
+    <m.div
       initial={reducedMotion ? {} : { opacity: 0, y: 20 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{
@@ -49,7 +49,7 @@ function AnimatedStat({
       <div className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -69,7 +69,7 @@ function FloatingIcon({
   reducedMotion: boolean;
 }) {
   return (
-    <motion.div
+    <m.div
       initial={reducedMotion ? {} : { opacity: 0, scale: 0.5 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{
@@ -82,7 +82,7 @@ function FloatingIcon({
       )}
     >
       <Icon className="h-6 w-6 text-white" />
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -152,7 +152,7 @@ export function TldrHero({ className, id }: TldrHeroProps) {
       <div className="container relative mx-auto px-4">
         <div className="mx-auto max-w-3xl text-center">
           {/* Badge */}
-          <motion.div
+          <m.div
             initial={reducedMotion ? {} : { opacity: 0, y: -10 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: reducedMotion ? 0 : 0.4 }}
@@ -160,10 +160,10 @@ export function TldrHero({ className, id }: TldrHeroProps) {
           >
             <Cog className="h-4 w-4" />
             <span>{messages.hero.badge.text}</span>
-          </motion.div>
+          </m.div>
 
           {/* Title */}
-          <motion.h1
+          <m.h1
             initial={reducedMotion ? {} : { opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: reducedMotion ? 0 : 0.5, delay: reducedMotion ? 0 : 0.1 }}
@@ -173,20 +173,20 @@ export function TldrHero({ className, id }: TldrHeroProps) {
             <span className="block bg-gradient-to-r from-primary via-primary/80 to-accent bg-clip-text text-transparent">
               {hero.subtitle}
             </span>
-          </motion.h1>
+          </m.h1>
 
           {/* Description */}
-          <motion.p
+          <m.p
             initial={reducedMotion ? {} : { opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: reducedMotion ? 0 : 0.5, delay: reducedMotion ? 0 : 0.2 }}
             className="mt-4 text-base leading-relaxed text-muted-foreground sm:mt-6 sm:text-lg md:text-xl"
           >
             {hero.description}
-          </motion.p>
+          </m.p>
 
           {/* Stats */}
-          <motion.div
+          <m.div
             initial={reducedMotion ? {} : { opacity: 0 }}
             animate={isInView ? { opacity: 1 } : {}}
             transition={{ duration: reducedMotion ? 0 : 0.5, delay: reducedMotion ? 0 : 0.3 }}
@@ -202,19 +202,19 @@ export function TldrHero({ className, id }: TldrHeroProps) {
                 isInView={isInView}
               />
             ))}
-          </motion.div>
+          </m.div>
 
           {/* Scroll indicator - hides after user scrolls */}
           <AnimatePresence>
             {!hasScrolled && (
-              <motion.div
+              <m.div
                 initial={reducedMotion ? {} : { opacity: 0 }}
                 animate={isInView ? { opacity: 1 } : {}}
                 exit={reducedMotion ? {} : { opacity: 0, y: 20 }}
                 transition={{ duration: reducedMotion ? 0 : 0.5, delay: reducedMotion ? 0 : 0.6 }}
                 className="mt-16 flex justify-center"
               >
-                <motion.div
+                <m.div
                   animate={reducedMotion ? {} : { y: [0, 8, 0] }}
                   transition={{
                     duration: 2,
@@ -227,8 +227,8 @@ export function TldrHero({ className, id }: TldrHeroProps) {
                     {messages.hero.scrollIndicator.text}
                   </span>
                   <ArrowDown className="h-5 w-5" />
-                </motion.div>
-              </motion.div>
+                </m.div>
+              </m.div>
             )}
           </AnimatePresence>
         </div>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState, useCallback, useMemo } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { m, useReducedMotion } from "framer-motion";
 import {
   ArrowUpRight,
   Star,
@@ -143,7 +143,7 @@ export function TldrToolCard({
   const spotlightRgb = getColorDefinition(tool.color).rgb;
 
   return (
-    <motion.div
+    <m.div
       layout={!reducedMotion}
       className="group h-full"
       initial={reducedMotion ? {} : { opacity: 0, y: 20 }}
@@ -313,7 +313,7 @@ export function TldrToolCard({
           </div>
         </div>
       </div>
-    </motion.div>
+    </m.div>
   );
 }
 

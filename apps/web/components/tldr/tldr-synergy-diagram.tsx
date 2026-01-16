@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useMemo } from "react";
-import { motion, useReducedMotion, useInView } from "framer-motion";
+import { m, useReducedMotion, useInView } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getColorDefinition } from "@/lib/colors";
 import type { TldrFlywheelTool } from "@/lib/tldr-content";
@@ -95,7 +95,7 @@ export function TldrSynergyDiagram({
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>
-      <motion.div
+      <m.div
         initial={reducedMotion ? {} : { opacity: 0, scale: 0.95 }}
         animate={isInView ? { opacity: 1, scale: 1 } : {}}
         transition={{ duration: reducedMotion ? 0 : 0.6 }}
@@ -145,7 +145,7 @@ export function TldrSynergyDiagram({
           {/* Connection lines */}
           <g className="connections">
             {connections.map((conn, index) => (
-              <motion.line
+              <m.line
                 key={`${conn.from}-${conn.to}`}
                 x1={conn.fromPos.x}
                 y1={conn.fromPos.y}
@@ -165,7 +165,7 @@ export function TldrSynergyDiagram({
           </g>
 
           {/* Center "Flywheel" label */}
-          <motion.g
+          <m.g
             initial={reducedMotion ? {} : { opacity: 0, scale: 0.8 }}
             animate={isInView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: reducedMotion ? 0 : 0.5, delay: reducedMotion ? 0 : 0.2 }}
@@ -194,7 +194,7 @@ export function TldrSynergyDiagram({
             >
               {coreTools.length} Core Tools
             </text>
-          </motion.g>
+          </m.g>
 
           {/* Tool nodes - smaller when more tools */}
           {coreTools.map((tool, index) => {
@@ -206,7 +206,7 @@ export function TldrSynergyDiagram({
             const fontSize = coreTools.length > 8 ? "9px" : "11px";
 
             return (
-              <motion.g
+              <m.g
                 key={tool.id}
                 initial={reducedMotion ? {} : { opacity: 0, scale: 0 }}
                 animate={isInView ? { opacity: 1, scale: 1 } : {}}
@@ -249,13 +249,13 @@ export function TldrSynergyDiagram({
                 >
                   {tool.shortName}
                 </text>
-              </motion.g>
+              </m.g>
             );
           })}
         </svg>
 
         {/* Legend */}
-        <motion.div
+        <m.div
           initial={reducedMotion ? {} : { opacity: 0, y: 10 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: reducedMotion ? 0 : 0.5, delay: reducedMotion ? 0 : 0.8 }}
@@ -264,8 +264,8 @@ export function TldrSynergyDiagram({
           <p className="text-xs text-muted-foreground">
             Lines represent data flow and integration between tools
           </p>
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
     </div>
   );
 }
