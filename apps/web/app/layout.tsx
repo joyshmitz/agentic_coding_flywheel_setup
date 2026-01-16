@@ -25,24 +25,24 @@ const siteUrl = "https://agent-flywheel.com";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Agent Flywheel - AI Agents Coding For You",
+    default: "Agent Flywheel - AI Агенти Кодують За Вас",
     template: "%s | Agent Flywheel",
   },
   description:
-    "Transform a fresh cloud server into a fully-configured agentic coding environment in ~30 minutes. Claude Code, OpenAI Codex, Google Gemini: all pre-configured with 30+ modern developer tools. Free & open-source.",
+    "Перетворіть свіжий хмарний сервер у повністю налаштоване середовище для агентного кодування за ~30 хвилин. Claude Code, OpenAI Codex, Google Gemini: всі попередньо налаштовані з 30+ сучасними інструментами розробника. Безкоштовно та з відкритим кодом.",
   keywords: [
-    "VPS setup",
-    "AI coding",
+    "налаштування VPS",
+    "AI кодування", 
     "Claude Code",
     "Codex CLI",
     "Gemini CLI",
-    "developer tools",
-    "agentic coding",
+    "інструменти розробника",
+    "агентне кодування",
     "Agent Flywheel",
-    "AI agents",
-    "coding automation",
+    "AI агенти",
+    "автоматизація кодування",
     "Ubuntu VPS",
-    "dev environment",
+    "середовище розробки",
   ],
   authors: [{ name: "Jeffrey Emanuel", url: "https://jeffreyemanuel.com/" }],
   creator: "Jeffrey Emanuel",
@@ -53,13 +53,13 @@ export const metadata: Metadata = {
   // Icons are auto-generated from icon.tsx and apple-icon.tsx
   // favicon.ico is also available as a fallback
   openGraph: {
-    title: "Agent Flywheel - AI Agents Coding For You",
+    title: "Agent Flywheel - AI Агенти Кодують За Вас",
     description:
-      "Transform a fresh VPS into a fully-configured agentic coding environment in ~30 minutes. Claude Code, Codex CLI, Gemini CLI + 30 dev tools. Free & open-source.",
+      "Перетворіть свіжий VPS у повністю налаштоване середовище для агентного кодування за ~30 хвилин. Claude Code, Codex CLI, Gemini CLI + 30 інструментів розробки. Безкоштовно та з відкритим кодом.",
     type: "website",
     url: siteUrl,
-    siteName: "Agent Flywheel",
-    locale: "en_US",
+    siteName: "Agent Flywheel", 
+    locale: "uk_UA",
     // Images are auto-generated from opengraph-image.tsx
   },
   twitter: {
@@ -96,7 +96,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="uk" className="dark">
       <body
         className={`${jetbrainsMono.variable} ${instrumentSans.variable} font-sans antialiased`}
       >
