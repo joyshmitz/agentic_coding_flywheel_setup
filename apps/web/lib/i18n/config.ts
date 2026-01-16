@@ -4,7 +4,7 @@
 
 export type Locale = "en" | "uk";
 
-export const DEFAULT_LOCALE: Locale = "en";
+export const DEFAULT_LOCALE: Locale = "uk";
 
 export const LOCALES: readonly Locale[] = ["en", "uk"] as const;
 
