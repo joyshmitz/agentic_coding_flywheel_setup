@@ -5,6 +5,9 @@ import { motion, useReducedMotion, useInView, AnimatePresence } from "framer-mot
 import { Cog, Zap, GitBranch, ArrowDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { tldrPageData } from "@/lib/tldr-content";
+import { useLocale } from "@/lib/i18n";
+import { tldrPageDataUk } from "@/lib/tldr-content.uk";
+import { getTldrMessages } from "@/lib/tldr-messages.uk";
 
 // =============================================================================
 // TYPES
@@ -106,7 +109,11 @@ export function TldrHero({ className, id }: TldrHeroProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const { hero } = tldrPageData;
+  const { locale } = useLocale();
+  const pageData = locale === "uk" ? tldrPageDataUk : tldrPageData;
+  const messages = getTldrMessages(locale);
+
+  const { hero } = pageData;
 
   return (
     <section
@@ -152,7 +159,7 @@ export function TldrHero({ className, id }: TldrHeroProps) {
             className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary ring-1 ring-inset ring-primary/20"
           >
             <Cog className="h-4 w-4" />
-            <span>Open Source Ecosystem</span>
+            <span>{messages.hero.badge.text}</span>
           </motion.div>
 
           {/* Title */}
@@ -217,7 +224,7 @@ export function TldrHero({ className, id }: TldrHeroProps) {
                   className="flex flex-col items-center gap-2 text-muted-foreground"
                 >
                   <span className="text-xs font-medium uppercase tracking-wider">
-                    Scroll to explore
+                    {messages.hero.scrollIndicator.text}
                   </span>
                   <ArrowDown className="h-5 w-5" />
                 </motion.div>

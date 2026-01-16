@@ -322,7 +322,7 @@ export function LessonContent({ lesson: initialLesson }: Props) {
     };
   }, []);
 
-  const lessonContent = renderLessonComponent(lesson.slug);
+  const lessonContent = renderLessonComponent(lesson.slug, locale);
 
   const wizardStepSlugByLesson: Record<string, string> = {
     welcome: "launch-onboarding",

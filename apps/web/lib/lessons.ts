@@ -208,6 +208,38 @@ export const LESSONS: Lesson[] = [
     duration: "10 min",
     file: "22_meta_skill.md",
   },
+  {
+    id: 23,
+    slug: "apr",
+    title: "APR: Plan Refinement",
+    description: "Automated iterative plan improvement with AI",
+    duration: "8 min",
+    file: "23_apr.md",
+  },
+  {
+    id: 24,
+    slug: "jfp",
+    title: "JFP: Finding Prompts",
+    description: "Discover and install curated prompts from JeffreysPrompts",
+    duration: "6 min",
+    file: "24_jfp.md",
+  },
+  {
+    id: 25,
+    slug: "pt",
+    title: "PT: Process Management",
+    description: "Intelligent process triage and resource monitoring",
+    duration: "7 min",
+    file: "25_pt.md",
+  },
+  {
+    id: 26,
+    slug: "xf",
+    title: "XF: Twitter Archive Search",
+    description: "Lightning-fast search through your X/Twitter history",
+    duration: "5 min",
+    file: "26_xf.md",
+  },
 ];
 
 /** Total number of lessons */

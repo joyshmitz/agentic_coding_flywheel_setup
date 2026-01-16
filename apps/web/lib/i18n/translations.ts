@@ -79,6 +79,13 @@ import { ruLessonMessagesUk } from "../lessons/ru.uk";
 import { dcgLessonMessages } from "../lessons/dcg.en";
 import { dcgLessonMessagesUk } from "../lessons/dcg.uk";
 
+// TLDR Content
+import { getTldrMessages } from "../tldr-messages.uk";
+import { tldrPageData } from "../tldr-content";
+import { tldrPageDataUk } from "../tldr-content.uk";
+import { tldrFlywheelTools } from "../tldr-content";
+import { tldrFlywheelToolsUk } from "../tldr-content.uk";
+
 /**
  * Get lessons for the specified locale
  */
@@ -609,4 +616,25 @@ export function getRuLessonMessages(locale: Locale) {
  */
 export function getDcgLessonMessages(locale: Locale) {
   return locale === "uk" ? dcgLessonMessagesUk : dcgLessonMessages;
+}
+
+/**
+ * Get TLDR messages for the specified locale
+ */
+export function getTldrMessagesForLocale(locale: Locale) {
+  return getTldrMessages(locale);
+}
+
+/**
+ * Get TLDR page data for the specified locale
+ */
+export function getTldrPageDataForLocale(locale: Locale) {
+  return locale === "uk" ? tldrPageDataUk : tldrPageData;
+}
+
+/**
+ * Get TLDR flywheel tools for the specified locale
+ */
+export function getTldrFlywheelToolsForLocale(locale: Locale) {
+  return locale === "uk" ? tldrFlywheelToolsUk : tldrFlywheelTools;
 }

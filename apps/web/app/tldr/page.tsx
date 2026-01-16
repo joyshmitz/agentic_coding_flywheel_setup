@@ -8,6 +8,9 @@ import { TldrHero } from "@/components/tldr/tldr-hero";
 import { TldrToolGrid } from "@/components/tldr/tldr-tool-grid";
 import { TldrSynergyDiagram } from "@/components/tldr/tldr-synergy-diagram";
 import { tldrFlywheelTools, tldrPageData } from "@/lib/tldr-content";
+import { useLocale } from "@/lib/i18n";
+import { tldrPageDataUk, tldrFlywheelToolsUk } from "@/lib/tldr-content.uk";
+import { getTldrMessages } from "@/lib/tldr-messages.uk";
 
 // =============================================================================
 // FLYWHEEL EXPLANATION SECTION
@@ -19,7 +22,11 @@ function FlywheelExplanation() {
   const prefersReducedMotion = useReducedMotion();
   const reducedMotion = prefersReducedMotion ?? false;
 
-  const { flywheelExplanation } = tldrPageData;
+  const { locale } = useLocale();
+  const pageData = locale === "uk" ? tldrPageDataUk : tldrPageData;
+  const tools = locale === "uk" ? tldrFlywheelToolsUk : tldrFlywheelTools;
+
+  const { flywheelExplanation } = pageData;
 
   return (
     <section
@@ -65,7 +72,7 @@ function FlywheelExplanation() {
             transition={{ duration: reducedMotion ? 0 : 0.5, delay: reducedMotion ? 0 : 0.2 }}
             className="mx-auto max-w-sm lg:max-w-none"
           >
-            <TldrSynergyDiagram tools={tldrFlywheelTools} />
+            <TldrSynergyDiagram tools={tools} />
           </motion.div>
         </div>
       </div>
@@ -92,15 +99,17 @@ function FooterCTA({ id }: { id?: string }) {
     }
   }, []);
 
+  const { locale } = useLocale();
+  const messages = getTldrMessages(locale);
+
   return (
     <section id={id} className="border-t border-border/50 py-12 md:py-16">
       <div className="container mx-auto px-4 text-center">
         <h2 className="text-xl font-bold text-white sm:text-2xl md:text-3xl">
-          Get Started
+          {messages.footerCta.title}
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground sm:text-base">
-          The fastest way to set up the entire flywheel ecosystem is with ACFS.
-          One command, 30 minutes, and you&apos;re ready to go.
+          {messages.footerCta.description}
         </p>
         <div className="mt-6 flex flex-col items-center gap-4 md:mt-8">
           <div className="group relative w-full max-w-6xl">
@@ -112,7 +121,7 @@ function FooterCTA({ id }: { id?: string }) {
                 <button
                   onClick={handleCopy}
                   className="flex-shrink-0 rounded-lg bg-secondary p-2 text-muted-foreground transition-all duration-200 hover:bg-primary hover:text-white active:scale-95 sm:p-2.5"
-                  aria-label={copied ? "Copied!" : "Copy to clipboard"}
+                  aria-label={copied ? messages.footerCta.copied : messages.footerCta.copyButtonLabel.default}
                 >
                   {copied ? (
                     <Check className="h-4 w-4 text-success sm:h-5 sm:w-5" />
@@ -124,7 +133,7 @@ function FooterCTA({ id }: { id?: string }) {
             </div>
             {copied && (
               <div className="absolute -top-10 left-1/2 -translate-x-1/2 rounded-lg bg-success px-3 py-1.5 text-xs font-medium text-white shadow-lg">
-                Copied!
+                {messages.footerCta.copied}
               </div>
             )}
           </div>
@@ -134,9 +143,9 @@ function FooterCTA({ id }: { id?: string }) {
               href="/wizard/os-selection"
               className="text-primary underline hover:text-primary/80"
             >
-              step-by-step wizard
+              {messages.footerCta.wizardLinkText}
             </a>{" "}
-            for guided setup.
+            {messages.footerCta.wizardDescription}
           </p>
         </div>
       </div>
@@ -149,6 +158,9 @@ function FooterCTA({ id }: { id?: string }) {
 // =============================================================================
 
 export default function TldrPage() {
+  const { locale } = useLocale();
+  const tools = locale === "uk" ? tldrFlywheelToolsUk : tldrFlywheelTools;
+  
   return (
     <ErrorBoundary>
       <main className="min-h-screen overflow-x-hidden">
@@ -164,7 +176,7 @@ export default function TldrPage() {
         <section className="py-12 md:py-24">
           <div className="container mx-auto px-4 sm:px-6">
             <ErrorBoundary>
-              <TldrToolGrid tools={tldrFlywheelTools} />
+              <TldrToolGrid tools={tools} />
             </ErrorBoundary>
           </div>
         </section>

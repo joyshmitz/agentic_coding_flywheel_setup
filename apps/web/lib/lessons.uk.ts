@@ -184,4 +184,46 @@ export const LESSONS_UK: Lesson[] = [
     duration: "8 хв",
     file: "21_dcg.md",
   },
+  {
+    id: 22,
+    slug: "meta-skill",
+    title: "Meta Skill: Локальні Skills",
+    description: "Керування та обмін Claude Code skills локально",
+    duration: "10 хв",
+    file: "22_meta_skill.md",
+  },
+  {
+    id: 23,
+    slug: "apr",
+    title: "APR: Удосконалення планів",
+    description: "Автоматизоване ітеративне покращення планів за допомогою AI",
+    duration: "8 хв",
+    file: "23_apr.md",
+  },
+  {
+    id: 24,
+    slug: "jfp",
+    title: "JFP: Пошук промптів",
+    description: "Відкрийте та встановлюйте куровані промпти з JeffreysPrompts",
+    duration: "6 хв",
+    file: "24_jfp.md",
+  },
+  {
+    id: 25,
+    slug: "pt",
+    title: "PT: Управління процесами",
+    description: "Інтелектуальна сортування процесів та моніторинг ресурсів",
+    duration: "7 хв",
+    file: "25_pt.md",
+  },
+  {
+    id: 26,
+    slug: "xf",
+    title: "XF: Пошук архіву Twitter",
+    description: "Блискавично швидкий пошук по вашій історії X/Twitter",
+    duration: "5 хв",
+    file: "26_xf.md",
+  },
 ];
+
+export const TOTAL_LESSONS_UK = LESSONS_UK.length;

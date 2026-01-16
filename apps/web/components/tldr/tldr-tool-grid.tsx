@@ -6,6 +6,8 @@ import { Layers, Wrench, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TldrToolCard } from "./tldr-tool-card";
 import type { TldrFlywheelTool } from "@/lib/tldr-content";
+import { useLocale } from "@/lib/i18n";
+import { getTldrMessages } from "@/lib/tldr-messages.uk";
 
 // =============================================================================
 // TYPES
@@ -27,6 +29,7 @@ const ToolSearchBar = memo(function ToolSearchBar({
   totalCount,
   inputRef,
   reducedMotion,
+  messages,
 }: {
   query: string;
   onQueryChange: (query: string) => void;
@@ -34,6 +37,7 @@ const ToolSearchBar = memo(function ToolSearchBar({
   totalCount: number;
   inputRef: React.RefObject<HTMLInputElement | null>;
   reducedMotion: boolean;
+  messages: ReturnType<typeof getTldrMessages>;
 }) {
   return (
     <motion.div
@@ -56,8 +60,8 @@ const ToolSearchBar = memo(function ToolSearchBar({
             type="text"
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Search tools..."
-            aria-label="Search flywheel tools"
+            placeholder={messages.toolGrid.search.placeholder}
+            aria-label={messages.toolGrid.search.ariaLabel}
             className="w-full rounded-xl bg-transparent py-3 pl-10 pr-16 text-sm text-white placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 sm:rounded-2xl sm:py-4 sm:pl-12 sm:pr-20"
           />
 
@@ -67,7 +71,7 @@ const ToolSearchBar = memo(function ToolSearchBar({
               <button
                 onClick={() => onQueryChange("")}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-white/10 hover:text-white"
-                aria-label="Clear search"
+                aria-label={messages.toolGrid.search.clearAriaLabel}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -91,18 +95,18 @@ const ToolSearchBar = memo(function ToolSearchBar({
             >
               <span className="text-xs text-muted-foreground sm:text-sm">
                 {resultCount === 0 ? (
-                  "No tools match your search"
+                  messages.toolGrid.search.noResultsMessage
                 ) : (
                   <>
-                    Showing{" "}
+                    {messages.toolGrid.search.showingText}{" "}
                     <span className="font-semibold text-white">
                       {resultCount}
                     </span>{" "}
-                    of{" "}
+                    {messages.toolGrid.search.ofText}{" "}
                     <span className="font-semibold text-white">
                       {totalCount}
                     </span>{" "}
-                    tools
+                    {messages.toolGrid.search.toolsText}
                   </>
                 )}
               </span>
@@ -122,10 +126,12 @@ const EmptySearchState = memo(function EmptySearchState({
   query,
   onClear,
   reducedMotion,
+  messages,
 }: {
   query: string;
   onClear: () => void;
   reducedMotion: boolean;
+  messages: ReturnType<typeof getTldrMessages>;
 }) {
   return (
     <motion.div
@@ -138,18 +144,17 @@ const EmptySearchState = memo(function EmptySearchState({
         <Search className="h-8 w-8 text-primary" />
       </div>
       <h3 className="mt-6 text-lg font-semibold text-white">
-        No tools match &quot;{query}&quot;
+        {messages.toolGrid.emptyState.noMatchHeading(query)}
       </h3>
       <p className="mt-2 text-sm text-muted-foreground">
-        Try searching for &quot;session&quot;, &quot;memory&quot;, or
-        &quot;search&quot;
+        {messages.toolGrid.emptyState.suggestions}
       </p>
       <button
         onClick={onClear}
         className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/20"
       >
         <X className="h-4 w-4" />
-        Clear search
+        {messages.toolGrid.search.clearButtonText}
       </button>
     </motion.div>
   );
@@ -178,24 +183,26 @@ const SectionHeader = memo(function SectionHeader({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: reducedMotion ? 0 : 0.5 }}
-      className="mb-6 sm:mb-8"
+      className="mb-8 sm:mb-12"
     >
-      <div className="flex items-center gap-2 sm:gap-3">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 text-primary sm:h-10 sm:w-10 sm:rounded-xl">
-          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
+      <div className="flex items-start gap-3 sm:gap-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 sm:h-12 sm:w-12">
+          <Icon className="h-5 w-5 text-primary sm:h-6 sm:w-6" />
         </div>
-        <div>
-          <h2 className="text-lg font-bold text-white sm:text-xl md:text-2xl">
-            {title}
-            <span className="ml-1.5 text-xs font-normal text-muted-foreground sm:ml-2 sm:text-sm">
-              ({count})
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl md:text-3xl">
+              {title}
+            </h2>
+            <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+              {count}
             </span>
-          </h2>
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground sm:text-base">
+            {description}
+          </p>
         </div>
       </div>
-      <p className="mt-2 max-w-2xl text-xs leading-relaxed text-muted-foreground sm:mt-3 sm:text-sm">
-        {description}
-      </p>
     </motion.div>
   );
 });
@@ -233,6 +240,9 @@ export function TldrToolGrid({ tools, className }: TldrToolGridProps) {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
+
+  const { locale } = useLocale();
+  const messages = getTldrMessages(locale);
 
   // Filter tools based on search query (simple filter)
   const filteredTools = useMemo(() => {
@@ -284,6 +294,7 @@ export function TldrToolGrid({ tools, className }: TldrToolGridProps) {
         totalCount={tools.length}
         inputRef={searchInputRef}
         reducedMotion={reducedMotion}
+        messages={messages}
       />
 
       {/* Empty State */}
@@ -292,6 +303,7 @@ export function TldrToolGrid({ tools, className }: TldrToolGridProps) {
           query={searchQuery}
           onClear={() => setSearchQuery("")}
           reducedMotion={reducedMotion}
+          messages={messages}
         />
       )}
 
@@ -299,8 +311,8 @@ export function TldrToolGrid({ tools, className }: TldrToolGridProps) {
       {coreTools.length > 0 && (
         <section id="core-tools">
           <SectionHeader
-            title="Core Flywheel Tools"
-            description="The backbone of multi-agent development: session management, communication, task tracking, static analysis, memory, search, safety guards, multi-repo sync, and automated setup. These tools form a self-reinforcing loop where each makes the others more powerful."
+            title={messages.toolGrid.sections.coreTools.title}
+            description={messages.toolGrid.sections.coreTools.description}
             icon={Layers}
             count={coreTools.length}
             reducedMotion={reducedMotion}
@@ -335,8 +347,8 @@ export function TldrToolGrid({ tools, className }: TldrToolGridProps) {
       {supportingTools.length > 0 && (
         <section id="supporting-tools">
           <SectionHeader
-            title="Supporting Tools"
-            description="Extend the ecosystem with GitHub issue sync, archive search, and prompt crafting utilities. These tools enhance the core flywheel for specialized workflows."
+            title={messages.toolGrid.sections.supportingTools.title}
+            description={messages.toolGrid.sections.supportingTools.description}
             icon={Wrench}
             count={supportingTools.length}
             reducedMotion={reducedMotion}

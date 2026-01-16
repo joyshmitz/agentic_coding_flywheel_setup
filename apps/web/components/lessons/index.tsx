@@ -28,9 +28,16 @@ import { JfpLesson } from "./jfp-lesson";
 import { PtLesson } from "./pt-lesson";
 import { XfLesson } from "./xf-lesson";
 
+// Ukrainian lesson components
+import { MsLessonUk } from "./ms-lesson.uk";
+import { AprLessonUk } from "./apr-lesson.uk";
+import { JfpLessonUk } from "./jfp-lesson.uk";
+import { PtLessonUk } from "./pt-lesson.uk";
+import { XfLessonUk } from "./xf-lesson.uk";
+
 // Render the lesson content for a given slug.
 // This intentionally uses a static switch so ESLint can guarantee components are not created during render.
-export function renderLessonComponent(slug: string): React.ReactNode | null {
+export function renderLessonComponent(slug: string, locale?: string): React.ReactNode | null {
   switch (slug) {
     case "welcome":
       return <WelcomeLesson />;
@@ -76,16 +83,16 @@ export function renderLessonComponent(slug: string): React.ReactNode | null {
       return <SlbCaseStudyLesson />;
     case "ru":
       return <RuLesson />;
-    case "ms":
-      return <MsLesson />;
+    case "meta-skill":
+      return locale === "uk" ? <MsLessonUk /> : <MsLesson />;
     case "apr":
-      return <AprLesson />;
+      return locale === "uk" ? <AprLessonUk /> : <AprLesson />;
     case "jfp":
-      return <JfpLesson />;
+      return locale === "uk" ? <JfpLessonUk /> : <JfpLesson />;
     case "pt":
-      return <PtLesson />;
+      return locale === "uk" ? <PtLessonUk /> : <PtLesson />;
     case "xf":
-      return <XfLesson />;
+      return locale === "uk" ? <XfLessonUk /> : <XfLesson />;
     default:
       return null;
   }
