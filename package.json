@@ -19,5 +19,8 @@
   "trustedDependencies": [
     "sharp",
     "unrs-resolver"
-  ]
+  ],
+  "dependencies": {
+    "@vercel/speed-insights": "^1.3.1"
+  }
 }

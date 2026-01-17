@@ -1,0 +1,7481 @@
+{
+  "positions": {
+    "agentic_coding_flywheel_setup-01s": [
+      0,
+      11200
+    ],
+    "agentic_coding_flywheel_setup-03ry": [
+      0,
+      9760
+    ],
+    "agentic_coding_flywheel_setup-04wt": [
+      600,
+      760
+    ],
+    "agentic_coding_flywheel_setup-066": [
+      600,
+      -1240
+    ],
+    "agentic_coding_flywheel_setup-0ge": [
+      400,
+      -480
+    ],
+    "agentic_coding_flywheel_setup-0iq": [
+      0,
+      10320
+    ],
+    "agentic_coding_flywheel_setup-0jo": [
+      800,
+      -600
+    ],
+    "agentic_coding_flywheel_setup-0o9n": [
+      0,
+      -10400
+    ],
+    "agentic_coding_flywheel_setup-0ok": [
+      0,
+      1600
+    ],
+    "agentic_coding_flywheel_setup-0sb": [
+      0,
+      -1600
+    ],
+    "agentic_coding_flywheel_setup-0vb": [
+      200,
+      2360
+    ],
+    "agentic_coding_flywheel_setup-10n": [
+      200,
+      3320
+    ],
+    "agentic_coding_flywheel_setup-11ps": [
+      200,
+      -2040
+    ],
+    "agentic_coding_flywheel_setup-14w": [
+      200,
+      -280
+    ],
+    "agentic_coding_flywheel_setup-166": [
+      0,
+      -7760
+    ],
+    "agentic_coding_flywheel_setup-16o": [
+      0,
+      6800
+    ],
+    "agentic_coding_flywheel_setup-17e": [
+      0,
+      4080
+    ],
+    "agentic_coding_flywheel_setup-17e.1": [
+      0,
+      4880
+    ],
+    "agentic_coding_flywheel_setup-17e.2": [
+      0,
+      -12480
+    ],
+    "agentic_coding_flywheel_setup-181m": [
+      0,
+      -1840
+    ],
+    "agentic_coding_flywheel_setup-187": [
+      0,
+      8560
+    ],
+    "agentic_coding_flywheel_setup-19d4": [
+      0,
+      -5520
+    ],
+    "agentic_coding_flywheel_setup-1j8r": [
+      0,
+      -7600
+    ],
+    "agentic_coding_flywheel_setup-1kr5": [
+      0,
+      -14080
+    ],
+    "agentic_coding_flywheel_setup-1of": [
+      200,
+      -200
+    ],
+    "agentic_coding_flywheel_setup-1ou7": [
+      0,
+      12080
+    ],
+    "agentic_coding_flywheel_setup-1u8e": [
+      0,
+      -1520
+    ],
+    "agentic_coding_flywheel_setup-1wk6": [
+      200,
+      -40
+    ],
+    "agentic_coding_flywheel_setup-1wup": [
+      0,
+      10960
+    ],
+    "agentic_coding_flywheel_setup-1xq": [
+      200,
+      -520
+    ],
+    "agentic_coding_flywheel_setup-1y8": [
+      0,
+      -11520
+    ],
+    "agentic_coding_flywheel_setup-20r6": [
+      0,
+      -3760
+    ],
+    "agentic_coding_flywheel_setup-21v": [
+      0,
+      4640
+    ],
+    "agentic_coding_flywheel_setup-22pa": [
+      0,
+      -240
+    ],
+    "agentic_coding_flywheel_setup-247m": [
+      200,
+      1240
+    ],
+    "agentic_coding_flywheel_setup-25i": [
+      200,
+      280
+    ],
+    "agentic_coding_flywheel_setup-2bn": [
+      0,
+      -13680
+    ],
+    "agentic_coding_flywheel_setup-2bn.1": [
+      0,
+      3600
+    ],
+    "agentic_coding_flywheel_setup-2cvc": [
+      1000,
+      -200
+    ],
+    "agentic_coding_flywheel_setup-2du": [
+      400,
+      -1040
+    ],
+    "agentic_coding_flywheel_setup-2gs8": [
+      0,
+      -13760
+    ],
+    "agentic_coding_flywheel_setup-2jjz": [
+      800,
+      -840
+    ],
+    "agentic_coding_flywheel_setup-2m0": [
+      0,
+      -480
+    ],
+    "agentic_coding_flywheel_setup-2yd": [
+      200,
+      -3560
+    ],
+    "agentic_coding_flywheel_setup-2yzm": [
+      0,
+      -11360
+    ],
+    "agentic_coding_flywheel_setup-314q": [
+      0,
+      720
+    ],
+    "agentic_coding_flywheel_setup-31e": [
+      0,
+      10480
+    ],
+    "agentic_coding_flywheel_setup-322g": [
+      200,
+      -2280
+    ],
+    "agentic_coding_flywheel_setup-325": [
+      200,
+      2840
+    ],
+    "agentic_coding_flywheel_setup-32g": [
+      200,
+      920
+    ],
+    "agentic_coding_flywheel_setup-33ug": [
+      0,
+      5040
+    ],
+    "agentic_coding_flywheel_setup-367d": [
+      0,
+      -5280
+    ],
+    "agentic_coding_flywheel_setup-37rw": [
+      0,
+      -9520
+    ],
+    "agentic_coding_flywheel_setup-37sa": [
+      0,
+      -3680
+    ],
+    "agentic_coding_flywheel_setup-3bll": [
+      0,
+      12720
+    ],
+    "agentic_coding_flywheel_setup-3ci": [
+      0,
+      -2960
+    ],
+    "agentic_coding_flywheel_setup-3dkg": [
+      600,
+      520
+    ],
+    "agentic_coding_flywheel_setup-3edj": [
+      600,
+      -1160
+    ],
+    "agentic_coding_flywheel_setup-3ht": [
+      400,
+      -720
+    ],
+    "agentic_coding_flywheel_setup-3l4p": [
+      0,
+      -8640
+    ],
+    "agentic_coding_flywheel_setup-3mp": [
+      400,
+      2080
+    ],
+    "agentic_coding_flywheel_setup-3nk": [
+      0,
+      11840
+    ],
+    "agentic_coding_flywheel_setup-3oa": [
+      0,
+      -4480
+    ],
+    "agentic_coding_flywheel_setup-3pqz": [
+      0,
+      -9120
+    ],
+    "agentic_coding_flywheel_setup-3u3m": [
+      600,
+      1160
+    ],
+    "agentic_coding_flywheel_setup-3vvj": [
+      400,
+      -1360
+    ],
+    "agentic_coding_flywheel_setup-3wmw": [
+      0,
+      -2160
+    ],
+    "agentic_coding_flywheel_setup-46lp": [
+      600,
+      120
+    ],
+    "agentic_coding_flywheel_setup-4czg": [
+      0,
+      6160
+    ],
+    "agentic_coding_flywheel_setup-4eet": [
+      0,
+      -7920
+    ],
+    "agentic_coding_flywheel_setup-4ey": [
+      0,
+      -2800
+    ],
+    "agentic_coding_flywheel_setup-4h4q": [
+      0,
+      240
+    ],
+    "agentic_coding_flywheel_setup-4jr": [
+      200,
+      1000
+    ],
+    "agentic_coding_flywheel_setup-4k5l": [
+      0,
+      -3360
+    ],
+    "agentic_coding_flywheel_setup-4ocp": [
+      0,
+      13280
+    ],
+    "agentic_coding_flywheel_setup-4ou": [
+      0,
+      -4800
+    ],
+    "agentic_coding_flywheel_setup-4p7": [
+      0,
+      -10080
+    ],
+    "agentic_coding_flywheel_setup-4r84": [
+      0,
+      -13280
+    ],
+    "agentic_coding_flywheel_setup-4rd": [
+      600,
+      600
+    ],
+    "agentic_coding_flywheel_setup-4xi": [
+      400,
+      480
+    ],
+    "agentic_coding_flywheel_setup-4zah": [
+      400,
+      720
+    ],
+    "agentic_coding_flywheel_setup-4zg": [
+      0,
+      5440
+    ],
+    "agentic_coding_flywheel_setup-4zsi": [
+      0,
+      -6720
+    ],
+    "agentic_coding_flywheel_setup-51xe": [
+      0,
+      -13920
+    ],
+    "agentic_coding_flywheel_setup-542": [
+      200,
+      -1480
+    ],
+    "agentic_coding_flywheel_setup-545": [
+      200,
+      1400
+    ],
+    "agentic_coding_flywheel_setup-54ky": [
+      0,
+      3920
+    ],
+    "agentic_coding_flywheel_setup-585o": [
+      1200,
+      120
+    ],
+    "agentic_coding_flywheel_setup-58by": [
+      0,
+      -6800
+    ],
+    "agentic_coding_flywheel_setup-59t4": [
+      0,
+      -1760
+    ],
+    "agentic_coding_flywheel_setup-59vr": [
+      200,
+      3400
+    ],
+    "agentic_coding_flywheel_setup-5amx": [
+      0,
+      -8560
+    ],
+    "agentic_coding_flywheel_setup-5gn2": [
+      0,
+      -7520
+    ],
+    "agentic_coding_flywheel_setup-5gq": [
+      200,
+      -1880
+    ],
+    "agentic_coding_flywheel_setup-5i2y": [
+      200,
+      1960
+    ],
+    "agentic_coding_flywheel_setup-5m6": [
+      0,
+      -5920
+    ],
+    "agentic_coding_flywheel_setup-5m6.1": [
+      0,
+      -14240
+    ],
+    "agentic_coding_flywheel_setup-5m6.10": [
+      0,
+      11360
+    ],
+    "agentic_coding_flywheel_setup-5m6.11": [
+      0,
+      3120
+    ],
+    "agentic_coding_flywheel_setup-5m6.12": [
+      0,
+      13760
+    ],
+    "agentic_coding_flywheel_setup-5m6.2": [
+      0,
+      12880
+    ],
+    "agentic_coding_flywheel_setup-5m6.3": [
+      0,
+      -160
+    ],
+    "agentic_coding_flywheel_setup-5m6.4": [
+      0,
+      4160
+    ],
+    "agentic_coding_flywheel_setup-5m6.5": [
+      0,
+      11280
+    ],
+    "agentic_coding_flywheel_setup-5m6.6": [
+      0,
+      5920
+    ],
+    "agentic_coding_flywheel_setup-5m6.7": [
+      0,
+      11680
+    ],
+    "agentic_coding_flywheel_setup-5m6.8": [
+      0,
+      10400
+    ],
+    "agentic_coding_flywheel_setup-5m6.9": [
+      0,
+      8800
+    ],
+    "agentic_coding_flywheel_setup-5qzv": [
+      0,
+      10560
+    ],
+    "agentic_coding_flywheel_setup-5uu": [
+      0,
+      6480
+    ],
+    "agentic_coding_flywheel_setup-5vz": [
+      0,
+      12160
+    ],
+    "agentic_coding_flywheel_setup-5wkz": [
+      0,
+      -9440
+    ],
+    "agentic_coding_flywheel_setup-5x9": [
+      0,
+      13040
+    ],
+    "agentic_coding_flywheel_setup-5yty": [
+      800,
+      -440
+    ],
+    "agentic_coding_flywheel_setup-5zm": [
+      200,
+      2120
+    ],
+    "agentic_coding_flywheel_setup-5zt": [
+      0,
+      7600
+    ],
+    "agentic_coding_flywheel_setup-6fx": [
+      0,
+      -1280
+    ],
+    "agentic_coding_flywheel_setup-6otv": [
+      0,
+      -10960
+    ],
+    "agentic_coding_flywheel_setup-6pto": [
+      200,
+      -2920
+    ],
+    "agentic_coding_flywheel_setup-6r9o": [
+      0,
+      1520
+    ],
+    "agentic_coding_flywheel_setup-6stg": [
+      400,
+      2000
+    ],
+    "agentic_coding_flywheel_setup-6tg4": [
+      0,
+      -1360
+    ],
+    "agentic_coding_flywheel_setup-6uqj": [
+      0,
+      -9360
+    ],
+    "agentic_coding_flywheel_setup-6utp": [
+      0,
+      5760
+    ],
+    "agentic_coding_flywheel_setup-6w9u": [
+      200,
+      -2760
+    ],
+    "agentic_coding_flywheel_setup-6y4w": [
+      400,
+      1600
+    ],
+    "agentic_coding_flywheel_setup-6zob": [
+      0,
+      3360
+    ],
+    "agentic_coding_flywheel_setup-6zuj": [
+      0,
+      -800
+    ],
+    "agentic_coding_flywheel_setup-75e": [
+      200,
+      -360
+    ],
+    "agentic_coding_flywheel_setup-75r": [
+      0,
+      2720
+    ],
+    "agentic_coding_flywheel_setup-75r.1": [
+      0,
+      5200
+    ],
+    "agentic_coding_flywheel_setup-75r.2": [
+      0,
+      -4080
+    ],
+    "agentic_coding_flywheel_setup-78a": [
+      0,
+      5680
+    ],
+    "agentic_coding_flywheel_setup-7i45": [
+      0,
+      -4320
+    ],
+    "agentic_coding_flywheel_setup-7idl": [
+      200,
+      1800
+    ],
+    "agentic_coding_flywheel_setup-7jjq": [
+      0,
+      7920
+    ],
+    "agentic_coding_flywheel_setup-7ke": [
+      0,
+      13680
+    ],
+    "agentic_coding_flywheel_setup-7oxy": [
+      0,
+      -1920
+    ],
+    "agentic_coding_flywheel_setup-7q1": [
+      400,
+      -880
+    ],
+    "agentic_coding_flywheel_setup-7r0o": [
+      0,
+      11440
+    ],
+    "agentic_coding_flywheel_setup-7ufj": [
+      200,
+      -2120
+    ],
+    "agentic_coding_flywheel_setup-7v9s": [
+      0,
+      6000
+    ],
+    "agentic_coding_flywheel_setup-7yfr": [
+      200,
+      -3240
+    ],
+    "agentic_coding_flywheel_setup-80sb": [
+      200,
+      -3000
+    ],
+    "agentic_coding_flywheel_setup-829h": [
+      0,
+      8880
+    ],
+    "agentic_coding_flywheel_setup-85l": [
+      0,
+      5360
+    ],
+    "agentic_coding_flywheel_setup-88b": [
+      0,
+      -3600
+    ],
+    "agentic_coding_flywheel_setup-8h4": [
+      0,
+      -6080
+    ],
+    "agentic_coding_flywheel_setup-8kk": [
+      0,
+      6320
+    ],
+    "agentic_coding_flywheel_setup-8mv": [
+      200,
+      1560
+    ],
+    "agentic_coding_flywheel_setup-8pkn": [
+      0,
+      6560
+    ],
+    "agentic_coding_flywheel_setup-8wpc": [
+      200,
+      -1080
+    ],
+    "agentic_coding_flywheel_setup-8xx": [
+      800,
+      600
+    ],
+    "agentic_coding_flywheel_setup-8z5": [
+      400,
+      -2080
+    ],
+    "agentic_coding_flywheel_setup-96cx": [
+      1400,
+      0
+    ],
+    "agentic_coding_flywheel_setup-97cl": [
+      200,
+      -1160
+    ],
+    "agentic_coding_flywheel_setup-998": [
+      0,
+      -6960
+    ],
+    "agentic_coding_flywheel_setup-9ay2": [
+      200,
+      -1720
+    ],
+    "agentic_coding_flywheel_setup-9c80": [
+      0,
+      -3280
+    ],
+    "agentic_coding_flywheel_setup-9dl9": [
+      200,
+      -2600
+    ],
+    "agentic_coding_flywheel_setup-9ntj": [
+      1200,
+      -40
+    ],
+    "agentic_coding_flywheel_setup-9x0i": [
+      0,
+      10720
+    ],
+    "agentic_coding_flywheel_setup-9x2": [
+      0,
+      2000
+    ],
+    "agentic_coding_flywheel_setup-9xnq": [
+      600,
+      1000
+    ],
+    "agentic_coding_flywheel_setup-9xt": [
+      0,
+      -80
+    ],
+    "agentic_coding_flywheel_setup-9y6y": [
+      0,
+      -12080
+    ],
+    "agentic_coding_flywheel_setup-9y9x": [
+      0,
+      480
+    ],
+    "agentic_coding_flywheel_setup-9yzy": [
+      0,
+      -8800
+    ],
+    "agentic_coding_flywheel_setup-a1g": [
+      200,
+      -1640
+    ],
+    "agentic_coding_flywheel_setup-a24x": [
+      0,
+      7120
+    ],
+    "agentic_coding_flywheel_setup-a7qh": [
+      0,
+      160
+    ],
+    "agentic_coding_flywheel_setup-a7t7": [
+      0,
+      13920
+    ],
+    "agentic_coding_flywheel_setup-a9nk": [
+      0,
+      4320
+    ],
+    "agentic_coding_flywheel_setup-aa1": [
+      0,
+      3200
+    ],
+    "agentic_coding_flywheel_setup-aeds": [
+      0,
+      2960
+    ],
+    "agentic_coding_flywheel_setup-aexi": [
+      0,
+      -4720
+    ],
+    "agentic_coding_flywheel_setup-afr": [
+      0,
+      1760
+    ],
+    "agentic_coding_flywheel_setup-aiye": [
+      0,
+      13120
+    ],
+    "agentic_coding_flywheel_setup-anq": [
+      400,
+      1520
+    ],
+    "agentic_coding_flywheel_setup-ao2": [
+      400,
+      -2160
+    ],
+    "agentic_coding_flywheel_setup-aoly": [
+      0,
+      6880
+    ],
+    "agentic_coding_flywheel_setup-aqs": [
+      400,
+      -1840
+    ],
+    "agentic_coding_flywheel_setup-auf": [
+      400,
+      640
+    ],
+    "agentic_coding_flywheel_setup-axx": [
+      0,
+      -12560
+    ],
+    "agentic_coding_flywheel_setup-ay4z": [
+      0,
+      -640
+    ],
+    "agentic_coding_flywheel_setup-azw": [
+      200,
+      -1800
+    ],
+    "agentic_coding_flywheel_setup-b1yk": [
+      400,
+      1040
+    ],
+    "agentic_coding_flywheel_setup-b38o": [
+      1400,
+      -80
+    ],
+    "agentic_coding_flywheel_setup-b51v": [
+      0,
+      9600
+    ],
+    "agentic_coding_flywheel_setup-b6m9": [
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-b9v": [
+      600,
+      -360
+    ],
+    "agentic_coding_flywheel_setup-bags": [
+      200,
+      2680
+    ],
+    "agentic_coding_flywheel_setup-bcin": [
+      1600,
+      40
+    ],
+    "agentic_coding_flywheel_setup-bcs6": [
+      0,
+      -9920
+    ],
+    "agentic_coding_flywheel_setup-bfv": [
+      0,
+      -12320
+    ],
+    "agentic_coding_flywheel_setup-bog3": [
+      1600,
+      -40
+    ],
+    "agentic_coding_flywheel_setup-bq3": [
+      0,
+      -9840
+    ],
+    "agentic_coding_flywheel_setup-bri": [
+      400,
+      -1200
+    ],
+    "agentic_coding_flywheel_setup-bt5": [
+      0,
+      8160
+    ],
+    "agentic_coding_flywheel_setup-bww6": [
+      600,
+      40
+    ],
+    "agentic_coding_flywheel_setup-byk": [
+      0,
+      8240
+    ],
+    "agentic_coding_flywheel_setup-c61": [
+      0,
+      -4960
+    ],
+    "agentic_coding_flywheel_setup-c68e": [
+      0,
+      12240
+    ],
+    "agentic_coding_flywheel_setup-cfk": [
+      200,
+      200
+    ],
+    "agentic_coding_flywheel_setup-cgkx": [
+      0,
+      14080
+    ],
+    "agentic_coding_flywheel_setup-coj": [
+      200,
+      -920
+    ],
+    "agentic_coding_flywheel_setup-csv": [
+      600,
+      920
+    ],
+    "agentic_coding_flywheel_setup-cueb": [
+      0,
+      -2480
+    ],
+    "agentic_coding_flywheel_setup-cvwu": [
+      0,
+      9040
+    ],
+    "agentic_coding_flywheel_setup-cxk": [
+      0,
+      -4240
+    ],
+    "agentic_coding_flywheel_setup-cxr": [
+      600,
+      -40
+    ],
+    "agentic_coding_flywheel_setup-cxz3": [
+      400,
+      -800
+    ],
+    "agentic_coding_flywheel_setup-d09": [
+      400,
+      2160
+    ],
+    "agentic_coding_flywheel_setup-d0g": [
+      400,
+      1200
+    ],
+    "agentic_coding_flywheel_setup-d2o7": [
+      800,
+      -680
+    ],
+    "agentic_coding_flywheel_setup-d3pz": [
+      0,
+      12560
+    ],
+    "agentic_coding_flywheel_setup-d5ei": [
+      0,
+      -8320
+    ],
+    "agentic_coding_flywheel_setup-d6my": [
+      400,
+      -400
+    ],
+    "agentic_coding_flywheel_setup-d7c": [
+      1200,
+      40
+    ],
+    "agentic_coding_flywheel_setup-db0": [
+      400,
+      560
+    ],
+    "agentic_coding_flywheel_setup-dcy": [
+      200,
+      -760
+    ],
+    "agentic_coding_flywheel_setup-decn": [
+      200,
+      2760
+    ],
+    "agentic_coding_flywheel_setup-dfc": [
+      0,
+      1360
+    ],
+    "agentic_coding_flywheel_setup-dgzc": [
+      0,
+      -12880
+    ],
+    "agentic_coding_flywheel_setup-dkhc": [
+      0,
+      -13040
+    ],
+    "agentic_coding_flywheel_setup-dmff": [
+      0,
+      10160
+    ],
+    "agentic_coding_flywheel_setup-dvt": [
+      0,
+      -3520
+    ],
+    "agentic_coding_flywheel_setup-dvt.1": [
+      0,
+      8720
+    ],
+    "agentic_coding_flywheel_setup-dvt.2": [
+      200,
+      2200
+    ],
+    "agentic_coding_flywheel_setup-dvt.3": [
+      800,
+      360
+    ],
+    "agentic_coding_flywheel_setup-dvt.4": [
+      200,
+      -1400
+    ],
+    "agentic_coding_flywheel_setup-dvt.5": [
+      800,
+      -40
+    ],
+    "agentic_coding_flywheel_setup-dvt.6": [
+      200,
+      -1000
+    ],
+    "agentic_coding_flywheel_setup-dwh": [
+      1000,
+      40
+    ],
+    "agentic_coding_flywheel_setup-e1fk": [
+      0,
+      10240
+    ],
+    "agentic_coding_flywheel_setup-e2tx": [
+      200,
+      -1240
+    ],
+    "agentic_coding_flywheel_setup-e3yt": [
+      600,
+      1320
+    ],
+    "agentic_coding_flywheel_setup-e88": [
+      200,
+      40
+    ],
+    "agentic_coding_flywheel_setup-eel0": [
+      0,
+      1120
+    ],
+    "agentic_coding_flywheel_setup-eetz": [
+      0,
+      4240
+    ],
+    "agentic_coding_flywheel_setup-egf5": [
+      1000,
+      -40
+    ],
+    "agentic_coding_flywheel_setup-eli": [
+      0,
+      1040
+    ],
+    "agentic_coding_flywheel_setup-eooz": [
+      0,
+      -2640
+    ],
+    "agentic_coding_flywheel_setup-epc": [
+      400,
+      -1440
+    ],
+    "agentic_coding_flywheel_setup-eqhy": [
+      0,
+      -12240
+    ],
+    "agentic_coding_flywheel_setup-ezi7": [
+      0,
+      2320
+    ],
+    "agentic_coding_flywheel_setup-f0b0": [
+      0,
+      -7840
+    ],
+    "agentic_coding_flywheel_setup-f5m0": [
+      0,
+      14240
+    ],
+    "agentic_coding_flywheel_setup-fac": [
+      0,
+      -9600
+    ],
+    "agentic_coding_flywheel_setup-fed": [
+      0,
+      -880
+    ],
+    "agentic_coding_flywheel_setup-fed.1": [
+      0,
+      4720
+    ],
+    "agentic_coding_flywheel_setup-fed.2": [
+      0,
+      -8160
+    ],
+    "agentic_coding_flywheel_setup-fed.3": [
+      0,
+      11120
+    ],
+    "agentic_coding_flywheel_setup-fjjv": [
+      0,
+      -2240
+    ],
+    "agentic_coding_flywheel_setup-fk7v": [
+      0,
+      -12800
+    ],
+    "agentic_coding_flywheel_setup-fkf": [
+      200,
+      3480
+    ],
+    "agentic_coding_flywheel_setup-fkjp": [
+      0,
+      -12640
+    ],
+    "agentic_coding_flywheel_setup-fslp": [
+      200,
+      -3160
+    ],
+    "agentic_coding_flywheel_setup-fwgh": [
+      0,
+      -3120
+    ],
+    "agentic_coding_flywheel_setup-fwmf": [
+      0,
+      -2880
+    ],
+    "agentic_coding_flywheel_setup-g29": [
+      0,
+      12480
+    ],
+    "agentic_coding_flywheel_setup-g61k": [
+      0,
+      -1680
+    ],
+    "agentic_coding_flywheel_setup-ge5q": [
+      0,
+      8640
+    ],
+    "agentic_coding_flywheel_setup-giz1": [
+      0,
+      7040
+    ],
+    "agentic_coding_flywheel_setup-gjnn": [
+      600,
+      -120
+    ],
+    "agentic_coding_flywheel_setup-gl9": [
+      0,
+      -11760
+    ],
+    "agentic_coding_flywheel_setup-glt2": [
+      0,
+      -5120
+    ],
+    "agentic_coding_flywheel_setup-gr26": [
+      0,
+      -8960
+    ],
+    "agentic_coding_flywheel_setup-grfs": [
+      0,
+      -13440
+    ],
+    "agentic_coding_flywheel_setup-gxf9": [
+      800,
+      280
+    ],
+    "agentic_coding_flywheel_setup-gy0i": [
+      200,
+      1080
+    ],
+    "agentic_coding_flywheel_setup-h7kw": [
+      200,
+      1640
+    ],
+    "agentic_coding_flywheel_setup-hao": [
+      200,
+      2280
+    ],
+    "agentic_coding_flywheel_setup-hby": [
+      400,
+      1920
+    ],
+    "agentic_coding_flywheel_setup-hh8k": [
+      0,
+      -8720
+    ],
+    "agentic_coding_flywheel_setup-hi7": [
+      0,
+      14160
+    ],
+    "agentic_coding_flywheel_setup-hii": [
+      0,
+      8480
+    ],
+    "agentic_coding_flywheel_setup-huic": [
+      0,
+      4560
+    ],
+    "agentic_coding_flywheel_setup-hun4": [
+      0,
+      -12960
+    ],
+    "agentic_coding_flywheel_setup-hvg": [
+      200,
+      3160
+    ],
+    "agentic_coding_flywheel_setup-hy7z": [
+      600,
+      280
+    ],
+    "agentic_coding_flywheel_setup-hz24": [
+      0,
+      -3920
+    ],
+    "agentic_coding_flywheel_setup-hznw": [
+      800,
+      200
+    ],
+    "agentic_coding_flywheel_setup-i0k9": [
+      0,
+      -6400
+    ],
+    "agentic_coding_flywheel_setup-i0q7": [
+      800,
+      440
+    ],
+    "agentic_coding_flywheel_setup-i4st": [
+      0,
+      11040
+    ],
+    "agentic_coding_flywheel_setup-iady": [
+      0,
+      -13120
+    ],
+    "agentic_coding_flywheel_setup-iaq1": [
+      0,
+      -11680
+    ],
+    "agentic_coding_flywheel_setup-idyc": [
+      0,
+      -10640
+    ],
+    "agentic_coding_flywheel_setup-ik2t": [
+      0,
+      3440
+    ],
+    "agentic_coding_flywheel_setup-itb": [
+      600,
+      -440
+    ],
+    "agentic_coding_flywheel_setup-ixt": [
+      0,
+      5520
+    ],
+    "agentic_coding_flywheel_setup-j0x0": [
+      0,
+      -7040
+    ],
+    "agentic_coding_flywheel_setup-j0zm": [
+      0,
+      -7280
+    ],
+    "agentic_coding_flywheel_setup-j9a": [
+      400,
+      -1520
+    ],
+    "agentic_coding_flywheel_setup-jbzz": [
+      0,
+      4000
+    ],
+    "agentic_coding_flywheel_setup-jku2": [
+      0,
+      4400
+    ],
+    "agentic_coding_flywheel_setup-jmwk": [
+      1000,
+      -120
+    ],
+    "agentic_coding_flywheel_setup-jqqi": [
+      0,
+      7440
+    ],
+    "agentic_coding_flywheel_setup-jufj": [
+      0,
+      -320
+    ],
+    "agentic_coding_flywheel_setup-k80e": [
+      200,
+      440
+    ],
+    "agentic_coding_flywheel_setup-kgf": [
+      0,
+      -7360
+    ],
+    "agentic_coding_flywheel_setup-kgf.1": [
+      0,
+      7200
+    ],
+    "agentic_coding_flywheel_setup-kgf.2": [
+      0,
+      9520
+    ],
+    "agentic_coding_flywheel_setup-kgf.3": [
+      0,
+      2560
+    ],
+    "agentic_coding_flywheel_setup-kgf.4": [
+      0,
+      6400
+    ],
+    "agentic_coding_flywheel_setup-kgmn": [
+      0,
+      -8080
+    ],
+    "agentic_coding_flywheel_setup-kkfn": [
+      800,
+      520
+    ],
+    "agentic_coding_flywheel_setup-kmmi": [
+      0,
+      11600
+    ],
+    "agentic_coding_flywheel_setup-kozt": [
+      0,
+      10640
+    ],
+    "agentic_coding_flywheel_setup-kt6v": [
+      0,
+      5600
+    ],
+    "agentic_coding_flywheel_setup-kwa": [
+      0,
+      7280
+    ],
+    "agentic_coding_flywheel_setup-kwk": [
+      0,
+      -1120
+    ],
+    "agentic_coding_flywheel_setup-kyhv": [
+      800,
+      -760
+    ],
+    "agentic_coding_flywheel_setup-kylx": [
+      200,
+      -3320
+    ],
+    "agentic_coding_flywheel_setup-l0mb": [
+      0,
+      560
+    ],
+    "agentic_coding_flywheel_setup-l1rl": [
+      800,
+      840
+    ],
+    "agentic_coding_flywheel_setup-l1zc": [
+      0,
+      960
+    ],
+    "agentic_coding_flywheel_setup-l2w": [
+      0,
+      -13200
+    ],
+    "agentic_coding_flywheel_setup-l334": [
+      0,
+      -11200
+    ],
+    "agentic_coding_flywheel_setup-l4eu": [
+      0,
+      -1200
+    ],
+    "agentic_coding_flywheel_setup-l4h3": [
+      0,
+      5280
+    ],
+    "agentic_coding_flywheel_setup-l500": [
+      0,
+      -5840
+    ],
+    "agentic_coding_flywheel_setup-l5z9": [
+      0,
+      -9680
+    ],
+    "agentic_coding_flywheel_setup-l82e": [
+      400,
+      800
+    ],
+    "agentic_coding_flywheel_setup-lbo": [
+      0,
+      12640
+    ],
+    "agentic_coding_flywheel_setup-lhe": [
+      400,
+      1760
+    ],
+    "agentic_coding_flywheel_setup-ligg": [
+      0,
+      -6560
+    ],
+    "agentic_coding_flywheel_setup-llba": [
+      0,
+      -4000
+    ],
+    "agentic_coding_flywheel_setup-llng": [
+      0,
+      9280
+    ],
+    "agentic_coding_flywheel_setup-lsne": [
+      0,
+      2240
+    ],
+    "agentic_coding_flywheel_setup-lv9j": [
+      0,
+      -720
+    ],
+    "agentic_coding_flywheel_setup-lwu7": [
+      800,
+      120
+    ],
+    "agentic_coding_flywheel_setup-lyf0": [
+      0,
+      13440
+    ],
+    "agentic_coding_flywheel_setup-lz1": [
+      600,
+      200
+    ],
+    "agentic_coding_flywheel_setup-m4fj": [
+      0,
+      -9200
+    ],
+    "agentic_coding_flywheel_setup-m9ww": [
+      0,
+      9360
+    ],
+    "agentic_coding_flywheel_setup-mg9": [
+      600,
+      840
+    ],
+    "agentic_coding_flywheel_setup-mirb": [
+      0,
+      6960
+    ],
+    "agentic_coding_flywheel_setup-mjt": [
+      0,
+      -14000
+    ],
+    "agentic_coding_flywheel_setup-mjt.1": [
+      0,
+      1840
+    ],
+    "agentic_coding_flywheel_setup-mjt.1.1": [
+      200,
+      -680
+    ],
+    "agentic_coding_flywheel_setup-mjt.1.2": [
+      400,
+      80
+    ],
+    "agentic_coding_flywheel_setup-mjt.1.3": [
+      600,
+      -280
+    ],
+    "agentic_coding_flywheel_setup-mjt.1.4": [
+      600,
+      -680
+    ],
+    "agentic_coding_flywheel_setup-mjt.2": [
+      0,
+      -11040
+    ],
+    "agentic_coding_flywheel_setup-mjt.2.1": [
+      0,
+      -5680
+    ],
+    "agentic_coding_flywheel_setup-mjt.2.2": [
+      200,
+      3240
+    ],
+    "agentic_coding_flywheel_setup-mjt.2.3": [
+      200,
+      -840
+    ],
+    "agentic_coding_flywheel_setup-mjt.3": [
+      200,
+      3000
+    ],
+    "agentic_coding_flywheel_setup-mjt.3.1": [
+      0,
+      7360
+    ],
+    "agentic_coding_flywheel_setup-mjt.3.2": [
+      200,
+      1720
+    ],
+    "agentic_coding_flywheel_setup-mjt.3.3": [
+      200,
+      -2840
+    ],
+    "agentic_coding_flywheel_setup-mjt.3.4": [
+      400,
+      320
+    ],
+    "agentic_coding_flywheel_setup-mjt.3.5": [
+      600,
+      680
+    ],
+    "agentic_coding_flywheel_setup-mjt.3.6": [
+      200,
+      1880
+    ],
+    "agentic_coding_flywheel_setup-mjt.4": [
+      400,
+      1120
+    ],
+    "agentic_coding_flywheel_setup-mjt.4.1": [
+      0,
+      -2400
+    ],
+    "agentic_coding_flywheel_setup-mjt.4.2": [
+      200,
+      840
+    ],
+    "agentic_coding_flywheel_setup-mjt.4.3": [
+      400,
+      -80
+    ],
+    "agentic_coding_flywheel_setup-mjt.4.4": [
+      400,
+      -1600
+    ],
+    "agentic_coding_flywheel_setup-mjt.4.5": [
+      400,
+      -320
+    ],
+    "agentic_coding_flywheel_setup-mjt.4.6": [
+      200,
+      520
+    ],
+    "agentic_coding_flywheel_setup-mjt.5": [
+      600,
+      1240
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.1": [
+      0,
+      3680
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.2": [
+      200,
+      -1320
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.3": [
+      400,
+      1680
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.4": [
+      600,
+      360
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.5": [
+      800,
+      -120
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.6": [
+      800,
+      -520
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.7": [
+      0,
+      -10160
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.8": [
+      800,
+      680
+    ],
+    "agentic_coding_flywheel_setup-mjt.6": [
+      800,
+      40
+    ],
+    "agentic_coding_flywheel_setup-mjt.6.1": [
+      0,
+      2640
+    ],
+    "agentic_coding_flywheel_setup-mjt.6.2": [
+      200,
+      3560
+    ],
+    "agentic_coding_flywheel_setup-mjt.6.3": [
+      200,
+      -2520
+    ],
+    "agentic_coding_flywheel_setup-mjt.7": [
+      1000,
+      200
+    ],
+    "agentic_coding_flywheel_setup-mjt.7.1": [
+      0,
+      -7680
+    ],
+    "agentic_coding_flywheel_setup-mjt.7.2": [
+      200,
+      -1560
+    ],
+    "agentic_coding_flywheel_setup-mjt.7.3": [
+      200,
+      -600
+    ],
+    "agentic_coding_flywheel_setup-mna": [
+      200,
+      2440
+    ],
+    "agentic_coding_flywheel_setup-mnbl": [
+      0,
+      1200
+    ],
+    "agentic_coding_flywheel_setup-mwh": [
+      0,
+      -5440
+    ],
+    "agentic_coding_flywheel_setup-my5": [
+      0,
+      9920
+    ],
+    "agentic_coding_flywheel_setup-n49f": [
+      400,
+      240
+    ],
+    "agentic_coding_flywheel_setup-n7o": [
+      0,
+      -5360
+    ],
+    "agentic_coding_flywheel_setup-natf": [
+      0,
+      5120
+    ],
+    "agentic_coding_flywheel_setup-nb4": [
+      800,
+      -360
+    ],
+    "agentic_coding_flywheel_setup-ni52": [
+      200,
+      120
+    ],
+    "agentic_coding_flywheel_setup-nic8": [
+      400,
+      -640
+    ],
+    "agentic_coding_flywheel_setup-nna": [
+      200,
+      -440
+    ],
+    "agentic_coding_flywheel_setup-nolz": [
+      0,
+      -8000
+    ],
+    "agentic_coding_flywheel_setup-nq21": [
+      0,
+      -5040
+    ],
+    "agentic_coding_flywheel_setup-nrnn": [
+      0,
+      3760
+    ],
+    "agentic_coding_flywheel_setup-nxbe": [
+      200,
+      -2360
+    ],
+    "agentic_coding_flywheel_setup-o0vm": [
+      0,
+      -12720
+    ],
+    "agentic_coding_flywheel_setup-o7k7": [
+      0,
+      4480
+    ],
+    "agentic_coding_flywheel_setup-o85": [
+      600,
+      440
+    ],
+    "agentic_coding_flywheel_setup-o86r": [
+      0,
+      800
+    ],
+    "agentic_coding_flywheel_setup-o8ps": [
+      200,
+      1480
+    ],
+    "agentic_coding_flywheel_setup-o9q6": [
+      400,
+      880
+    ],
+    "agentic_coding_flywheel_setup-oaoq": [
+      0,
+      -2320
+    ],
+    "agentic_coding_flywheel_setup-obi": [
+      400,
+      -1680
+    ],
+    "agentic_coding_flywheel_setup-ofte": [
+      200,
+      2920
+    ],
+    "agentic_coding_flywheel_setup-ofwh": [
+      0,
+      12400
+    ],
+    "agentic_coding_flywheel_setup-onl7": [
+      0,
+      -13600
+    ],
+    "agentic_coding_flywheel_setup-oom6": [
+      0,
+      -3040
+    ],
+    "agentic_coding_flywheel_setup-ori": [
+      200,
+      -120
+    ],
+    "agentic_coding_flywheel_setup-p8w7": [
+      0,
+      -6640
+    ],
+    "agentic_coding_flywheel_setup-pazm": [
+      0,
+      -4880
+    ],
+    "agentic_coding_flywheel_setup-pe58": [
+      0,
+      9200
+    ],
+    "agentic_coding_flywheel_setup-pom": [
+      400,
+      160
+    ],
+    "agentic_coding_flywheel_setup-pu11": [
+      200,
+      2040
+    ],
+    "agentic_coding_flywheel_setup-q10": [
+      0,
+      -1040
+    ],
+    "agentic_coding_flywheel_setup-q16i": [
+      0,
+      -3440
+    ],
+    "agentic_coding_flywheel_setup-q6w2": [
+      0,
+      -8240
+    ],
+    "agentic_coding_flywheel_setup-q7r3": [
+      400,
+      1360
+    ],
+    "agentic_coding_flywheel_setup-qfj1": [
+      0,
+      9680
+    ],
+    "agentic_coding_flywheel_setup-qfsm": [
+      0,
+      -11280
+    ],
+    "agentic_coding_flywheel_setup-qgom": [
+      0,
+      1680
+    ],
+    "agentic_coding_flywheel_setup-qi82": [
+      400,
+      1840
+    ],
+    "agentic_coding_flywheel_setup-ql6q": [
+      0,
+      2880
+    ],
+    "agentic_coding_flywheel_setup-qmfo": [
+      1000,
+      280
+    ],
+    "agentic_coding_flywheel_setup-qmlq": [
+      0,
+      -5600
+    ],
+    "agentic_coding_flywheel_setup-qqo": [
+      0,
+      10880
+    ],
+    "agentic_coding_flywheel_setup-qrua": [
+      0,
+      2080
+    ],
+    "agentic_coding_flywheel_setup-qup": [
+      600,
+      -840
+    ],
+    "agentic_coding_flywheel_setup-qxj8": [
+      0,
+      -7440
+    ],
+    "agentic_coding_flywheel_setup-qxr": [
+      0,
+      6240
+    ],
+    "agentic_coding_flywheel_setup-qzhr": [
+      0,
+      -10240
+    ],
+    "agentic_coding_flywheel_setup-qzuy": [
+      0,
+      7840
+    ],
+    "agentic_coding_flywheel_setup-qzwz": [
+      0,
+      -6880
+    ],
+    "agentic_coding_flywheel_setup-r14r": [
+      0,
+      -4160
+    ],
+    "agentic_coding_flywheel_setup-r1z5": [
+      200,
+      3080
+    ],
+    "agentic_coding_flywheel_setup-r2np": [
+      800,
+      -200
+    ],
+    "agentic_coding_flywheel_setup-r3gd": [
+      0,
+      -3840
+    ],
+    "agentic_coding_flywheel_setup-r50f": [
+      0,
+      7680
+    ],
+    "agentic_coding_flywheel_setup-r56u": [
+      1000,
+      120
+    ],
+    "agentic_coding_flywheel_setup-r6i3": [
+      0,
+      -10800
+    ],
+    "agentic_coding_flywheel_setup-r6xz": [
+      0,
+      -9040
+    ],
+    "agentic_coding_flywheel_setup-r7tx": [
+      0,
+      -6240
+    ],
+    "agentic_coding_flywheel_setup-r7xo": [
+      0,
+      -14160
+    ],
+    "agentic_coding_flywheel_setup-rbrf": [
+      200,
+      -2440
+    ],
+    "agentic_coding_flywheel_setup-rbu": [
+      400,
+      -1920
+    ],
+    "agentic_coding_flywheel_setup-rc48": [
+      0,
+      -8880
+    ],
+    "agentic_coding_flywheel_setup-rcvi": [
+      200,
+      1320
+    ],
+    "agentic_coding_flywheel_setup-rdfo": [
+      0,
+      -12160
+    ],
+    "agentic_coding_flywheel_setup-rdtu": [
+      0,
+      13200
+    ],
+    "agentic_coding_flywheel_setup-re2": [
+      400,
+      -160
+    ],
+    "agentic_coding_flywheel_setup-rhvw": [
+      800,
+      760
+    ],
+    "agentic_coding_flywheel_setup-ri62": [
+      0,
+      14000
+    ],
+    "agentic_coding_flywheel_setup-riet": [
+      0,
+      -10000
+    ],
+    "agentic_coding_flywheel_setup-rl4f": [
+      0,
+      11920
+    ],
+    "agentic_coding_flywheel_setup-rn2q": [
+      200,
+      -3080
+    ],
+    "agentic_coding_flywheel_setup-rr2l": [
+      200,
+      600
+    ],
+    "agentic_coding_flywheel_setup-rs8j": [
+      0,
+      -13360
+    ],
+    "agentic_coding_flywheel_setup-rttu": [
+      0,
+      -11920
+    ],
+    "agentic_coding_flywheel_setup-s25": [
+      600,
+      -760
+    ],
+    "agentic_coding_flywheel_setup-s4cg": [
+      0,
+      -6480
+    ],
+    "agentic_coding_flywheel_setup-s7mb": [
+      0,
+      7760
+    ],
+    "agentic_coding_flywheel_setup-sa4e": [
+      0,
+      -7120
+    ],
+    "agentic_coding_flywheel_setup-sffp": [
+      0,
+      12960
+    ],
+    "agentic_coding_flywheel_setup-si8i": [
+      0,
+      -400
+    ],
+    "agentic_coding_flywheel_setup-sixt": [
+      400,
+      960
+    ],
+    "agentic_coding_flywheel_setup-sk9c": [
+      400,
+      -1760
+    ],
+    "agentic_coding_flywheel_setup-snxd": [
+      1400,
+      80
+    ],
+    "agentic_coding_flywheel_setup-ss3": [
+      0,
+      4960
+    ],
+    "agentic_coding_flywheel_setup-syed": [
+      0,
+      -4560
+    ],
+    "agentic_coding_flywheel_setup-t0f": [
+      200,
+      -3480
+    ],
+    "agentic_coding_flywheel_setup-t0gk": [
+      200,
+      2520
+    ],
+    "agentic_coding_flywheel_setup-t3c": [
+      600,
+      -1320
+    ],
+    "agentic_coding_flywheel_setup-t66c": [
+      400,
+      0
+    ],
+    "agentic_coding_flywheel_setup-t6ha": [
+      0,
+      -2560
+    ],
+    "agentic_coding_flywheel_setup-t703": [
+      0,
+      400
+    ],
+    "agentic_coding_flywheel_setup-t964": [
+      0,
+      8960
+    ],
+    "agentic_coding_flywheel_setup-t9i": [
+      0,
+      320
+    ],
+    "agentic_coding_flywheel_setup-tdbv": [
+      0,
+      5840
+    ],
+    "agentic_coding_flywheel_setup-te6a": [
+      0,
+      -7200
+    ],
+    "agentic_coding_flywheel_setup-terj": [
+      0,
+      1280
+    ],
+    "agentic_coding_flywheel_setup-thvw": [
+      400,
+      -1280
+    ],
+    "agentic_coding_flywheel_setup-tlos": [
+      0,
+      6080
+    ],
+    "agentic_coding_flywheel_setup-tof": [
+      0,
+      -9760
+    ],
+    "agentic_coding_flywheel_setup-tor": [
+      0,
+      -10560
+    ],
+    "agentic_coding_flywheel_setup-trkz": [
+      600,
+      -1000
+    ],
+    "agentic_coding_flywheel_setup-tx7": [
+      0,
+      8400
+    ],
+    "agentic_coding_flywheel_setup-tzto": [
+      0,
+      -11120
+    ],
+    "agentic_coding_flywheel_setup-u0cs": [
+      0,
+      -11440
+    ],
+    "agentic_coding_flywheel_setup-u5z": [
+      400,
+      -240
+    ],
+    "agentic_coding_flywheel_setup-ua5": [
+      0,
+      4800
+    ],
+    "agentic_coding_flywheel_setup-ub3u": [
+      0,
+      -11840
+    ],
+    "agentic_coding_flywheel_setup-uc8m": [
+      200,
+      -2200
+    ],
+    "agentic_coding_flywheel_setup-udti": [
+      0,
+      -5200
+    ],
+    "agentic_coding_flywheel_setup-ue16": [
+      0,
+      10800
+    ],
+    "agentic_coding_flywheel_setup-ug30": [
+      0,
+      13520
+    ],
+    "agentic_coding_flywheel_setup-uga": [
+      0,
+      10080
+    ],
+    "agentic_coding_flywheel_setup-umil": [
+      0,
+      -5760
+    ],
+    "agentic_coding_flywheel_setup-umqa": [
+      0,
+      1440
+    ],
+    "agentic_coding_flywheel_setup-unqt": [
+      0,
+      12000
+    ],
+    "agentic_coding_flywheel_setup-usg1": [
+      0,
+      -10480
+    ],
+    "agentic_coding_flywheel_setup-ux1f": [
+      0,
+      13360
+    ],
+    "agentic_coding_flywheel_setup-uxc": [
+      200,
+      360
+    ],
+    "agentic_coding_flywheel_setup-uyd3": [
+      600,
+      -920
+    ],
+    "agentic_coding_flywheel_setup-v5ni": [
+      0,
+      -10720
+    ],
+    "agentic_coding_flywheel_setup-v5pl": [
+      0,
+      -2000
+    ],
+    "agentic_coding_flywheel_setup-v70e": [
+      400,
+      -1120
+    ],
+    "agentic_coding_flywheel_setup-v8a": [
+      0,
+      -12400
+    ],
+    "agentic_coding_flywheel_setup-va8": [
+      600,
+      -520
+    ],
+    "agentic_coding_flywheel_setup-vmg": [
+      0,
+      -13520
+    ],
+    "agentic_coding_flywheel_setup-vqr": [
+      0,
+      3280
+    ],
+    "agentic_coding_flywheel_setup-vsg0": [
+      600,
+      -1080
+    ],
+    "agentic_coding_flywheel_setup-vwv": [
+      0,
+      -9280
+    ],
+    "agentic_coding_flywheel_setup-vy9j": [
+      0,
+      7520
+    ],
+    "agentic_coding_flywheel_setup-vydu": [
+      600,
+      1080
+    ],
+    "agentic_coding_flywheel_setup-w0q": [
+      0,
+      -960
+    ],
+    "agentic_coding_flywheel_setup-w11f": [
+      800,
+      -280
+    ],
+    "agentic_coding_flywheel_setup-w1v8": [
+      0,
+      9840
+    ],
+    "agentic_coding_flywheel_setup-w587": [
+      200,
+      -3400
+    ],
+    "agentic_coding_flywheel_setup-w6gf": [
+      400,
+      -2000
+    ],
+    "agentic_coding_flywheel_setup-wcu3": [
+      0,
+      -10320
+    ],
+    "agentic_coding_flywheel_setup-wcxz": [
+      200,
+      680
+    ],
+    "agentic_coding_flywheel_setup-wde3": [
+      0,
+      -13840
+    ],
+    "agentic_coding_flywheel_setup-wfi2": [
+      0,
+      6720
+    ],
+    "agentic_coding_flywheel_setup-whw3": [
+      0,
+      640
+    ],
+    "agentic_coding_flywheel_setup-wn0": [
+      0,
+      -2080
+    ],
+    "agentic_coding_flywheel_setup-wp0g": [
+      200,
+      -1960
+    ],
+    "agentic_coding_flywheel_setup-wsj": [
+      400,
+      1440
+    ],
+    "agentic_coding_flywheel_setup-wv8m": [
+      0,
+      -6160
+    ],
+    "agentic_coding_flywheel_setup-wy1": [
+      200,
+      1160
+    ],
+    "agentic_coding_flywheel_setup-x01y": [
+      1200,
+      -120
+    ],
+    "agentic_coding_flywheel_setup-x04": [
+      0,
+      3040
+    ],
+    "agentic_coding_flywheel_setup-x0l": [
+      0,
+      -4640
+    ],
+    "agentic_coding_flywheel_setup-xc4v": [
+      0,
+      3520
+    ],
+    "agentic_coding_flywheel_setup-xmu5": [
+      0,
+      -4400
+    ],
+    "agentic_coding_flywheel_setup-xos": [
+      400,
+      1280
+    ],
+    "agentic_coding_flywheel_setup-xot": [
+      200,
+      -2680
+    ],
+    "agentic_coding_flywheel_setup-xv9e": [
+      600,
+      -600
+    ],
+    "agentic_coding_flywheel_setup-xvvd": [
+      0,
+      8000
+    ],
+    "agentic_coding_flywheel_setup-y0d": [
+      0,
+      8320
+    ],
+    "agentic_coding_flywheel_setup-y0g9": [
+      0,
+      9440
+    ],
+    "agentic_coding_flywheel_setup-yad": [
+      0,
+      3840
+    ],
+    "agentic_coding_flywheel_setup-yad.1": [
+      0,
+      1920
+    ],
+    "agentic_coding_flywheel_setup-yad.10": [
+      0,
+      -12000
+    ],
+    "agentic_coding_flywheel_setup-yad.11": [
+      0,
+      13840
+    ],
+    "agentic_coding_flywheel_setup-yad.12": [
+      0,
+      8080
+    ],
+    "agentic_coding_flywheel_setup-yad.13": [
+      0,
+      880
+    ],
+    "agentic_coding_flywheel_setup-yad.14": [
+      0,
+      11760
+    ],
+    "agentic_coding_flywheel_setup-yad.15": [
+      0,
+      -11600
+    ],
+    "agentic_coding_flywheel_setup-yad.2": [
+      0,
+      9120
+    ],
+    "agentic_coding_flywheel_setup-yad.3": [
+      0,
+      -1440
+    ],
+    "agentic_coding_flywheel_setup-yad.4": [
+      0,
+      -10880
+    ],
+    "agentic_coding_flywheel_setup-yad.5": [
+      0,
+      -6320
+    ],
+    "agentic_coding_flywheel_setup-yad.6": [
+      0,
+      10000
+    ],
+    "agentic_coding_flywheel_setup-yad.7": [
+      0,
+      -560
+    ],
+    "agentic_coding_flywheel_setup-yad.8": [
+      0,
+      -2720
+    ],
+    "agentic_coding_flywheel_setup-yad.9": [
+      0,
+      2800
+    ],
+    "agentic_coding_flywheel_setup-yaj": [
+      400,
+      400
+    ],
+    "agentic_coding_flywheel_setup-yh5": [
+      0,
+      2160
+    ],
+    "agentic_coding_flywheel_setup-yhn9": [
+      200,
+      760
+    ],
+    "agentic_coding_flywheel_setup-yn6": [
+      400,
+      -960
+    ],
+    "agentic_coding_flywheel_setup-yuda": [
+      0,
+      12320
+    ],
+    "agentic_coding_flywheel_setup-ywk": [
+      600,
+      -200
+    ],
+    "agentic_coding_flywheel_setup-z1gu": [
+      0,
+      -6000
+    ],
+    "agentic_coding_flywheel_setup-z44d": [
+      0,
+      -8480
+    ],
+    "agentic_coding_flywheel_setup-z7r5": [
+      200,
+      2600
+    ],
+    "agentic_coding_flywheel_setup-zb79": [
+      0,
+      2400
+    ],
+    "agentic_coding_flywheel_setup-zca2": [
+      0,
+      -3200
+    ],
+    "agentic_coding_flywheel_setup-zcpv": [
+      0,
+      6640
+    ],
+    "agentic_coding_flywheel_setup-zg3y": [
+      0,
+      13600
+    ],
+    "agentic_coding_flywheel_setup-zghf": [
+      0,
+      2480
+    ],
+    "agentic_coding_flywheel_setup-zguw": [
+      0,
+      11520
+    ],
+    "agentic_coding_flywheel_setup-ziyk": [
+      400,
+      -560
+    ],
+    "agentic_coding_flywheel_setup-zr8f": [
+      0,
+      80
+    ],
+    "agentic_coding_flywheel_setup-zumu": [
+      0,
+      -8400
+    ],
+    "agentic_coding_flywheel_setup-zv33": [
+      0,
+      12800
+    ],
+    "agentic_coding_flywheel_setup-zwg3": [
+      1000,
+      -280
+    ]
+  },
+  "metrics": {
+    "agentic_coding_flywheel_setup-01s": [
+      0.004448275010433141,
+      0,
+      0,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-03ry": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-04wt": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-066": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-0ge": [
+      0.0029302225459176476,
+      7.666666666666666,
+      2,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-0iq": [
+      0.002975344386303541,
+      0,
+      0,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-0jo": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-0o9n": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-0ok": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-0sb": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-0vb": [
+      0.002347332304178439,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-10n": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-11ps": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-14w": [
+      0.003642730054410415,
+      0,
+      1,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-166": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-16o": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-17e": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-17e.1": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-17e.2": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-181m": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-187": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-19d4": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-1j8r": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-1kr5": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-1of": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-1ou7": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-1u8e": [
+      0.0020386621267363676,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-1wk6": [
+      0.003017878150393276,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-1wup": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-1xq": [
+      0.0016796000047893027,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-1y8": [
+      0.002975344386303541,
+      0,
+      0,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-20r6": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-21v": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-22pa": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-247m": [
+      0.0011019798671691944,
+      0,
+      2,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-25i": [
+      0.0023040548445007513,
+      0,
+      1,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-2bn": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-2bn.1": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-2cvc": [
+      0.0011019798671691944,
+      0,
+      2,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-2du": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-2gs8": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-2jjz": [
+      0.0035115927508659684,
+      23,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-2m0": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-2yd": [
+      0.0030204923551829885,
+      0,
+      1,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-2yzm": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-314q": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-31e": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-322g": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-325": [
+      0.001968410073599357,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-32g": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-33ug": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-367d": [
+      0.0020386621267363676,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-37rw": [
+      0.002975344386303541,
+      0,
+      0,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-37sa": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-3bll": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-3ci": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-3dkg": [
+      0.00675639401137349,
+      17.25,
+      1,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-3edj": [
+      0.001570320996952781,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-3ht": [
+      0.0014181096879383789,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-3l4p": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-3mp": [
+      0.0014181096879383789,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-3nk": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-3oa": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-3pqz": [
+      0.0012893163190826292,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-3u3m": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-3vvj": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-3wmw": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-46lp": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4czg": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4eet": [
+      0.006061709740836765,
+      0,
+      0,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4ey": [
+      0.005134977887245531,
+      0,
+      0,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4h4q": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4jr": [
+      0.0037715225395966922,
+      5.75,
+      1,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4k5l": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4ocp": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4ou": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4p7": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4r84": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4rd": [
+      0.0014142072870249188,
+      0,
+      3,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4xi": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4zah": [
+      0.004991420761239094,
+      11.5,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4zg": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-4zsi": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-51xe": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-542": [
+      0.0016796000047893027,
+      5.75,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-545": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-54ky": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-585o": [
+      0.0028348402800295186,
+      34.5,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-58by": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-59t4": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-59vr": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5amx": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5gn2": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5gq": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5i2y": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5m6": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5m6.1": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5m6.10": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5m6.11": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5m6.12": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5m6.2": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5m6.3": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5m6.4": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5m6.5": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5m6.6": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5m6.7": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5m6.8": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5m6.9": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5qzv": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5uu": [
+      0.0020386621267363676,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5vz": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5wkz": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5x9": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5yty": [
+      0.0027497539681120616,
+      8.625,
+      2,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5zm": [
+      0.0017576574488662156,
+      5.75,
+      2,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-5zt": [
+      0.003588633760141918,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-6fx": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-6otv": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-6pto": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-6r9o": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-6stg": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-6tg4": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-6uqj": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-6utp": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-6w9u": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-6y4w": [
+      0.0037431051049835063,
+      8.625,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-6zob": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-6zuj": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-75e": [
+      0.01074512103867263,
+      5.75,
+      1,
+      8,
+      0
+    ],
+    "agentic_coding_flywheel_setup-75r": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-75r.1": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-75r.2": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-78a": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-7i45": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-7idl": [
+      0.0020386621267363676,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-7jjq": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-7ke": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-7oxy": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-7q1": [
+      0.0011019798671691944,
+      0,
+      2,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-7r0o": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-7ufj": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-7v9s": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-7yfr": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-80sb": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-829h": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-85l": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-88b": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-8h4": [
+      0.0017693655352760689,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-8kk": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-8mv": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-8pkn": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-8wpc": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-8xx": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-8z5": [
+      0.0020386621267363676,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-96cx": [
+      0.0020386621267363676,
+      0,
+      2,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-97cl": [
+      0.0020386621267363676,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-998": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-9ay2": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-9c80": [
+      0.002975344386303541,
+      0,
+      0,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-9dl9": [
+      0.00457706998976004,
+      5.75,
+      1,
+      4,
+      0
+    ],
+    "agentic_coding_flywheel_setup-9ntj": [
+      0.001968410073599357,
+      0,
+      2,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-9x0i": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-9x2": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-9xnq": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-9xt": [
+      0.009765186801818914,
+      0,
+      0,
+      6,
+      0
+    ],
+    "agentic_coding_flywheel_setup-9y6y": [
+      0.007377747471591362,
+      0,
+      0,
+      5,
+      0
+    ],
+    "agentic_coding_flywheel_setup-9y9x": [
+      0.013451510223969888,
+      0,
+      0,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-9yzy": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-a1g": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-a24x": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-a7qh": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-a7t7": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-a9nk": [
+      0.0020386621267363676,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-aa1": [
+      0.003588633760141918,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-aeds": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-aexi": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-afr": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-aiye": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-anq": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ao2": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-aoly": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-aqs": [
+      0.0020386621267363676,
+      0,
+      2,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-auf": [
+      0.0015839024439085493,
+      4.791666666666666,
+      2,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-axx": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ay4z": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-azw": [
+      0.001968410073599357,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-b1yk": [
+      0.002272832691628161,
+      0,
+      1,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-b38o": [
+      0.0020386621267363676,
+      40.25,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-b51v": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-b6m9": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-b9v": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-bags": [
+      0.008851823707818124,
+      11.5,
+      1,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-bcin": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-bcs6": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-bfv": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-bog3": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-bq3": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-bri": [
+      0.0020386621267363676,
+      0,
+      2,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-bt5": [
+      0.003443685516087127,
+      0,
+      0,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-bww6": [
+      0.004575873373610721,
+      17.25,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-byk": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-c61": [
+      0.003107259139066343,
+      0,
+      0,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-c68e": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-cfk": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-cgkx": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-coj": [
+      0.0020386621267363676,
+      5.75,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-csv": [
+      0.002975344386303541,
+      0,
+      8,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-cueb": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-cvwu": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-cxk": [
+      0.0020386621267363676,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-cxr": [
+      0.0015839024439085493,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-cxz3": [
+      0.0068449821510334725,
+      11.5,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-d09": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-d0g": [
+      0.0014181096879383789,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-d2o7": [
+      0.004086851338945993,
+      23,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-d3pz": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-d5ei": [
+      0.003912026645870714,
+      0,
+      0,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-d6my": [
+      0.0035115927508659684,
+      17.25,
+      3,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-d7c": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-db0": [
+      0.0014181096879383789,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-dcy": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-decn": [
+      0.0019449927225536866,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-dfc": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-dgzc": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-dkhc": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-dmff": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-dvt": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-dvt.1": [
+      0.0045794123139775884,
+      0,
+      0,
+      4,
+      0
+    ],
+    "agentic_coding_flywheel_setup-dvt.2": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-dvt.3": [
+      0.0011019798671691944,
+      0,
+      2,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-dvt.4": [
+      0.0013361504320609878,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-dvt.5": [
+      0.0011019798671691944,
+      0,
+      4,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-dvt.6": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-dwh": [
+      0.0020386621267363676,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-e1fk": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-e2tx": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-e3yt": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-e88": [
+      0.0020386621267363676,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-eel0": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-eetz": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-egf5": [
+      0.001938553652985181,
+      14.375,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-eli": [
+      0.002529639001446235,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-eooz": [
+      0.001570320996952781,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-epc": [
+      0.0014142072870249188,
+      0,
+      2,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-eqhy": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ezi7": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-f0b0": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-f5m0": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-fac": [
+      0.0028348402800295186,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-fed": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-fed.1": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-fed.2": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-fed.3": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-fjjv": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-fk7v": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-fkf": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-fkjp": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-fslp": [
+      0.008075754614630991,
+      2.875,
+      1,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-fwgh": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-fwmf": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-g29": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-g61k": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ge5q": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-giz1": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-gjnn": [
+      0.0028348402800295186,
+      23,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-gl9": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-glt2": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-gr26": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-grfs": [
+      0.0020386621267363676,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-gxf9": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-gy0i": [
+      0.004506549908124901,
+      0,
+      1,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-h7kw": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-hao": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-hby": [
+      0.0014181096879383789,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-hh8k": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-hi7": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-hii": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-huic": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-hun4": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-hvg": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-hy7z": [
+      0.0031072070549675495,
+      14.375,
+      1,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-hz24": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-hznw": [
+      0.0011019798671691944,
+      0,
+      3,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-i0k9": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-i0q7": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-i4st": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-iady": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-iaq1": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-idyc": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ik2t": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-itb": [
+      0.0015839024439085493,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ixt": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-j0x0": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-j0zm": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-j9a": [
+      0.0023040548445007513,
+      0,
+      2,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-jbzz": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-jku2": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-jmwk": [
+      0.0035115927508659684,
+      28.75,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-jqqi": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-jufj": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-k80e": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-kgf": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-kgf.1": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-kgf.2": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-kgf.3": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-kgf.4": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-kgmn": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-kkfn": [
+      0.0011019798671691944,
+      0,
+      4,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-kmmi": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-kozt": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-kt6v": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-kwa": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-kwk": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-kyhv": [
+      0.0020386621267363676,
+      28.75,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-kylx": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-l0mb": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-l1rl": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-l1zc": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-l2w": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-l334": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-l4eu": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-l4h3": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-l500": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-l5z9": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-l82e": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-lbo": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-lhe": [
+      0.0029302225459176476,
+      4.791666666666666,
+      2,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ligg": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-llba": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-llng": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-lsne": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-lv9j": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-lwu7": [
+      0.0020386621267363676,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-lyf0": [
+      0.0020386621267363676,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-lz1": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-m4fj": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-m9ww": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mg9": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mirb": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.1": [
+      0.0028389266203899576,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.1.1": [
+      0.003631018433322671,
+      5.75,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.1.2": [
+      0.002975344386303541,
+      11.5,
+      1,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.1.3": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.1.4": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.2": [
+      0.0028389266203899576,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.2.1": [
+      0.002975344386303541,
+      0,
+      0,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.2.2": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.2.3": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.3": [
+      0.004086851338945993,
+      0,
+      2,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.3.1": [
+      0.005384957270000315,
+      0,
+      0,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.3.2": [
+      0.0028348402800295186,
+      5.75,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.3.3": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.3.4": [
+      0.0020386621267363676,
+      11.5,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.3.5": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.3.6": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.4": [
+      0.0035115927508659684,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.4.1": [
+      0.005363878846182995,
+      0,
+      0,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.4.2": [
+      0.003912026645870714,
+      5.75,
+      1,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.4.3": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.4.4": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.4.5": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.4.6": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.5": [
+      0.0028348402800295186,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.1": [
+      0.0036236338562192034,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.2": [
+      0.00296661996808312,
+      11.5,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.3": [
+      0.004387387678951165,
+      34.5,
+      2,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.4": [
+      0.003865192532892355,
+      23,
+      1,
+      5,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.5": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.6": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.7": [
+      0.00296661996808312,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.5.8": [
+      0.0011019798671691944,
+      0,
+      5,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.6": [
+      0.0020386621267363676,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.6.1": [
+      0.003408559489518622,
+      0,
+      0,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.6.2": [
+      0.0013361504320609878,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.6.3": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.7": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.7.1": [
+      0.002975344386303541,
+      0,
+      0,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.7.2": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mjt.7.3": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mna": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mnbl": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-mwh": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-my5": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-n49f": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-n7o": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-natf": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-nb4": [
+      0.0028348402800295186,
+      45.99999999999999,
+      5,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ni52": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-nic8": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-nna": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-nolz": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-nq21": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-nrnn": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-nxbe": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-o0vm": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-o7k7": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-o85": [
+      0.0014142072870249188,
+      0,
+      3,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-o86r": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-o8ps": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-o9q6": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-oaoq": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-obi": [
+      0.0014181096879383789,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ofte": [
+      0.0019449927225536866,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ofwh": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-onl7": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-oom6": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ori": [
+      0.004149707335833817,
+      0,
+      1,
+      5,
+      0
+    ],
+    "agentic_coding_flywheel_setup-p8w7": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-pazm": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-pe58": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-pom": [
+      0.0014181096879383789,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-pu11": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-q10": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-q16i": [
+      0.0012893163190826292,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-q6w2": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-q7r3": [
+      0.004507987851661492,
+      11.5,
+      2,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-qfj1": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-qfsm": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-qgom": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-qi82": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ql6q": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-qmfo": [
+      0.0028348402800295186,
+      28.75,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-qmlq": [
+      0.005644726901726761,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-qqo": [
+      0.003441343191869578,
+      0,
+      0,
+      4,
+      0
+    ],
+    "agentic_coding_flywheel_setup-qrua": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-qup": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-qxj8": [
+      0.015665018867792098,
+      0,
+      0,
+      6,
+      0
+    ],
+    "agentic_coding_flywheel_setup-qxr": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-qzhr": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-qzuy": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-qzwz": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-r14r": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-r1z5": [
+      0.008467573822367166,
+      0,
+      1,
+      5,
+      0
+    ],
+    "agentic_coding_flywheel_setup-r2np": [
+      0.001570320996952781,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-r3gd": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-r50f": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-r56u": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-r6i3": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-r6xz": [
+      0.00457706998976004,
+      0,
+      0,
+      4,
+      0
+    ],
+    "agentic_coding_flywheel_setup-r7tx": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-r7xo": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-rbrf": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-rbu": [
+      0.001570320996952781,
+      0,
+      2,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-rc48": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-rcvi": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-rdfo": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-rdtu": [
+      0.0012893163190826292,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-re2": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-rhvw": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ri62": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-riet": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-rl4f": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-rn2q": [
+      0.002272832691628161,
+      0,
+      1,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-rr2l": [
+      0.0011019798671691944,
+      0,
+      5,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-rs8j": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-rttu": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-s25": [
+      0.0011019798671691944,
+      0,
+      2,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-s4cg": [
+      0.0020386621267363676,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-s7mb": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-sa4e": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-sffp": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-si8i": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-sixt": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-sk9c": [
+      0.00457706998976004,
+      0,
+      1,
+      4,
+      0
+    ],
+    "agentic_coding_flywheel_setup-snxd": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ss3": [
+      0.0028348402800295186,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-syed": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-t0f": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-t0gk": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-t3c": [
+      0.0014142072870249188,
+      0,
+      3,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-t66c": [
+      0.004376995943998618,
+      2.875,
+      2,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-t6ha": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-t703": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-t964": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-t9i": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-tdbv": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-te6a": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-terj": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-thvw": [
+      0.0028348402800295186,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-tlos": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-tof": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-tor": [
+      0.008433328553590148,
+      0,
+      0,
+      4,
+      0
+    ],
+    "agentic_coding_flywheel_setup-trkz": [
+      0.0022025806384911497,
+      0,
+      1,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-tx7": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-tzto": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-u0cs": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-u5z": [
+      0.0014181096879383789,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ua5": [
+      0.008321455872430977,
+      0,
+      0,
+      8,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ub3u": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-uc8m": [
+      0.005344490066233326,
+      5.75,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-udti": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ue16": [
+      0.0012893163190826292,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ug30": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-uga": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-umil": [
+      0.003912026645870714,
+      0,
+      0,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-umqa": [
+      0.011758509299419882,
+      0,
+      0,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-unqt": [
+      0.0020386621267363676,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-usg1": [
+      0.0012893163190826292,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ux1f": [
+      0.005583101407169674,
+      0,
+      0,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-uxc": [
+      0.005850955035029082,
+      46,
+      2,
+      4,
+      0
+    ],
+    "agentic_coding_flywheel_setup-uyd3": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-v5ni": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-v5pl": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-v70e": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-v8a": [
+      0.008330818518259517,
+      0,
+      0,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-va8": [
+      0.0011019798671691944,
+      0,
+      3,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-vmg": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-vqr": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-vsg0": [
+      0.003912026645870714,
+      0,
+      5,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-vwv": [
+      0.001848983350605384,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-vy9j": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-vydu": [
+      0.0024367512033829433,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-w0q": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-w11f": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-w1v8": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-w587": [
+      0.0019449927225536866,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-w6gf": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-wcu3": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-wcxz": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-wde3": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-wfi2": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-whw3": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-wn0": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-wp0g": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-wsj": [
+      0.0020386621267363676,
+      23,
+      3,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-wv8m": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-wy1": [
+      0.0023040548445007513,
+      0,
+      1,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-x01y": [
+      0.0020386621267363676,
+      34.5,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-x04": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-x0l": [
+      0.010235357000078077,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-xc4v": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-xmu5": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-xos": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-xot": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-xv9e": [
+      0.0020386621267363676,
+      0,
+      1,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-xvvd": [
+      0.001570320996952781,
+      0,
+      0,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-y0d": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-y0g9": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.1": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.10": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.11": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.12": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.13": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.14": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.15": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.2": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.3": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.4": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.5": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.6": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.7": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.8": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yad.9": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yaj": [
+      0.003162680838216975,
+      17.25,
+      1,
+      3,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yh5": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yhn9": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yn6": [
+      0.0014142072870249188,
+      0,
+      2,
+      1,
+      0
+    ],
+    "agentic_coding_flywheel_setup-yuda": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ywk": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-z1gu": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-z44d": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-z7r5": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-zb79": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-zca2": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-zcpv": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-zg3y": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-zghf": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-zguw": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-ziyk": [
+      0.002975344386303541,
+      0,
+      3,
+      2,
+      0
+    ],
+    "agentic_coding_flywheel_setup-zr8f": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-zumu": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-zv33": [
+      0.0011019798671691944,
+      0,
+      0,
+      0,
+      0
+    ],
+    "agentic_coding_flywheel_setup-zwg3": [
+      0.0011019798671691944,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  "links": [
+    [
+      "agentic_coding_flywheel_setup-sk9c",
+      "agentic_coding_flywheel_setup-04wt"
+    ],
+    [
+      "agentic_coding_flywheel_setup-wsj",
+      "agentic_coding_flywheel_setup-066"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9xt",
+      "agentic_coding_flywheel_setup-0ge"
+    ],
+    [
+      "agentic_coding_flywheel_setup-0vb",
+      "agentic_coding_flywheel_setup-0ge"
+    ],
+    [
+      "agentic_coding_flywheel_setup-csv",
+      "agentic_coding_flywheel_setup-0jo"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9xt",
+      "agentic_coding_flywheel_setup-0vb"
+    ],
+    [
+      "agentic_coding_flywheel_setup-0iq",
+      "agentic_coding_flywheel_setup-10n"
+    ],
+    [
+      "agentic_coding_flywheel_setup-umil",
+      "agentic_coding_flywheel_setup-11ps"
+    ],
+    [
+      "agentic_coding_flywheel_setup-4ey",
+      "agentic_coding_flywheel_setup-14w"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ua5",
+      "agentic_coding_flywheel_setup-1of"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ux1f",
+      "agentic_coding_flywheel_setup-1wk6"
+    ],
+    [
+      "agentic_coding_flywheel_setup-c61",
+      "agentic_coding_flywheel_setup-1xq"
+    ],
+    [
+      "agentic_coding_flywheel_setup-eooz",
+      "agentic_coding_flywheel_setup-247m"
+    ],
+    [
+      "agentic_coding_flywheel_setup-xvvd",
+      "agentic_coding_flywheel_setup-247m"
+    ],
+    [
+      "agentic_coding_flywheel_setup-tor",
+      "agentic_coding_flywheel_setup-25i"
+    ],
+    [
+      "agentic_coding_flywheel_setup-3edj",
+      "agentic_coding_flywheel_setup-2cvc"
+    ],
+    [
+      "agentic_coding_flywheel_setup-r2np",
+      "agentic_coding_flywheel_setup-2cvc"
+    ],
+    [
+      "agentic_coding_flywheel_setup-e88",
+      "agentic_coding_flywheel_setup-2du"
+    ],
+    [
+      "agentic_coding_flywheel_setup-3dkg",
+      "agentic_coding_flywheel_setup-2jjz"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9xt",
+      "agentic_coding_flywheel_setup-2yd"
+    ],
+    [
+      "agentic_coding_flywheel_setup-s4cg",
+      "agentic_coding_flywheel_setup-322g"
+    ],
+    [
+      "agentic_coding_flywheel_setup-01s",
+      "agentic_coding_flywheel_setup-325"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9xt",
+      "agentic_coding_flywheel_setup-32g"
+    ],
+    [
+      "agentic_coding_flywheel_setup-cxz3",
+      "agentic_coding_flywheel_setup-3dkg"
+    ],
+    [
+      "agentic_coding_flywheel_setup-q7r3",
+      "agentic_coding_flywheel_setup-3edj"
+    ],
+    [
+      "agentic_coding_flywheel_setup-75e",
+      "agentic_coding_flywheel_setup-3ht"
+    ],
+    [
+      "agentic_coding_flywheel_setup-75e",
+      "agentic_coding_flywheel_setup-3mp"
+    ],
+    [
+      "agentic_coding_flywheel_setup-b1yk",
+      "agentic_coding_flywheel_setup-3u3m"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9dl9",
+      "agentic_coding_flywheel_setup-3vvj"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ziyk",
+      "agentic_coding_flywheel_setup-46lp"
+    ],
+    [
+      "agentic_coding_flywheel_setup-v8a",
+      "agentic_coding_flywheel_setup-4jr"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ori",
+      "agentic_coding_flywheel_setup-4rd"
+    ],
+    [
+      "agentic_coding_flywheel_setup-25i",
+      "agentic_coding_flywheel_setup-4rd"
+    ],
+    [
+      "agentic_coding_flywheel_setup-j9a",
+      "agentic_coding_flywheel_setup-4rd"
+    ],
+    [
+      "agentic_coding_flywheel_setup-uxc",
+      "agentic_coding_flywheel_setup-4xi"
+    ],
+    [
+      "agentic_coding_flywheel_setup-uc8m",
+      "agentic_coding_flywheel_setup-4zah"
+    ],
+    [
+      "agentic_coding_flywheel_setup-eli",
+      "agentic_coding_flywheel_setup-542"
+    ],
+    [
+      "agentic_coding_flywheel_setup-0iq",
+      "agentic_coding_flywheel_setup-545"
+    ],
+    [
+      "agentic_coding_flywheel_setup-jmwk",
+      "agentic_coding_flywheel_setup-585o"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9c80",
+      "agentic_coding_flywheel_setup-59vr"
+    ],
+    [
+      "agentic_coding_flywheel_setup-1y8",
+      "agentic_coding_flywheel_setup-5gq"
+    ],
+    [
+      "agentic_coding_flywheel_setup-unqt",
+      "agentic_coding_flywheel_setup-5i2y"
+    ],
+    [
+      "agentic_coding_flywheel_setup-t66c",
+      "agentic_coding_flywheel_setup-5yty"
+    ],
+    [
+      "agentic_coding_flywheel_setup-hy7z",
+      "agentic_coding_flywheel_setup-5yty"
+    ],
+    [
+      "agentic_coding_flywheel_setup-vwv",
+      "agentic_coding_flywheel_setup-5zm"
+    ],
+    [
+      "agentic_coding_flywheel_setup-qqo",
+      "agentic_coding_flywheel_setup-5zm"
+    ],
+    [
+      "agentic_coding_flywheel_setup-qxj8",
+      "agentic_coding_flywheel_setup-6pto"
+    ],
+    [
+      "agentic_coding_flywheel_setup-r1z5",
+      "agentic_coding_flywheel_setup-6stg"
+    ],
+    [
+      "agentic_coding_flywheel_setup-367d",
+      "agentic_coding_flywheel_setup-6w9u"
+    ],
+    [
+      "agentic_coding_flywheel_setup-fslp",
+      "agentic_coding_flywheel_setup-6y4w"
+    ],
+    [
+      "agentic_coding_flywheel_setup-x0l",
+      "agentic_coding_flywheel_setup-75e"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9y6y",
+      "agentic_coding_flywheel_setup-7idl"
+    ],
+    [
+      "agentic_coding_flywheel_setup-qqo",
+      "agentic_coding_flywheel_setup-7q1"
+    ],
+    [
+      "agentic_coding_flywheel_setup-5zm",
+      "agentic_coding_flywheel_setup-7q1"
+    ],
+    [
+      "agentic_coding_flywheel_setup-d5ei",
+      "agentic_coding_flywheel_setup-7ufj"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9y6y",
+      "agentic_coding_flywheel_setup-7yfr"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9y6y",
+      "agentic_coding_flywheel_setup-80sb"
+    ],
+    [
+      "agentic_coding_flywheel_setup-v8a",
+      "agentic_coding_flywheel_setup-8mv"
+    ],
+    [
+      "agentic_coding_flywheel_setup-umil",
+      "agentic_coding_flywheel_setup-8wpc"
+    ],
+    [
+      "agentic_coding_flywheel_setup-csv",
+      "agentic_coding_flywheel_setup-8xx"
+    ],
+    [
+      "agentic_coding_flywheel_setup-4jr",
+      "agentic_coding_flywheel_setup-8z5"
+    ],
+    [
+      "agentic_coding_flywheel_setup-trkz",
+      "agentic_coding_flywheel_setup-96cx"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9ntj",
+      "agentic_coding_flywheel_setup-96cx"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9y6y",
+      "agentic_coding_flywheel_setup-97cl"
+    ],
+    [
+      "agentic_coding_flywheel_setup-r6xz",
+      "agentic_coding_flywheel_setup-9ay2"
+    ],
+    [
+      "agentic_coding_flywheel_setup-qxj8",
+      "agentic_coding_flywheel_setup-9dl9"
+    ],
+    [
+      "agentic_coding_flywheel_setup-hy7z",
+      "agentic_coding_flywheel_setup-9ntj"
+    ],
+    [
+      "agentic_coding_flywheel_setup-egf5",
+      "agentic_coding_flywheel_setup-9ntj"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ziyk",
+      "agentic_coding_flywheel_setup-9xnq"
+    ],
+    [
+      "agentic_coding_flywheel_setup-bt5",
+      "agentic_coding_flywheel_setup-a1g"
+    ],
+    [
+      "agentic_coding_flywheel_setup-4jr",
+      "agentic_coding_flywheel_setup-anq"
+    ],
+    [
+      "agentic_coding_flywheel_setup-14w",
+      "agentic_coding_flywheel_setup-ao2"
+    ],
+    [
+      "agentic_coding_flywheel_setup-325",
+      "agentic_coding_flywheel_setup-aqs"
+    ],
+    [
+      "agentic_coding_flywheel_setup-azw",
+      "agentic_coding_flywheel_setup-aqs"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9xt",
+      "agentic_coding_flywheel_setup-auf"
+    ],
+    [
+      "agentic_coding_flywheel_setup-2yd",
+      "agentic_coding_flywheel_setup-auf"
+    ],
+    [
+      "agentic_coding_flywheel_setup-01s",
+      "agentic_coding_flywheel_setup-azw"
+    ],
+    [
+      "agentic_coding_flywheel_setup-fslp",
+      "agentic_coding_flywheel_setup-b1yk"
+    ],
+    [
+      "agentic_coding_flywheel_setup-585o",
+      "agentic_coding_flywheel_setup-b38o"
+    ],
+    [
+      "agentic_coding_flywheel_setup-bri",
+      "agentic_coding_flywheel_setup-b9v"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9y9x",
+      "agentic_coding_flywheel_setup-bags"
+    ],
+    [
+      "agentic_coding_flywheel_setup-96cx",
+      "agentic_coding_flywheel_setup-bcin"
+    ],
+    [
+      "agentic_coding_flywheel_setup-b38o",
+      "agentic_coding_flywheel_setup-bog3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-tor",
+      "agentic_coding_flywheel_setup-bri"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ori",
+      "agentic_coding_flywheel_setup-bri"
+    ],
+    [
+      "agentic_coding_flywheel_setup-4zah",
+      "agentic_coding_flywheel_setup-bww6"
+    ],
+    [
+      "agentic_coding_flywheel_setup-4ey",
+      "agentic_coding_flywheel_setup-cfk"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ss3",
+      "agentic_coding_flywheel_setup-coj"
+    ],
+    [
+      "agentic_coding_flywheel_setup-u5z",
+      "agentic_coding_flywheel_setup-csv"
+    ],
+    [
+      "agentic_coding_flywheel_setup-3mp",
+      "agentic_coding_flywheel_setup-csv"
+    ],
+    [
+      "agentic_coding_flywheel_setup-db0",
+      "agentic_coding_flywheel_setup-csv"
+    ],
+    [
+      "agentic_coding_flywheel_setup-hby",
+      "agentic_coding_flywheel_setup-csv"
+    ],
+    [
+      "agentic_coding_flywheel_setup-obi",
+      "agentic_coding_flywheel_setup-csv"
+    ],
+    [
+      "agentic_coding_flywheel_setup-3ht",
+      "agentic_coding_flywheel_setup-csv"
+    ],
+    [
+      "agentic_coding_flywheel_setup-pom",
+      "agentic_coding_flywheel_setup-csv"
+    ],
+    [
+      "agentic_coding_flywheel_setup-d0g",
+      "agentic_coding_flywheel_setup-csv"
+    ],
+    [
+      "agentic_coding_flywheel_setup-0ge",
+      "agentic_coding_flywheel_setup-cxr"
+    ],
+    [
+      "agentic_coding_flywheel_setup-bags",
+      "agentic_coding_flywheel_setup-cxz3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-uxc",
+      "agentic_coding_flywheel_setup-d09"
+    ],
+    [
+      "agentic_coding_flywheel_setup-75e",
+      "agentic_coding_flywheel_setup-d0g"
+    ],
+    [
+      "agentic_coding_flywheel_setup-bww6",
+      "agentic_coding_flywheel_setup-d2o7"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9y9x",
+      "agentic_coding_flywheel_setup-d6my"
+    ],
+    [
+      "agentic_coding_flywheel_setup-gy0i",
+      "agentic_coding_flywheel_setup-d6my"
+    ],
+    [
+      "agentic_coding_flywheel_setup-bags",
+      "agentic_coding_flywheel_setup-d6my"
+    ],
+    [
+      "agentic_coding_flywheel_setup-dwh",
+      "agentic_coding_flywheel_setup-d7c"
+    ],
+    [
+      "agentic_coding_flywheel_setup-75e",
+      "agentic_coding_flywheel_setup-db0"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ua5",
+      "agentic_coding_flywheel_setup-dcy"
+    ],
+    [
+      "agentic_coding_flywheel_setup-4eet",
+      "agentic_coding_flywheel_setup-decn"
+    ],
+    [
+      "agentic_coding_flywheel_setup-dvt.1",
+      "agentic_coding_flywheel_setup-dvt.2"
+    ],
+    [
+      "agentic_coding_flywheel_setup-dvt.1",
+      "agentic_coding_flywheel_setup-dvt.3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.5.4",
+      "agentic_coding_flywheel_setup-dvt.3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-dvt.1",
+      "agentic_coding_flywheel_setup-dvt.4"
+    ],
+    [
+      "agentic_coding_flywheel_setup-dvt.4",
+      "agentic_coding_flywheel_setup-dvt.5"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.6.1",
+      "agentic_coding_flywheel_setup-dvt.5"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.6.2",
+      "agentic_coding_flywheel_setup-dvt.5"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.5.4",
+      "agentic_coding_flywheel_setup-dvt.5"
+    ],
+    [
+      "agentic_coding_flywheel_setup-dvt.1",
+      "agentic_coding_flywheel_setup-dvt.6"
+    ],
+    [
+      "agentic_coding_flywheel_setup-nb4",
+      "agentic_coding_flywheel_setup-dwh"
+    ],
+    [
+      "agentic_coding_flywheel_setup-d5ei",
+      "agentic_coding_flywheel_setup-e2tx"
+    ],
+    [
+      "agentic_coding_flywheel_setup-sk9c",
+      "agentic_coding_flywheel_setup-e3yt"
+    ],
+    [
+      "agentic_coding_flywheel_setup-fac",
+      "agentic_coding_flywheel_setup-e88"
+    ],
+    [
+      "agentic_coding_flywheel_setup-5yty",
+      "agentic_coding_flywheel_setup-egf5"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ua5",
+      "agentic_coding_flywheel_setup-epc"
+    ],
+    [
+      "agentic_coding_flywheel_setup-wy1",
+      "agentic_coding_flywheel_setup-epc"
+    ],
+    [
+      "agentic_coding_flywheel_setup-5uu",
+      "agentic_coding_flywheel_setup-fkf"
+    ],
+    [
+      "agentic_coding_flywheel_setup-umqa",
+      "agentic_coding_flywheel_setup-fslp"
+    ],
+    [
+      "agentic_coding_flywheel_setup-d6my",
+      "agentic_coding_flywheel_setup-gjnn"
+    ],
+    [
+      "agentic_coding_flywheel_setup-xv9e",
+      "agentic_coding_flywheel_setup-gxf9"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9y9x",
+      "agentic_coding_flywheel_setup-gy0i"
+    ],
+    [
+      "agentic_coding_flywheel_setup-a9nk",
+      "agentic_coding_flywheel_setup-h7kw"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ua5",
+      "agentic_coding_flywheel_setup-hao"
+    ],
+    [
+      "agentic_coding_flywheel_setup-75e",
+      "agentic_coding_flywheel_setup-hby"
+    ],
+    [
+      "agentic_coding_flywheel_setup-bt5",
+      "agentic_coding_flywheel_setup-hvg"
+    ],
+    [
+      "agentic_coding_flywheel_setup-6y4w",
+      "agentic_coding_flywheel_setup-hy7z"
+    ],
+    [
+      "agentic_coding_flywheel_setup-4rd",
+      "agentic_coding_flywheel_setup-hznw"
+    ],
+    [
+      "agentic_coding_flywheel_setup-o85",
+      "agentic_coding_flywheel_setup-hznw"
+    ],
+    [
+      "agentic_coding_flywheel_setup-t3c",
+      "agentic_coding_flywheel_setup-hznw"
+    ],
+    [
+      "agentic_coding_flywheel_setup-vsg0",
+      "agentic_coding_flywheel_setup-i0q7"
+    ],
+    [
+      "agentic_coding_flywheel_setup-lhe",
+      "agentic_coding_flywheel_setup-itb"
+    ],
+    [
+      "agentic_coding_flywheel_setup-tor",
+      "agentic_coding_flywheel_setup-j9a"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ori",
+      "agentic_coding_flywheel_setup-j9a"
+    ],
+    [
+      "agentic_coding_flywheel_setup-d2o7",
+      "agentic_coding_flywheel_setup-jmwk"
+    ],
+    [
+      "agentic_coding_flywheel_setup-1u8e",
+      "agentic_coding_flywheel_setup-k80e"
+    ],
+    [
+      "agentic_coding_flywheel_setup-t66c",
+      "agentic_coding_flywheel_setup-kkfn"
+    ],
+    [
+      "agentic_coding_flywheel_setup-trkz",
+      "agentic_coding_flywheel_setup-kkfn"
+    ],
+    [
+      "agentic_coding_flywheel_setup-rn2q",
+      "agentic_coding_flywheel_setup-kkfn"
+    ],
+    [
+      "agentic_coding_flywheel_setup-b1yk",
+      "agentic_coding_flywheel_setup-kkfn"
+    ],
+    [
+      "agentic_coding_flywheel_setup-gjnn",
+      "agentic_coding_flywheel_setup-kyhv"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9c80",
+      "agentic_coding_flywheel_setup-kylx"
+    ],
+    [
+      "agentic_coding_flywheel_setup-vsg0",
+      "agentic_coding_flywheel_setup-l1rl"
+    ],
+    [
+      "agentic_coding_flywheel_setup-r1z5",
+      "agentic_coding_flywheel_setup-l82e"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9xt",
+      "agentic_coding_flywheel_setup-lhe"
+    ],
+    [
+      "agentic_coding_flywheel_setup-2yd",
+      "agentic_coding_flywheel_setup-lhe"
+    ],
+    [
+      "agentic_coding_flywheel_setup-3dkg",
+      "agentic_coding_flywheel_setup-lwu7"
+    ],
+    [
+      "agentic_coding_flywheel_setup-aqs",
+      "agentic_coding_flywheel_setup-lz1"
+    ],
+    [
+      "agentic_coding_flywheel_setup-yaj",
+      "agentic_coding_flywheel_setup-mg9"
+    ],
+    [
+      "agentic_coding_flywheel_setup-v8a",
+      "agentic_coding_flywheel_setup-mjt.1.1"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.1.1",
+      "agentic_coding_flywheel_setup-mjt.1.2"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.1.2",
+      "agentic_coding_flywheel_setup-mjt.1.3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.1.2",
+      "agentic_coding_flywheel_setup-mjt.1.4"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.2.1",
+      "agentic_coding_flywheel_setup-mjt.2.2"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.2.1",
+      "agentic_coding_flywheel_setup-mjt.2.3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.2",
+      "agentic_coding_flywheel_setup-mjt.3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.1",
+      "agentic_coding_flywheel_setup-mjt.3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.3.1",
+      "agentic_coding_flywheel_setup-mjt.3.2"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.3.1",
+      "agentic_coding_flywheel_setup-mjt.3.3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.3.2",
+      "agentic_coding_flywheel_setup-mjt.3.4"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.3.4",
+      "agentic_coding_flywheel_setup-mjt.3.5"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.3.1",
+      "agentic_coding_flywheel_setup-mjt.3.6"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.3",
+      "agentic_coding_flywheel_setup-mjt.4"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.4.1",
+      "agentic_coding_flywheel_setup-mjt.4.2"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.4.2",
+      "agentic_coding_flywheel_setup-mjt.4.3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.4.2",
+      "agentic_coding_flywheel_setup-mjt.4.4"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.4.2",
+      "agentic_coding_flywheel_setup-mjt.4.5"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.4.1",
+      "agentic_coding_flywheel_setup-mjt.4.6"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.4",
+      "agentic_coding_flywheel_setup-mjt.5"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.5.1",
+      "agentic_coding_flywheel_setup-mjt.5.2"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.5.2",
+      "agentic_coding_flywheel_setup-mjt.5.3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.5.7",
+      "agentic_coding_flywheel_setup-mjt.5.3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.5.3",
+      "agentic_coding_flywheel_setup-mjt.5.4"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.5.4",
+      "agentic_coding_flywheel_setup-mjt.5.5"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.5.4",
+      "agentic_coding_flywheel_setup-mjt.5.6"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.5.4",
+      "agentic_coding_flywheel_setup-mjt.5.8"
+    ],
+    [
+      "agentic_coding_flywheel_setup-uxc",
+      "agentic_coding_flywheel_setup-mjt.5.8"
+    ],
+    [
+      "agentic_coding_flywheel_setup-yaj",
+      "agentic_coding_flywheel_setup-mjt.5.8"
+    ],
+    [
+      "agentic_coding_flywheel_setup-qqo",
+      "agentic_coding_flywheel_setup-mjt.5.8"
+    ],
+    [
+      "agentic_coding_flywheel_setup-5zm",
+      "agentic_coding_flywheel_setup-mjt.5.8"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.5",
+      "agentic_coding_flywheel_setup-mjt.6"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.6.1",
+      "agentic_coding_flywheel_setup-mjt.6.2"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.6.1",
+      "agentic_coding_flywheel_setup-mjt.6.3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.6",
+      "agentic_coding_flywheel_setup-mjt.7"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.7.1",
+      "agentic_coding_flywheel_setup-mjt.7.2"
+    ],
+    [
+      "agentic_coding_flywheel_setup-mjt.7.1",
+      "agentic_coding_flywheel_setup-mjt.7.3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-cxk",
+      "agentic_coding_flywheel_setup-mna"
+    ],
+    [
+      "agentic_coding_flywheel_setup-97cl",
+      "agentic_coding_flywheel_setup-n49f"
+    ],
+    [
+      "agentic_coding_flywheel_setup-auf",
+      "agentic_coding_flywheel_setup-nb4"
+    ],
+    [
+      "agentic_coding_flywheel_setup-0ge",
+      "agentic_coding_flywheel_setup-nb4"
+    ],
+    [
+      "agentic_coding_flywheel_setup-lhe",
+      "agentic_coding_flywheel_setup-nb4"
+    ],
+    [
+      "agentic_coding_flywheel_setup-cxr",
+      "agentic_coding_flywheel_setup-nb4"
+    ],
+    [
+      "agentic_coding_flywheel_setup-itb",
+      "agentic_coding_flywheel_setup-nb4"
+    ],
+    [
+      "agentic_coding_flywheel_setup-grfs",
+      "agentic_coding_flywheel_setup-ni52"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9dl9",
+      "agentic_coding_flywheel_setup-nic8"
+    ],
+    [
+      "agentic_coding_flywheel_setup-qqo",
+      "agentic_coding_flywheel_setup-nna"
+    ],
+    [
+      "agentic_coding_flywheel_setup-r6xz",
+      "agentic_coding_flywheel_setup-nxbe"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ori",
+      "agentic_coding_flywheel_setup-o85"
+    ],
+    [
+      "agentic_coding_flywheel_setup-25i",
+      "agentic_coding_flywheel_setup-o85"
+    ],
+    [
+      "agentic_coding_flywheel_setup-j9a",
+      "agentic_coding_flywheel_setup-o85"
+    ],
+    [
+      "agentic_coding_flywheel_setup-r6xz",
+      "agentic_coding_flywheel_setup-o8ps"
+    ],
+    [
+      "agentic_coding_flywheel_setup-7idl",
+      "agentic_coding_flywheel_setup-o9q6"
+    ],
+    [
+      "agentic_coding_flywheel_setup-75e",
+      "agentic_coding_flywheel_setup-obi"
+    ],
+    [
+      "agentic_coding_flywheel_setup-4eet",
+      "agentic_coding_flywheel_setup-ofte"
+    ],
+    [
+      "agentic_coding_flywheel_setup-tor",
+      "agentic_coding_flywheel_setup-ori"
+    ],
+    [
+      "agentic_coding_flywheel_setup-75e",
+      "agentic_coding_flywheel_setup-pom"
+    ],
+    [
+      "agentic_coding_flywheel_setup-lyf0",
+      "agentic_coding_flywheel_setup-pu11"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ux1f",
+      "agentic_coding_flywheel_setup-q7r3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-1wk6",
+      "agentic_coding_flywheel_setup-q7r3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-bags",
+      "agentic_coding_flywheel_setup-qi82"
+    ],
+    [
+      "agentic_coding_flywheel_setup-2jjz",
+      "agentic_coding_flywheel_setup-qmfo"
+    ],
+    [
+      "agentic_coding_flywheel_setup-8z5",
+      "agentic_coding_flywheel_setup-qup"
+    ],
+    [
+      "agentic_coding_flywheel_setup-qxj8",
+      "agentic_coding_flywheel_setup-r1z5"
+    ],
+    [
+      "agentic_coding_flywheel_setup-vydu",
+      "agentic_coding_flywheel_setup-r2np"
+    ],
+    [
+      "agentic_coding_flywheel_setup-lwu7",
+      "agentic_coding_flywheel_setup-r56u"
+    ],
+    [
+      "agentic_coding_flywheel_setup-qxj8",
+      "agentic_coding_flywheel_setup-rbrf"
+    ],
+    [
+      "agentic_coding_flywheel_setup-8h4",
+      "agentic_coding_flywheel_setup-rbu"
+    ],
+    [
+      "agentic_coding_flywheel_setup-14w",
+      "agentic_coding_flywheel_setup-rbu"
+    ],
+    [
+      "agentic_coding_flywheel_setup-37rw",
+      "agentic_coding_flywheel_setup-rcvi"
+    ],
+    [
+      "agentic_coding_flywheel_setup-14w",
+      "agentic_coding_flywheel_setup-re2"
+    ],
+    [
+      "agentic_coding_flywheel_setup-3dkg",
+      "agentic_coding_flywheel_setup-rhvw"
+    ],
+    [
+      "agentic_coding_flywheel_setup-umqa",
+      "agentic_coding_flywheel_setup-rn2q"
+    ],
+    [
+      "agentic_coding_flywheel_setup-3pqz",
+      "agentic_coding_flywheel_setup-rr2l"
+    ],
+    [
+      "agentic_coding_flywheel_setup-usg1",
+      "agentic_coding_flywheel_setup-rr2l"
+    ],
+    [
+      "agentic_coding_flywheel_setup-q16i",
+      "agentic_coding_flywheel_setup-rr2l"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ue16",
+      "agentic_coding_flywheel_setup-rr2l"
+    ],
+    [
+      "agentic_coding_flywheel_setup-rdtu",
+      "agentic_coding_flywheel_setup-rr2l"
+    ],
+    [
+      "agentic_coding_flywheel_setup-rbu",
+      "agentic_coding_flywheel_setup-s25"
+    ],
+    [
+      "agentic_coding_flywheel_setup-bt5",
+      "agentic_coding_flywheel_setup-s25"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9dl9",
+      "agentic_coding_flywheel_setup-sixt"
+    ],
+    [
+      "agentic_coding_flywheel_setup-r1z5",
+      "agentic_coding_flywheel_setup-sk9c"
+    ],
+    [
+      "agentic_coding_flywheel_setup-x01y",
+      "agentic_coding_flywheel_setup-snxd"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ua5",
+      "agentic_coding_flywheel_setup-t0f"
+    ],
+    [
+      "agentic_coding_flywheel_setup-qxj8",
+      "agentic_coding_flywheel_setup-t0gk"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ori",
+      "agentic_coding_flywheel_setup-t3c"
+    ],
+    [
+      "agentic_coding_flywheel_setup-25i",
+      "agentic_coding_flywheel_setup-t3c"
+    ],
+    [
+      "agentic_coding_flywheel_setup-j9a",
+      "agentic_coding_flywheel_setup-t3c"
+    ],
+    [
+      "agentic_coding_flywheel_setup-fslp",
+      "agentic_coding_flywheel_setup-t66c"
+    ],
+    [
+      "agentic_coding_flywheel_setup-umqa",
+      "agentic_coding_flywheel_setup-t66c"
+    ],
+    [
+      "agentic_coding_flywheel_setup-gy0i",
+      "agentic_coding_flywheel_setup-thvw"
+    ],
+    [
+      "agentic_coding_flywheel_setup-t66c",
+      "agentic_coding_flywheel_setup-trkz"
+    ],
+    [
+      "agentic_coding_flywheel_setup-75e",
+      "agentic_coding_flywheel_setup-u5z"
+    ],
+    [
+      "agentic_coding_flywheel_setup-qmlq",
+      "agentic_coding_flywheel_setup-uc8m"
+    ],
+    [
+      "agentic_coding_flywheel_setup-5zt",
+      "agentic_coding_flywheel_setup-uxc"
+    ],
+    [
+      "agentic_coding_flywheel_setup-aa1",
+      "agentic_coding_flywheel_setup-uxc"
+    ],
+    [
+      "agentic_coding_flywheel_setup-sk9c",
+      "agentic_coding_flywheel_setup-uyd3"
+    ],
+    [
+      "agentic_coding_flywheel_setup-rn2q",
+      "agentic_coding_flywheel_setup-v70e"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ua5",
+      "agentic_coding_flywheel_setup-va8"
+    ],
+    [
+      "agentic_coding_flywheel_setup-epc",
+      "agentic_coding_flywheel_setup-va8"
+    ],
+    [
+      "agentic_coding_flywheel_setup-yn6",
+      "agentic_coding_flywheel_setup-va8"
+    ],
+    [
+      "agentic_coding_flywheel_setup-qxj8",
+      "agentic_coding_flywheel_setup-vsg0"
+    ],
+    [
+      "agentic_coding_flywheel_setup-r1z5",
+      "agentic_coding_flywheel_setup-vsg0"
+    ],
+    [
+      "agentic_coding_flywheel_setup-sk9c",
+      "agentic_coding_flywheel_setup-vsg0"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9dl9",
+      "agentic_coding_flywheel_setup-vsg0"
+    ],
+    [
+      "agentic_coding_flywheel_setup-r6xz",
+      "agentic_coding_flywheel_setup-vsg0"
+    ],
+    [
+      "agentic_coding_flywheel_setup-q7r3",
+      "agentic_coding_flywheel_setup-vydu"
+    ],
+    [
+      "agentic_coding_flywheel_setup-vsg0",
+      "agentic_coding_flywheel_setup-w11f"
+    ],
+    [
+      "agentic_coding_flywheel_setup-4eet",
+      "agentic_coding_flywheel_setup-w587"
+    ],
+    [
+      "agentic_coding_flywheel_setup-r1z5",
+      "agentic_coding_flywheel_setup-w6gf"
+    ],
+    [
+      "agentic_coding_flywheel_setup-umil",
+      "agentic_coding_flywheel_setup-wcxz"
+    ],
+    [
+      "agentic_coding_flywheel_setup-9y6y",
+      "agentic_coding_flywheel_setup-wp0g"
+    ],
+    [
+      "agentic_coding_flywheel_setup-c61",
+      "agentic_coding_flywheel_setup-wsj"
+    ],
+    [
+      "agentic_coding_flywheel_setup-1xq",
+      "agentic_coding_flywheel_setup-wsj"
+    ],
+    [
+      "agentic_coding_flywheel_setup-542",
+      "agentic_coding_flywheel_setup-wsj"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ua5",
+      "agentic_coding_flywheel_setup-wy1"
+    ],
+    [
+      "agentic_coding_flywheel_setup-qmfo",
+      "agentic_coding_flywheel_setup-x01y"
+    ],
+    [
+      "agentic_coding_flywheel_setup-coj",
+      "agentic_coding_flywheel_setup-xos"
+    ],
+    [
+      "agentic_coding_flywheel_setup-1y8",
+      "agentic_coding_flywheel_setup-xot"
+    ],
+    [
+      "agentic_coding_flywheel_setup-thvw",
+      "agentic_coding_flywheel_setup-xv9e"
+    ],
+    [
+      "agentic_coding_flywheel_setup-uxc",
+      "agentic_coding_flywheel_setup-yaj"
+    ],
+    [
+      "agentic_coding_flywheel_setup-37rw",
+      "agentic_coding_flywheel_setup-yhn9"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ua5",
+      "agentic_coding_flywheel_setup-yn6"
+    ],
+    [
+      "agentic_coding_flywheel_setup-wy1",
+      "agentic_coding_flywheel_setup-yn6"
+    ],
+    [
+      "agentic_coding_flywheel_setup-yaj",
+      "agentic_coding_flywheel_setup-ywk"
+    ],
+    [
+      "agentic_coding_flywheel_setup-d5ei",
+      "agentic_coding_flywheel_setup-z7r5"
+    ],
+    [
+      "agentic_coding_flywheel_setup-decn",
+      "agentic_coding_flywheel_setup-ziyk"
+    ],
+    [
+      "agentic_coding_flywheel_setup-w587",
+      "agentic_coding_flywheel_setup-ziyk"
+    ],
+    [
+      "agentic_coding_flywheel_setup-ofte",
+      "agentic_coding_flywheel_setup-ziyk"
+    ],
+    [
+      "agentic_coding_flywheel_setup-kyhv",
+      "agentic_coding_flywheel_setup-zwg3"
+    ]
+  ],
+  "version": "1.0.0",
+  "generated_at": "2026-01-04T04:44:43Z",
+  "node_count": 575,
+  "edge_count": 286
+}

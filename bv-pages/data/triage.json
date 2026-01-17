@@ -1,0 +1,223 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "generated_at": "2026-01-04T04:44:42.97517599Z",
+    "phase2_ready": false,
+    "issue_count": 575,
+    "compute_time_ms": 0
+  },
+  "quick_ref": {
+    "open_count": 2,
+    "actionable_count": 2,
+    "blocked_count": 0,
+    "in_progress_count": 1,
+    "top_picks": [
+      {
+        "id": "agentic_coding_flywheel_setup-vy9j",
+        "title": "install.sh overwrites authorized_keys instead of merging - causes SSH lockout",
+        "score": 0.20960988496477304,
+        "reasons": [
+          "📅 Last updated 11 days ago",
+          "✅ Currently unclaimed - available for work",
+          "🚨 High priority (P0) - prioritize this work"
+        ],
+        "unblocks": 0
+      },
+      {
+        "id": "agentic_coding_flywheel_setup-wde3",
+        "title": "Deep audit agent-authored code for safety/reliability",
+        "score": 0.0740879461766628,
+        "reasons": [
+          "🚧 In progress - already being worked"
+        ],
+        "unblocks": 0
+      }
+    ]
+  },
+  "recommendations": [
+    {
+      "id": "agentic_coding_flywheel_setup-vy9j",
+      "title": "install.sh overwrites authorized_keys instead of merging - causes SSH lockout",
+      "type": "bug",
+      "status": "open",
+      "priority": 0,
+      "labels": [
+        "critical-path",
+        "installer",
+        "security"
+      ],
+      "score": 0.20960988496477304,
+      "breakdown": {
+        "pagerank": 0,
+        "betweenness": 0,
+        "blocker_ratio": 0,
+        "staleness": 0.018349427176369407,
+        "priority_boost": 0.1,
+        "time_to_impact": 0.026250000000000002,
+        "urgency": 0.1,
+        "risk": 0.0020004374880694294,
+        "pagerank_norm": 0,
+        "betweenness_norm": 0,
+        "blocker_ratio_norm": 0,
+        "staleness_norm": 0.36698854352738813,
+        "priority_boost_norm": 1,
+        "time_to_impact_norm": 0.2625,
+        "urgency_norm": 1,
+        "risk_norm": 0.020004374880694294,
+        "time_to_impact_explanation": "Leaf node, median estimate 60m",
+        "urgency_explanation": "has 'critical-path' label",
+        "risk_explanation": "Low risk - stable dependency structure",
+        "risk_signals": {
+          "fan_variance": 0,
+          "activity_churn": 0.000014582935647637334,
+          "cross_repo_risk": 0,
+          "status_risk": 0.1,
+          "composite_risk": 0.020004374880694294,
+          "explanation": "Low risk - stable dependency structure"
+        }
+      },
+      "action": "Start work on this issue",
+      "reasons": [
+        "📅 Last updated 11 days ago",
+        "✅ Currently unclaimed - available for work",
+        "🚨 High priority (P0) - prioritize this work"
+      ]
+    },
+    {
+      "id": "agentic_coding_flywheel_setup-wde3",
+      "title": "Deep audit agent-authored code for safety/reliability",
+      "type": "task",
+      "status": "in_progress",
+      "priority": 2,
+      "labels": null,
+      "score": 0.0740879461766628,
+      "breakdown": {
+        "pagerank": 0,
+        "betweenness": 0,
+        "blocker_ratio": 0,
+        "staleness": 0.006422521161438851,
+        "priority_boost": 0.05,
+        "time_to_impact": 0.026250000000000002,
+        "urgency": 0.021167221114282594,
+        "risk": 0.0020001808337968227,
+        "pagerank_norm": 0,
+        "betweenness_norm": 0,
+        "blocker_ratio_norm": 0,
+        "staleness_norm": 0.128450423228777,
+        "priority_boost_norm": 0.5,
+        "time_to_impact_norm": 0.2625,
+        "urgency_norm": 0.21167221114282592,
+        "risk_norm": 0.020001808337968226,
+        "time_to_impact_explanation": "Leaf node, median estimate 60m",
+        "urgency_explanation": "moderate time pressure",
+        "risk_explanation": "Low risk - stable dependency structure",
+        "risk_signals": {
+          "fan_variance": 0,
+          "activity_churn": 0.000006027793227404971,
+          "cross_repo_risk": 0,
+          "status_risk": 0.1,
+          "composite_risk": 0.020001808337968226,
+          "explanation": "Low risk - stable dependency structure"
+        }
+      },
+      "action": "Continue work on this issue",
+      "reasons": [
+        "🚧 In progress - already being worked"
+      ]
+    }
+  ],
+  "quick_wins": [
+    {
+      "id": "agentic_coding_flywheel_setup-vy9j",
+      "title": "install.sh overwrites authorized_keys instead of merging - causes SSH lockout",
+      "score": 0.5,
+      "reason": "Low complexity, high priority"
+    },
+    {
+      "id": "agentic_coding_flywheel_setup-wde3",
+      "title": "Deep audit agent-authored code for safety/reliability",
+      "score": 0.4,
+      "reason": "Low complexity"
+    }
+  ],
+  "blockers_to_clear": [],
+  "project_health": {
+    "counts": {
+      "total": 575,
+      "open": 2,
+      "closed": 573,
+      "blocked": 0,
+      "actionable": 2,
+      "by_status": {
+        "closed": 573,
+        "in_progress": 1,
+        "open": 1
+      },
+      "by_type": {
+        "bug": 163,
+        "epic": 23,
+        "feature": 49,
+        "task": 340
+      },
+      "by_priority": {
+        "0": 28,
+        "1": 182,
+        "2": 284,
+        "3": 81
+      }
+    },
+    "graph": {
+      "node_count": 575,
+      "edge_count": 286,
+      "density": 0.0008665353734282684,
+      "has_cycles": false,
+      "phase2_ready": false
+    },
+    "velocity": {
+      "closed_last_7_days": 109,
+      "closed_last_30_days": 573,
+      "avg_days_to_close": 0.09224138815758513,
+      "weekly": [
+        {
+          "week_start": "2025-12-29T00:00:00Z",
+          "closed": 109
+        },
+        {
+          "week_start": "2025-12-22T00:00:00Z",
+          "closed": 210
+        },
+        {
+          "week_start": "2025-12-15T00:00:00Z",
+          "closed": 254
+        },
+        {
+          "week_start": "2025-12-08T00:00:00Z",
+          "closed": 0
+        },
+        {
+          "week_start": "2025-12-01T00:00:00Z",
+          "closed": 0
+        },
+        {
+          "week_start": "2025-11-24T00:00:00Z",
+          "closed": 0
+        },
+        {
+          "week_start": "2025-11-17T00:00:00Z",
+          "closed": 0
+        },
+        {
+          "week_start": "2025-11-10T00:00:00Z",
+          "closed": 0
+        }
+      ]
+    }
+  },
+  "commands": {
+    "claim_top": "bd update agentic_coding_flywheel_setup-vy9j --status=in_progress",
+    "show_top": "bd show agentic_coding_flywheel_setup-vy9j",
+    "list_ready": "bd ready",
+    "list_blocked": "bd blocked",
+    "refresh_triage": "bv --robot-triage"
+  }
+}

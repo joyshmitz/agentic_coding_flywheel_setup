@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { JetBrains_Mono, Instrument_Sans } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { QueryProvider } from "@/components/query-provider";
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { ThirdPartyScripts } from "@/components/third-party-scripts";
@@ -112,6 +113,7 @@ export default function RootLayout({
             </LocaleProvider>
           </QueryProvider>
         </Suspense>
+        <SpeedInsights />
       </body>
     </html>
   );

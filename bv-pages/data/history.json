@@ -1,0 +1,190 @@
+{
+  "generated_at": "2026-01-04T04:44:48Z",
+  "commits": [
+    {
+      "sha": "5c5443de8412703206e6da0a1740e507ce4990ad",
+      "date": "2025-12-21T17:21:17-05:00",
+      "message": "feat(installer): integrate generated installers for base category (mjt.5.6)",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-mjt.6.3",
+        "agentic_coding_flywheel_setup-4ey"
+      ]
+    },
+    {
+      "sha": "eba9afb1111b6e79f7d5276be408c010d07a4902",
+      "date": "2025-12-21T17:24:54-05:00",
+      "message": "docs: update selection docs and add commit pinning note",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-mjt.7.1"
+      ]
+    },
+    {
+      "sha": "d152976cffd5abe99a81a2167af1ec24c76133b2",
+      "date": "2025-12-21T18:25:59-05:00",
+      "message": "fix(core): generator regex, update logging, and robust state validation",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-25i",
+        "agentic_coding_flywheel_setup-ori",
+        "agentic_coding_flywheel_setup-cxk",
+        "agentic_coding_flywheel_setup-bri"
+      ]
+    },
+    {
+      "sha": "dd2816306d565fef1812baf4b1e2b7c783e3e2ea",
+      "date": "2025-12-21T18:34:32-05:00",
+      "message": "feat(web): add reference pages and cross-links for Learning Hub",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-hznw"
+      ]
+    },
+    {
+      "sha": "45ea80d017c2062f1d4ac720553691c6b9e57f77",
+      "date": "2025-12-21T19:30:03-05:00",
+      "message": "fix: namespace generated SCRIPT_DIR, align agent aliases",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-6y4w"
+      ]
+    },
+    {
+      "sha": "789c8bd9d528de2130109f202a0e8bbdc695e06a",
+      "date": "2025-12-21T19:35:41-05:00",
+      "message": "feat(wizard): implement password-first SSH flow for wizard pages",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-egf5",
+        "agentic_coding_flywheel_setup-3u3m",
+        "agentic_coding_flywheel_setup-b1yk"
+      ]
+    },
+    {
+      "sha": "e20c6c7915d41dfffa26f15e3657a4f8674d1629",
+      "date": "2025-12-21T21:58:09-05:00",
+      "message": "fix: harden error tracking and /api/track",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-58by",
+        "agentic_coding_flywheel_setup-ge5q"
+      ]
+    },
+    {
+      "sha": "86963a9180e5236c89f6570f3c421e3ae21d4cf1",
+      "date": "2025-12-22T14:38:49-05:00",
+      "message": "feat(wizard): add paid plan badges to accounts step",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-6w9u",
+        "agentic_coding_flywheel_setup-e1fk"
+      ]
+    },
+    {
+      "sha": "32fb0b34bc1f6bd75e6f21f4256ce1dda6fc7b38",
+      "date": "2025-12-22T17:05:30-05:00",
+      "message": "chore(beads): sync export and fix contract test stubs",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-8pkn"
+      ]
+    },
+    {
+      "sha": "9d4534c921c617d91e51c8088f0c51b95d2b1f49",
+      "date": "2025-12-23T13:20:14-05:00",
+      "message": "wizard: provider screenshots + clearer costs/output",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-sk9c"
+      ]
+    },
+    {
+      "sha": "63a8c8933bf54e9d35e2ad96d6dbd7dce7e6fb7d",
+      "date": "2025-12-23T21:09:56-05:00",
+      "message": "fix(info): show next onboard lesson title",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-zg3y"
+      ]
+    },
+    {
+      "sha": "dccff9cc8e27cd8078c207c2f200be9e48bf8a36",
+      "date": "2025-12-25T00:23:14-05:00",
+      "message": "fix: improve Learning Hub links with icons and correct path",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-o9q6"
+      ]
+    },
+    {
+      "sha": "ffed93939d5dceb3dbf0e5ca95143d2b66135468",
+      "date": "2025-12-25T00:32:50-05:00",
+      "message": "feat(learn): add reading progress, keyboard shortcuts, improved UX",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-97cl"
+      ]
+    },
+    {
+      "sha": "94842e844134cfb828503b22f5789bc879136a6a",
+      "date": "2025-12-25T06:47:51-05:00",
+      "message": "fix(upgrade): make state completion write reliable",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-dgzc"
+      ]
+    },
+    {
+      "sha": "d90a079e3a8bddd9b1775e24c0938a6364d7c77b",
+      "date": "2025-12-28T22:42:43-05:00",
+      "message": "fix(session,web): repair sanitize export + docs",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-oom6"
+      ]
+    },
+    {
+      "sha": "e8ce9e31069acfba1d37e4e213db7f0b7a1f6fd0",
+      "date": "2025-12-29T23:21:03-05:00",
+      "message": "Harden filesystem ownership setup",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-sa4e"
+      ]
+    },
+    {
+      "sha": "0a5a8ef01ca5ddccafeb6c6a87a8fd86c125a0ea",
+      "date": "2026-01-02T13:03:19Z",
+      "message": "feat(i18n): add LanguageSwitcher to wizard layout",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-aoly"
+      ]
+    },
+    {
+      "sha": "6eda2bf8fc3c4ce00779ce2d8e546e730e232417",
+      "date": "2026-01-03T10:44:56Z",
+      "message": "chore: update GitHub links to fork on flywheel page",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-bww6"
+      ]
+    },
+    {
+      "sha": "8ab745a27b7bad2c2fdd31e77ff2476ffb7d65aa",
+      "date": "2026-01-03T11:20:10Z",
+      "message": "feat(i18n): add Jargon tooltips to Wizard ssh-connect page",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-jmwk",
+        "agentic_coding_flywheel_setup-585o"
+      ]
+    },
+    {
+      "sha": "dc451c049fc76dc148317546883fb45e30cf6688",
+      "date": "2026-01-03T11:45:39Z",
+      "message": "feat(i18n): add JargonText component and apply to Troubleshooting page",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-b38o",
+        "agentic_coding_flywheel_setup-bog3"
+      ]
+    },
+    {
+      "sha": "3598c2b58792f7830e7ab074f01fa9866b48ece0",
+      "date": "2026-01-03T13:04:03Z",
+      "message": "feat(i18n): add Ukrainian translations for Flywheel page content",
+      "beads_added": [
+        "agentic_coding_flywheel_setup-w587",
+        "agentic_coding_flywheel_setup-qrua",
+        "agentic_coding_flywheel_setup-decn",
+        "agentic_coding_flywheel_setup-9xnq",
+        "agentic_coding_flywheel_setup-ofte",
+        "agentic_coding_flywheel_setup-46lp",
+        "agentic_coding_flywheel_setup-ziyk",
+        "agentic_coding_flywheel_setup-4eet"
+      ]
+    }
+  ]
+}
