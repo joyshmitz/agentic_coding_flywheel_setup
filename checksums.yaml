@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-01-16T09:01:40+00:00
+# checksums.yaml - Auto-generated 2026-01-17T03:50:11+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -20,7 +20,7 @@ installers:
 
   dcg:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh"
-    sha256: "34979289f40a42f593246638da4d9a949401bf5c2423073e799ae3996f2922c6"
+    sha256: "9462bccf4315426fd74db4cafac10c12d69624ed27ea960b812da6909e680c4b"
 
   claude:
     url: "https://claude.ai/install.sh"
@@ -61,6 +61,10 @@ installers:
   ru:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/repo_updater/main/install.sh"
     sha256: "9a9f4cb42a1e801c36acc761ea513fef92c237fab6f56bbe5dae5cf7c27da51e"
+
+  srps:
+    url: "https://raw.githubusercontent.com/Dicklesworthstone/system_resource_protection_script/main/install.sh"
+    sha256: "82b97151d9aa7254ddf3515f11b9f5c8918028fff0ee53c27a15e840e9fac68f"
 
   nvm:
     url: "https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh"
