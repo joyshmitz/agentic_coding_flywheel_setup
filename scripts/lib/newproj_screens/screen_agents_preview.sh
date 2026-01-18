@@ -145,8 +145,13 @@ edit_content() {
     content=$(generate_preview_content)
 
     # Create temp file
+    # Use TMPDIR if set, otherwise /tmp. Use mktemp to create a safe file.
+    local tmp_dir="${TMPDIR:-/tmp}"
     local tmpfile
-    tmpfile=$(mktemp /tmp/agents_md_preview.XXXXXX.md)
+    tmpfile=$(mktemp "${tmp_dir}/agents_md_preview.XXXXXX")
+    # Rename to add .md extension for syntax highlighting (atomic rename is not strictly required here as it's a temp file)
+    mv "$tmpfile" "${tmpfile}.md"
+    tmpfile="${tmpfile}.md"
 
     echo "$content" > "$tmpfile"
 

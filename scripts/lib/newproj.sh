@@ -581,8 +581,9 @@ main() {
     fi
 
     # Validate project name format (alphanumeric, hyphens, underscores)
-    if [[ ! "$project_name" =~ ^[a-zA-Z][a-zA-Z0-9_-]*$ ]]; then
-        echo -e "${RED}Error: Project name must start with a letter and contain only letters, numbers, hyphens, and underscores${NC}" >&2
+    # Allow dots for domain-style names (e.g. com.example.app), but ensure it starts with alphanumeric
+    if [[ ! "$project_name" =~ ^[a-zA-Z0-9][a-zA-Z0-9._-]*$ ]]; then
+        echo -e "${RED}Error: Project name must start with a letter/number and contain only letters, numbers, hyphens, underscores, and dots${NC}" >&2
         exit 1
     fi
 

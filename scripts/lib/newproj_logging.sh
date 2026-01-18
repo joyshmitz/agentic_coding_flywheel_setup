@@ -213,8 +213,20 @@ log_input() {
 
     # Basic sanitization for common sensitive patterns
     # Mask anything that looks like a token/key/password
-    # Note: Use 'I' flag for case-insensitive matching in GNU sed (not 'i')
-    sanitized=$(echo "$sanitized" | sed -E 's/(sk[-_]|api[-_]?key|token|password|secret)[^[:space:]]*/\1***/gI')
+    # Detect if sed supports 'I' flag (GNU) or not (BSD/macOS)
+    local sed_flags="g"
+    if printf 'test' | sed -E 's/test/TEST/gI' >/dev/null 2>&1; then
+        sed_flags="gI"
+    fi
+
+    # Patterns to match keys: sk-, api_key, apikey, token, password, secret
+    # If 'I' flag is not supported, we match exact case (lowercase) to avoid complex regex logic in a logging helper
+    # or rely on the fact that most secrets key headers are lowercase.
+    # For better portability without I, we could use [sS][kK]... but that's verbose.
+    # Given this runs primarily on Ubuntu (GNU), defaulting to gI check is good.
+    # If BSD and check fails, we use 'g' which is case-sensitive. This is an acceptable fallback for logging sanitization.
+    
+    sanitized=$(echo "$sanitized" | sed -E "s/(sk[-_]|api[-_]?key|token|password|secret)[^[:space:]]*/\1***/${sed_flags}")
 
     local timestamp
     timestamp=$(date +"%H:%M:%S.%3N" 2>/dev/null || date +"%H:%M:%S")

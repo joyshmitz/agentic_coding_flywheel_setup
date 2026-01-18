@@ -183,7 +183,15 @@ cheatsheet_parse_zshrc() {
     fi
     [[ "$line_active" == "true" ]] || continue
 
-    rest="$line"
+    # Pre-process line to protect escaped quotes so basic parsing works.
+    # Zsh/Bash aliases often use '\'' to embed single quotes inside single-quoted strings.
+    # We replace this sequence with a placeholder to avoid splitting on the inner quotes.
+    local safe_line
+    safe_line="${line//\'\\\'\'/__ACFS_SQ__}"
+    # Protect \" inside double quotes
+    safe_line="${safe_line//\\\"/__ACFS_DQ__}"
+
+    rest="$safe_line"
     while [[ "$rest" == *"alias "* ]]; do
       # Move to the next alias segment.
       rest="${rest#*alias }"
@@ -218,6 +226,10 @@ cheatsheet_parse_zshrc() {
         cmd="${value%%[[:space:]]*}"
         remainder="${value#"$cmd"}"
       fi
+
+      # Restore placeholders
+      cmd="${cmd//__ACFS_SQ__/\'}"
+      cmd="${cmd//__ACFS_DQ__/\"}"
 
       local category="$current_category"
       [[ -z "$category" || "$category" == "Misc" ]] && category="$(infer_category "$name" "$cmd")"
