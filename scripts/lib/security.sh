@@ -17,6 +17,14 @@ if [[ -z "${ACFS_BLUE:-}" ]]; then
     source "$SECURITY_SCRIPT_DIR/logging.sh" 2>/dev/null || true
 fi
 
+# Color aliases for backward compatibility (used by display functions below)
+CYAN="${ACFS_BLUE:-\033[0;36m}"
+DIM="${ACFS_GRAY:-\033[0;90m}"
+NC="${ACFS_NC:-\033[0m}"
+RED="${ACFS_RED:-\033[0;31m}"
+GREEN="${ACFS_GREEN:-\033[0;32m}"
+YELLOW="${ACFS_YELLOW:-\033[0;33m}"
+
 # ============================================================
 # Configuration
 # ============================================================
@@ -162,6 +170,11 @@ declare -gA KNOWN_INSTALLERS=(
     [slb]="https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh"
     [dcg]="https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh"
     [ru]="https://raw.githubusercontent.com/Dicklesworthstone/repo_updater/main/install.sh"
+    [apr]="https://raw.githubusercontent.com/Dicklesworthstone/automated_plan_reviser_pro/main/install.sh"
+    [ms]="https://raw.githubusercontent.com/Dicklesworthstone/meta_skill/main/scripts/install.sh"
+    [pt]="https://raw.githubusercontent.com/Dicklesworthstone/process_triage/master/install.sh"
+    [srps]="https://raw.githubusercontent.com/Dicklesworthstone/system_resource_protection_script/main/install.sh"
+    [xf]="https://raw.githubusercontent.com/Dicklesworthstone/xf/main/install.sh"
     [giil]="https://raw.githubusercontent.com/Dicklesworthstone/giil/main/install.sh"
     [csctf]="https://raw.githubusercontent.com/Dicklesworthstone/chat_shared_conversation_to_file/main/install.sh"
 )
