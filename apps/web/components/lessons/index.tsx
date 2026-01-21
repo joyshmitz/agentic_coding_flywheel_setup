@@ -27,6 +27,7 @@ import { AprLesson } from "./apr-lesson";
 import { JfpLesson } from "./jfp-lesson";
 import { PtLesson } from "./pt-lesson";
 import { XfLesson } from "./xf-lesson";
+import { SrpsLesson } from "./srps-lesson";
 
 // Ukrainian lesson components
 import { MsLessonUk } from "./ms-lesson.uk";
@@ -93,6 +94,8 @@ export function renderLessonComponent(slug: string, locale?: string): React.Reac
       return locale === "uk" ? <PtLessonUk /> : <PtLesson />;
     case "xf":
       return locale === "uk" ? <XfLessonUk /> : <XfLesson />;
+    case "srps":
+      return <SrpsLesson />;
     default:
       return null;
   }
@@ -127,4 +130,5 @@ export {
   JfpLesson,
   PtLesson,
   XfLesson,
+  SrpsLesson,
 };

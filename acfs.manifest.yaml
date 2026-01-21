@@ -1022,22 +1022,16 @@ modules:
     optional: true
     enabled_by_default: true
     tags: [recommended, agent-skills, prompts]
-    dependencies:
-      - lang.bun
     installed_check:
       run_as: target_user
       command: "command -v jfp"
-    install:
-      - |
-          JFP_DIR="${HOME}/.local/share/jeffreysprompts.com"
-          mkdir -p "${HOME}/.local/share"
-          cd "$JFP_DIR" 2>/dev/null || git clone https://github.com/Dicklesworthstone/jeffreysprompts.com.git "$JFP_DIR"
-          cd "$JFP_DIR" && bun install && bun run build:cli
-          cp "$JFP_DIR/jfp" ~/.local/bin/jfp
-          chmod +x ~/.local/bin/jfp
+    verified_installer:
+      tool: jfp
+      runner: bash
+    install: []
     verify:
-      - jfp --help
-      - jfp status || true
+      - jfp --version
+      - jfp doctor || true
 
   - id: stack.process_triage
     description: Find and terminate stuck/zombie processes with intelligent scoring (pt)

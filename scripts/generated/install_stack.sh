@@ -447,20 +447,59 @@ install_stack_jeffreysprompts() {
     log_step "Installing stack.jeffreysprompts"
 
     if [[ "${DRY_RUN:-false}" = "true" ]]; then
-        log_info "dry-run: install: JFP_DIR=\"\${HOME}/.local/share/jeffreysprompts.com\" (target_user)"
+        log_info "dry-run: verified installer: stack.jeffreysprompts"
     else
-        if ! run_as_target_shell <<'INSTALL_STACK_JEFFREYSPROMPTS'
-JFP_DIR="${HOME}/.local/share/jeffreysprompts.com"
-mkdir -p "${HOME}/.local/share"
-cd "$JFP_DIR" 2>/dev/null || git clone https://github.com/Dicklesworthstone/jeffreysprompts.com.git "$JFP_DIR"
-cd "$JFP_DIR" && bun install && bun run build:cli
-cp "$JFP_DIR/jfp" ~/.local/bin/jfp
-chmod +x ~/.local/bin/jfp
-INSTALL_STACK_JEFFREYSPROMPTS
-        then
-            log_warn "stack.jeffreysprompts: install command failed: JFP_DIR=\"\${HOME}/.local/share/jeffreysprompts.com\""
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
+                if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="jfp"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "stack.jeffreysprompts: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s'; then
+                            install_success=true
+                        else
+                            log_error "stack.jeffreysprompts: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "stack.jeffreysprompts: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "stack.jeffreysprompts: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "stack.jeffreysprompts: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "stack.jeffreysprompts: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # Verified install is required - no fallback
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for stack.jeffreysprompts"
+                false
+            fi
+        }; then
+            log_warn "stack.jeffreysprompts: verified installer failed"
             if type -t record_skipped_tool >/dev/null 2>&1; then
-              record_skipped_tool "stack.jeffreysprompts" "install command failed: JFP_DIR=\"\${HOME}/.local/share/jeffreysprompts.com\""
+              record_skipped_tool "stack.jeffreysprompts" "verified installer failed"
             elif type -t state_tool_skip >/dev/null 2>&1; then
               state_tool_skip "stack.jeffreysprompts"
             fi
@@ -470,15 +509,15 @@ INSTALL_STACK_JEFFREYSPROMPTS
 
     # Verify
     if [[ "${DRY_RUN:-false}" = "true" ]]; then
-        log_info "dry-run: verify: jfp --help (target_user)"
+        log_info "dry-run: verify: jfp --version (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_STACK_JEFFREYSPROMPTS'
-jfp --help
+jfp --version
 INSTALL_STACK_JEFFREYSPROMPTS
         then
-            log_warn "stack.jeffreysprompts: verify failed: jfp --help"
+            log_warn "stack.jeffreysprompts: verify failed: jfp --version"
             if type -t record_skipped_tool >/dev/null 2>&1; then
-              record_skipped_tool "stack.jeffreysprompts" "verify failed: jfp --help"
+              record_skipped_tool "stack.jeffreysprompts" "verify failed: jfp --version"
             elif type -t state_tool_skip >/dev/null 2>&1; then
               state_tool_skip "stack.jeffreysprompts"
             fi
@@ -486,10 +525,10 @@ INSTALL_STACK_JEFFREYSPROMPTS
         fi
     fi
     if [[ "${DRY_RUN:-false}" = "true" ]]; then
-        log_info "dry-run: verify (optional): jfp status (target_user)"
+        log_info "dry-run: verify (optional): jfp doctor (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_STACK_JEFFREYSPROMPTS'
-jfp status
+jfp doctor
 INSTALL_STACK_JEFFREYSPROMPTS
         then
             log_warn "Optional verify failed: stack.jeffreysprompts"

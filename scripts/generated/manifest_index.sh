@@ -6,7 +6,7 @@
 # ============================================================
 # Data-only manifest index. Safe to source.
 
-ACFS_MANIFEST_SHA256="418a410b887432f967dc292830f98d08b8b454002bdc48f3f71ebe52119b5aff"
+ACFS_MANIFEST_SHA256="83debc9a5766fca04c262b82cc05f31c492fe90b6a8a505887197c9dde49f871"
 
 ACFS_MODULES_IN_ORDER=(
   "base.system"
@@ -141,7 +141,7 @@ declare -gA ACFS_MODULE_DEPS=(
   [stack.mcp_agent_mail]="lang.bun,lang.uv,cli.modern"
   [stack.meta_skill]="lang.rust,lang.uv"
   [stack.automated_plan_reviser]="lang.rust"
-  [stack.jeffreysprompts]="lang.bun"
+  [stack.jeffreysprompts]=""
   [stack.process_triage]="lang.rust"
   [stack.ultimate_bug_scanner]="lang.bun,lang.uv,tools.ast_grep"
   [stack.beads_viewer]="lang.go"

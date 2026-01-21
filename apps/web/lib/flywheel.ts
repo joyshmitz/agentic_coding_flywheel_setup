@@ -235,6 +235,36 @@ export const workflowScenarios: WorkflowScenario[] = [
     outcome: "20+ repos committed with intelligent, contextual messages while you're away",
     timeframe: "30 mins - 2 hours depending on repo count",
   },
+  {
+    id: "resource-protected-swarm",
+    title: "Resource-Protected Agent Swarm",
+    description:
+      "Run multiple heavy agents simultaneously without your workstation becoming unresponsive. SRPS keeps everything smooth.",
+    steps: [
+      {
+        tool: "srps",
+        action: "Verify SRPS is running: `systemctl status ananicy-cpp`",
+        result: "ananicy-cpp daemon is active, auto-managing process priorities",
+      },
+      {
+        tool: "ntm",
+        action: "Launch heavy multi-agent session: `ntm spawn proj1 --cc=2 proj2 --cod=2`",
+        result: "4 agents start, each spawning compilers and test runners",
+      },
+      {
+        tool: "srps",
+        action: "Monitor in real-time: `sysmoni`",
+        result: "See agents' subprocesses being auto-deprioritized as they spawn",
+      },
+      {
+        tool: "slb",
+        action: "Add more agents safely: `slb run 'ntm spawn proj3 --gmi=2'`",
+        result: "Even with 6 agents, terminal stays responsive",
+      },
+    ],
+    outcome: "Run 6+ heavy agents simultaneously without system lockup - SRPS keeps your UI snappy",
+    timeframe: "Hours of unattended work without freezes",
+  },
 ];
 
 // ============================================================
@@ -422,13 +452,14 @@ export const flywheelTools: FlywheelTool[] = [
       "Transform tmux into a multi-agent command center. Spawn Claude, Codex, and Gemini agents in named panes. Broadcast prompts to specific agent types. Persistent sessions survive SSH disconnects.",
     deepDescription:
       "NTM is the orchestration layer that lets you run multiple AI agents in parallel. Spawn agents with type classification (cc/cod/gmi), broadcast prompts with filtering, use the command palette TUI for quick actions. Features include configurable hooks, robot mode for automation, and deep Agent Mail integration.",
-    connectsTo: ["slb", "mail", "cass", "caam", "ru"],
+    connectsTo: ["slb", "mail", "cass", "caam", "ru", "srps"],
     connectionDescriptions: {
       slb: "Routes dangerous commands through SLB safety checks",
       mail: "Spawned agents auto-register with Mail for coordination",
       cass: "All session history indexed for cross-agent search",
       caam: "Quick-switches credentials when spawning new agents",
       ru: "RU agent-sweep uses ntm robot mode for orchestration",
+      srps: "SRPS keeps tmux sessions responsive when agents spawn heavy builds",
     },
     stars: 16,
     features: [
@@ -687,11 +718,12 @@ export const flywheelTools: FlywheelTool[] = [
       "Safety friction for autonomous agents. Three-tier risk classification. Cryptographic command binding with SHA-256+HMAC. Dynamic quorum. Complete audit trails.",
     deepDescription:
       "SLB implements nuclear-launch-style safety for AI agents. CRITICAL commands need 2+ approvals from different models. Commands bound with SHA-256 hash. Reviews signed with HMAC. Self-review protection prevents agents from approving their own requests.",
-    connectsTo: ["mail", "ubs", "ntm"],
+    connectsTo: ["mail", "ubs", "ntm", "srps"],
     connectionDescriptions: {
       mail: "Approval requests sent as urgent messages",
       ubs: "Pre-flight scans before execution",
       ntm: "Coordinates quorum across agents",
+      srps: "SRPS prevents multi-agent sessions from overwhelming system resources",
     },
     stars: 23,
     features: [
@@ -724,11 +756,12 @@ export const flywheelTools: FlywheelTool[] = [
       "A Claude Code hook that blocks dangerous commands BEFORE they execute. Catches git resets, force pushes, rm -rf, DROP TABLE, and more. Fail-open design ensures you're never blocked by errors.",
     deepDescription:
       "DCG is the safety layer that protects your codebase from destructive operations. It intercepts commands as a PreToolUse hook in Claude Code, checking against 50+ protection packs covering git, filesystem, databases, Kubernetes, and cloud operations. When a dangerous command is detected, DCG blocks it and suggests safer alternatives. The allow-once workflow enables legitimate bypasses with time-limited short codes.",
-    connectsTo: ["slb", "ntm", "mail"],
+    connectsTo: ["slb", "ntm", "mail", "srps"],
     connectionDescriptions: {
       slb: "DCG and SLB form a two-layer safety system - DCG blocks pre-execution, SLB validates post-execution",
       ntm: "Agents spawned by NTM are protected by DCG hooks in Claude Code",
       mail: "DCG denials can be logged to Mail for agent coordination",
+      srps: "Together with SRPS: DCG blocks dangerous commands, SRPS blocks resource exhaustion",
     },
     stars: 50,
     features: [
@@ -827,6 +860,267 @@ export const flywheelTools: FlywheelTool[] = [
     installCommand: "cargo install --git https://github.com/Dicklesworthstone/meta_skill",
     language: "Rust",
   },
+  {
+    id: "jfp",
+    name: "JeffreysPrompts",
+    shortName: "JFP",
+    href: "https://jeffreysprompts.com",
+    icon: "BookOpen",
+    color: "from-amber-400 to-yellow-500",
+    tagline: "Curated prompt library + skill installer",
+    description:
+      "Browse a curated library of battle-tested prompts and install them directly as Claude Code skills. Works via CLI or web UI.",
+    deepDescription:
+      "JFP (JeffreysPrompts.com CLI) is the fastest way to discover prompts that actually work in production agent workflows. It mirrors the website library in a CLI: search, preview, and install prompts as Claude Code skills in seconds. Prompts are organized into workflows and bundles so teams can standardize how agents are directed across projects.",
+    connectsTo: ["ms", "apr", "cm"],
+    connectionDescriptions: {
+      ms: "Use JFP to discover prompts, then manage/curate them locally with MS",
+      apr: "Feed high-quality prompts into APR to refine and harden specifications",
+      cm: "Prompts that work become reusable memory artifacts",
+    },
+    stars: 50,
+    features: [
+      "Curated prompt library with workflow bundles",
+      "Install prompts as Claude Code skills",
+      "Fast search with tags and categories",
+      "CLI + web UI access to the same library",
+      "JSON mode for automation and agent workflows",
+      "Built-in doctor commands for health checks",
+    ],
+    cliCommands: [
+      "jfp list",
+      "jfp search \"code review\"",
+      "jfp show idea-wizard",
+      "jfp install idea-wizard",
+      "jfp installed",
+    ],
+    installCommand: "curl -fsSL https://jeffreysprompts.com/install-cli.sh | bash",
+    language: "TypeScript (Bun)",
+  },
+  {
+    id: "srps",
+    name: "System Resource Protection Script",
+    shortName: "SRPS",
+    href: "https://github.com/Dicklesworthstone/system_resource_protection_script",
+    icon: "Shield",
+    color: "from-yellow-400 to-orange-500",
+    tagline: "Keep your workstation responsive under heavy agent load",
+    description:
+      "Installs ananicy-cpp with 1700+ rules to automatically deprioritize background processes, plus sysmoni TUI for real-time monitoring.",
+    deepDescription: `When AI coding agents run cargo build, npm install, or spawn
+multiple parallel processes, your system can become unresponsive. SRPS solves this
+by automatically lowering the priority of known resource hogs (compilers, bundlers,
+test runners) while keeping your terminal and IDE snappy.
+
+Built on ananicy-cpp (a C++ replacement for the original ananicy) with curated rules
+for developer workloads. The sysmoni TUI shows real-time CPU/memory per process with
+ananicy rule status, so you can see exactly what's being managed.
+
+Key capabilities:
+- 1700+ pre-configured rules for compilers, browsers, IDEs, and common dev tools
+- Custom rule support for any process (add your own in /etc/ananicy.d/)
+- Sysctl kernel tweaks for better responsiveness under memory pressure
+- Zero configuration needed - just install and forget`,
+    connectsTo: ["ntm", "dcg", "slb"],
+    connectionDescriptions: {
+      ntm: "SRPS ensures tmux sessions stay responsive even during heavy builds - no frozen terminals",
+      dcg: "Combined safety: DCG prevents destructive commands, SRPS prevents resource exhaustion from runaway processes",
+      slb: "When SLB launches multiple agents, SRPS keeps them from starving each other for CPU/memory",
+    },
+    stars: 50,
+    features: [
+      "ananicy-cpp daemon with 1700+ process priority rules",
+      "sysmoni Go TUI for real-time resource monitoring",
+      "Auto-deprioritizes compilers, bundlers, test runners, browsers",
+      "Sysctl tweaks for better responsiveness under memory pressure",
+      "Custom rules: add any process to /etc/ananicy.d/",
+      "Zero-config: install once, benefits forever",
+    ],
+    cliCommands: ["sysmoni"],
+    installCommand:
+      "curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/system_resource_protection_script/main/install.sh | bash -s -- --install",
+    language: "Go + C++ + Bash",
+  },
+  {
+    id: "apr",
+    name: "Automated Plan Reviser Pro",
+    shortName: "APR",
+    href: "https://github.com/Dicklesworthstone/automated_plan_reviser_pro",
+    icon: "FileText",
+    color: "from-amber-500 to-yellow-600",
+    tagline: "Automated iterative spec refinement with extended AI reasoning",
+    description:
+      "Takes rough plans and runs multiple review cycles using GPT Pro 5.2 Extended Reasoning via Oracle to identify architectural issues, edge cases, and security flaws.",
+    deepDescription: `Complex specifications require multiple review cycles to catch all issues.
+Instead of manually running 15-20 AI review rounds, APR automates the refinement process.
+Early rounds fix major issues, middle rounds refine structure, and later rounds polish
+abstractions until you have a production-ready specification.
+
+APR uses GPT Pro 5.2 Extended Reasoning via Oracle for deep analysis. Each pass adds:
+- Better structure and organization
+- Identified dependencies between components
+- Edge cases and error scenarios
+- Security considerations
+- More actionable implementation steps
+
+Key capabilities:
+- Multi-pass iterative refinement with configurable depth
+- Markdown plan file processing with preserved formatting
+- Output comparison between versions to see improvements
+- Integration with beads for converting refined specs to tasks`,
+    connectsTo: ["jfp", "cm", "bv"],
+    connectionDescriptions: {
+      jfp: "Battle-tested prompts from JFP can be refined into comprehensive specifications via APR",
+      cm: "Refined plans become searchable procedural memory - find what worked before",
+      bv: "Well-refined specifications become granular, dependency-tracked beads for execution",
+    },
+    stars: 85,
+    features: [
+      "Automated multi-pass specification refinement",
+      "Extended AI reasoning via GPT Pro 5.2 + Oracle",
+      "Markdown-based plan processing",
+      "Progressive structure and detail improvement",
+      "Dependency identification and edge case detection",
+      "Robot mode for AI agent integration",
+    ],
+    cliCommands: ["apr refine <file>", "apr --help", "apr --version"],
+    installCommand:
+      "curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/automated_plan_reviser_pro/main/install.sh | bash --easy-mode",
+    language: "Bash",
+  },
+  {
+    id: "jfp",
+    name: "JeffreysPrompts CLI",
+    shortName: "JFP",
+    href: "https://jeffreysprompts.com",
+    icon: "Sparkles",
+    color: "from-pink-500 to-rose-600",
+    tagline: "Battle-tested prompts as installable Claude Code skills",
+    description:
+      "Official CLI for jeffreysprompts.com - browse curated prompts and install them as Claude Code skills with one command.",
+    deepDescription: `JFP connects your terminal directly to jeffreysprompts.com - a curated collection
+of battle-tested AI coding prompts organized by use case. Instead of writing prompts from scratch
+or copying them manually, JFP installs them directly to your Claude Code skills folder.
+
+The prompts on jeffreysprompts.com are real-world patterns extracted from thousands of hours
+of AI-assisted coding sessions. They cover everything from exploration and planning to
+review and execution workflows.
+
+Key capabilities:
+- Browse prompts by category (exploration, review, planning, execution)
+- One-command skill installation: jfp install <prompt-name>
+- Offline browsing of downloaded prompts
+- MCP server mode for agent integration: jfp serve
+- JSON output for programmatic access: jfp --json list`,
+    connectsTo: ["ms", "apr", "cm"],
+    connectionDescriptions: {
+      ms: "JFP downloads from remote, MS manages local - together they're your complete skill system",
+      apr: "Downloaded prompts can be refined into comprehensive specifications via APR",
+      cm: "Effective prompts become retrievable memories for future sessions",
+    },
+    stars: 120,
+    features: [
+      "One-command prompt installation to Claude Code skills",
+      "Curated prompt categories: exploration, review, planning, execution",
+      "MCP server mode for agent integration",
+      "Offline browsing of installed prompts",
+      "JSON output for programmatic access",
+      "Built-in update command",
+    ],
+    cliCommands: [
+      "jfp install <prompt>",
+      "jfp list",
+      "jfp search <query>",
+      "jfp serve",
+    ],
+    installCommand:
+      "git clone https://github.com/Dicklesworthstone/jeffreysprompts.com.git ~/.local/share/jeffreysprompts.com && cd ~/.local/share/jeffreysprompts.com && bun install && bun run build:cli && cp jfp ~/.local/bin/",
+    language: "TypeScript/Bun",
+  },
+  {
+    id: "pt",
+    name: "Process Triage",
+    shortName: "PT",
+    href: "https://github.com/Dicklesworthstone/process_triage",
+    icon: "Activity",
+    color: "from-red-500 to-orange-600",
+    tagline: "Find and kill stuck/zombie processes with intelligent scoring",
+    description:
+      "Rust-based process manager with Bayesian scoring to identify and terminate problematic processes. TUI for interactive selection.",
+    deepDescription: `When builds hang, test runners go rogue, or processes zombie out, you need to find
+and terminate them quickly. PT uses intelligent Bayesian scoring to prioritize truly problematic
+processes - not just those using resources, but those that are actually stuck or misbehaving.
+
+The scoring algorithm considers CPU usage patterns, memory growth rate, file descriptor counts,
+and process state to identify processes that are genuinely problematic vs. those that are just
+doing heavy work.
+
+Key capabilities:
+- Bayesian scoring identifies stuck processes, not just heavy ones
+- Interactive TUI for selecting processes to terminate
+- Robot mode for automation: pt --robot list
+- Integration with SRPS for proactive resource management`,
+    connectsTo: ["srps", "ntm"],
+    connectionDescriptions: {
+      srps: "PT terminates stuck processes, SRPS prevents them from starving the system",
+      ntm: "Clean up runaway processes across all your tmux sessions",
+    },
+    stars: 45,
+    features: [
+      "Bayesian process scoring algorithm",
+      "Interactive TUI for process selection",
+      "Robot mode for automation",
+      "Resource usage trend analysis",
+      "Zombie process detection",
+      "Safe termination with confirmation",
+    ],
+    cliCommands: ["pt", "pt --robot list", "pt --help"],
+    installCommand: "cargo install --git https://github.com/Dicklesworthstone/process_triage",
+    language: "Rust",
+  },
+  {
+    id: "xf",
+    name: "X Archive Search",
+    shortName: "XF",
+    href: "https://github.com/Dicklesworthstone/xf",
+    icon: "Archive",
+    color: "from-blue-500 to-indigo-600",
+    tagline: "Ultra-fast search over your X/Twitter archive",
+    description:
+      "Hybrid BM25 + semantic search over X/Twitter data exports. Zero-dependency local processing with Reciprocal Rank Fusion.",
+    deepDescription: `Your X/Twitter archive is a goldmine of bookmarks, threads, and ideas - but Twitter's
+search is notoriously terrible. XF makes your entire archive instantly searchable with both
+keyword (BM25) and semantic matching, fused together using Reciprocal Rank Fusion.
+
+The hybrid approach means you can search by exact terms ("that thread about async/await")
+or by concept ("discussions about concurrent programming patterns"). Results are ranked by
+combining both signals.
+
+Key capabilities:
+- Rust implementation for maximum performance (sub-second searches)
+- Hybrid BM25 + semantic search with RRF fusion
+- Zero-dependency hash embedder (no Python/API calls needed)
+- Fully local, privacy-preserving processing
+- Parses all X archive formats (tweets, DMs, bookmarks, likes)`,
+    connectsTo: ["cass", "cm"],
+    connectionDescriptions: {
+      cass: "Similar search architecture - hybrid retrieval patterns",
+      cm: "Found tweets can become memories for agent context",
+    },
+    stars: 156,
+    features: [
+      "Sub-second search over large archives",
+      "Hybrid BM25 + semantic search",
+      "Reciprocal Rank Fusion scoring",
+      "Zero external API dependencies",
+      "Privacy-preserving local processing",
+      "Parses tweets, DMs, bookmarks, likes",
+    ],
+    cliCommands: ["xf search 'query'", "xf index /path/to/archive", "xf --help"],
+    installCommand:
+      "curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/xf/main/install.sh | bash",
+    language: "Rust",
+  },
 ];
 
 // ============================================================
@@ -835,7 +1129,7 @@ export const flywheelTools: FlywheelTool[] = [
 
 export const flywheelDescription = {
   title: "The Agentic Coding Flywheel",
-  subtitle: "Eleven tools plus utilities that create unheard-of velocity",
+  subtitle: "Fourteen tools plus utilities that create unheard-of velocity",
   description:
     "A self-reinforcing system that enables multiple AI agents to work in parallel across 10+ projects, reviewing each other's work, creating and executing tasks, and making incredible autonomous progress while you're away.",
   philosophy: [
@@ -862,7 +1156,7 @@ export const flywheelDescription = {
   ],
   metrics: {
     totalStars: "2K+",
-    toolCount: 11,
+    toolCount: 14,
     languages: ["Go", "Rust", "TypeScript", "Python", "Bash"],
     avgInstallTime: "< 30s each",
     projectsSimultaneous: "10+",

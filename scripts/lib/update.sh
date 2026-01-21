@@ -1481,17 +1481,9 @@ update_stack() {
         run_cmd "xf" update_run_verified_installer xf --easy-mode
     fi
 
-    # JeffreysPrompts (jfp) - built from source, update via git pull + rebuild
+    # JeffreysPrompts (jfp)
     if cmd_exists jfp; then
-        local jfp_dir="${HOME}/.local/share/jeffreysprompts.com"
-        if [[ -d "$jfp_dir/.git" ]]; then
-            run_cmd "JeffreysPrompts (git)" git -C "$jfp_dir" pull --ff-only
-            if [[ $? -eq 0 ]] && cmd_exists bun; then
-                run_cmd "JeffreysPrompts (build)" bash -c "cd $jfp_dir && bun install && bun run build:cli && cp jfp ~/.local/bin/jfp"
-            fi
-        else
-            log_item "skip" "JeffreysPrompts" "source directory not found at $jfp_dir"
-        fi
+        run_cmd "JeffreysPrompts" jfp update
     fi
 
     # UBS

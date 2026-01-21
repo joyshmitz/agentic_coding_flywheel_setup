@@ -575,6 +575,53 @@ export const tldrFlywheelTools: TldrFlywheelTool[] = [
     ],
   },
   {
+    id: "srps",
+    name: "System Resource Protection Script",
+    shortName: "SRPS",
+    href: "https://github.com/Dicklesworthstone/system_resource_protection_script",
+    icon: "Shield",
+    color: "from-yellow-400 to-orange-500",
+    category: "supporting",
+    stars: 50,
+    whatItDoes:
+      "Auto-deprioritizes background processes to keep your terminal responsive during heavy builds and multi-agent sessions.",
+    whyItsUseful:
+      "When running cargo build, npm install, or multiple AI agents simultaneously, SRPS prevents your system from becoming unresponsive by automatically lowering the priority of known resource hogs.",
+    implementationHighlights: [
+      "ananicy-cpp daemon with 1700+ process rules",
+      "sysmoni Go TUI for real-time monitoring",
+      "Sysctl tweaks for better responsiveness",
+      "Custom rule support for any process",
+    ],
+    synergies: [
+      {
+        toolId: "ntm",
+        description: "Keeps tmux sessions responsive during heavy workloads",
+      },
+      {
+        toolId: "slb",
+        description: "Prevents multiple agents from starving each other for resources",
+      },
+      {
+        toolId: "dcg",
+        description: "Combined safety: resource protection + command protection",
+      },
+    ],
+    techStack: ["Go", "C++", "ananicy-cpp", "systemd"],
+    keyFeatures: [
+      "Automatic process deprioritization",
+      "Real-time TUI monitoring",
+      "1700+ pre-configured rules",
+      "Custom rule creation",
+    ],
+    useCases: [
+      "Multi-agent coding sessions",
+      "Large compilation jobs",
+      "Heavy test suite runs",
+      "Background indexing (rust-analyzer, typescript server)",
+    ],
+  },
+  {
     id: "xf",
     name: "X Archive Search",
     shortName: "XF",
@@ -658,6 +705,143 @@ export const tldrFlywheelTools: TldrFlywheelTool[] = [
       "Managing context window budget",
     ],
   },
+  {
+    id: "apr",
+    name: "Automated Plan Reviser Pro",
+    shortName: "APR",
+    href: "https://github.com/Dicklesworthstone/automated_plan_reviser_pro",
+    icon: "FileText",
+    color: "from-amber-500 to-yellow-600",
+    category: "supporting",
+    stars: 85,
+    whatItDoes:
+      "Automated iterative specification refinement using extended AI reasoning. Takes rough plans and runs multiple review cycles to identify architectural issues, edge cases, and security flaws.",
+    whyItsUseful:
+      "Complex specifications need 15-20 review cycles to catch all issues. Instead of manually prompting each round, APR automates the refinement loop, progressively improving structure and detail.",
+    implementationHighlights: [
+      "Uses GPT Pro 5.2 Extended Reasoning via Oracle",
+      "Iterative multi-pass refinement algorithm",
+      "Markdown plan file processing",
+      "Configurable refinement depth",
+    ],
+    synergies: [
+      {
+        toolId: "jfp",
+        description: "Battle-tested prompts can be refined into specifications",
+      },
+      {
+        toolId: "cm",
+        description: "Refined plans become searchable memories",
+      },
+      {
+        toolId: "bv",
+        description: "Refined specs generate well-structured beads",
+      },
+    ],
+    techStack: ["Bash", "Oracle CLI", "GPT Pro 5.2", "Markdown"],
+    keyFeatures: [
+      "Automated multi-pass refinement",
+      "Extended AI reasoning integration",
+      "Markdown-based plan processing",
+      "Progressive structure improvement",
+    ],
+    useCases: [
+      "Turning rough ideas into detailed specifications",
+      "Catching architectural flaws early",
+      "Creating implementation-ready plans for agents",
+      "Iterative requirement refinement",
+    ],
+  },
+  {
+    id: "jfp",
+    name: "JeffreysPrompts CLI",
+    shortName: "JFP",
+    href: "https://jeffreysprompts.com",
+    icon: "Sparkles",
+    color: "from-pink-500 to-rose-600",
+    category: "supporting",
+    stars: 120,
+    whatItDoes:
+      "Official CLI for jeffreysprompts.com - browse, search, and install battle-tested prompts as Claude Code skills with one command.",
+    whyItsUseful:
+      "Instead of writing prompts from scratch, install proven patterns. JFP connects to jeffreysprompts.com to discover prompts categorized by use case, then installs them directly to your Claude Code skills folder.",
+    implementationHighlights: [
+      "TypeScript/Bun compiled to standalone binary",
+      "Direct integration with Claude Code skills system",
+      "MCP server mode for agent integration",
+      "Offline browsing of downloaded prompts",
+    ],
+    synergies: [
+      {
+        toolId: "ms",
+        description: "JFP downloads remote prompts, MS manages local skills - they complement each other",
+      },
+      {
+        toolId: "apr",
+        description: "Downloaded prompts can be refined into comprehensive specs via APR",
+      },
+      {
+        toolId: "cm",
+        description: "Effective prompts become retrievable memories",
+      },
+    ],
+    techStack: ["TypeScript", "Bun", "Claude Code Skills API"],
+    keyFeatures: [
+      "One-command skill installation",
+      "Browsable prompt categories",
+      "Claude Code skills integration",
+      "MCP server for agent access",
+    ],
+    useCases: [
+      "Bootstrapping a new project with proven prompts",
+      "Discovering prompts for specific domains",
+      "Sharing effective prompts across teams",
+      "Building a personal prompt library",
+    ],
+  },
+  {
+    id: "pt",
+    name: "Process Triage",
+    shortName: "PT",
+    href: "https://github.com/Dicklesworthstone/process_triage",
+    icon: "Activity",
+    color: "from-red-500 to-orange-600",
+    category: "supporting",
+    stars: 45,
+    whatItDoes:
+      "Find and terminate stuck or zombie processes with intelligent Bayesian scoring. Identifies resource hogs and helps clean up runaway processes.",
+    whyItsUseful:
+      "When cargo build hangs, or a test runner goes rogue, pt helps you identify and terminate the offending processes. Uses intelligent scoring to prioritize truly problematic processes.",
+    implementationHighlights: [
+      "Rust implementation for speed",
+      "Bayesian scoring for process prioritization",
+      "Interactive TUI for process selection",
+      "Robot mode for automation",
+    ],
+    synergies: [
+      {
+        toolId: "srps",
+        description: "PT terminates stuck processes, SRPS prevents them from hogging resources",
+      },
+      {
+        toolId: "ntm",
+        description: "Clean up runaway processes in tmux sessions",
+      },
+    ],
+    techStack: ["Rust", "Bayesian inference", "procfs"],
+    keyFeatures: [
+      "Intelligent process scoring",
+      "Interactive TUI selection",
+      "Robot mode for automation",
+      "Resource usage analysis",
+    ],
+    useCases: [
+      "Killing stuck build processes",
+      "Cleaning up zombie processes",
+      "Identifying memory hogs",
+      "Automated process cleanup",
+    ],
+  },
 ];
 
 export const tldrPageData = {
@@ -665,9 +849,9 @@ export const tldrPageData = {
     title: "The Agentic Coding Flywheel",
     subtitle: "TL;DR Edition",
     description:
-      "11 core tools and 3 supporting utilities that transform multi-agent AI coding workflows. Each tool makes the others more powerful - the more you use it, the faster it spins. While others argue about agentic coding, we're just over here building as fast as we can.",
+      "11 core tools and 7 supporting utilities that transform multi-agent AI coding workflows. Each tool makes the others more powerful - the more you use it, the faster it spins. While others argue about agentic coding, we're just over here building as fast as we can.",
     stats: [
-      { label: "Ecosystem Tools", value: "14" },
+      { label: "Ecosystem Tools", value: "18" },
       { label: "GitHub Stars", value: "3,600+" },
       { label: "Languages", value: "5" },
     ],
@@ -675,7 +859,7 @@ export const tldrPageData = {
   coreDescription:
     "The core flywheel tools form the backbone: Agent Mail for coordination, BV for graph-based prioritization, CASS for instant session search, CM for persistent memory, UBS for bug detection, MS for skill management with MCP integration, plus session management, safety guards, and automated setup.",
   supportingDescription:
-    "Supporting tools extend the ecosystem: GIIL for remote image debugging, XF for searching your X archive, and S2P for crafting prompts from source code.",
+    "Supporting tools extend the ecosystem: GIIL for remote image debugging, SRPS for system responsiveness under heavy load, XF for searching your X archive, S2P for crafting prompts from source code, APR for spec refinement, JFP for curated prompt discovery, and PT for process triage.",
   flywheelExplanation: {
     title: "Why a Flywheel?",
     paragraphs: [
