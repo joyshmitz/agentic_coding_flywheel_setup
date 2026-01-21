@@ -71,6 +71,9 @@ export const toolPageMessages = {
     pt: {
       tagline: "Find and kill stuck/zombie processes with Bayesian scoring and decision memory",
     },
+    srps: {
+      tagline: "Keep your workstation responsive under heavy AI agent load",
+    },
     xf: {
       tagline: "Blazingly fast local search across your X/Twitter archive",
     },

@@ -35,6 +35,7 @@ import { AprLessonUk } from "./apr-lesson.uk";
 import { JfpLessonUk } from "./jfp-lesson.uk";
 import { PtLessonUk } from "./pt-lesson.uk";
 import { XfLessonUk } from "./xf-lesson.uk";
+import { SrpsLessonUk } from "./srps-lesson.uk";
 
 // Render the lesson content for a given slug.
 // This intentionally uses a static switch so ESLint can guarantee components are not created during render.
@@ -95,7 +96,7 @@ export function renderLessonComponent(slug: string, locale?: string): React.Reac
     case "xf":
       return locale === "uk" ? <XfLessonUk /> : <XfLesson />;
     case "srps":
-      return <SrpsLesson />;
+      return locale === "uk" ? <SrpsLessonUk /> : <SrpsLesson />;
     default:
       return null;
   }
