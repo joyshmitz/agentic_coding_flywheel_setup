@@ -65,10 +65,10 @@ export const agentMailLessonMessagesUk = {
     projectsAndAgents: {
       title: "Проєкти та агенти",
       description: "Кожен проєкт має зареєстрованих агентів з унікальними іменами",
-      codeComment: `# Імена агентів — це комбінації прикметник+іменник
-# Приклади: "BlueLake", "GreenCastle", "RedStone"
+      codeComment: `# Agent names are adjective+noun combinations
+# Examples: "BlueLake", "GreenCastle", "RedStone"
 
-# Зареєструвати агента
+# Register an agent
 ensure_project(human_key="/data/projects/my-app")
 register_agent(
   project_key="/data/projects/my-app",
@@ -92,16 +92,16 @@ register_agent(
     fileReservations: {
       title: "Резервування файлів",
       description: "Резервуйте файли перед редагуванням, щоб запобігти конфліктам",
-      code: `# Зарезервувати файли перед редагуванням
+      code: `# Reserve files before editing
 file_reservation_paths(
   project_key="/data/projects/my-app",
   agent_name="BlueLake",
   paths=["src/api/*.py", "src/routes/*.py"],
-  ttl_seconds=3600,  # Оренда на 1 годину
-  exclusive=true     # Ніхто інший не може редагувати
+  ttl_seconds=3600,  # Lease for 1 hour
+  exclusive=true     # Only I can edit
 )
 
-# Звільнити після завершення
+# Release when done
 release_file_reservations(
   project_key="/data/projects/my-app",
   agent_name="BlueLake"
@@ -111,7 +111,7 @@ release_file_reservations(
     checkingInbox: {
       title: "Перевірка вхідних",
       description: "Отримати повідомлення, адресовані вам",
-      code: `# Перевірити нові повідомлення
+      code: `# Check for new messages
 fetch_inbox(
   project_key="/data/projects/my-app",
   agent_name="BlueLake",

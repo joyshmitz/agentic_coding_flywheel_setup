@@ -265,11 +265,11 @@ export const gitBasicsLessonMessagesUk = {
         description: "Створити новий commit, що відміняє попередній",
       },
     ],
-    codeExample: `# Втратили commit після reset --hard? Знайдіть його!
+    codeExample: `# Lost commit after reset --hard? Find it!
 $ git reflog
-# Шукайте ваш commit hash, потім:
+# Look for your commit hash, then:
 $ git checkout <hash>
-# Або створіть branch на тому commit:
+# Or create a branch on that commit:
 $ git branch recovery <hash>`,
   },
 

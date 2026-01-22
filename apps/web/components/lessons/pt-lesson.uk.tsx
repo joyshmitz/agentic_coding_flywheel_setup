@@ -41,7 +41,7 @@ export function PtLessonUk() {
         <Paragraph>
           PT запам'ятовує ваші рішення про знищення/збереження схожих процесів,
           покращуючи рекомендації з часом. Він вимагає явного підтвердження і
-          спочатку намагається graceful SIGTERM.
+          спочатку намагається м'яке завершення (SIGTERM).
         </Paragraph>
 
         <div className="mt-8">
@@ -96,13 +96,13 @@ export function PtLessonUk() {
 
       {/* Секція 3: Типові сценарії */}
       <Section title="Типові сценарії" icon={<Play className="h-5 w-5" />} delay={0.3}>
-        <CodeBlock code={`# Знайти що використовує CPU
+        <CodeBlock code={`# Find what's using CPU
 pt --top
 
-# Шукати node процеси
+# Search for node processes
 pt search node
 
-# Знайти процеси, що використовують порт 3000
+# Find processes using port 3000
 pt --port 3000`} />
       </Section>
     </div>

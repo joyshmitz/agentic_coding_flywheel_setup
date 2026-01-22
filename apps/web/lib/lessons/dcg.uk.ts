@@ -65,7 +65,7 @@ export const dcgLessonMessagesUk: DcgLessonMessages = {
 
     example: {
       language: "bash",
-      code: `# Приклад: протестувати команду перед запуском
+      code: `# Example: test command before running
 $ dcg test "git reset --hard" --explain
 > BLOCKED: git.reset.hard
 > Why: hard reset discards uncommitted work

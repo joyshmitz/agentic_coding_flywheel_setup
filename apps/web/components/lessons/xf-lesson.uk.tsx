@@ -95,16 +95,16 @@ export function XfLessonUk() {
 
       {/* Секція 3: Приклади пошуків */}
       <Section title="Приклади пошуків" icon={<Play className="h-5 w-5" />} delay={0.3}>
-        <CodeBlock code={`# Індексуйте ваш архів (одноразово)
+        <CodeBlock code={`# Index your archive (one-time)
 xf index ~/Downloads/twitter-archive
 
-# Шукайте за темою
+# Search for a topic
 xf search "machine learning"
 
-# Пошук у діапазоні дат
+# Search within a date range
 xf search "rust" --from 2024-01-01 --to 2024-06-30
 
-# Експортуйте результати в JSON
+# Export results to JSON
 xf search "AI" --format json > results.json`} />
       </Section>
     </div>

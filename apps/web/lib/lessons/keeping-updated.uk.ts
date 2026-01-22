@@ -125,7 +125,7 @@ export const keepingUpdatedLessonMessagesUk = {
       {
         title: "apt заблоковано",
         description: 'Якщо ви бачите "apt is locked by another process":',
-        solution: `# Дочекайтеся завершення інших операцій apt, або:
+        solution: `# Wait for other apt operations to finish, or:
 sudo rm /var/lib/dpkg/lock-frontend
 sudo dpkg --configure -a`,
       },

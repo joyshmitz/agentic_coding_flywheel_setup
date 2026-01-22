@@ -103,16 +103,16 @@ export function MsLessonUk() {
           Використовуйте їх з синтаксисом slash команд.
         </Paragraph>
 
-        <CodeBlock code={`# Перелічіть ваші встановлені skills
+        <CodeBlock code={`# List your installed skills
 ms list
 
-# Встановіть skill
+# Install a skill
 ms install idea-wizard
 
-# Використовуйте його в Claude Code
-/idea-wizard "побудувати todo додаток"
+# Use it in Claude Code
+/idea-wizard "build a todo app"
 
-# Оновіть всі skills до останніх версій
+# Update all skills to latest versions
 ms update`} />
       </Section>
     </div>

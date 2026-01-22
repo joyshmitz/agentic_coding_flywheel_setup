@@ -158,7 +158,7 @@ export const cassLessonMessagesUk = {
       "line_number": 87,
       "agent": "claude_code",
       "workspace": "/projects/myapp",
-      "snippet": "...виправив PostgreSQL з'єднання встановленням pool_size=20...",
+      "snippet": "...fixed PostgreSQL connection by setting pool_size=20...",
       "score": 0.92
     },
     {
@@ -166,7 +166,7 @@ export const cassLessonMessagesUk = {
       "line_number": 45,
       "agent": "codex",
       "workspace": "/projects/backend",
-      "snippet": "...формат рядка PostgreSQL з'єднання: postgres://user:pass...",
+      "snippet": "...PostgreSQL connection string format: postgres://user:pass...",
       "score": 0.85
     }
   ],

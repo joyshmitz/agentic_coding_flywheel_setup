@@ -82,14 +82,14 @@ export const ruLessonMessagesUk: RuLessonMessages = {
       filename: "Three-Phase Workflow",
       language: "bash",
       code: `# Phase 1: Understand
-# Agent читає AGENTS.md, досліджує кодову базу, вивчає конвенції
+# Agent reads AGENTS.md, explores codebase, studies conventions
 
 # Phase 2: Plan
-# Agent створює JSON план коміту (файли, повідомлення)
-# RU валідує: немає секретів, ліміти розміру файлів, перевірка схеми
+# Agent creates JSON commit plan (files, messages)
+# RU validates: no secrets, file size limits, schema check
 
 # Phase 3: Execute
-# RU виконує валідований план з детермінованими git командами`,
+# RU executes validated plan with deterministic git commands`,
     },
 
     commands: [
@@ -135,7 +135,7 @@ export const ruLessonMessagesUk: RuLessonMessages = {
     configExample: {
       filename: "~/.config/ru/config",
       language: "bash",
-      code: `# Базова директорія для репозиторіїв
+      code: `# Base directory for repositories
 PROJECTS_DIR=/data/projects
 
 # Parallel workers (1-8)
@@ -144,7 +144,7 @@ PARALLEL=4
 # Update strategy: ff-only | rebase | merge
 UPDATE_STRATEGY=ff-only
 
-# Auto-stash локальні зміни перед pull
+# Auto-stash local changes before pull
 AUTOSTASH=false`,
     },
 

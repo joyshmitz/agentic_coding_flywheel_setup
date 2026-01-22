@@ -173,11 +173,11 @@ Exit code: 1`,
   preCommitIntegration: {
     title: "Інтеграція Pre-Commit",
     intro: "Для максимальної безпеки додайте UBS до вашого pre-commit workflow:",
-    codeExample: `# У вашому workflow:
+    codeExample: `# In your workflow:
 $ git add .
 $ ubs $(git diff --name-only --cached)
-# Якщо exit 0: продовжуйте з commit
-# Якщо exit 1: спочатку виправте проблеми
+# If exit 0: proceed with commit
+# If exit 1: fix issues first
 
 $ git commit -m "feat: add user auth"`,
     tip: {

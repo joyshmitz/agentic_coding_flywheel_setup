@@ -12,8 +12,8 @@ export const welcomeLessonMessagesUk = {
 
   whatYouNowHave: {
     title: "Що у вас тепер є",
-    congratulations: "Вітаємо! Ви щойно налаштували повністю оснащену робочу станцію для agentic-програмування.",
-    highlight: "робочу станцію для agentic-програмування",
+    congratulations: "Вітаємо! Ви щойно налаштували повністю оснащену робочу станцію для агентного програмування.",
+    highlight: "робочу станцію для агентного програмування",
     installedIntro: "Ось що встановлено на вашому VPS:",
 
     features: {

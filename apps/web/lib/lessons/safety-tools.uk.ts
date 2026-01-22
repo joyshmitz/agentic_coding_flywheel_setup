@@ -163,19 +163,19 @@ export const safetyToolsLessonMessagesUk = {
   integration: {
     title: "Інтеграція з агентами",
     intro: "Як SLB, так і CAAM інтегруються з Claude Code, Codex та Gemini:",
-    codeExample: `# Приклад: Небезпечна команда запускає SLB
+    codeExample: `# Example: Dangerous command triggers SLB
 $ claude "delete all test files"
-> SLB: Ця команда потребує схвалення
-> Очікування другого схвалення...
-> Запустіть 'slb approve req-123 --session-id <sid>' з іншої сесії
+> SLB: This command requires approval
+> Waiting for second approval...
+> Run 'slb approve req-123 --session-id <sid>' from another session
 
-# Приклад: Перемикання Claude облікових записів для проекту
+# Example: Switching Claude accounts for project
 $ caam activate claude work@company.com
-> Активовано профіль 'work@company.com' для claude
-> Symlink оновлено за 47мс
+> Activated profile 'work@company.com' for claude
+> Symlink updated in 47ms
 
 $ claude "continue the project"
-> Використовується профіль: work@company.com`,
+> Using profile: work@company.com`,
   },
 
   bestPractices: {

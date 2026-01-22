@@ -94,16 +94,16 @@ export function AprLessonUk() {
 
       {/* Секція 3: Типовий робочий процес */}
       <Section title="Типовий робочий процес" icon={<Play className="h-5 w-5" />} delay={0.3}>
-        <CodeBlock code={`# 1. Згенеруйте початковий план за допомогою Claude Code
-# (Claude створює plan.md)
+        <CodeBlock code={`# 1. Generate initial plan with Claude Code
+# (Claude creates plan.md)
 
-# 2. Удосконаліть за допомогою APR
+# 2. Refine with APR
 apr refine plan.md -o refined-plan.md
 
-# 3. Перегляньте удосконалений план
+# 3. Review the refined plan
 cat refined-plan.md
 
-# 4. Передайте назад Claude Code для реалізації`} />
+# 4. Feed back to Claude Code for implementation`} />
       </Section>
     </div>
   );

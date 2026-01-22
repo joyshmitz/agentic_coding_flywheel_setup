@@ -43,13 +43,13 @@ export const githubCliLessonMessagesUk = {
   authentication: {
     title: "Аутентифікація",
     intro: "Спочатку аутентифікуйтеся з вашим GitHub аккаунтом:",
-    codeExample: `# Інтерактивний логін (рекомендується)
+    codeExample: `# Interactive login (recommended)
 $ gh auth login
 
-# Перевірити статус аутентифікації
+# Check authentication status
 $ gh auth status
 
-# Переглянути поточного користувача
+# View current user
 $ gh api user --jq '.login'`,
     tip: {
       content: "Інтерактивний логін проведе вас через OAuth на основі browser. Виберіть HTTPS для git протоколу, якщо у вас не налаштовані SSH ключі.",

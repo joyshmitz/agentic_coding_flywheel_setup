@@ -27,7 +27,7 @@ export function JfpLessonUk() {
   return (
     <div className="space-y-8">
       <GoalBanner>
-        Відкрийте та встановлюйте куровані промпти для agentic кодування за допомогою JeffreysPrompts.
+        Відкрийте та встановлюйте куровані промпти для агентного кодування за допомогою JeffreysPrompts.
       </GoalBanner>
 
       {/* Секція 1: Що таке JFP */}
@@ -97,17 +97,17 @@ export function JfpLessonUk() {
 
       {/* Секція 3: Швидкий старт */}
       <Section title="Швидкий старт" icon={<Play className="h-5 w-5" />} delay={0.3}>
-        <CodeBlock code={`# Перегляньте всі промпти
+        <CodeBlock code={`# Browse all prompts
 jfp list
 
-# Шукайте промпти для code review
+# Search for code review prompts
 jfp search "code review"
 
-# Встановіть промпт як skill
+# Install a prompt as a skill
 jfp install idea-wizard
 
-# Використовуйте в Claude Code
-/idea-wizard "побудувати REST API"`} />
+# Use in Claude Code
+/idea-wizard "build a REST API"`} />
       </Section>
     </div>
   );

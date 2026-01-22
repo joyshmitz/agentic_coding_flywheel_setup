@@ -430,6 +430,102 @@ export const flywheelToolsUk: Partial<FlywheelTool>[] = [
       "Zero string parsing (git plumbing only)",
     ],
   },
+  {
+    id: "ms",
+    tagline: "Повна платформа управління навичками",
+    description:
+      "Зберігайте навички, шукайте їх, відстежуйте ефективність, пакуйте для розповсюдження та інтегруйте з AI агентами через MCP server. Навички йдуть з ручних файлів, CASS mining, bundles або гайдованих workflows.",
+    deepDescription:
+      "MS — це рівень управління навичками для AI агентів. Thompson sampling навчається які навички найкраще працюють з часом. MCP server викривають 6 рідних інструментів (search, load, evidence, list, show, doctor) щоб будь-який AI агент міг запитувати навички безпосередньо. Мультирівневе забезпечення: ACIP виявляє prompt injection, DCG класифікує command safety, path policy запобігає escape, secret scanner редагує чутливі дані.",
+    features: [
+      "MCP server: Native AI agent integration (6 tools)",
+      "Thompson sampling: Навчається з використання для оптимізації пропозицій",
+      "ACIP: Виявлення prompt-injection з quarantine",
+      "DCG: Рівні command safety (Safe/Caution/Danger/Critical)",
+      "Hybrid search: BM25 + hash embeddings з RRF fusion",
+      "Token packing: Оптимізуйте завантаження навичок для context budgets",
+    ],
+  },
+  {
+    id: "jfp",
+    tagline: "Battle-tested промпти як інстальовані Claude Code навички",
+    description:
+      "Офіційний CLI для jeffreysprompts.com — переглядайте курировані промпти та встановлюйте їх як Claude Code навички однією командою.",
+    deepDescription:
+      "JFP з'єднує ваш терміналь прямо з jeffreysprompts.com — курирована колекція battle-tested AI coding промптів організована за use case. Замість писання промптів з нуля або копіювання їх вручну, JFP встановлює їх прямо в вашу Claude Code папку навичок.\n\nПромпти на jeffreysprompts.com — real-world патерни видобуті з тисяч годин AI-assisted coding сесій. Вони покривають все від exploration та planning до review та execution workflows.\n\nОсновні можливості:\n- Переглядайте промпти за категоріями (exploration, review, planning, execution)\n- Одна команда для встановлення: jfp install <prompt-name>\n- Offline просмотр завантажених промптів\n- MCP server режим для інтеграції агентів: jfp serve\n- JSON вивід для програмного доступу: jfp --json list",
+    features: [
+      "Встановлення промптів однією командою в Claude Code навички",
+      "Курировані категорії промптів: exploration, review, planning, execution",
+      "MCP server режим для інтеграції агентів",
+      "Offline просмотр встановлених промптів",
+      "JSON вивід для програмного доступу",
+      "Вбудована команда update",
+    ],
+  },
+  {
+    id: "srps",
+    tagline: "Тримайте вашу робочу станцію чутливою при важкому навантаженні агентів",
+    description:
+      "Встановлює ananicy-cpp з 1700+ правилами для автоматичного пониження пріоритету фонових процесів, плюс sysmoni TUI для real-time моніторингу.",
+    deepDescription:
+      "Коли AI coding агенти запускають cargo build, npm install або спавнять кілька паралельних процесів, ваша система може стати невідповідною. SRPS вирішує це автоматичним пониженням пріоритету відомих resource hogs (компіляторів, bundlers, test runners) поки тримаючи ваш терміналь та IDE оперативними.\n\nПобудовано на ananicy-cpp (C++ заміна оригінального ananicy) з курованими правилами для developer workloads. sysmoni TUI показує real-time CPU/memory за процесом з ananicy rule status, щоб ви могли бачити точно що керується.\n\nОсновні можливості:\n- 1700+ попередньо налаштованих правил для компіляторів, браузерів, IDE та звичайних dev інструментів\n- Підтримка користувацьких правил для будь-якого процесу (додайте свої в /etc/ananicy.d/)\n- Sysctl kernel tweaks для кращої responsiveness під пресингом пам'яті\n- Нульова конфігурація - просто встановіть і забудьте",
+    features: [
+      "ananicy-cpp daemon з 1700+ process priority правилами",
+      "sysmoni Go TUI для real-time resource моніторингу",
+      "Авто-пониження пріоритету компіляторів, bundlers, test runners, браузерів",
+      "Sysctl tweaks для кращої responsiveness під пресингом пам'яті",
+      "Користувацькі правила: додайте будь-який процес в /etc/ananicy.d/",
+      "Zero-config: встановіть один раз, отримайте користь назавжди",
+    ],
+  },
+  {
+    id: "apr",
+    tagline: "Автоматизована ітеративна spec-рефіняція з розширеним AI reasoning",
+    description:
+      "Бере грубі плани та запускає кілька циклів перегляду використовуючи GPT Pro 5.2 Extended Reasoning через Oracle для виявлення архітектурних проблем, edge cases та security flaws.",
+    deepDescription:
+      "Складні специфікації потребують кількох циклів перегляду щоб ловити всі проблеми.\nЗамість ручного запуску 15-20 AI review раундів, APR автоматизує процес рефіняції.\nРанні раунди виправляють основні проблеми, середні раунди рефінюють структуру, пізні раунди полірують абстракції поки ви не маєте production-ready специфікацію.\n\nAPR використовує GPT Pro 5.2 Extended Reasoning через Oracle для глибокого аналізу. Кожен проход додає:\n- Кращу структуру та організацію\n- Виявлені залежності між компонентами\n- Edge cases та error scenarios\n- Security considerations\n- Більш actionable implementation steps\n\nОсновні можливості:\n- Мультипроходна ітеративна рефіняція з конфігуровною глибиною\n- Обробка Markdown plan файлів зі збереженням форматування\n- Порівняння виходу між версіями щоб бачити покращення\n- Інтеграція з beads для конвертування рефінованих specs в tasks",
+    features: [
+      "Автоматизована мультипроходна specification рефіняція",
+      "Extended AI reasoning через GPT Pro 5.2 + Oracle",
+      "Обробка Markdown-based планів",
+      "Прогресивне покращення структури та деталей",
+      "Виявлення залежностей та edge case detection",
+      "Robot режим для AI agent інтеграції",
+    ],
+  },
+  {
+    id: "pt",
+    tagline: "Знаходьте та вбивайте застряглі/zombie процеси з розумним скорингом",
+    description:
+      "Rust-based процес менеджер з Bayesian скорингом для виявлення та припинення проблемних процесів. TUI для інтерактивного вибору.",
+    deepDescription:
+      "Коли білди зависають, test runners йдуть на межу, або процеси zombie-ють, вам потрібно знайти та припинити їх швидко. PT використовує розумний Bayesian скорінг щоб пріоритизувати справді проблемні процеси - не лише ті що використовують ресурси, але ті що справді застрягли або мають дивну поведінку.\n\nАлгоритм скорингу розглядає CPU usage patterns, memory growth rate, file descriptor counts та process state щоб виявити процеси що справді проблемні vs. ті що просто виконують важку роботу.\n\nОсновні можливості:\n- Bayesian скорінг виявляє застрягли процеси, не лише важкі\n- Інтерактивний TUI для вибору процесів до припинення\n- Robot режим для автоматизації: pt --robot list\n- Інтеграція з SRPS для proactive resource management",
+    features: [
+      "Bayesian process scoring алгоритм",
+      "Інтерактивний TUI для вибору процесів",
+      "Robot режим для автоматизації",
+      "Тренд аналіз resource usage",
+      "Zombie process detection",
+      "Безпечне припинення з підтвердженням",
+    ],
+  },
+  {
+    id: "xf",
+    tagline: "Ультра-швидкий пошук у вашому X/Twitter архіві",
+    description:
+      "Гібридна BM25 + semantic пошук через X/Twitter data exports. Zero-dependency локальна обробка з Reciprocal Rank Fusion.",
+    deepDescription:
+      "Ваш X/Twitter архів — золота жила закладок, потоків та ідей - але Twitter пошук відомо жахливий. XF робить ваш весь архів миттєво пошуковим з обома keyword (BM25) та semantic matching, склеєні разом використовуючи Reciprocal Rank Fusion.\n\nГібридний підхід означає ви можете шукати точними термінами ('той потік про async/await') або по концепту ('дискусії про concurrent programming patterns'). Результати ранжовані комбінуванням обох сигналів.\n\nОсновні можливості:\n- Rust імплементація для максимальної производительности (sub-second searches)\n- Гібридна BM25 + semantic пошук з RRF fusion\n- Zero-dependency hash embedder (без Python/API дзвінків)\n- Повністю локальна, privacy-preserving обробка\n- Парсинг всіх X archive форматів (tweets, DMs, bookmarks, likes)",
+    features: [
+      "Sub-second пошук по великим архівам",
+      "Гібридна BM25 + semantic пошук",
+      "Reciprocal Rank Fusion скорінг",
+      "Zero зовнішніх API залежностей",
+      "Privacy-preserving локальна обробка",
+      "Парсинг tweets, DMs, bookmarks, likes",
+    ],
+  },
 ];
 
 // ============================================================

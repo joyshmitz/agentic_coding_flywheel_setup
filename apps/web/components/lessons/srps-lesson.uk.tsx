@@ -93,10 +93,10 @@ export function SrpsLessonUk() {
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Встановити SRPS з усіма компонентами
+            code={`# Install SRPS with all components
 $ curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/system_resource_protection_script/main/install.sh | bash -s -- --install
 
-# Перевірити, що демон працює
+# Verify daemon is running
 $ systemctl status ananicy-cpp
 > Active: active (running)`}
             language="bash"
@@ -124,11 +124,11 @@ $ systemctl status ananicy-cpp
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Запустити TUI моніторингу
+            code={`# Launch the monitoring TUI
 $ sysmoni
 
-# Бачте CPU/пам'ять кожного процесу зі статусом правила ananicy
-# q для виходу, стрілки для навігації, s для сортування, f для фільтрації`}
+# See per-process CPU/memory with ananicy rule status
+# q to quit, arrows to navigate, s to sort, f to filter`}
             language="bash"
           />
         </div>
@@ -228,11 +228,11 @@ $ sysmoni
 
         <div className="mt-6">
           <CodeBlock
-            code={`# Приклад: додати правило для власного важкого процесу
+            code={`# Example: add rule for a custom heavy process
 $ echo '{"name": "my-heavy-process", "nice": 19, "sched": "idle", "ioclass": "idle"}' | \\
     sudo tee /etc/ananicy.d/00-default/99-custom.rules
 
-# Перезапустити для застосування
+# Restart to apply
 $ sudo systemctl restart ananicy-cpp`}
             language="bash"
           />
@@ -295,16 +295,16 @@ $ sudo systemctl restart ananicy-cpp`}
 
         <div className="mt-6 space-y-4">
           <CodeBlock
-            code={`# Перевірити, чи демон працює
+            code={`# Check if daemon is running
 $ systemctl status ananicy-cpp
 
-# Переглянути останні логи
+# View recent logs
 $ journalctl -u ananicy-cpp -n 50
 
-# Перевірити всі файли правил
+# Validate all rule files
 $ ananicy-cpp --config-test
 
-# Видалити за потреби
+# Uninstall if needed
 $ curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/system_resource_protection_script/main/install.sh | bash -s -- --uninstall`}
             language="bash"
           />

@@ -75,7 +75,7 @@ export const realWorldCaseStudyLessonMessagesUk = {
 
   planAnatomy: {
     title: "Анатомія чудового плану",
-    intro: "План - це основа успішного agentic проєкту. Розберемо, що робить",
+    intro: "План - це основа успішного агентного проєкту. Розберемо, що робить",
     actualPlan: "справжній план з 5,600+ рядків",
     soEffective: "таким ефективним.",
 

@@ -35,7 +35,7 @@ export const COMMAND_CATEGORIES_UK: Array<{
   {
     id: "stack",
     label: "Stack",
-    description: "Інструменти Dicklesworthstone для агентних воркфлоу",
+    description: "Інструменти Dicklesworthstone для агентних workflow",
   },
   {
     id: "languages",
@@ -125,7 +125,7 @@ export const COMMANDS_UK: CommandRef[] = [
   {
     name: "ntm",
     fullName: "Named Tmux Manager",
-    description: "Менеджер сесій для агентів та воркфлоу.",
+    description: "Менеджер сесій для агентів та workflow.",
     category: "system",
     example: "ntm new acfs",
   },
@@ -183,7 +183,7 @@ export const COMMANDS_UK: CommandRef[] = [
   {
     name: "bv",
     fullName: "Beads Viewer",
-    description: "Переглядач issues та воркфлоу (--robot-* флаги).",
+    description: "Переглядач issues та workflow (--robot-* флаги).",
     category: "stack",
     example: "bv --robot-triage",
   },
@@ -204,7 +204,7 @@ export const COMMANDS_UK: CommandRef[] = [
   {
     name: "cm",
     fullName: "CASS Memory",
-    description: "Процедурна пам'ять для агентних воркфлоу.",
+    description: "Процедурна пам'ять для агентних workflow.",
     category: "stack",
     example: 'cm context "auth flow"',
   },
@@ -307,5 +307,13 @@ export const COMMANDS_UK: CommandRef[] = [
     category: "stack",
     example: "ru sync --parallel 4",
     aliases: ["repo-updater"],
+  },
+  {
+    name: "sysmoni",
+    fullName: "SRPS System Monitor",
+    description: "TUI в реальному часі, що показує CPU/пам'ять по процесах зі статусом правил ananicy.",
+    category: "stack",
+    example: "sysmoni",
+    docsUrl: "https://github.com/Dicklesworthstone/system_resource_protection_script",
   },
 ];

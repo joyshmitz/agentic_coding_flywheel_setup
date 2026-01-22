@@ -215,19 +215,19 @@ export const beadsLessonMessagesUk = {
   tryItNow: {
     title: "Спробуйте зараз",
 
-    codeExample: `# Подивитися, що готово для роботи
+    codeExample: `# See what's ready to work on
 $ bd ready
 
-# Отримати розумні рекомендації сортування
+# Get smart triage recommendations
 $ bv --robot-triage | jq '.quick_ref'
 
-# Створити завдання
+# Create a task
 $ bd create "Add login page" -t feature -p 2
 
-# Почати працювати над цим
+# Start working on it
 $ bd update bd-1 --status=in_progress
 
-# Синхронізувати після завершення
+# Sync when done
 $ bd sync`,
   },
 };

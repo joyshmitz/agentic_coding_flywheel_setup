@@ -97,7 +97,7 @@ apr refine plan.md -o refined-plan.md
 cat refined-plan.md
 
 # 4. Передайте Claude Code для реалізації
-# "Будь ласка, реалізуйте відповідно до refined-plan.md"
+# "Please implement according to refined-plan.md"
 ```
 
 ---
