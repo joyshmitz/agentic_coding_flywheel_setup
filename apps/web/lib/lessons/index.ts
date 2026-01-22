@@ -22,11 +22,11 @@ export { githubCliLessonMessages } from './github-cli-messages';
 export { gitBasicsLessonMessages } from './git-basics-messages';
 
 // Wave 4 lessons (advanced)
-export { beadsLessonMessages } from './beads.en';
+export { beadsLessonMessages } from './beads';
 export { beadsLessonMessagesUk } from './beads.uk';
-export { keepingUpdatedLessonMessages } from './keeping-updated.en';
+export { keepingUpdatedLessonMessages } from './keeping-updated';
 export { keepingUpdatedLessonMessagesUk } from './keeping-updated.uk';
-export { agentMailLessonMessages } from './agent-mail.en';
+export { agentMailLessonMessages } from './agent-mail';
 export { agentMailLessonMessagesUk } from './agent-mail.uk';
 
 // Wave 5 lessons (deep dive)
@@ -38,15 +38,15 @@ export { flywheelLoopMessages } from './flywheel-loop';
 export { flywheelLoopMessagesUk } from './flywheel-loop.uk';
 
 // Wave 6 lessons (case studies)
-export { slbCaseStudyLessonMessages } from './slb-case-study-messages.en';
+export { slbCaseStudyLessonMessages } from './slb-case-study-messages';
 export { slbCaseStudyLessonMessagesUk } from './slb-case-study-messages.uk';
-export { promptEngineeringLessonMessages } from './prompt-engineering-messages.en';
+export { promptEngineeringLessonMessages } from './prompt-engineering-messages';
 export { promptEngineeringLessonMessagesUk } from './prompt-engineering-messages.uk';
-export { realWorldCaseStudyLessonMessages } from './real-world-case-study-messages.en';
+export { realWorldCaseStudyLessonMessages } from './real-world-case-study-messages';
 export { realWorldCaseStudyLessonMessagesUk } from './real-world-case-study-messages.uk';
 
 // Wave 7 lessons (RU and DCG)
-export { ruLessonMessages } from './ru.en';
+export { ruLessonMessages } from './ru';
 export { ruLessonMessagesUk } from './ru.uk';
-export { dcgLessonMessages } from './dcg.en';
+export { dcgLessonMessages } from './dcg';
 export { dcgLessonMessagesUk } from './dcg.uk';

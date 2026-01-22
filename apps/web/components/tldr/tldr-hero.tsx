@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 import { tldrPageData } from "@/lib/tldr-content";
 import { useLocale } from "@/lib/i18n";
 import { tldrPageDataUk } from "@/lib/tldr-content.uk";
-import { getTldrMessages } from "@/lib/tldr-messages.uk";
+import { getTldrMessages } from "@/lib/tldr-messages";
+import { getTldrMessagesUk } from "@/lib/tldr-messages.uk";
 
 // =============================================================================
 // TYPES
@@ -111,7 +112,7 @@ export function TldrHero({ className, id }: TldrHeroProps) {
 
   const { locale } = useLocale();
   const pageData = locale === "uk" ? tldrPageDataUk : tldrPageData;
-  const messages = getTldrMessages(locale);
+  const messages = locale === "uk" ? getTldrMessagesUk() : getTldrMessages();
 
   const { hero } = pageData;
 

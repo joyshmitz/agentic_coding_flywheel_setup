@@ -20,15 +20,15 @@ import { jargonDictionary, type JargonTerm } from "../jargon";
 import { jargonDictionaryUk } from "../jargon.uk";
 
 // Beads Lesson
-import { beadsLessonMessages } from "../lessons/beads.en";
+import { beadsLessonMessages } from "../lessons/beads";
 import { beadsLessonMessagesUk } from "../lessons/beads.uk";
 
 // Keeping Updated Lesson
-import { keepingUpdatedLessonMessages } from "../lessons/keeping-updated.en";
+import { keepingUpdatedLessonMessages } from "../lessons/keeping-updated";
 import { keepingUpdatedLessonMessagesUk } from "../lessons/keeping-updated.uk";
 
 // Agent Mail Lesson
-import { agentMailLessonMessages } from "../lessons/agent-mail.en";
+import { agentMailLessonMessages } from "../lessons/agent-mail";
 import { agentMailLessonMessagesUk } from "../lessons/agent-mail.uk";
 
 // Core Lesson Messages
@@ -66,21 +66,22 @@ import { gitBasicsLessonMessages } from "../lessons/git-basics-messages";
 import { gitBasicsLessonMessagesUk } from "../lessons/git-basics-messages.uk";
 
 // Wave 6 Case Study Lessons
-import { slbCaseStudyLessonMessages } from "../lessons/slb-case-study-messages.en";
+import { slbCaseStudyLessonMessages } from "../lessons/slb-case-study-messages";
 import { slbCaseStudyLessonMessagesUk } from "../lessons/slb-case-study-messages.uk";
-import { promptEngineeringLessonMessages } from "../lessons/prompt-engineering-messages.en";
+import { promptEngineeringLessonMessages } from "../lessons/prompt-engineering-messages";
 import { promptEngineeringLessonMessagesUk } from "../lessons/prompt-engineering-messages.uk";
-import { realWorldCaseStudyLessonMessages } from "../lessons/real-world-case-study-messages.en";
+import { realWorldCaseStudyLessonMessages } from "../lessons/real-world-case-study-messages";
 import { realWorldCaseStudyLessonMessagesUk } from "../lessons/real-world-case-study-messages.uk";
 
 // Wave 7 Safety Tools Lessons
-import { ruLessonMessages } from "../lessons/ru.en";
+import { ruLessonMessages } from "../lessons/ru";
 import { ruLessonMessagesUk } from "../lessons/ru.uk";
-import { dcgLessonMessages } from "../lessons/dcg.en";
+import { dcgLessonMessages } from "../lessons/dcg";
 import { dcgLessonMessagesUk } from "../lessons/dcg.uk";
 
 // TLDR Content
-import { getTldrMessages } from "../tldr-messages.uk";
+import { getTldrMessages } from "../tldr-messages";
+import { getTldrMessagesUk } from "../tldr-messages.uk";
 import { tldrPageData } from "../tldr-content";
 import { tldrPageDataUk } from "../tldr-content.uk";
 import { tldrFlywheelTools } from "../tldr-content";
@@ -622,7 +623,7 @@ export function getDcgLessonMessages(locale: Locale) {
  * Get TLDR messages for the specified locale
  */
 export function getTldrMessagesForLocale(locale: Locale) {
-  return getTldrMessages(locale);
+  return locale === "uk" ? getTldrMessagesUk() : getTldrMessages();
 }
 
 /**

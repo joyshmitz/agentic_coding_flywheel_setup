@@ -10,7 +10,8 @@ import { TldrSynergyDiagram } from "@/components/tldr/tldr-synergy-diagram";
 import { tldrFlywheelTools, tldrPageData } from "@/lib/tldr-content";
 import { useLocale } from "@/lib/i18n";
 import { tldrPageDataUk, tldrFlywheelToolsUk } from "@/lib/tldr-content.uk";
-import { getTldrMessages } from "@/lib/tldr-messages.uk";
+import { getTldrMessages } from "@/lib/tldr-messages";
+import { getTldrMessagesUk } from "@/lib/tldr-messages.uk";
 
 // =============================================================================
 // FLYWHEEL EXPLANATION SECTION
@@ -100,7 +101,7 @@ function FooterCTA({ id }: { id?: string }) {
   }, []);
 
   const { locale } = useLocale();
-  const messages = getTldrMessages(locale);
+  const messages = locale === "uk" ? getTldrMessagesUk() : getTldrMessages();
 
   return (
     <section id={id} className="border-t border-border/50 py-12 md:py-16">

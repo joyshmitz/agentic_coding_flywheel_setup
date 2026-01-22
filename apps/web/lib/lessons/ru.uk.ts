@@ -6,7 +6,7 @@
  * Claude Code, NTM, BV, Mail, agent-sweep, dry-run, parallel, worker, TUI, CLI, JSON, MCP
  */
 
-import type { RuLessonMessages } from "./ru.en";
+import type { RuLessonMessages } from "./ru";
 
 export const ruLessonMessagesUk: RuLessonMessages = {
   // ========================================

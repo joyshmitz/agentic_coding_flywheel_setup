@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 import { TldrToolCard } from "./tldr-tool-card";
 import type { TldrFlywheelTool } from "@/lib/tldr-content";
 import { useLocale } from "@/lib/i18n";
-import { getTldrMessages } from "@/lib/tldr-messages.uk";
+import { getTldrMessages } from "@/lib/tldr-messages";
+import { getTldrMessagesUk } from "@/lib/tldr-messages.uk";
 
 // =============================================================================
 // TYPES
@@ -242,7 +243,7 @@ export function TldrToolGrid({ tools, className }: TldrToolGridProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const { locale } = useLocale();
-  const messages = getTldrMessages(locale);
+  const messages = locale === "uk" ? getTldrMessagesUk() : getTldrMessages();
 
   // Filter tools based on search query (simple filter)
   const filteredTools = useMemo(() => {

@@ -6,7 +6,7 @@
  * Claude Code, PreToolUse, hook, pack, allow-once, fail-open, CLI, TOML, bash, binary, config
  */
 
-import type { DcgLessonMessages } from "./dcg.en";
+import type { DcgLessonMessages } from "./dcg";
 
 export const dcgLessonMessagesUk: DcgLessonMessages = {
   // ========================================
