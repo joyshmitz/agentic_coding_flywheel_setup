@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-01-21T17:53:24+00:00
+# checksums.yaml - Auto-generated 2026-01-23T18:55:27+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -68,11 +68,11 @@ installers:
 
   caam:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_account_manager/main/install.sh"
-    sha256: "b63bfa2c0e7fdaf7ffc5ca52c656f8aa97dc4e5a0829b43ad2a1b5754ab69f14"
+    sha256: "831b8a3d9273601d6a71124c54450ac72e480fddc4e5e87f39192f187bd4624f"
 
   ubs:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh"
-    sha256: "4f0396d74d5ac2473d31c48725beec28d494066bfa5d9722cb09388d2cd33501"
+    sha256: "c0a4647b9d4e07816c3d47955d875fe5137c3e3098f2cb59c45f6bd8277cf40f"
 
   slb:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/simultaneous_launch_button/main/scripts/install.sh"
@@ -85,6 +85,10 @@ installers:
   nvm:
     url: "https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh"
     sha256: "abdb525ee9f5b48b34d8ed9fc67c6013fb0f659712e401ecd88ab989b3af8f53"
+
+  jfp:
+    url: "https://jeffreysprompts.com/install-cli.sh"
+    sha256: "97db629240b4065349e63601f05cd483fcec4b1e16008e986d6eed3c3a0367b7"
 
   rust:
     url: "https://sh.rustup.rs"

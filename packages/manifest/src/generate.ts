@@ -176,43 +176,44 @@ function shellQuote(str: string): string {
 }
 
 /**
- * Quote a string for shell usage while allowing *trusted* parameter expansion.
- *
- * This is intentionally narrow: it is ONLY used for internal manifest templates like
- * "${TARGET_HOME:-/home/ubuntu}/..." where we want runtime expansion on the target host.
- *
- * SECURITY:
- * - Refuses command substitution/backticks so we never generate strings that can execute
- *   arbitrary commands during installer runtime.
- */
-function shellQuoteAllowParamExpansion(str: string): string {
-  if (str.includes('$(') || str.includes('`')) {
-    throw new Error(
-      `SECURITY: Refusing to generate expandable shell arg containing command substitution: ${JSON.stringify(str)}`
-    );
-  }
-
-  const escaped = str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-  return `"${escaped}"`;
-}
-
-/**
  * Quote verified-installer args.
  *
  * Most args are treated as literal words (single-quoted) to prevent injection.
- * For a small allowlist of runtime templates (TARGET_USER/TARGET_HOME), we use
- * double quotes to allow parameter expansion.
+ * However, we allow specific runtime variables to be expanded:
+ * - TARGET_HOME
+ * - TARGET_USER
+ *
+ * SECURITY:
+ * - We do NOT use a blacklist (e.g. banning `$(`).
+ * - We use a strict tokenizer: allowed variables are wrapped in double quotes `"..."`,
+ *   and EVERYTHING else is wrapped in single quotes `'...'`.
+ * - This ensures that input like `$(rm -rf /)` is treated as a literal string `'$(rm -rf /)'`.
  */
 function shellQuoteVerifiedInstallerArg(str: string): string {
-  if (
-    str.includes('${TARGET_HOME') ||
-    str.includes('$TARGET_HOME') ||
-    str.includes('${TARGET_USER') ||
-    str.includes('$TARGET_USER')
-  ) {
-    return shellQuoteAllowParamExpansion(str);
-  }
-  return shellQuote(str);
+  // Regex to capture allowed variables.
+  // Order matters: match longest tokens first (${VAR} before $VAR).
+  // capturing group () is included in split output.
+  const variablePattern = /(\$\{TARGET_HOME\}|\$TARGET_HOME|\$\{TARGET_USER\}|\$TARGET_USER)/g;
+
+  const parts = str.split(variablePattern);
+
+  return parts
+    .map((part) => {
+      // If it's one of our allowed variables, wrap in double quotes to allow expansion
+      if (
+        part === '${TARGET_HOME}' ||
+        part === '$TARGET_HOME' ||
+        part === '${TARGET_USER}' ||
+        part === '$TARGET_USER'
+      ) {
+        return `"${part}"`;
+      }
+      // Otherwise, strict single quoting
+      // Optimization: skip empty parts (result of split) to avoid empty '' strings
+      if (part === '') return '';
+      return shellQuote(part);
+    })
+    .join('');
 }
 
 /**
@@ -336,6 +337,15 @@ function encodeDoctorCommand(cmd: string): string {
     .replace(/\\/g, '\\\\')
     .replace(/\t/g, '\\t')
     .replace(/\r?\n/g, '\\n');
+}
+
+/**
+ * Sanitize a string for use in a bash comment.
+ * Replaces newlines and other control characters with spaces to prevent
+ * breaking the generated script structure.
+ */
+function sanitizeForBashComment(str: string): string {
+  return str.replace(/[\r\n\t]+/g, ' ').trim();
 }
 
 function indentLines(lines: string[], spaces: number): string[] {
@@ -926,7 +936,7 @@ function generateCategoryScript(manifest: Manifest, category: ModuleCategory): s
   // Generate individual install functions
   for (const module of sortedModules) {
     const funcName = toFunctionName(module.id);
-    lines.push(`# ${module.description}`);
+    lines.push(`# ${sanitizeForBashComment(module.description)}`);
     lines.push(`${funcName}() {`);
     lines.push(`    local module_id="${module.id}"`);
     lines.push('    acfs_require_contract "module:${module_id}" || return 1');

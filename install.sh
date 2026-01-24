@@ -3006,11 +3006,41 @@ install_languages_legacy_tools() {
 
     # Install additional cargo tools (dust, lsd, etc.)
     # These are better than apt versions and always up-to-date
-    _cargo_install "du-dust" "dust"      # Better du replacement
-    _cargo_install "lsd"                  # Better ls replacement
-    _cargo_install "bat" "bat"            # Better cat replacement (may already be from apt)
-    _cargo_install "fd-find" "fd"         # Better find replacement (may already be from apt)
-    _cargo_install "ripgrep" "rg"         # Better grep (may already be from apt, but cargo is newer)
+    # Optimization: batch install all needed tools in one cargo command
+    # This downloads the index once and allows parallel compilation
+    local cargo_tools_needed=()
+    local -A cargo_bin_map=(
+        ["du-dust"]="dust"
+        ["lsd"]="lsd"
+        ["bat"]="bat"
+        ["fd-find"]="fd"
+        ["ripgrep"]="rg"
+    )
+
+    # Collect tools that need to be installed
+    for tool in du-dust lsd bat fd-find ripgrep; do
+        local bin_name="${cargo_bin_map[$tool]}"
+        if [[ ! -x "$TARGET_HOME/.cargo/bin/$bin_name" ]]; then
+            cargo_tools_needed+=("$tool")
+        fi
+    done
+
+    # Batch install if there are tools to install
+    if [[ ${#cargo_tools_needed[@]} -gt 0 ]] && [[ -x "$cargo_bin" ]]; then
+        log_detail "Batch installing ${#cargo_tools_needed[@]} cargo tools: ${cargo_tools_needed[*]}"
+        if try_step "Batch installing cargo tools" run_as_target "$cargo_bin" install "${cargo_tools_needed[@]}" --locked 2>/dev/null || \
+           try_step "Batch installing cargo tools (no --locked)" run_as_target "$cargo_bin" install "${cargo_tools_needed[@]}"; then
+            log_success "Cargo tools batch installed: ${cargo_tools_needed[*]}"
+        else
+            # Fallback: install individually if batch fails
+            log_warn "Batch install failed, falling back to individual installs"
+            _cargo_install "du-dust" "dust"
+            _cargo_install "lsd"
+            _cargo_install "bat" "bat"
+            _cargo_install "fd-find" "fd"
+            _cargo_install "ripgrep" "rg"
+        fi
+    fi
 
     # Atuin (install as target user)
     # Check both the data directory and the binary location
@@ -3171,8 +3201,23 @@ install_agents_phase() {
     fi
 
     # Codex CLI (install as target user)
+    # Uses fallback chain: @latest -> unversioned -> pinned 0.87.0
+    # npm can 404 briefly after publishing; pinned version is reliable fallback
     log_detail "Installing Codex CLI for $TARGET_USER"
-    try_step "Installing Codex CLI" run_as_target "$bun_bin" install -g --trust @openai/codex@latest || true
+    try_step "Installing Codex CLI" run_as_target bash -c '
+        set -euo pipefail
+        bun_bin="$1"
+        CODEX_FALLBACK_VERSION="0.87.0"
+        if "$bun_bin" install -g --trust @openai/codex@latest 2>/dev/null; then
+            exit 0
+        fi
+        echo "WARN: Codex CLI @latest failed; retrying unversioned" >&2
+        if "$bun_bin" install -g --trust @openai/codex 2>/dev/null; then
+            exit 0
+        fi
+        echo "WARN: Codex CLI unversioned failed; retrying pinned $CODEX_FALLBACK_VERSION" >&2
+        "$bun_bin" install -g --trust "@openai/codex@$CODEX_FALLBACK_VERSION"
+    ' _ "$bun_bin" || true
 
     # Create wrapper script that uses bun as runtime (avoids node PATH issues)
     local codex_bin_local="$TARGET_HOME/.local/bin/codex"
@@ -4318,7 +4363,10 @@ main() {
     detect_environment
 
     # Source generated installers for manifest-driven execution (mjt.5.6)
-    source_generated_installers
+    # Skip when we're only listing/printing plan or running dry-run/print-only modes.
+    if [[ "$LIST_MODULES" != "true" ]] && [[ "$PRINT_PLAN_MODE" != "true" ]] && [[ "$DRY_RUN" != "true" ]] && [[ "$PRINT_MODE" != "true" ]]; then
+        source_generated_installers
+    fi
 
     # Map legacy --skip-* flags to SKIP_MODULES (mjt.5.5)
     # This allows --skip-postgres, --skip-vault, --skip-cloud to work
