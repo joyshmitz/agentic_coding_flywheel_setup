@@ -346,12 +346,13 @@ acfs() {
         echo "ACFS version unknown"
       fi
       ;;
-    help|-h|--help|*)
+    help|-h|--help)
       echo "ACFS - Agentic Coding Flywheel Setup"
       echo ""
       echo "Usage: acfs <command>"
       echo ""
       echo "Commands:"
+      echo "  newproj         Create new project with git, bd, claude settings"
       echo "  info            Quick system overview (hostname, IP, uptime, progress)"
       echo "  cheatsheet      Command reference (aliases, shortcuts)"
       echo "  dashboard, dash <generate|serve> - Static HTML dashboard"
@@ -368,6 +369,16 @@ acfs() {
       echo "  --html          Self-contained HTML dashboard (info only)"
       echo "  --minimal       Just the essentials (info only)"
       ;;
+    *)
+      # Pass unknown commands to the binary (supports newproj and future commands)
+      if [[ -x "$acfs_bin" ]]; then
+        "$acfs_bin" "$cmd" "$@"
+      else
+        echo "Error: Unknown command '$cmd' and acfs binary not found at $acfs_bin"
+        echo "Try 'acfs help' for available commands."
+        return 1
+      fi
+      ;;
   esac
 }
 
@@ -381,8 +392,8 @@ alias bdev='bun run dev'
 alias bl='bun run lint'
 alias bt='bun run type-check'
 
-# Beads shortcuts
-alias br='bd'
+# Beads shortcuts: alias old bd command to new br (beads_rust)
+alias bd='br'
 
 # MCP Agent Mail helper (installer usually adds `am`, but keep a fallback)
 alias am='cd ~/mcp_agent_mail 2>/dev/null && scripts/run_server_with_token.sh || echo "mcp_agent_mail not found in ~/mcp_agent_mail"'

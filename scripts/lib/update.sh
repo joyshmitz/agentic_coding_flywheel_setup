@@ -150,7 +150,7 @@ get_version() {
         vercel)
             version=$(vercel --version 2>/dev/null || echo "unknown")
             ;;
-        ntm|ubs|bv|cass|cm|caam|slb|ru|dcg|apr|pt|xf|jfp|ms)
+        ntm|ubs|bv|cass|cm|caam|slb|ru|dcg|apr|pt|xf|jfp|ms|br|rch|wa|brenner)
             version=$("$tool" --version 2>/dev/null | head -1 || echo "unknown")
             ;;
         sg|lsd|dust|tldr)
@@ -2090,6 +2090,9 @@ EOF
 main() {
     # Ensure PATH includes user tool directories
     ensure_path
+
+    # Save original arguments before parsing (for re-exec after self-update)
+    local -a ACFS_UPDATE_ARGS=("$@")
 
     # Parse arguments
     while [[ $# -gt 0 ]]; do

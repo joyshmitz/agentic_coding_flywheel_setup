@@ -28,6 +28,9 @@ import { JfpLesson } from "./jfp-lesson";
 import { PtLesson } from "./pt-lesson";
 import { XfLesson } from "./xf-lesson";
 import { SrpsLesson } from "./srps-lesson";
+import { RchLesson } from "./rch-lesson";
+import { WaLesson } from "./wa-lesson";
+import { BrennerLesson } from "./brenner-lesson";
 
 // Ukrainian lesson components
 import { MsLessonUk } from "./ms-lesson.uk";
@@ -97,6 +100,12 @@ export function renderLessonComponent(slug: string, locale?: string): React.Reac
       return locale === "uk" ? <XfLessonUk /> : <XfLesson />;
     case "srps":
       return locale === "uk" ? <SrpsLessonUk /> : <SrpsLesson />;
+    case "rch":
+      return <RchLesson />;
+    case "wa":
+      return <WaLesson />;
+    case "brenner":
+      return <BrennerLesson />;
     default:
       return null;
   }

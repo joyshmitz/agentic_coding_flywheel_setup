@@ -775,3 +775,188 @@ fetch_with_retry() {
 
     retry_with_backoff "Fetching $url" curl "${curl_args[@]}" "$@" "$url"
 }
+
+# ============================================================
+# Tool Installation Tracking (bd-1ega.14)
+# Tracks failed tool installations for summary and retry
+# ============================================================
+
+# Array of failed tool names
+declare -ga ACFS_FAILED_TOOLS=()
+
+# Associative array of tool -> error message
+declare -gA ACFS_FAILED_TOOL_ERRORS=()
+
+# Array of successful tool names
+declare -ga ACFS_SUCCESSFUL_TOOLS=()
+
+# Track a failed tool installation
+# Usage: track_failed_tool <tool_name> [error_message]
+# Example: track_failed_tool "meta_skill" "GitHub releases not available"
+track_failed_tool() {
+    local tool_name="$1"
+    local error_message="${2:-Installation failed}"
+
+    ACFS_FAILED_TOOLS+=("$tool_name")
+    ACFS_FAILED_TOOL_ERRORS["$tool_name"]="$error_message"
+
+    if type -t log_warn &>/dev/null; then
+        log_warn "$tool_name installation failed: $error_message (will continue)"
+    fi
+}
+
+# Track a successful tool installation
+# Usage: track_successful_tool <tool_name>
+track_successful_tool() {
+    local tool_name="$1"
+    ACFS_SUCCESSFUL_TOOLS+=("$tool_name")
+}
+
+# Install a tool with tracking
+# Usage: install_tool_tracked <tool_name> <install_function>
+# Returns: 0 on success, 1 on failure (but continues)
+#
+# Example:
+#   install_tool_tracked "meta_skill" install_meta_skill
+#
+install_tool_tracked() {
+    local tool_name="$1"
+    local install_func="$2"
+
+    if type -t log_info &>/dev/null; then
+        log_info "Installing $tool_name..."
+    fi
+
+    local exit_code=0
+    if "$install_func" 2>&1; then
+        track_successful_tool "$tool_name"
+        if type -t log_success &>/dev/null; then
+            log_success "$tool_name installed successfully"
+        fi
+        return 0
+    fi
+    exit_code=$?
+
+    track_failed_tool "$tool_name" "Exit code $exit_code"
+    return 1
+}
+
+# Get count of failed tools
+# Usage: get_failed_tool_count
+# Outputs: Number of failed tools
+get_failed_tool_count() {
+    echo "${#ACFS_FAILED_TOOLS[@]}"
+}
+
+# Get count of successful tools
+# Usage: get_successful_tool_count
+get_successful_tool_count() {
+    echo "${#ACFS_SUCCESSFUL_TOOLS[@]}"
+}
+
+# Check if any tools failed
+# Usage: has_failed_tools
+# Returns: 0 if tools failed, 1 otherwise
+has_failed_tools() {
+    [[ ${#ACFS_FAILED_TOOLS[@]} -gt 0 ]]
+}
+
+# Print installation summary
+# Usage: print_install_summary
+print_install_summary() {
+    local success_count="${#ACFS_SUCCESSFUL_TOOLS[@]}"
+    local fail_count="${#ACFS_FAILED_TOOLS[@]}"
+
+    echo ""
+    echo "=== INSTALLATION SUMMARY ==="
+    echo "Successful: $success_count tools"
+    echo "Failed: $fail_count tools"
+
+    if [[ $fail_count -gt 0 ]]; then
+        echo ""
+        echo "Failed tools:"
+        for tool in "${ACFS_FAILED_TOOLS[@]}"; do
+            local error="${ACFS_FAILED_TOOL_ERRORS[$tool]:-Unknown error}"
+            echo "  - $tool: $error"
+        done
+        echo ""
+        echo "To retry failed tools:"
+        echo "  acfs install --retry-failed"
+    fi
+}
+
+# Get list of failed tools as space-separated string
+# Usage: get_failed_tools_list
+# Outputs: Space-separated list of failed tools
+get_failed_tools_list() {
+    echo "${ACFS_FAILED_TOOLS[*]}"
+}
+
+# Get list of failed tools as JSON array
+# Usage: get_failed_tools_json
+get_failed_tools_json() {
+    if [[ ${#ACFS_FAILED_TOOLS[@]} -eq 0 ]]; then
+        echo "[]"
+        return 0
+    fi
+
+    local json="["
+    local first=true
+    for tool in "${ACFS_FAILED_TOOLS[@]}"; do
+        local error="${ACFS_FAILED_TOOL_ERRORS[$tool]:-Unknown error}"
+        # Escape JSON
+        error="${error//\\/\\\\}"
+        error="${error//\"/\\\"}"
+        error="${error//$'\n'/\\n}"
+
+        if [[ "$first" == "true" ]]; then
+            first=false
+        else
+            json+=","
+        fi
+        json+="{\"tool\":\"$tool\",\"error\":\"$error\"}"
+    done
+    json+="]"
+    echo "$json"
+}
+
+# Clear all installation tracking state
+# Usage: clear_install_tracking
+clear_install_tracking() {
+    ACFS_FAILED_TOOLS=()
+    ACFS_FAILED_TOOL_ERRORS=()
+    ACFS_SUCCESSFUL_TOOLS=()
+}
+
+# Save failed tools to file for retry
+# Usage: save_failed_tools_for_retry [file_path]
+# Default file: $HOME/.acfs/failed_tools.txt
+save_failed_tools_for_retry() {
+    local file_path="${1:-$HOME/.acfs/failed_tools.txt}"
+
+    if [[ ${#ACFS_FAILED_TOOLS[@]} -eq 0 ]]; then
+        rm -f "$file_path" 2>/dev/null || true
+        return 0
+    fi
+
+    mkdir -p "$(dirname "$file_path")" 2>/dev/null || true
+    printf '%s\n' "${ACFS_FAILED_TOOLS[@]}" > "$file_path"
+}
+
+# Load failed tools for retry
+# Usage: load_failed_tools_for_retry [file_path]
+# Returns: 0 if file exists and loaded, 1 otherwise
+load_failed_tools_for_retry() {
+    local file_path="${1:-$HOME/.acfs/failed_tools.txt}"
+
+    if [[ ! -f "$file_path" ]]; then
+        return 1
+    fi
+
+    ACFS_FAILED_TOOLS=()
+    while IFS= read -r tool; do
+        [[ -n "$tool" ]] && ACFS_FAILED_TOOLS+=("$tool")
+    done < "$file_path"
+
+    return 0
+}

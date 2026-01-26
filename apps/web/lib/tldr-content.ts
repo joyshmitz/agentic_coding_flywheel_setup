@@ -123,6 +123,52 @@ export const tldrFlywheelTools: TldrFlywheelTool[] = [
     ],
   },
   {
+    id: "br",
+    name: "beads_rust",
+    shortName: "BR",
+    href: "https://github.com/Dicklesworthstone/beads_rust",
+    icon: "ListTodo",
+    color: "from-amber-500 to-orange-600",
+    category: "core",
+    stars: 128,
+    whatItDoes:
+      "Local-first issue tracking for AI agents. Issues live in .beads/*.jsonl files that commit with your code. Full dependency graph with blocking/blocked-by relationships.",
+    whyItsUseful:
+      "Your issues travel with your repo - no external service required. Agents can create, update, and close issues with simple CLI commands. The bd alias provides backward compatibility with the original Go version.",
+    implementationHighlights: [
+      "Rust port of the original Go beads CLI",
+      "Issues stored in JSONL - human readable, git friendly",
+      "Auto-flush syncs state to disk automatically",
+      "Full dependency graph with blocks/blocked-by",
+    ],
+    synergies: [
+      {
+        toolId: "bv",
+        description: "BV visualizes and analyzes issues created by br",
+      },
+      {
+        toolId: "mail",
+        description: "Task updates notify agents via mail",
+      },
+      {
+        toolId: "ntm",
+        description: "NTM spawns agents that pick work from beads",
+      },
+    ],
+    techStack: ["Rust", "Serde", "JSONL"],
+    keyFeatures: [
+      "Local-first issue storage",
+      "Dependency graph tracking",
+      "Labels, priorities, comments",
+      "JSON output for agents",
+    ],
+    useCases: [
+      "Tracking tasks that travel with the code",
+      "Building dependency graphs for complex projects",
+      "Enabling agents to manage their own work queues",
+    ],
+  },
+  {
     id: "cass",
     name: "Coding Agent Session Search",
     shortName: "CASS",
@@ -527,6 +573,190 @@ export const tldrFlywheelTools: TldrFlywheelTool[] = [
       "AI agents querying skills via MCP during sessions",
       "Building team-wide skill libraries with effectiveness tracking",
       "Packaging and sharing skills via signed bundles",
+    ],
+  },
+  {
+    id: "rch",
+    name: "Remote Compilation Helper",
+    shortName: "RCH",
+    href: "https://github.com/Dicklesworthstone/remote_compilation_helper",
+    icon: "Cpu",
+    color: "from-indigo-500 to-blue-600",
+    category: "core",
+    stars: 35,
+    whatItDoes:
+      "Offloads Rust compilation to remote workers via transparent cargo interception. Syncs source via rsync, builds remotely, and streams artifacts back.",
+    whyItsUseful:
+      "Multi-agent swarms trigger many concurrent builds. RCH transparently routes cargo commands to powerful remote machines, preventing local CPU bottlenecks and dramatically reducing build times.",
+    implementationHighlights: [
+      "Claude Code hook intercepts cargo commands",
+      "rsync + zstd for fast source synchronization",
+      "Worker pool with priority-based scheduling",
+      "Artifact streaming with incremental updates",
+    ],
+    synergies: [
+      {
+        toolId: "ntm",
+        description: "Agents in NTM sessions use RCH for builds",
+      },
+      {
+        toolId: "ru",
+        description: "RU syncs repos that RCH then builds remotely",
+      },
+      {
+        toolId: "bv",
+        description: "Build tasks can be tracked via beads",
+      },
+    ],
+    techStack: ["Rust", "rsync", "zstd", "SSH", "Claude Code hooks"],
+    keyFeatures: [
+      "Transparent cargo interception",
+      "Multi-worker pool with priority scheduling",
+      "Incremental artifact sync",
+      "Daemon mode with status monitoring",
+    ],
+    useCases: [
+      "Offloading builds during multi-agent sessions",
+      "Reducing local CPU usage during heavy compilation",
+      "Distributing builds across powerful remote servers",
+    ],
+  },
+  {
+    id: "wa",
+    name: "WezTerm Automata",
+    shortName: "WA",
+    href: "https://github.com/Dicklesworthstone/wezterm_automata",
+    icon: "Monitor",
+    color: "from-cyan-500 to-teal-600",
+    category: "core",
+    stars: 42,
+    whatItDoes:
+      "Terminal hypervisor that captures pane output in real-time, detects agent state transitions through pattern matching, and enables event-driven automation across multiple AI coding agents.",
+    whyItsUseful:
+      "When running multiple AI agents in WezTerm, you need to know when they hit rate limits, complete tasks, or need approval. WA observes all panes with sub-50ms latency and triggers automated responses.",
+    implementationHighlights: [
+      "Real-time delta extraction (sub-50ms latency)",
+      "Multi-agent pattern detection engine",
+      "FTS5-powered full-text search with BM25 ranking",
+      "Safety policy engine with capability gates",
+    ],
+    synergies: [
+      {
+        toolId: "ntm",
+        description: "WA observes agents spawned by NTM",
+      },
+      {
+        toolId: "mail",
+        description: "State changes trigger Agent Mail notifications",
+      },
+      {
+        toolId: "bv",
+        description: "Task completions can update bead status",
+      },
+    ],
+    techStack: ["Rust", "WezTerm API", "SQLite FTS5", "Pattern matching"],
+    keyFeatures: [
+      "Real-time terminal observation",
+      "Intelligent pattern detection",
+      "Robot Mode JSON API",
+      "Event-driven automation",
+    ],
+    useCases: [
+      "Detecting agent rate limits and errors",
+      "Coordinating multi-agent workflows",
+      "Searching across captured terminal sessions",
+    ],
+  },
+  {
+    id: "brenner",
+    name: "Brenner Bot",
+    shortName: "Brenner",
+    href: "https://github.com/Dicklesworthstone/brenner_bot",
+    icon: "FlaskConical",
+    color: "from-rose-500 to-pink-600",
+    category: "core",
+    stars: 28,
+    whatItDoes:
+      "Research orchestration platform inspired by Sydney Brenner's scientific methodology. Coordinates multi-agent AI research sessions with systematic problem formulation and rigorous constraint-based reasoning.",
+    whyItsUseful:
+      "Complex research problems need structured approaches. Brenner Bot combines a curated corpus with multi-model AI syntheses to enable collaborative scientific research conversations with proper citation tracking.",
+    implementationHighlights: [
+      "236-section transcript corpus with stable §n citations",
+      "Multi-model syntheses from Claude, GPT, Gemini",
+      "Artifact compiler with 50+ validation rules",
+      "Agent Mail integration for research sessions",
+    ],
+    synergies: [
+      {
+        toolId: "mail",
+        description: "Research sessions coordinate via Agent Mail threads",
+      },
+      {
+        toolId: "ntm",
+        description: "NTM spawns parallel research agents",
+      },
+      {
+        toolId: "cass",
+        description: "Research session history is searchable",
+      },
+    ],
+    techStack: ["TypeScript", "Bun", "Agent Mail", "Multi-model AI"],
+    keyFeatures: [
+      "Primary source corpus with citations",
+      "Multi-agent research sessions",
+      "Discriminative test ranking",
+      "Adversarial critique generation",
+    ],
+    useCases: [
+      "Structured hypothesis generation",
+      "Multi-model research synthesis",
+      "Scientific methodology workflows",
+    ],
+  },
+  {
+    id: "ms",
+    name: "Meta Skill",
+    shortName: "MS",
+    href: "https://github.com/Dicklesworthstone/meta_skill",
+    icon: "BookMarked",
+    color: "from-indigo-500 to-blue-600",
+    category: "core",
+    stars: 35,
+    whatItDoes:
+      "Local-first skill management platform that turns operational knowledge into structured, searchable, reusable artifacts. Provides dual persistence (SQLite + Git), hybrid search, and native AI agent integration via MCP.",
+    whyItsUseful:
+      "As you build expertise across codebases, you need a way to capture and reuse successful patterns. MS indexes SKILL.md files, provides context-aware suggestions with bandit optimization, and exposes skills as native tools for AI agents.",
+    implementationHighlights: [
+      "Dual SQLite + Git persistence for speed and audit trails",
+      "Hybrid BM25 + hash embeddings with Reciprocal Rank Fusion",
+      "UCB bandit algorithm for adaptive suggestions",
+      "MCP server exposing skills as native AI tools",
+    ],
+    synergies: [
+      {
+        toolId: "cm",
+        description: "CM stores playbook rules that MS can query",
+      },
+      {
+        toolId: "cass",
+        description: "Skills can be mined from CASS session history",
+      },
+      {
+        toolId: "bv",
+        description: "Graph analysis via bv for dependency insights",
+      },
+    ],
+    techStack: ["Rust", "SQLite", "Git", "MCP", "Hash Embeddings"],
+    keyFeatures: [
+      "Skill indexing and semantic search",
+      "Context-aware adaptive suggestions",
+      "Multi-machine Git-based sync",
+      "MCP integration for AI agents",
+    ],
+    useCases: [
+      "Capturing operational knowledge as reusable skills",
+      "AI agent augmentation via MCP tools",
+      "Cross-project pattern distribution",
     ],
   },
   // ===========================================================================

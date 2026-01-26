@@ -289,7 +289,7 @@ ${messages.firstTaskSection.codeComments.beadsExplanation}
 ${messages.firstTaskSection.codeComments.conflictWarning}
 git branch beads-sync main
 git push -u origin beads-sync
-bd config set sync.branch beads-sync
+bd config set sync.branch=beads-sync
 
 ${messages.firstTaskSection.codeComments.spawnAgents}
 ntm spawn my-first-project --cc=2 --cod=1 --gmi=1
