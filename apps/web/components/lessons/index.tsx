@@ -33,7 +33,6 @@ import { WaLesson } from "./wa-lesson";
 import { BrennerLesson } from "./brenner-lesson";
 
 // Ukrainian lesson components
-import { MsLessonUk } from "./ms-lesson.uk";
 import { AprLessonUk } from "./apr-lesson.uk";
 import { JfpLessonUk } from "./jfp-lesson.uk";
 import { PtLessonUk } from "./pt-lesson.uk";
@@ -88,8 +87,8 @@ export function renderLessonComponent(slug: string, locale?: string): React.Reac
       return <SlbCaseStudyLesson />;
     case "ru":
       return <RuLesson />;
-    case "meta-skill":
-      return locale === "uk" ? <MsLessonUk /> : <MsLesson />;
+    case "ms":
+      return <MsLesson />;
     case "apr":
       return locale === "uk" ? <AprLessonUk /> : <AprLesson />;
     case "jfp":

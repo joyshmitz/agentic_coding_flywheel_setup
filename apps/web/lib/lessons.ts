@@ -248,6 +248,30 @@ export const LESSONS: Lesson[] = [
     duration: "6 min",
     file: "27_xf.md",
   },
+  {
+    id: 28,
+    slug: "rch",
+    title: "RCH: Remote Code Host",
+    description: "Offload Rust builds to remote workers for faster compilation",
+    duration: "8 min",
+    file: "28_rch.md",
+  },
+  {
+    id: 29,
+    slug: "wa",
+    title: "WA: Wezterm Automata",
+    description: "Coordinate multiple AI agents with real-time terminal observation",
+    duration: "7 min",
+    file: "29_wa.md",
+  },
+  {
+    id: 30,
+    slug: "brenner",
+    title: "Brenner: AI Bot Manager",
+    description: "Orchestrate and monitor AI agent lifecycles",
+    duration: "6 min",
+    file: "30_brenner.md",
+  },
 ];
 
 /** Total number of lessons */

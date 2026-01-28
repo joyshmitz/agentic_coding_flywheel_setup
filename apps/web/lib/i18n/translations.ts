@@ -56,6 +56,8 @@ import { agentsLoginLessonMessages } from "../lessons/agents-login-messages";
 import { agentsLoginLessonMessagesUk } from "../lessons/agents-login-messages.uk";
 import { cassLessonMessages } from "../lessons/cass-messages";
 import { cassLessonMessagesUk } from "../lessons/cass-messages.uk";
+import { msMessages } from "../lessons/ms-messages";
+import { msMessagesUk } from "../lessons/ms-messages.uk";
 
 // Wave 3 Development Lessons
 import { ubsLessonMessages } from "../lessons/ubs-messages";
@@ -561,6 +563,13 @@ export function getAgentsLoginLessonMessages(locale: Locale) {
  */
 export function getCassLessonMessages(locale: Locale) {
   return locale === "uk" ? cassLessonMessagesUk : cassLessonMessages;
+}
+
+/**
+ * Get Meta Skill lesson messages for the specified locale
+ */
+export function getMsLessonMessages(locale: Locale) {
+  return locale === "uk" ? msMessagesUk : msMessages;
 }
 
 /**
