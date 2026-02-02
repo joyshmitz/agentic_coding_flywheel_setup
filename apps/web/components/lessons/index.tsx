@@ -31,6 +31,8 @@ import { SrpsLesson } from "./srps-lesson";
 import { RchLesson } from "./rch-lesson";
 import { WaLesson } from "./wa-lesson";
 import { BrennerLesson } from "./brenner-lesson";
+import { GiilLesson } from "./giil-lesson";
+import { S2pLesson } from "./s2p-lesson";
 
 // Ukrainian lesson components
 import { AprLessonUk } from "./apr-lesson.uk";
@@ -105,6 +107,10 @@ export function renderLessonComponent(slug: string, locale?: string): React.Reac
       return <WaLesson />;
     case "brenner":
       return <BrennerLesson />;
+    case "giil":
+      return <GiilLesson />;
+    case "s2p":
+      return <S2pLesson />;
     default:
       return null;
   }
@@ -140,4 +146,9 @@ export {
   PtLesson,
   XfLesson,
   SrpsLesson,
+RchLesson,
+  WaLesson,
+  BrennerLesson,
+  GiilLesson,
+  S2pLesson,
 };

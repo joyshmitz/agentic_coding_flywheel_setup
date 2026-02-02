@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Sparkles,
@@ -11,8 +11,11 @@ import {
   ShieldCheck,
   Code,
   Wifi,
+  Pin,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CommandCard } from "@/components/command-card";
 import { AlertCard, OutputPreview, DetailsSection } from "@/components/alert-card";
 import { TrackedLink } from "@/components/tracked-link";
@@ -30,7 +33,21 @@ import {
 import { Jargon } from "@/components/jargon";
 import { useLocale, getRunInstallerMessages } from "@/lib/i18n";
 
-const INSTALL_COMMAND = `curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/install.sh?$(date +%s)" | bash -s -- --yes --mode vibe`;
+// Base URL for raw GitHub content
+const GITHUB_RAW_BASE = "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup";
+
+// Build install command based on options
+function buildInstallCommand(usePinnedRef: boolean, pinnedRef: string): string {
+  const ref = usePinnedRef && pinnedRef ? pinnedRef : "main";
+  const url = `${GITHUB_RAW_BASE}/${ref}/install.sh?$(date +%s)`;
+
+  if (usePinnedRef && pinnedRef) {
+    // With pinned ref: set ACFS_REF env var so installer uses exact commit
+    return `curl -fsSL "${url}" | ACFS_REF="${pinnedRef}" bash -s -- --yes --mode vibe`;
+  }
+  // Default: use main branch (always gets latest)
+  return `curl -fsSL "${url}" | bash -s -- --yes --mode vibe`;
+}
 
 // WHAT_IT_INSTALLS is static data (tool names are not translated)
 
@@ -39,6 +56,16 @@ export default function RunInstallerPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const { locale } = useLocale();
   const messages = getRunInstallerMessages(locale);
+
+  // Pinned ref state (bd-31ps.8.2)
+  const [usePinnedRef, setUsePinnedRef] = useState(false);
+  const [pinnedRef, setPinnedRef] = useState("main");
+
+  // Build command dynamically based on pinning options
+  const installCommand = useMemo(
+    () => buildInstallCommand(usePinnedRef, pinnedRef),
+    [usePinnedRef, pinnedRef]
+  );
 
   // Analytics tracking for this wizard step
   const { markComplete } = useWizardAnalytics({
@@ -119,8 +146,55 @@ export default function RunInstallerPage() {
         <h2 className="text-xl font-semibold">
           {messages.command.title}
         </h2>
+
+        {/* Pinned ref toggle (bd-31ps.8.2) */}
+        <div className="rounded-lg border border-border/50 bg-card/50 p-4 space-y-3">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="pin-ref"
+              checked={usePinnedRef}
+              onCheckedChange={(checked) => setUsePinnedRef(checked === true)}
+              className="mt-0.5"
+            />
+            <div className="flex-1 space-y-1">
+              <label
+                htmlFor="pin-ref"
+                className="flex items-center gap-2 text-sm font-medium cursor-pointer"
+              >
+                <Pin className="h-4 w-4 text-muted-foreground" />
+                Pin to specific version
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Use a specific commit or tag for reproducible installs across multiple machines.
+              </p>
+            </div>
+          </div>
+
+          {usePinnedRef && (
+            <div className="ml-7 space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={pinnedRef}
+                  onChange={(e) => setPinnedRef(e.target.value)}
+                  placeholder="main, v1.0.0, or commit SHA"
+                  className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-mono placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <span>
+                  Use <code className="rounded bg-muted px-1 py-0.5">main</code> for latest,
+                  a tag like <code className="rounded bg-muted px-1 py-0.5">v1.0.0</code> for stable releases,
+                  or a full SHA for exact reproducibility.
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
         <CommandCard
-          command={INSTALL_COMMAND}
+command={installCommand}
           description={messages.command.desc}
           runLocation="vps"
           showCheckbox
@@ -200,9 +274,16 @@ export default function RunInstallerPage() {
               </p>
             </div>
             <div>
-              <code className="text-[oklch(0.75_0.18_195)]">| bash</code>
+              <code className="text-[oklch(0.75_0.18_195)]">{usePinnedRef ? `| ACFS_REF="${pinnedRef}" bash` : "| bash"}</code>
               <p className="mt-1 font-sans text-muted-foreground">
-                {messages.commandBreakdown.pipe}
+{messages.commandBreakdown.pipe}
+                {usePinnedRef && (
+                  <>
+                    {" "}The <code className="text-foreground/80">ACFS_REF</code> environment variable
+                    pins the installer to version <code className="text-foreground/80">{pinnedRef}</code>,
+                    ensuring reproducible installs across machines.
+                  </>
+                )}
               </p>
             </div>
             <div>

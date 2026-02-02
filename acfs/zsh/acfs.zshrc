@@ -251,6 +251,17 @@ acfs() {
   shift 1 2>/dev/null || true
 
   case "$cmd" in
+    newproj|new)
+      if [[ -f "$acfs_home/scripts/lib/newproj.sh" ]]; then
+        bash "$acfs_home/scripts/lib/newproj.sh" "$@"
+      elif [[ -x "$acfs_bin" ]]; then
+        "$acfs_bin" newproj "$@"
+      else
+        echo "Error: newproj.sh not found"
+        echo "Re-run the ACFS installer to get the latest scripts"
+        return 1
+      fi
+      ;;
     services-setup|services|setup)
       if [[ -f "$acfs_home/scripts/services-setup.sh" ]]; then
         bash "$acfs_home/scripts/services-setup.sh" "$@"
@@ -295,7 +306,18 @@ acfs() {
         return 1
       fi
       ;;
-    continue|status|progress)
+    status)
+      if [[ -f "$acfs_home/scripts/lib/status.sh" ]]; then
+        bash "$acfs_home/scripts/lib/status.sh" "$@"
+      elif [[ -x "$acfs_bin" ]]; then
+        "$acfs_bin" status "$@"
+      else
+        echo "Error: status.sh not found"
+        echo "Re-run the ACFS installer to get the latest scripts"
+        return 1
+      fi
+      ;;
+    continue|progress)
       if [[ -f "$acfs_home/scripts/lib/continue.sh" ]]; then
         bash "$acfs_home/scripts/lib/continue.sh" "$@"
       elif [[ -x "$acfs_bin" ]]; then
@@ -339,6 +361,17 @@ acfs() {
         return 1
       fi
       ;;
+    support-bundle|bundle)
+      if [[ -f "$acfs_home/scripts/lib/support.sh" ]]; then
+        bash "$acfs_home/scripts/lib/support.sh" "$@"
+      elif [[ -x "$acfs_bin" ]]; then
+        "$acfs_bin" support-bundle "$@"
+      else
+        echo "Error: support.sh not found"
+        echo "Re-run the ACFS installer to get the latest scripts"
+        return 1
+      fi
+      ;;
     version|-v|--version)
       if [[ -f "$acfs_home/VERSION" ]]; then
         cat "$acfs_home/VERSION"
@@ -352,14 +385,17 @@ acfs() {
       echo "Usage: acfs <command>"
       echo ""
       echo "Commands:"
-      echo "  newproj         Create new project with git, bd, claude settings"
+      echo "  newproj         Create new project (git, bd, AGENTS.md, Claude settings)"
+      echo "                  Use 'acfs newproj -i' for interactive TUI wizard"
       echo "  info            Quick system overview (hostname, IP, uptime, progress)"
       echo "  cheatsheet      Command reference (aliases, shortcuts)"
       echo "  dashboard, dash <generate|serve> - Static HTML dashboard"
       echo "  continue        View installation progress (after Ubuntu upgrade)"
       echo "  services-setup  Configure AI agents and cloud services"
       echo "  doctor          Check system health and tool status"
+      echo "  status          Quick one-line health summary (fast, no network)"
       echo "  session         List/export/import agent sessions (cass)"
+      echo "  support-bundle  Collect diagnostic data for troubleshooting"
       echo "  update          Update ACFS tools to latest versions"
       echo "  version         Show ACFS version"
       echo "  help            Show this help message"

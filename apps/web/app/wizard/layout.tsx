@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
-import { Terminal, Home, ChevronLeft, ChevronRight } from "lucide-react";
+import { Terminal, Home, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Stepper, StepperMobile } from "@/components/stepper";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { HelpPanel } from "@/components/wizard/HelpPanel";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { WIZARD_STEPS, getStepBySlug } from "@/lib/wizardSteps";
-import { detectOS, getUserOS, setUserOS, getVPSIP } from "@/lib/userPreferences";
+import { useStepValidation } from "@/lib/hooks/useStepValidation";
 import { withCurrentSearch } from "@/lib/utils";
 import { useLocale, getCommonMessages } from "@/lib/i18n";
 
@@ -32,57 +34,24 @@ export default function WizardLayout({
   const prevStep = WIZARD_STEPS.find((s) => s.id === currentStep - 1);
   const nextStep = WIZARD_STEPS.find((s) => s.id === currentStep + 1);
 
-  const ensureOSSelected = useCallback((): boolean => {
-    const existing = getUserOS();
-    if (existing) return true;
-
-    const detected = detectOS();
-    if (detected) {
-      return setUserOS(detected);
-    }
-
-    return false;
-  }, []);
+  const { validate, validationErrors, clearErrors } = useStepValidation();
 
   const handleStepClick = useCallback(
     (stepId: number) => {
       const step = WIZARD_STEPS.find((s) => s.id === stepId);
-      if (step) {
-        // Step 1 is a hard prerequisite for the rest of the wizard.
-        // Users often hit the global "Next" without explicitly clicking an OS card.
-        // Ensure we persist a selection (or block navigation) so later steps don't
-        // immediately redirect back to Step 1.
-        if (currentStep === 1 && stepId > 1) {
-          if (!ensureOSSelected()) {
-            // Scroll to OS selection buttons and add visual feedback
-            const osButtons = document.querySelector('[data-os-selection]');
-            if (osButtons) {
-              osButtons.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            return;
-          }
-        }
+      if (!step) return;
 
-        // Step 5 (Create VPS) requires IP address before proceeding to step 6 (SSH Connect).
-        // The SSH Connect page redirects back if no IP is stored, which looks like a page reload.
-        // Silently block navigation - the page's Continue button has proper validation.
-        if (currentStep === 5 && stepId === 6) {
-          const storedIP = getVPSIP();
-          if (!storedIP) {
-            // Scroll to the IP input section to draw attention
-            const ipInput = document.querySelector('[data-vps-ip-input]');
-            if (ipInput) {
-              ipInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              (ipInput as HTMLElement).focus();
-            }
-            return;
-          }
-        }
-
-        router.push(withCurrentSearch(`/wizard/${step.slug}`));
+      // Validate the current step before allowing forward navigation.
+      // Backward navigation is always allowed (don't block exploration).
+      if (stepId > currentStep) {
+        const result = validate(currentStep);
+        if (!result.valid) return;
       }
+
+      clearErrors();
+      router.push(withCurrentSearch(`/wizard/${step.slug}`));
     },
-    [router, currentStep, ensureOSSelected]
+    [router, currentStep, validate, clearErrors]
   );
 
   const progress = (currentStep / WIZARD_STEPS.length) * 100;
@@ -129,18 +98,21 @@ export default function WizardLayout({
             </div>
 
             {/* Sidebar footer */}
-            <div className="border-t border-border/50 p-4">
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start text-muted-foreground hover:text-foreground"
-              >
-                <Link href="/">
-                  <Home className="mr-2 h-4 w-4" />
-                  {messages.layout.backToHome}
-                </Link>
-              </Button>
+<div className="border-t border-border/50 p-4 space-y-1">
+              <div className="flex items-center justify-between">
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="sm"
+                  className="justify-start text-muted-foreground hover:text-foreground"
+                >
+                  <Link href="/">
+                    <Home className="mr-2 h-4 w-4" />
+                    {messages.layout.backToHome}
+                  </Link>
+                </Button>
+                <ThemeToggle />
+              </div>
             </div>
           </div>
         </aside>
@@ -155,8 +127,17 @@ export default function WizardLayout({
               </div>
               <span className="font-mono text-sm font-bold">Agent Flywheel</span>
             </Link>
-            <div className="flex items-center gap-3">
+<div className="flex items-center gap-1.5">
               <LanguageSwitcher />
+              <HelpPanel currentStep={currentStep} />
+              <ThemeToggle />
+              <Link
+                href="/"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                aria-label="Home"
+              >
+                <Home className="h-4 w-4" />
+              </Link>
               <div className="text-xs text-muted-foreground">
                 {messages.layout.step} <span className="font-mono text-primary">{currentStep}</span> {messages.layout.of} {WIZARD_STEPS.length}
               </div>
@@ -168,13 +149,31 @@ export default function WizardLayout({
             <div className="mx-auto max-w-2xl">
               {/* Step title (desktop) */}
               <div className="mb-8 hidden md:block">
-                <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 font-mono text-xs text-primary">
-                    {currentStep}
-                  </span>
-                  <span>{messages.layout.step} {currentStep} {messages.layout.of} {WIZARD_STEPS.length}</span>
+<div className="mb-2 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 font-mono text-xs text-primary">
+                      {currentStep}
+                    </span>
+                    <span>{messages.layout.step} {currentStep} {messages.layout.of} {WIZARD_STEPS.length}</span>
+                  </div>
+                  <HelpPanel currentStep={currentStep} />
                 </div>
               </div>
+
+              {/* Validation error banner */}
+              {validationErrors.length > 0 && (
+                <div
+                  role="alert"
+                  className="mb-4 flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive animate-in fade-in slide-in-from-top-2 duration-200"
+                >
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <div>
+                    {validationErrors.map((err) => (
+                      <p key={err}>{err}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Page content */}
               <div className="animate-scale-in">{children}</div>

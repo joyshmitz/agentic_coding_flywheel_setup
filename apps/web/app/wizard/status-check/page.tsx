@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { CommandCard } from "@/components/command-card";
+import { CommandCard, CodeBlock } from "@/components/command-card";
 import { AlertCard, OutputPreview } from "@/components/alert-card";
 import { WhereAmICheck } from "@/components/connection-check";
 import { markStepComplete } from "@/lib/wizardSteps";
@@ -136,9 +136,7 @@ export default function StatusCheckPage() {
           <p className="text-sm">
             {messages.reconnectionReminder.sshFirst}
           </p>
-          <code className="mt-1 block overflow-x-auto rounded bg-background/50 px-3 py-2 font-mono text-xs">
-            ssh -i ~/.ssh/acfs_ed25519 ubuntu@YOUR_VPS_IP
-          </code>
+          <CommandCard command="ssh -i ~/.ssh/acfs_ed25519 ubuntu@YOUR_VPS_IP" runLocation="local" className="mt-1" />
           <p className="text-sm text-muted-foreground">
             {messages.reconnectionReminder.readyWhen}
           </p>
@@ -242,6 +240,73 @@ export default function StatusCheckPage() {
             <p className="mt-2 text-xs text-muted-foreground">
               {messages.headlessAuth.note}
             </p>
+          </div>
+        </AlertCard>
+
+{/* Codex-specific auth note */}
+        <AlertCard variant="warning" icon={AlertCircle} title="Codex CLI: Special Headless Setup">
+          <div className="space-y-2">
+            <p>
+              <strong>Codex requires extra steps</strong> because its OAuth callback expects{" "}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">localhost:1455</code>,
+              which doesn&apos;t work on a remote VPS.
+            </p>
+            <p className="text-sm font-medium">Option 1: Device Auth (Recommended)</p>
+            <ol className="list-decimal list-inside space-y-1 text-sm pl-2">
+              <li>Go to <a href="https://chatgpt.com/settings/security" target="_blank" rel="noopener noreferrer" className="text-primary underline">ChatGPT Settings → Security</a></li>
+              <li>Enable &quot;Device code login&quot; (may be in beta)</li>
+              <li>Then run: <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">codex login --device-auth</code></li>
+            </ol>
+            <p className="text-sm font-medium mt-2">Option 2: SSH Tunnel</p>
+            <ol className="list-decimal list-inside space-y-1 text-sm pl-2">
+              <li>On your laptop: <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">ssh -L 1455:localhost:1455 ubuntu@YOUR_VPS_IP</code></li>
+              <li>In that SSH session (on VPS): <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">codex login</code></li>
+              <li>The OAuth redirect will reach your VPS through the tunnel</li>
+            </ol>
+          </div>
+        </AlertCard>
+
+        {/* Wrangler (Cloudflare) headless auth note */}
+        <AlertCard variant="warning" icon={AlertCircle} title="Wrangler: Headless VPS Setup">
+          <div className="space-y-2">
+            <p>
+              <strong>Wrangler requires a browser</strong> for{" "}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">wrangler login</code>,
+              which doesn&apos;t work on a headless VPS.
+            </p>
+            <p className="text-sm font-medium">Solution: Use API Token</p>
+            <ol className="list-decimal list-inside space-y-1 text-sm pl-2">
+              <li>Go to <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">Cloudflare → API Tokens</a></li>
+              <li>Create a token with the permissions you need (e.g., Workers, Pages)</li>
+              <li>Add to your <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~/.zshrc</code>:</li>
+            </ol>
+            <CodeBlock code={`export CLOUDFLARE_API_TOKEN="your-token-here"\nexport CLOUDFLARE_ACCOUNT_ID="your-account-id"`} language="bash" className="mt-1" />
+            <p className="text-xs text-muted-foreground mt-1">
+              Then run <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">source ~/.zshrc</code> or start a new shell.
+            </p>
+          </div>
+        </AlertCard>
+
+        {/* Other cloud tools headless auth */}
+        <AlertCard variant="warning" icon={AlertCircle} title="Supabase & Vercel: Headless VPS Setup">
+          <div className="space-y-2">
+            <p>
+              These CLIs also use browser-based OAuth. For headless VPS, use access tokens instead.
+            </p>
+            <div className="text-sm space-y-2">
+              <p className="font-medium">Supabase:</p>
+              <ol className="list-decimal list-inside space-y-1 pl-2 text-sm">
+                <li>Go to <a href="https://supabase.com/dashboard/account/tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">Supabase → Access Tokens</a></li>
+                <li>Create a token, then add to <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~/.zshrc</code>:</li>
+              </ol>
+              <CodeBlock code={`export SUPABASE_ACCESS_TOKEN="your-token-here"`} language="bash" />
+
+              <p className="font-medium mt-2">Vercel:</p>
+              <ol className="list-decimal list-inside space-y-1 pl-2 text-sm">
+                <li>Go to <a href="https://vercel.com/account/tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">Vercel → Tokens</a></li>
+                <li>Create a token, then use with commands: <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">vercel --token YOUR_TOKEN</code></li>
+              </ol>
+            </div>
           </div>
         </AlertCard>
 
@@ -374,9 +439,7 @@ export default function StatusCheckPage() {
                 <p className="text-sm text-muted-foreground">
                   {messages.guide.whatIfFailed.commandNotFound.content}
                 </p>
-                <code className="mt-1 block overflow-x-auto rounded bg-muted px-2 py-1 font-mono text-xs">
-                  {messages.guide.whatIfFailed.commandNotFound.command}
-                </code>
+<CommandCard command="source ~/.zshrc" runLocation="vps" className="mt-1" />
                 <p className="mt-1 text-sm text-muted-foreground">
                   {messages.guide.whatIfFailed.commandNotFound.after}
                 </p>
@@ -387,9 +450,7 @@ export default function StatusCheckPage() {
                 <p className="text-sm text-muted-foreground">
                   {messages.guide.whatIfFailed.specificToolFailed.content}
                 </p>
-                <code className="mt-1 block overflow-x-auto rounded bg-muted px-2 py-1 font-mono text-xs">
-                  curl -fsSL &quot;https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/install.sh&quot; | bash -s -- --yes --mode vibe
-                </code>
+                <CommandCard command='curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/install.sh" | bash -s -- --yes --mode vibe' runLocation="vps" className="mt-1" />
               </div>
 
               <div>

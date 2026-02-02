@@ -453,7 +453,7 @@ function FlywheelSection() {
             {messages.flywheel.title}
           </h2>
           <p className="mx-auto max-w-2xl text-muted-foreground">
-            {messages.flywheel.subtitle}
+{messages.flywheel.subtitle}
           </p>
         </motion.div>
 

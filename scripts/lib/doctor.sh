@@ -45,6 +45,22 @@ fi
 # Source gum_ui library if available
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Source output formatting library (for TOON support)
+if [[ -f "$SCRIPT_DIR/output.sh" ]]; then
+    # shellcheck source=output.sh
+    source "$SCRIPT_DIR/output.sh"
+fi
+
+# Global format options (set by argument parsing)
+_DOCTOR_OUTPUT_FORMAT=""
+_DOCTOR_SHOW_STATS=false
+
+# Source doctor_fix library for --fix functionality
+if [[ -f "$SCRIPT_DIR/doctor_fix.sh" ]]; then
+    # shellcheck source=doctor_fix.sh
+    source "$SCRIPT_DIR/doctor_fix.sh"
+fi
+
 # Prefer the installed VERSION file when available.
 if [[ -f "$HOME/.acfs/VERSION" ]]; then
     ACFS_VERSION="$(cat "$HOME/.acfs/VERSION" 2>/dev/null || echo "$ACFS_VERSION")"
@@ -87,6 +103,113 @@ elif [[ -f "$HOME/.acfs/scripts/lib/gum_ui.sh" ]]; then
     source "$HOME/.acfs/scripts/lib/gum_ui.sh"
 fi
 
+# ============================================================
+# Fix Suggestion Builder (bd-31ps.5.2)
+# ============================================================
+# Builds copy-pasteable fix suggestions that respect the current
+# install mode (vibe/safe) and pinned ref when known.
+# ============================================================
+
+# Build a fix suggestion command for a given module
+# Usage: build_fix_suggestion <module_id> [--phase <phase_num>]
+# Returns: A copy-pasteable install command
+build_fix_suggestion() {
+    local module_id="$1"
+    shift
+    local phase_flag=""
+
+    # Parse optional --phase argument
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --phase)
+                phase_flag="--only-phase $2"
+                shift 2
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+
+    # Base URL
+    local base_url="https://agent-flywheel.com/install"
+
+    # Build flags based on current state
+    local flags="--yes"
+
+    # Add mode flag (vibe is default, but explicit is clearer)
+    local mode="${ACFS_MODE:-vibe}"
+    flags="$flags --mode $mode"
+
+    # Add module/phase selector
+    if [[ -n "$phase_flag" ]]; then
+        flags="$flags $phase_flag"
+    elif [[ -n "$module_id" ]]; then
+        flags="$flags --only $module_id"
+    fi
+
+    # Build the command
+    # Check if we have a pinned ref from state.json
+    local ref_env=""
+    local state_file="$HOME/.acfs/state.json"
+    if [[ -f "$state_file" ]]; then
+        local pinned_ref=""
+        if command -v jq &>/dev/null; then
+            pinned_ref=$(jq -r '.pinned_ref // empty' "$state_file" 2>/dev/null) || true
+        fi
+        if [[ -n "$pinned_ref" && "$pinned_ref" != "main" ]]; then
+            ref_env="ACFS_REF=\"$pinned_ref\" "
+        fi
+    fi
+
+    echo "curl -fsSL $base_url | ${ref_env}bash -s -- $flags"
+}
+
+# Shorthand for common fix patterns
+fix_for_module() {
+    local module_id="$1"
+    build_fix_suggestion "$module_id"
+}
+
+fix_for_phase() {
+    local phase_num="$1"
+    build_fix_suggestion "" --phase "$phase_num"
+}
+
+# ============================================================
+# Manifest-Derived Checks (bd-31ps.5.1)
+# ============================================================
+# Source generated doctor_checks.sh to get MANIFEST_CHECKS array.
+# This provides comprehensive manifest-driven verification for tools
+# not already covered by the bespoke check functions below.
+# ============================================================
+MANIFEST_CHECKS_LOADED=false
+
+# Source at top level (not inside a function) because doctor_checks.sh uses
+# "declare -a MANIFEST_CHECKS=(...)" which bash scopes as local inside a
+# function.  Top-level sourcing keeps the array globally visible.
+_MANIFEST_CHECKS_FILE=""
+if [[ -f "$SCRIPT_DIR/../generated/doctor_checks.sh" ]]; then
+    _MANIFEST_CHECKS_FILE="$SCRIPT_DIR/../generated/doctor_checks.sh"
+elif [[ -f "$HOME/.acfs/scripts/generated/doctor_checks.sh" ]]; then
+    _MANIFEST_CHECKS_FILE="$HOME/.acfs/scripts/generated/doctor_checks.sh"
+fi
+
+if [[ -n "$_MANIFEST_CHECKS_FILE" ]]; then
+    # Save shell options before sourcing (doctor_checks.sh sets -euo pipefail)
+    _MANIFEST_SAVED_OPTS=$(set +o)
+
+    # shellcheck source=/dev/null
+    if source "$_MANIFEST_CHECKS_FILE" 2>/dev/null; then
+        MANIFEST_CHECKS_LOADED=true
+    fi
+
+    # Restore original shell options
+    eval "$_MANIFEST_SAVED_OPTS" 2>/dev/null
+    unset _MANIFEST_SAVED_OPTS
+fi
+unset _MANIFEST_CHECKS_FILE
+
 # Colors (fallback if gum_ui not loaded)
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -110,7 +233,7 @@ FAIL_COUNT=0
 SKIP_COUNT=0
 
 # Skipped tools data (bead qup)
-declare -a SKIPPED_TOOLS_DATA=()
+declare -ga SKIPPED_TOOLS_DATA=()
 
 # Output modes
 JSON_MODE=false
@@ -119,6 +242,11 @@ JSON_CHECKS=()
 # Deep mode - run functional tests beyond binary existence
 # Related: agentic_coding_flywheel_setup-01s
 DEEP_MODE=false
+
+# Fix mode - automatically apply safe fixes
+# Related: bd-31ps.6.2
+FIX_MODE=false
+DRY_RUN_MODE=false
 
 # Caching for deep checks - skip slow operations that recently passed
 # Related: agentic_coding_flywheel_setup-lz1
@@ -514,6 +642,13 @@ check() {
                 ;;
         esac
     fi
+
+    # Dispatch fix if --fix mode is enabled
+    if [[ "$FIX_MODE" == "true" ]] && [[ "$status" != "pass" ]]; then
+        if type -t dispatch_fix &>/dev/null; then
+            dispatch_fix "$id" "$status" "$fix"
+        fi
+    fi
 }
 
 # Try to retrieve a reasonably informative version line for a command without
@@ -627,7 +762,7 @@ check_shell() {
     if [[ -d "$HOME/.oh-my-zsh" ]]; then
         check "shell.ohmyzsh" "Oh My Zsh" "pass"
     else
-        check "shell.ohmyzsh" "Oh My Zsh" "fail" "not installed" "Re-run: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 3"
+        check "shell.ohmyzsh" "Oh My Zsh" "fail" "not installed" "$(fix_for_module "shell.omz")"
     fi
 
     local p10k_dir="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k"
@@ -647,9 +782,9 @@ check_shell() {
     fi
 
     if [[ -d "$plugins_dir/zsh-syntax-highlighting" ]]; then
-        check "shell.plugins.zsh_syntax_highlightinging" "zsh-syntax-highlighting" "pass"
+        check "shell.plugins.zsh_syntax_highlighting" "zsh-syntax-highlighting" "pass"
     else
-        check "shell.plugins.zsh_syntax_highlightinging" "zsh-syntax-highlighting" "warn" "not installed" \
+        check "shell.plugins.zsh_syntax_highlighting" "zsh-syntax-highlighting" "warn" "not installed" \
             "git clone https://github.com/zsh-users/zsh-syntax-highlighting \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
     fi
 
@@ -662,7 +797,7 @@ check_shell() {
         check "shell.lsd_or_eza" "lsd/eza" "warn" "neither installed" "sudo apt install lsd"
     fi
 
-    check_command "shell.atuin" "Atuin" "atuin" "Re-run: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 5"
+    check_command "shell.atuin" "Atuin" "atuin" "$(fix_for_module "tools.atuin")"
     check_command "shell.fzf" "fzf" "fzf" "sudo apt install fzf"
     check_command "shell.zoxide" "zoxide" "zoxide" \
         "Re-run: curl -fsSL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash"
@@ -675,9 +810,9 @@ check_shell() {
 check_core_tools() {
     section "Core tools"
 
-    check_command "tool.bun" "Bun" "bun" "Re-run: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 5"
-    check_command "tool.uv" "uv" "uv" "Re-run: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 5"
-    check_command "tool.cargo" "Cargo (Rust)" "cargo" "Re-run: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 5"
+    check_command "tool.bun" "Bun" "bun" "$(fix_for_module "lang.bun")"
+    check_command "tool.uv" "uv" "uv" "$(fix_for_module "lang.uv")"
+    check_command "tool.cargo" "Cargo (Rust)" "cargo" "$(fix_for_module "lang.rust")"
     check_command "tool.go" "Go" "go" "sudo apt install golang-go"
     check_command "tool.tmux" "tmux" "tmux" "sudo apt install tmux"
     check_command "tool.rg" "ripgrep" "rg" "sudo apt install ripgrep"
@@ -697,28 +832,29 @@ check_core_tools() {
 check_agents() {
     section "Agents"
 
-    check_command "agent.claude" "Claude Code" "claude" \
-        "Re-run: curl -fsSL https://claude.ai/install.sh | bash"
-    check_command "agent.codex" "Codex CLI" "codex" "bun install -g --trust @openai/codex@latest"
-    check_command "agent.gemini" "Gemini CLI" "gemini" "bun install -g --trust @google/gemini-cli@latest"
+    check_command "agent.claude" "Claude Code" "claude" "$(fix_for_module "agents.claude")"
+    check_command "agent.codex" "Codex CLI" "codex" "$(fix_for_module "agents.codex")"
+    check_command "agent.gemini" "Gemini CLI" "gemini" "$(fix_for_module "agents.gemini")"
 
     # Check aliases are defined in the zshrc
+    local alias_fix
+    alias_fix="$(fix_for_module "shell.omz")"
     if grep -q "^alias cc=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
         check "agent.alias.cc" "cc alias" "pass"
     else
-        check "agent.alias.cc" "cc alias" "warn" "not in zshrc"
+        check "agent.alias.cc" "cc alias" "warn" "not in zshrc" "$alias_fix"
     fi
 
     if grep -q "^alias cod=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
         check "agent.alias.cod" "cod alias" "pass"
     else
-        check "agent.alias.cod" "cod alias" "warn" "not in zshrc"
+        check "agent.alias.cod" "cod alias" "warn" "not in zshrc" "$alias_fix"
     fi
 
     if grep -q "^alias gmi=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
         check "agent.alias.gmi" "gmi alias" "pass"
     else
-        check "agent.alias.gmi" "gmi alias" "warn" "not in zshrc"
+        check "agent.alias.gmi" "gmi alias" "warn" "not in zshrc" "$alias_fix"
     fi
 
     # Check for PATH conflicts (bead hi7)
@@ -840,23 +976,43 @@ check_cloud() {
         if [[ "$doctor_ci" == "true" ]]; then
             check "network.tailscale" "Tailscale (not installed)" "pass" "ok in CI"
         else
-            check "network.tailscale" "Tailscale" "warn" "not installed (optional)" "Install: curl --proto '=https' --proto-redir '=https' -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only network.tailscale"
+            check "network.tailscale" "Tailscale" "warn" "not installed (optional)" "Install: curl --proto '=https' --proto-redir '=https' -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only network.tailscale"
         fi
     fi
 
     # SSH keepalive configuration (prevents VPN/NAT disconnects)
+    # Check both main config and sshd_config.d includes for ClientAliveInterval
+    local keepalive_interval=""
+    local keepalive_source=""
+
+    # Check main sshd_config (allow leading whitespace, handle commented lines)
     if [[ -f /etc/ssh/sshd_config ]]; then
-        local keepalive_interval
-        keepalive_interval=$(grep -E '^ClientAliveInterval[[:space:]]+[0-9]+' /etc/ssh/sshd_config 2>/dev/null | awk '{print $2}')
-        keepalive_interval="${keepalive_interval:-0}"
-        if [[ "$keepalive_interval" -gt 0 ]] 2>/dev/null; then
-            check "network.ssh_keepalive" "SSH keepalive" "pass" "ClientAliveInterval ${keepalive_interval}s"
-        else
-            if [[ "$doctor_ci" == "true" ]]; then
-                check "network.ssh_keepalive" "SSH keepalive (not configured)" "pass" "ok in CI"
-            else
-                check "network.ssh_keepalive" "SSH keepalive" "warn" "not configured (optional)" "Install: curl --proto '=https' --proto-redir '=https' -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only network.ssh_keepalive"
+        keepalive_interval=$(grep -E '^[[:space:]]*ClientAliveInterval[[:space:]]+[0-9]+' /etc/ssh/sshd_config 2>/dev/null | grep -v '^[[:space:]]*#' | tail -n1 | awk '{print $2}')
+        [[ -n "$keepalive_interval" ]] && keepalive_source="sshd_config"
+    fi
+
+    # Check sshd_config.d includes (common on Ubuntu 22.04+)
+    if [[ -z "$keepalive_interval" ]] && [[ -d /etc/ssh/sshd_config.d ]]; then
+        for conf_file in /etc/ssh/sshd_config.d/*.conf; do
+            [[ -f "$conf_file" ]] || continue
+            local val
+            val=$(grep -E '^[[:space:]]*ClientAliveInterval[[:space:]]+[0-9]+' "$conf_file" 2>/dev/null | grep -v '^[[:space:]]*#' | tail -n1 | awk '{print $2}')
+            if [[ -n "$val" ]]; then
+                keepalive_interval="$val"
+                keepalive_source="$(basename "$conf_file")"
+                break
             fi
+        done
+    fi
+
+    keepalive_interval="${keepalive_interval:-0}"
+    if [[ "$keepalive_interval" -gt 0 ]] 2>/dev/null; then
+        check "network.ssh_keepalive" "SSH keepalive" "pass" "ClientAliveInterval ${keepalive_interval}s (${keepalive_source})"
+    else
+        if [[ "$doctor_ci" == "true" ]]; then
+            check "network.ssh_keepalive" "SSH keepalive (not configured)" "pass" "ok in CI"
+        else
+            check "network.ssh_keepalive" "SSH keepalive" "warn" "not configured (optional)" "$(fix_for_module "network.ssh_keepalive")"
         fi
     fi
 
@@ -882,8 +1038,30 @@ check_stack() {
             "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh | bash"
     fi
 
-    check_command "stack.bv" "Beads Viewer" "bv" \
-        "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh | bash"
+    # Beads Viewer - custom check to detect gcloud 'bv' shadowing
+    if command -v bv &>/dev/null; then
+        local bv_path version
+        bv_path=$(command -v bv)
+        # Check if the resolved bv is gcloud's BigQuery Visualizer
+        if [[ "$bv_path" == *"google-cloud-sdk"* ]]; then
+            check "stack.bv" "Beads Viewer" "fail" "SHADOWED by gcloud bv at $bv_path" \
+                "gcloud's 'bv' (BigQuery) is masking beads_viewer. Fix: Ensure ~/.local/bin is before gcloud in PATH, or re-run installer."
+        else
+            version=$(get_version_line "bv")
+            # Also warn if gcloud's bv exists anywhere in PATH
+            local gcloud_bv
+            gcloud_bv=$(whence -ap bv 2>/dev/null | grep "google-cloud-sdk" | head -1 || true)
+            if [[ -n "$gcloud_bv" ]]; then
+                check "stack.bv" "Beads Viewer ($version)" "warn" "gcloud bv exists at $gcloud_bv (but correctly shadowed)" \
+                    "beads_viewer is correctly prioritized, but gcloud's bv exists. ACFS zshrc handles this."
+            else
+                check "stack.bv" "Beads Viewer ($version)" "pass" "installed"
+            fi
+        fi
+    else
+        check "stack.bv" "Beads Viewer" "fail" "not found" \
+            "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh | bash"
+    fi
 
     # CASS - custom check
     if command -v cass &>/dev/null; then
@@ -918,10 +1096,190 @@ check_stack() {
             "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/repo_updater/main/install.sh | bash"
     fi
 
+    # Check beads_rust (br) - local-first issue tracker
+    if command -v br &>/dev/null; then
+        local version
+        version=$(get_version_line "br")
+        check "stack.beads_rust" "beads_rust ($version)" "pass" "installed"
+    else
+        check "stack.beads_rust" "beads_rust (br)" "warn" "not installed" \
+            "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/beads_rust/main/install.sh | bash"
+    fi
+
+    # Check meta_skill (ms)
+    if command -v ms &>/dev/null; then
+        local version
+        version=$(get_version_line "ms")
+        check "stack.meta_skill" "meta_skill ($version)" "pass" "installed"
+    else
+        check "stack.meta_skill" "meta_skill (ms)" "warn" "not installed" \
+            "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/meta_skill/main/scripts/install.sh | bash"
+    fi
+
+    # Check rch (Remote Compilation Helper)
+    # RCH can be installed in several locations: PATH, ~/.local/bin, ~/.cargo/bin, or ~/remote_compilation_helper
+    local rch_bin=""
+    local rch_version=""
+
+    if command -v rch &>/dev/null; then
+        rch_bin="$(command -v rch)"
+    elif [[ -x "$HOME/.local/bin/rch" ]]; then
+        rch_bin="$HOME/.local/bin/rch"
+    elif [[ -x "$HOME/.cargo/bin/rch" ]]; then
+        rch_bin="$HOME/.cargo/bin/rch"
+    elif [[ -x "$HOME/remote_compilation_helper/rch" ]]; then
+        rch_bin="$HOME/remote_compilation_helper/rch"
+    fi
+
+    if [[ -n "$rch_bin" ]] && [[ -x "$rch_bin" ]]; then
+        rch_version=$("$rch_bin" --version 2>/dev/null | head -n1) || rch_version="installed"
+        check "stack.rch" "rch ($rch_version)" "pass" "installed"
+    else
+        # Also check if RCH config exists (indicates partial/previous install)
+        if [[ -f "$HOME/.config/rch/config.toml" ]] || [[ -d "$HOME/remote_compilation_helper" ]]; then
+            check "stack.rch" "rch (Remote Compilation Helper)" "warn" "config exists but binary not in PATH" \
+                "Add rch to PATH or re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/remote_compilation_helper/master/install.sh | bash"
+        else
+            check "stack.rch" "rch (Remote Compilation Helper)" "warn" "not installed" \
+                "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/remote_compilation_helper/master/install.sh | bash"
+        fi
+    fi
+
+    # Check wa (WezTerm Automata) - optional
+    if command -v wa &>/dev/null; then
+        local version
+        version=$(get_version_line "wa")
+        check "stack.wezterm_automata" "wezterm_automata ($version)" "pass" "installed"
+    else
+        check "stack.wezterm_automata" "wezterm_automata (wa)" "skip" "not installed (optional)"
+    fi
+
+    # Check brenner (Brenner Bot) - optional
+    if command -v brenner &>/dev/null; then
+        local version
+        version=$(get_version_line "brenner")
+        check "stack.brenner_bot" "brenner_bot ($version)" "pass" "installed"
+    else
+        check "stack.brenner_bot" "brenner_bot" "skip" "not installed (optional)"
+    fi
+
     # Check DCG (Destructive Command Guard)
     check_dcg_hook_status
 
     blank_line
+}
+
+# ============================================================
+# Manifest Supplemental Checks (bd-31ps.5.1)
+# ============================================================
+# Runs manifest-derived checks for tools NOT already covered by the bespoke
+# check functions above.  This fills gaps (lazygit, nvm, apr, jfp, pt, srps,
+# all utils.*, acfs.*, base.system.*) without duplicating bespoke output.
+# ============================================================
+
+# Returns 0 (true) if the given manifest ID is already verified by a bespoke
+# check function; 1 (false) if it needs manifest supplemental coverage.
+_is_bespoke_covered() {
+    local id="$1"
+    case "$id" in
+        # check_identity
+        users.ubuntu.*) return 0 ;;
+        # check_workspace
+        base.filesystem.[12]) return 0 ;;
+        # check_shell
+        shell.*) return 0 ;;
+        # check_core_tools  (cli.modern.* maps to rg, tmux, fzf, gh, etc.)
+        cli.modern.*) return 0 ;;
+        # check_core_tools  (languages)
+        lang.bun|lang.uv|lang.rust.*|lang.go) return 0 ;;
+        # check_shell / check_core_tools  (individual tools)
+        tools.atuin|tools.zoxide|tools.ast_grep|tools.vault) return 0 ;;
+        # check_agents
+        agents.*) return 0 ;;
+        # check_cloud
+        cloud.*|network.*|db.*) return 0 ;;
+        # check_stack  (individual stack entries)
+        stack.ntm|stack.slb|stack.mcp_agent_mail) return 0 ;;
+        stack.ultimate_bug_scanner.*|stack.beads_viewer) return 0 ;;
+        stack.beads_rust.*|stack.cass|stack.cm.*|stack.caam) return 0 ;;
+        stack.dcg.*|stack.ru|stack.meta_skill.*) return 0 ;;
+        stack.brenner_bot|stack.rch|stack.wezterm_automata) return 0 ;;
+    esac
+    return 1
+}
+
+# Extract the manifest module ID from a check ID by stripping trailing ".N".
+# e.g., "stack.automated_plan_reviser.1" → "stack.automated_plan_reviser"
+# e.g., "tools.lazygit" → "tools.lazygit" (no change)
+_manifest_module_id() {
+    local id="$1"
+    if [[ "$id" =~ ^(.+)\.[0-9]+$ ]]; then
+        echo "${BASH_REMATCH[1]}"
+    else
+        echo "$id"
+    fi
+}
+
+# Run manifest checks that are NOT already covered by bespoke functions.
+# Integrates with the standard check() output (JSON/gum/plain) so the results
+# are indistinguishable from hand-written checks.  Failed checks include a
+# copy-pasteable fix suggestion using `acfs install --only <module>`.
+check_manifest_supplemental() {
+    [[ "$MANIFEST_CHECKS_LOADED" == "true" ]] || return 0
+    [[ ${#MANIFEST_CHECKS[@]} -gt 0 ]] || return 0
+
+    local printed_section=false
+
+    for entry in "${MANIFEST_CHECKS[@]}"; do
+        IFS=$'\t' read -r id desc cmd req_flag <<< "$entry"
+
+        # Skip checks already covered by bespoke functions
+        _is_bespoke_covered "$id" && continue
+
+        # Print section header on first supplemental check
+        if [[ "$printed_section" == "false" ]]; then
+            section "Additional Tools (manifest)"
+            printed_section=true
+        fi
+
+        # Decode printf escapes (\n, \t, \\) embedded by the generator
+        cmd="$(printf '%b' "$cmd")"
+
+        # Build a human-readable label from the check command.
+        # For most entries the first word is the binary name (curl, lazygit, apr).
+        # For shell builtins / operators we fall back to the ID's last segment.
+        local tool_name
+        tool_name="${cmd%% *}"
+        case "$tool_name" in
+            test|"["|grep|export|command|bash|sh|systemctl|"[["*)
+                tool_name="${id%.[0-9]*}"    # strip trailing .N
+                tool_name="${tool_name##*.}" # keep last segment
+                ;;
+            */*)
+                # Path like ~/.bun/bin/bun → basename
+                tool_name="${tool_name##*/}"
+                ;;
+        esac
+
+        # Build per-module fix suggestion for failed/warn checks (bd-31ps.5.2)
+        local module_id
+        module_id=$(_manifest_module_id "$id")
+        local fix
+        fix="$(fix_for_module "$module_id")"
+
+        # Execute the check command in a subshell
+        if bash -o pipefail -c "$cmd" &>/dev/null; then
+            check "$id" "$tool_name" "pass" "$desc"
+        elif [[ "$req_flag" == "optional" ]]; then
+            # Optional tools use "warn" status (not critical failures)
+            # Still provide fix suggestion so users know how to install if desired
+            check "$id" "$tool_name" "warn" "$desc (optional)" "$fix"
+        else
+            check "$id" "$tool_name" "fail" "$desc" "$fix"
+        fi
+    done
+
+    [[ "$printed_section" == "true" ]] && blank_line
 }
 
 # ============================================================
@@ -1070,6 +1428,9 @@ run_deep_checks() {
 
     # tmux responsiveness checks (GitHub issue #20: NTM timeouts / slow tmux)
     deep_check_tmux_performance
+
+    # Network health checks (bead bd-31ps.7.2)
+    deep_check_network
 
     # Calculate deep check specific counts
     DEEP_PASS_COUNT=$((PASS_COUNT - pre_pass))
@@ -1445,6 +1806,133 @@ deep_check_tmux_performance() {
     _deep_check_tmux_cmd "deep.tmux.list_panes" "tmux list-panes -a responsiveness" bash -lc "tmux list-panes -a -F '#{pane_id}' >/dev/null"
 }
 
+# Deep check: Network health
+# Related: bead bd-31ps.7.2
+# Exposes preflight-style network checks via doctor --deep for ongoing verification.
+# Results are WARN (non-fatal) since network issues may be transient.
+deep_check_network() {
+    check_network_dns
+    check_network_github
+    check_network_apt_mirror
+}
+
+# check_network_dns - DNS resolution check for critical hosts
+# Related: bead bd-31ps.7.2
+# Tests DNS resolution for hosts required by the installer
+check_network_dns() {
+    local hosts=(
+        "github.com"
+        "raw.githubusercontent.com"
+    )
+    local dns_failures=()
+    local dns_ok=true
+
+    for host in "${hosts[@]}"; do
+        # Try multiple resolution methods (dig, host, getent)
+        local resolved=false
+        if command -v dig &>/dev/null; then
+            if dig +short +time=5 +tries=1 "$host" 2>/dev/null | grep -qE '^[0-9]'; then
+                resolved=true
+            fi
+        fi
+        if [[ "$resolved" == "false" ]] && command -v host &>/dev/null; then
+            if timeout 5 host "$host" &>/dev/null; then
+                resolved=true
+            fi
+        fi
+        if [[ "$resolved" == "false" ]] && command -v getent &>/dev/null; then
+            if timeout 5 getent hosts "$host" &>/dev/null; then
+                resolved=true
+            fi
+        fi
+
+        if [[ "$resolved" == "false" ]]; then
+            dns_failures+=("$host")
+            dns_ok=false
+        fi
+    done
+
+    if [[ "$dns_ok" == "true" ]]; then
+        check "deep.network.dns" "DNS resolution" "pass" "all hosts resolved"
+    else
+        local failed_list
+        failed_list=$(IFS=", "; echo "${dns_failures[*]}")
+        check "deep.network.dns" "DNS resolution" "warn" "failed: $failed_list" "Check /etc/resolv.conf or network settings"
+    fi
+}
+
+# check_network_github - GitHub connectivity check
+# Related: bead bd-31ps.7.2
+# Tests HTTP(S) connectivity to GitHub (critical for installer downloads)
+check_network_github() {
+    if ! command -v curl &>/dev/null; then
+        check "deep.network.github" "GitHub connectivity" "warn" "curl not installed"
+        return
+    fi
+
+    # Test basic HTTPS connectivity to GitHub
+    local http_status
+    http_status=$(curl -sL --max-time 10 --connect-timeout 5 -o /dev/null -w "%{http_code}" "https://github.com" 2>/dev/null) || http_status="000"
+
+    if [[ "$http_status" == "200" ]] || [[ "$http_status" == "301" ]] || [[ "$http_status" == "302" ]]; then
+        check "deep.network.github" "GitHub connectivity" "pass" "github.com reachable (HTTP $http_status)"
+    elif [[ "$http_status" == "000" ]]; then
+        check "deep.network.github" "GitHub connectivity" "warn" "connection failed" "Check network/firewall settings"
+    else
+        check "deep.network.github" "GitHub connectivity" "warn" "HTTP $http_status" "Unexpected response; check proxy settings"
+    fi
+
+    # Also test raw.githubusercontent.com (used for script downloads)
+    http_status=$(curl -sL --max-time 10 --connect-timeout 5 -o /dev/null -w "%{http_code}" "https://raw.githubusercontent.com" 2>/dev/null) || http_status="000"
+
+    if [[ "$http_status" == "200" ]] || [[ "$http_status" == "301" ]] || [[ "$http_status" == "400" ]]; then
+        # Note: raw.githubusercontent.com returns 400 on bare request, which is expected
+        check "deep.network.github_raw" "GitHub raw content" "pass" "raw.githubusercontent.com reachable"
+    elif [[ "$http_status" == "000" ]]; then
+        check "deep.network.github_raw" "GitHub raw content" "warn" "connection failed" "Check network/firewall settings"
+    else
+        check "deep.network.github_raw" "GitHub raw content" "warn" "HTTP $http_status" "Unexpected response"
+    fi
+}
+
+# check_network_apt_mirror - APT mirror reachability check
+# Related: bead bd-31ps.7.2
+# Tests connectivity to the configured APT mirror
+check_network_apt_mirror() {
+    if ! command -v curl &>/dev/null; then
+        return  # Already warned in github check
+    fi
+
+    # Detect the primary APT mirror from sources.list
+    local mirror_url=""
+    if [[ -f /etc/apt/sources.list ]]; then
+        mirror_url=$(grep -m1 "^deb http" /etc/apt/sources.list 2>/dev/null | awk '{print $2}' | sed 's|/ubuntu.*||') || true
+    fi
+    if [[ -z "$mirror_url" ]] && [[ -d /etc/apt/sources.list.d ]]; then
+        mirror_url=$(grep -rh "^deb http" /etc/apt/sources.list.d/ 2>/dev/null | head -1 | awk '{print $2}' | sed 's|/ubuntu.*||') || true
+    fi
+
+    if [[ -z "$mirror_url" ]]; then
+        check "deep.network.apt_mirror" "APT mirror" "warn" "could not detect mirror URL"
+        return
+    fi
+
+    # Test mirror reachability
+    local http_status
+    http_status=$(curl -sL --max-time 10 --connect-timeout 5 -o /dev/null -w "%{http_code}" "${mirror_url}/dists/" 2>/dev/null) || http_status="000"
+
+    local mirror_host="${mirror_url#http*://}"
+    mirror_host="${mirror_host%%/*}"
+
+    if [[ "$http_status" == "200" ]] || [[ "$http_status" == "301" ]]; then
+        check "deep.network.apt_mirror" "APT mirror" "pass" "$mirror_host reachable"
+    elif [[ "$http_status" == "000" ]]; then
+        check "deep.network.apt_mirror" "APT mirror" "warn" "$mirror_host unreachable" "Check /etc/apt/sources.list or network"
+    else
+        check "deep.network.apt_mirror" "APT mirror" "warn" "HTTP $http_status from $mirror_host" "May need to switch mirrors"
+    fi
+}
+
 # check_vault_configured - Check if Vault is configured and reachable
 # Related: bead azw
 check_vault_configured() {
@@ -1531,25 +2019,104 @@ check_wrangler_auth() {
     if ((status == 124)); then
         check_with_timeout_status "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "timeout" "check timed out" "Check network, then: wrangler login"
     elif ((status == 0)); then
-        # Get the authenticated user/team for more detail
+        # Extract account info from wrangler whoami output
+        local wrangler_account="authenticated"
+        if echo "$result" | grep -q "Account ID"; then
+            wrangler_account="authenticated"
+        fi
+        cache_result "wrangler_auth" "$wrangler_account"
+        check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "pass" "$wrangler_account"
+    else
+        # Check for CLOUDFLARE_API_TOKEN as alternative
+        if [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+            cache_result "wrangler_auth" "CLOUDFLARE_API_TOKEN"
+            check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "pass" "CLOUDFLARE_API_TOKEN set"
+            return
+        fi
+
+        # Fallback: detect auth file if offline
+        if [[ -f "$HOME/.wrangler/config/default.toml" ]]; then
+            cache_result "wrangler_auth" "config file present"
+            check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "pass" "config file present"
+        else
+            check "deep.cloud.wrangler_auth" "Wrangler (Cloudflare) auth" "warn" "not authenticated" "wrangler login (or set CLOUDFLARE_API_TOKEN)"
+        fi
+    fi
+}
+
+# check_supabase_auth - Supabase CLI authentication check
+# Related: bead azw
+check_supabase_auth() {
+    if ! command -v supabase &>/dev/null; then
+        check "deep.cloud.supabase_auth" "Supabase CLI" "warn" "not installed" "acfs update --cloud-only --force"
+        return
+    fi
+
+    # Try cache first (bead lz1)
+    local cached_result
+    if cached_result=$(get_cached_result "supabase_auth"); then
+        check "deep.cloud.supabase_auth" "Supabase CLI auth" "pass" "$cached_result (cached)"
+        return
+    fi
+
+    # Check for SUPABASE_ACCESS_TOKEN (headless auth)
+    if [[ -n "${SUPABASE_ACCESS_TOKEN:-}" ]]; then
+        cache_result "supabase_auth" "SUPABASE_ACCESS_TOKEN"
+        check "deep.cloud.supabase_auth" "Supabase CLI auth" "pass" "SUPABASE_ACCESS_TOKEN set"
+        return
+    fi
+
+    # Check for local auth file
+    if [[ -f "$HOME/.supabase/access-token" ]]; then
+        cache_result "supabase_auth" "access-token file"
+        check "deep.cloud.supabase_auth" "Supabase CLI auth" "pass" "access-token file present"
+    else
+        check "deep.cloud.supabase_auth" "Supabase CLI auth" "warn" "not authenticated" "supabase login (or set SUPABASE_ACCESS_TOKEN)"
+    fi
+}
+
+# check_vercel_auth - Vercel CLI authentication check
+# Related: bead azw
+check_vercel_auth() {
+    if ! command -v vercel &>/dev/null; then
+        check "deep.cloud.vercel_auth" "Vercel CLI" "warn" "not installed" "bun install -g --trust vercel@latest"
+        return
+    fi
+
+    # Try cache first (bead lz1)
+    local cached_result
+    if cached_result=$(get_cached_result "vercel_auth"); then
+        check "deep.cloud.vercel_auth" "Vercel CLI auth" "pass" "$cached_result (cached)"
+        return
+    fi
+
+    # Run with timeout
+    local result
+    result=$(run_with_timeout "$DEEP_CHECK_TIMEOUT" "Vercel auth" vercel whoami 2>&1)
+    local status=$?
+
+    if ((status == 124)); then
+        check_with_timeout_status "deep.cloud.vercel_auth" "Vercel CLI auth" "timeout" "check timed out" "Check network, then: vercel login"
+    elif ((status == 0)); then
         local vercel_user
-        vercel_user=$(timeout 5 vercel whoami 2>/dev/null) || vercel_user="authenticated"
+        vercel_user=$(echo "$result" | head -n1 | tr -d ' ')
+        [[ -z "$vercel_user" ]] && vercel_user="authenticated"
         cache_result "vercel_auth" "$vercel_user"
-        check "deep.cloud.vercel_auth" "Vercel auth" "pass" "$vercel_user"
+        check "deep.cloud.vercel_auth" "Vercel CLI auth" "pass" "$vercel_user"
     else
         # Check for VERCEL_TOKEN as alternative
         if [[ -n "${VERCEL_TOKEN:-}" ]]; then
             cache_result "vercel_auth" "VERCEL_TOKEN"
-            check "deep.cloud.vercel_auth" "Vercel auth" "pass" "VERCEL_TOKEN set"
+            check "deep.cloud.vercel_auth" "Vercel CLI auth" "pass" "VERCEL_TOKEN set"
             return
         fi
 
         # Fallback: detect auth file if offline
         if [[ -f "$HOME/.config/vercel/auth.json" || -f "$HOME/.vercel/auth.json" ]]; then
             cache_result "vercel_auth" "auth file present"
-            check "deep.cloud.vercel_auth" "Vercel auth" "pass" "auth file present"
+            check "deep.cloud.vercel_auth" "Vercel CLI auth" "pass" "auth file present"
         else
-            check "deep.cloud.vercel_auth" "Vercel auth" "warn" "not authenticated" "vercel login (or set SUPABASE_ACCESS_TOKEN for headless)"
+            check "deep.cloud.vercel_auth" "Vercel CLI auth" "warn" "not authenticated" "vercel login (or set VERCEL_TOKEN)"
         fi
     fi
 }
@@ -1564,8 +2131,7 @@ print_summary() {
         if [[ "$HAS_GUM" == "true" ]]; then
             gum style --foreground "$ACFS_MUTED" "  Legend: $(gum style --foreground "$ACFS_SUCCESS" "✓") installed  $(gum style --foreground "$ACFS_MUTED" "○") skipped  $(gum style --foreground "$ACFS_ERROR" "✖") missing  $(gum style --foreground "$ACFS_WARNING" "⚠") warning  $(gum style --foreground "$ACFS_WARNING" "?") timeout"
         else
-            echo -e "  ${CYAN}○ SKIP${NC} $label"
-            echo -e "        Reason: $reason"
+            echo -e "  Legend: ${GREEN}✓${NC} installed  ${CYAN}○${NC} skipped  ${RED}✖${NC} missing  ${YELLOW}⚠${NC} warning  ${YELLOW}?${NC} timeout"
         fi
     fi
 }
@@ -1593,7 +2159,8 @@ print_json() {
   \"deep_summary\": {\"pass\": $DEEP_PASS_COUNT, \"warn\": $DEEP_WARN_COUNT, \"fail\": $DEEP_FAIL_COUNT, \"total\": $deep_total, \"elapsed_seconds\": ${DEEP_CHECK_ELAPSED:-0}}"
     fi
 
-    cat << EOF
+    local json_output
+    json_output=$(cat << EOF
 {
   "acfs_version": "$(json_escape "$ACFS_VERSION")",
   "timestamp": "$(json_escape "$(date -Iseconds)")",
@@ -1605,6 +2172,17 @@ print_json() {
   "summary": {"pass": $PASS_COUNT, "skip": $SKIP_COUNT, "warn": $WARN_COUNT, "fail": $FAIL_COUNT}$deep_summary_json
 }
 EOF
+)
+
+    # Use output formatting library if available
+    if type -t acfs_format_output &>/dev/null; then
+        local resolved_format
+        resolved_format=$(acfs_resolve_format "$_DOCTOR_OUTPUT_FORMAT")
+        acfs_format_output "$json_output" "$resolved_format" "$_DOCTOR_SHOW_STATS"
+    else
+        # Fallback: direct JSON output
+        printf '%s\n' "$json_output"
+    fi
 }
 
 # Main
@@ -1735,6 +2313,22 @@ main() {
             echo "Error: services-setup.sh not found" >&2
             return 1
             ;;
+        support-bundle|bundle)
+            shift
+            local support_script=""
+            if [[ -f "$HOME/.acfs/scripts/lib/support.sh" ]]; then
+                support_script="$HOME/.acfs/scripts/lib/support.sh"
+            elif [[ -f "$SCRIPT_DIR/support.sh" ]]; then
+                support_script="$SCRIPT_DIR/support.sh"
+            fi
+
+            if [[ -n "$support_script" ]]; then
+                exec bash "$support_script" "$@"
+            fi
+
+            echo "Error: support.sh not found" >&2
+            return 1
+            ;;
         version|-v|--version)
             local version_file=""
             if [[ -f "$HOME/.acfs/VERSION" ]]; then
@@ -1771,6 +2365,34 @@ main() {
                 JSON_MODE=true
                 shift
                 ;;
+            --format|-f)
+                shift
+                if [[ -z "${1:-}" || "$1" == -* ]]; then
+                    echo "Error: --format requires a value (json or toon)" >&2
+                    return 1
+                fi
+                _DOCTOR_OUTPUT_FORMAT="$1"
+                JSON_MODE=true
+                shift
+                ;;
+            --format=*)
+                _DOCTOR_OUTPUT_FORMAT="${1#*=}"
+                if [[ -z "$_DOCTOR_OUTPUT_FORMAT" ]]; then
+                    echo "Error: --format requires a value (json or toon)" >&2
+                    return 1
+                fi
+                JSON_MODE=true
+                shift
+                ;;
+            --toon|-t)
+                _DOCTOR_OUTPUT_FORMAT="toon"
+                JSON_MODE=true
+                shift
+                ;;
+            --stats)
+                _DOCTOR_SHOW_STATS=true
+                shift
+                ;;
             --deep)
                 DEEP_MODE=true
                 shift
@@ -1779,13 +2401,26 @@ main() {
                 NO_CACHE=true
                 shift
                 ;;
+            --fix)
+                FIX_MODE=true
+                shift
+                ;;
+            --dry-run)
+                DRY_RUN_MODE=true
+                shift
+                ;;
             --help|-h)
-                echo "Usage: acfs doctor [--json] [--deep] [--no-cache]"
+                echo "Usage: acfs doctor [--json] [--format <fmt>] [--stats] [--deep] [--no-cache] [--fix] [--dry-run]"
                 echo ""
                 echo "Options:"
-                echo "  --json      Output results as JSON"
+                echo "  --json           Output results as JSON"
+                echo "  --format <fmt>   Output format: json or toon (env: ACFS_OUTPUT_FORMAT, TOON_DEFAULT_FORMAT)"
+                echo "  --toon, -t       Shorthand for --format toon"
+                echo "  --stats          Show token savings statistics (JSON vs TOON bytes)"
                 echo "  --deep      Run functional tests (auth, connections)"
                 echo "  --no-cache  Skip cache, run all checks fresh"
+                echo "  --fix       Automatically apply safe fixes for failed checks"
+                echo "  --dry-run   Preview fixes without applying (use with --fix)"
                 echo ""
                 echo "By default, doctor runs quick existence checks only."
                 echo "Use --deep for thorough validation including:"
@@ -1796,11 +2431,20 @@ main() {
                 echo "Deep checks are cached for 5 minutes by default."
                 echo "Use --no-cache to force fresh checks."
                 echo ""
+                echo "Fix mode applies safe, reversible fixes for common issues:"
+                echo "  - PATH ordering in shell config"
+                echo "  - Missing ACFS config files"
+                echo "  - Missing symlinks for tools"
+                echo "  - Missing zsh plugins"
+                echo "Use --dry-run to preview fixes before applying."
+                echo ""
                 echo "Examples:"
                 echo "  acfs doctor                   # Quick health check"
                 echo "  acfs doctor --deep            # Full functional tests"
                 echo "  acfs doctor --deep --no-cache # Force fresh deep checks"
                 echo "  acfs doctor --json            # JSON output for tooling"
+                echo "  acfs doctor --fix             # Apply safe fixes"
+                echo "  acfs doctor --fix --dry-run   # Preview fixes"
                 exit 0
                 ;;
             *)
@@ -1838,6 +2482,20 @@ $(gum style --foreground "$ACFS_MUTED" "OS:") $(gum style --foreground "$ACFS_TE
         fi
     fi
 
+    # Initialize fix mode if enabled
+    if [[ "$FIX_MODE" == "true" ]]; then
+        if type -t run_doctor_fix &>/dev/null; then
+            if [[ "$DRY_RUN_MODE" == "true" ]]; then
+                run_doctor_fix --dry-run
+            else
+                run_doctor_fix
+            fi
+        else
+            echo "Warning: doctor_fix.sh not loaded, --fix unavailable" >&2
+            FIX_MODE=false
+        fi
+    fi
+
     check_identity
     check_workspace
     check_shell
@@ -1845,6 +2503,7 @@ $(gum style --foreground "$ACFS_MUTED" "OS:") $(gum style --foreground "$ACFS_TE
     check_agents
     check_cloud
     check_stack
+    check_manifest_supplemental
     show_skipped_tools
 
     # Run deep checks if --deep flag was provided
@@ -1856,6 +2515,13 @@ $(gum style --foreground "$ACFS_MUTED" "OS:") $(gum style --foreground "$ACFS_TE
         print_json
     else
         print_summary
+    fi
+
+    # Finalize fix mode if enabled
+    if [[ "$FIX_MODE" == "true" ]]; then
+        if type -t finalize_doctor_fix &>/dev/null; then
+            finalize_doctor_fix
+        fi
     fi
 
     # Exit with appropriate code

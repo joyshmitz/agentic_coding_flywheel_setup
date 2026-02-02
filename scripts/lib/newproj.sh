@@ -18,7 +18,7 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 # Track what was created for summary
-declare -a CREATED_ITEMS=()
+declare -ga CREATED_ITEMS=()
 
 # ============================================================
 # Environment Detection
@@ -601,10 +601,12 @@ main() {
         exit 1
     fi
 
-    # SAFEGUARD: Reject names with hex-encoded characters (e.g., -2d, -5f, -3d)
+    # SAFEGUARD: Reject names with URL-encoded characters (e.g., %2d, %5f, %3d)
     # These patterns indicate test framework name encoding that leaked into production
-    if [[ "$project_name" =~ -[0-9a-f]{2} ]]; then
-        echo -e "${RED}Error: Project name contains hex-encoded characters (e.g., -2d, -5f)${NC}" >&2
+    # Note: Uses % prefix (standard URL encoding), not - prefix which causes false positives
+    # on valid names like "code-review", "node-app", "test-flywheel-demo"
+    if [[ "$project_name" =~ %[0-9a-fA-F]{2} ]]; then
+        echo -e "${RED}Error: Project name contains URL-encoded characters (e.g., %2d, %5f)${NC}" >&2
         echo -e "${YELLOW}This pattern suggests a test framework encoding leak${NC}" >&2
         exit 1
     fi
@@ -739,19 +741,19 @@ EOF
         echo -e "${CYAN}Git already initialized, skipping${NC}"
     fi
 
-    # Initialize beads (bd) if available and not skipped
+    # Initialize beads (br) if available and not skipped
     if [[ "$skip_bd" == "false" ]]; then
-        if command -v bd &>/dev/null; then
+        if command -v br &>/dev/null; then
             if [[ ! -d .beads ]]; then
-                echo -e "${GREEN}Initializing beads (bd)...${NC}"
-                bd init
+                echo -e "${GREEN}Initializing beads (br)...${NC}"
+                br init
                 CREATED_ITEMS+=("Beads tracking (.beads/)")
             else
                 echo -e "${CYAN}Beads already initialized, skipping${NC}"
             fi
         else
-            echo -e "${YELLOW}Warning: bd not found, skipping beads initialization${NC}"
-            echo -e "${YELLOW}Install with: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only stack.beads_viewer${NC}"
+echo -e "${YELLOW}Warning: br not found, skipping beads initialization${NC}"
+            echo -e "${YELLOW}Install with: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only stack.beads_viewer${NC}"
         fi
     fi
 
@@ -805,9 +807,9 @@ EOF
     if [[ "$skip_agents" == "false" ]] && [[ -f AGENTS.md ]]; then
         echo "  # Edit AGENTS.md to customize for your project"
     fi
-    if [[ "$skip_bd" == "false" ]] && command -v bd &>/dev/null; then
-        echo "  bd ready                    # Check for work"
-        echo "  bd create --title=\"...\"    # Create tasks"
+    if [[ "$skip_bd" == "false" ]] && command -v br &>/dev/null; then
+        echo "  br ready                    # Check for work"
+        echo "  br create --title=\"...\"    # Create tasks"
     fi
     echo "  cc                          # Start Claude Code"
 }

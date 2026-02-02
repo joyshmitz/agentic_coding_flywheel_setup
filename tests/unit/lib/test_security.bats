@@ -34,9 +34,9 @@ teardown() {
         sha=$(echo -n "$content" | shasum -a 256 | cut -d' ' -f1)
     fi
     
-    # Stub curl to return content
-    stub_command "curl" "$content" 0
-    
+    # Stub curl to return content (handles -o flag)
+    stub_curl "$content" 0
+
     run verify_checksum "https://example.com" "$sha" "test"
     assert_success
     assert_output --partial "$content"
@@ -46,8 +46,8 @@ teardown() {
 @test "verify_checksum: fails on mismatch" {
     local content="malicious content"
     local sha="0000000000000000000000000000000000000000000000000000000000000000"
-    
-    stub_command "curl" "$content" 0
+
+    stub_curl "$content" 0
     
     run verify_checksum "https://example.com" "$sha" "test"
     assert_failure

@@ -64,7 +64,7 @@ export function FlywheelLoopLesson() {
 
       <Divider />
 
-      {/* The Eight Tools */}
+{/* The Twenty Tools */}
       <Section
         {...{
           title: messages.toolsSection.title,

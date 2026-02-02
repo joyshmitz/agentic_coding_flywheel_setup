@@ -17,6 +17,17 @@ if [[ -z "${ACFS_BLUE:-}" ]]; then
     source "$SECURITY_SCRIPT_DIR/logging.sh" 2>/dev/null || true
 fi
 
+# Fallback logging if logging.sh was not sourced or failed to load
+if ! declare -f log_success &>/dev/null; then
+    log_success() { printf "OK: %s\n" "$1" >&2; }
+    log_error()   { printf "ERROR: %s\n" "$1" >&2; }
+    log_info()    { printf "INFO: %s\n" "$1" >&2; }
+    log_warn()    { printf "WARN: %s\n" "$1" >&2; }
+    log_step()    { printf "[%s] %s\n" "$1" "$2" >&2; }
+    log_detail()  { printf "  %s\n" "$1" >&2; }
+    log_fatal()   { printf "FATAL: %s\n" "$1" >&2; exit 1; }
+fi
+
 # Color aliases for backward compatibility (used by display functions below)
 CYAN="${ACFS_BLUE:-\033[0;36m}"
 DIM="${ACFS_GRAY:-\033[0;90m}"
@@ -169,6 +180,13 @@ declare -gA KNOWN_INSTALLERS=(
     [giil]="https://raw.githubusercontent.com/Dicklesworthstone/giil/main/install.sh"
     [csctf]="https://raw.githubusercontent.com/Dicklesworthstone/chat_shared_conversation_to_file/main/install.sh"
     [jfp]="https://jeffreysprompts.com/install-cli.sh"
+    [br]="https://raw.githubusercontent.com/Dicklesworthstone/beads_rust/main/install.sh"
+    [brenner_bot]="https://raw.githubusercontent.com/Dicklesworthstone/brenner_bot/main/install.sh"
+    [rch]="https://raw.githubusercontent.com/Dicklesworthstone/remote_compilation_helper/master/install.sh"
+    [tru]="https://raw.githubusercontent.com/Dicklesworthstone/toon_rust/master/install.sh"
+    [rano]="https://raw.githubusercontent.com/Dicklesworthstone/rano/main/install.sh"
+    [mdwb]="https://raw.githubusercontent.com/Dicklesworthstone/markdown_web_browser/main/install.sh"
+    [s2p]="https://raw.githubusercontent.com/Dicklesworthstone/source_to_prompt_tui/main/install.sh"
 )
 
 # ============================================================

@@ -13,10 +13,13 @@ teardown() {
 }
 
 @test "logging: color variables are exported" {
-    # Check a few key color variables
-    [[ -n "$ACFS_RED" ]]
-    [[ -n "$ACFS_GREEN" ]]
-    [[ -n "$ACFS_NC" ]]
+    # Color variables should be exported with ANSI escape sequences
+    [[ -v ACFS_RED ]]
+    [[ -v ACFS_GREEN ]]
+    [[ -v ACFS_NC ]]
+    # Verify they contain escape sequences (start with \033)
+    [[ "$ACFS_RED" == *"033"* ]]
+    [[ "$ACFS_GREEN" == *"033"* ]]
 }
 
 @test "logging: log_success prints green checkmark to stderr" {

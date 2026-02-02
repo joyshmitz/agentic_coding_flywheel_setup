@@ -19,8 +19,10 @@ setup() {
     stub_command "chmod" ""
     
     # Mock environment
-    export ACFS_TARGET_USER="testuser"
+    # Note: user.sh uses TARGET_USER not ACFS_TARGET_USER
+    export TARGET_USER="testuser"
     export ACFS_TARGET_HOME=$(create_temp_dir)
+    export TARGET_HOME="$ACFS_TARGET_HOME"
     export HOME=$(create_temp_dir)
     
     # We need mkdir and touch to work for some tests, so we won't stub them globally

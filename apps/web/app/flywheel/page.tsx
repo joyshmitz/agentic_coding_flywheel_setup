@@ -103,7 +103,7 @@ function HeroSection({ messages }: { messages: ReturnType<typeof getFlywheelMess
           className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg lg:text-xl opacity-0 animate-slide-up"
           style={{ animationDelay: "0.3s", animationFillMode: "forwards" }}
         >
-          {messages.hero.subtitle}{" "}
+{messages.hero.subtitle}{" "}
           <span className="text-foreground font-medium">{messages.hero.subtitleHighlight}</span>.
         </p>
 
@@ -759,7 +759,7 @@ function ToolsSection({ messages, locale }: { messages: ReturnType<typeof getFly
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
           <h2 className="font-mono text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
-            {messages.sections.tools.title}
+{messages.sections.tools.title}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground lg:text-lg">
             <ToolsDescriptionWithJargon messages={messages} />
