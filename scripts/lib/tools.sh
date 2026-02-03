@@ -356,6 +356,16 @@ record_skipped_tool() {
     local reason="${2:-Installation failed}"
     local url="${3:-}"
 
+    # Only add to array if not already present (prevents duplicates)
+    local existing
+    for existing in "${SKIPPED_TOOLS[@]}"; do
+        if [[ "$existing" == "$tool" ]]; then
+            # Tool already recorded, just update details with latest reason/url
+            SKIPPED_TOOL_DETAILS["$tool"]="$reason|$url"
+            return 0
+        fi
+    done
+
     SKIPPED_TOOLS+=("$tool")
     SKIPPED_TOOL_DETAILS["$tool"]="$reason|$url"
 }

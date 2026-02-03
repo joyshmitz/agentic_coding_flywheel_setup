@@ -4,7 +4,105 @@
 # Provides consistent, colored output for the installer
 # ============================================================
 
-# Prevent multiple sourcing
+# ============================================================
+# Log file capture (always defined, even when basic log funcs
+# are skipped via _ACFS_LOGGING_SH_LOADED guard)
+# ============================================================
+
+# Initialize log file capture: tee stderr to a timestamped log file.
+# Usage: acfs_log_init [log_directory]
+# After calling, all stderr output is captured to ACFS_LOG_FILE.
+# Call acfs_log_close to restore stderr and finalize the log.
+if ! declare -f acfs_log_init >/dev/null 2>&1; then
+    acfs_log_init() {
+        local log_dir="${1:-${ACFS_HOME:+${ACFS_HOME}/logs}}"
+
+        # Fallback if ACFS_HOME not set or empty
+        if [[ -z "$log_dir" ]]; then
+            log_dir="${ACFS_LOG_DIR:-/var/log/acfs}"
+        fi
+
+        # Create log directory
+        mkdir -p "$log_dir" 2>/dev/null || return 1
+
+        ACFS_LOG_FILE="${log_dir}/install-$(date +%Y%m%d_%H%M%S).log"
+        export ACFS_LOG_FILE
+
+        # Write log header
+        {
+            printf '=== ACFS Install Log ===\n'
+            printf 'Started: %s\n' "$(date -Iseconds)"
+            printf 'Version: %s\n' "${ACFS_VERSION:-unknown}"
+            printf 'User: %s\n' "${TARGET_USER:-unknown}"
+            printf 'Home: %s\n' "${TARGET_HOME:-unknown}"
+            printf '========================\n\n'
+        } > "$ACFS_LOG_FILE" 2>/dev/null || return 1
+
+        # Fix ownership so target user can read logs
+        if [[ -n "${TARGET_USER:-}" ]] && [[ "$(id -u)" -eq 0 ]]; then
+            chown "${TARGET_USER}:${TARGET_USER}" "$log_dir" "$ACFS_LOG_FILE" 2>/dev/null || true
+        fi
+
+        # Tee stderr: all stderr output goes to both terminal and log file.
+        # fd 3 = original stderr (preserved for terminal output).
+        #
+        # NOTE: Process substitution >(tee ...) can fail on some systems
+        # (especially Ubuntu 25.04 with bash 5.3+). We test first and
+        # fall back to simple file logging if it fails.
+        local tee_logging_ok=false
+        if command -v tee >/dev/null 2>&1; then
+            # Test if process substitution works before committing to it.
+            # On bash 5.3+, bare `exec` under set -e can exit the script
+            # before `if` catches the failure, so we test in a subshell.
+            # shellcheck disable=SC2261
+            if (exec 3>&1; echo test > >(cat >/dev/null)) 2>/dev/null; then
+                exec 3>&2 || true
+                # shellcheck disable=SC2261
+                # Use set +e locally to prevent exec from exiting under bash 5.3+
+                if (set +e; exec 2> >(tee -a "$ACFS_LOG_FILE" >&3)) 2>/dev/null; then
+                    exec 2> >(tee -a "$ACFS_LOG_FILE" >&3) && tee_logging_ok=true
+                fi
+            fi
+        fi
+
+        if [[ "$tee_logging_ok" != "true" ]]; then
+            # Fallback: rely on explicit logging calls instead of automatic tee
+            ACFS_LOG_FALLBACK=true
+            export ACFS_LOG_FALLBACK
+        fi
+    }
+fi
+
+# Close log file capture and restore stderr.
+# Strips ANSI color codes from the log for clean text output.
+if ! declare -f acfs_log_close >/dev/null 2>&1; then
+    acfs_log_close() {
+        # Restore original stderr if fd 3 is open
+        if { true >&3; } 2>/dev/null; then
+            exec 2>&3 3>&-
+        fi
+
+        if [[ -n "${ACFS_LOG_FILE:-}" ]] && [[ -f "$ACFS_LOG_FILE" ]]; then
+            # Strip ANSI escape codes for clean log
+            # Use -i.bak for portability (works on both GNU sed and BSD sed)
+            sed -i.bak $'s/\033\[[0-9;]*m//g' "$ACFS_LOG_FILE" 2>/dev/null && rm -f "${ACFS_LOG_FILE}.bak" || true
+
+            # Append footer
+            {
+                printf '\n========================\n'
+                printf 'Finished: %s\n' "$(date -Iseconds)"
+                printf '========================\n'
+            } >> "$ACFS_LOG_FILE"
+
+            # Fix ownership
+            if [[ -n "${TARGET_USER:-}" ]] && [[ "$(id -u)" -eq 0 ]]; then
+                chown "${TARGET_USER}:${TARGET_USER}" "$ACFS_LOG_FILE" 2>/dev/null || true
+            fi
+        fi
+    }
+fi
+
+# Prevent multiple sourcing of basic log functions
 if [[ -n "${_ACFS_LOGGING_SH_LOADED:-}" ]]; then
     return 0
 fi
@@ -240,7 +338,14 @@ fi
 if ! declare -f timer_end >/dev/null; then
     timer_end() {
         local name="$1"
-        local start="${ACFS_TIMERS[$name]:-$(date +%s)}"
+        local start="${ACFS_TIMERS[$name]:-}"
+
+        # If timer was never started, warn and skip duration logging
+        if [[ -z "$start" ]]; then
+            log_detail "Completed (no timing data)"
+            return 0
+        fi
+
         local end
         end=$(date +%s)
         local duration=$((end - start))

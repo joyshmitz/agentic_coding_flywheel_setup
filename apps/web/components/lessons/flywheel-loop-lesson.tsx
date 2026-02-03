@@ -64,7 +64,7 @@ export function FlywheelLoopLesson() {
 
       <Divider />
 
-      {/* The Eight Tools */}
+      {/* The Twenty Tools */}
       <Section
         {...{
           title: messages.toolsSection.title,
@@ -205,7 +205,7 @@ export function FlywheelLoopLesson() {
             {...{
               code: `${messages.workflowSection.codeComments.planWork}
 bv --robot-triage                ${messages.workflowSection.codeComments.checkTasks}
-bd ready                        ${messages.workflowSection.codeComments.seeReady}
+br ready                        ${messages.workflowSection.codeComments.seeReady}
 
 ${messages.workflowSection.codeComments.startAgents}
 ntm spawn myproject --cc=2 --cod=1
@@ -226,7 +226,7 @@ ${messages.workflowSection.codeComments.updateMemoryStep}
 cm reflect                      ${messages.workflowSection.codeComments.distillLearnings}
 
 ${messages.workflowSection.codeComments.closeTask}
-bd close <task-id>`,
+br close <task-id>`,
               showLineNumbers: true,
             }}
           />
@@ -282,14 +282,14 @@ ${messages.firstTaskSection.codeComments.initGit}
 git init
 
 ${messages.firstTaskSection.codeComments.initBeads}
-bd init
+br init
 
 ${messages.firstTaskSection.codeComments.recommended}
 ${messages.firstTaskSection.codeComments.beadsExplanation}
 ${messages.firstTaskSection.codeComments.conflictWarning}
 git branch beads-sync main
 git push -u origin beads-sync
-bd config set sync.branch=beads-sync
+br config set sync.branch=beads-sync
 
 ${messages.firstTaskSection.codeComments.spawnAgents}
 ntm spawn my-first-project --cc=2 --cod=1 --gmi=1

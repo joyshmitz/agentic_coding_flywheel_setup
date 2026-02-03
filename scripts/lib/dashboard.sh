@@ -105,22 +105,20 @@ dashboard_serve() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --port)
-                if [[ -n "${2:-}" ]]; then
-                    port="$2"
-                    shift
-                else
+                if [[ -z "${2:-}" || "$2" == -* ]]; then
                     echo "Error: --port requires a port number" >&2
                     return 1
                 fi
+                port="$2"
+                shift
                 ;;
             --host)
-                if [[ -n "${2:-}" ]]; then
-                    host="$2"
-                    shift
-                else
+                if [[ -z "${2:-}" || "$2" == -* ]]; then
                     echo "Error: --host requires a host/address (e.g. 127.0.0.1 or 0.0.0.0)" >&2
                     return 1
                 fi
+                host="$2"
+                shift
                 ;;
             --public)
                 host="0.0.0.0"

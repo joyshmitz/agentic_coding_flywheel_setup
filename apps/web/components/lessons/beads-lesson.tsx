@@ -55,6 +55,10 @@ export function BeadsLesson() {
           <Highlight>BV (Beads Viewer)</Highlight>{" "}
           {messages.whatIsBeads.bvDescription}
         </Paragraph>
+        <TipBox variant="info">
+          <code>br</code> is the CLI for the beads_rust issue tracker.
+          Use <code>br --help</code> for all available commands.
+        </TipBox>
 
         <div className="mt-8">
           <FeatureGrid>

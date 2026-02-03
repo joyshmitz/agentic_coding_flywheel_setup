@@ -65,7 +65,6 @@ const CATEGORY_UI: Record<CommandCategory, { icon: ReactNode; gradient: string }
   },
 };
 
-
 function toAnchorId(value: string): string {
   return value
     .toLowerCase()

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================
 # ACFS newproj - Create a new project with full ACFS tooling
-# Creates a project with git, beads (bd), Claude settings, and AGENTS.md
+# Creates a project with git, beads (br), Claude settings, and AGENTS.md
 # Supports both CLI mode and interactive TUI wizard mode
 # ============================================================
 
@@ -18,7 +18,7 @@ CYAN='\033[0;36m'
 NC='\033[0m'
 
 # Track what was created for summary
-declare -a CREATED_ITEMS=()
+declare -ga CREATED_ITEMS=()
 
 # ============================================================
 # Environment Detection
@@ -84,7 +84,7 @@ print_help() {
     echo "Usage: acfs newproj [options] <project-name> [directory]"
     echo "       acfs newproj --interactive"
     echo ""
-    echo "Create a new project with ACFS tooling (git, bd, claude settings, AGENTS.md)"
+    echo "Create a new project with ACFS tooling (git, br, claude settings, AGENTS.md)"
     echo ""
     echo "Arguments:"
     echo "  project-name    Name of the project (required in CLI mode)"
@@ -95,7 +95,7 @@ print_help() {
     echo "                      (recommended for first-time users)"
     echo ""
     echo "CLI mode options:"
-    echo "  --no-bd         Skip beads (bd) initialization"
+    echo "  --no-br         Skip beads (br) initialization"
     echo "  --no-claude     Skip Claude settings creation"
     echo "  --no-agents     Skip AGENTS.md template creation"
     echo "  -h, --help      Show this help message"
@@ -194,7 +194,7 @@ Example structure:
 PROJECT_NAME_PLACEHOLDER/
 ├── README.md
 ├── AGENTS.md
-├── .beads/                        # Issue tracking (bd)
+├── .beads/                        # Issue tracking (br)
 ├── .claude/                       # Claude Code settings
 │
 └── src/                           # Your source code
@@ -308,13 +308,10 @@ Common pitfalls:
 
 All issue tracking goes through **Beads**. No other TODO systems.
 
-**Note:** `br` is a convenience alias (installed by `acfs/zsh/acfs.zshrc`) for the real Beads CLI: `bd`.
-If `br` is unavailable (CI / non-interactive shells), use `bd` directly.
-
 Key invariants:
 
 - `.beads/` is authoritative state and **must always be committed** with code changes.
-- Do not edit `.beads/*.jsonl` directly; only via `br` / `bd`.
+- Do not edit `.beads/*.jsonl` directly; only via `br`.
 
 ### Basics
 
@@ -524,7 +521,7 @@ run_interactive_mode() {
 main() {
     local project_name=""
     local project_dir=""
-    local skip_bd=false
+    local skip_br=false
     local skip_claude=false
     local skip_agents=false
     local interactive_mode=false
@@ -540,8 +537,8 @@ main() {
                 interactive_mode=true
                 shift
                 ;;
-            --no-bd)
-                skip_bd=true
+            --no-br)
+                skip_br=true
                 shift
                 ;;
             --no-claude)
@@ -601,10 +598,12 @@ main() {
         exit 1
     fi
 
-    # SAFEGUARD: Reject names with hex-encoded characters (e.g., -2d, -5f, -3d)
+    # SAFEGUARD: Reject names with URL-encoded characters (e.g., %2d, %5f, %3d)
     # These patterns indicate test framework name encoding that leaked into production
-    if [[ "$project_name" =~ -[0-9a-f]{2} ]]; then
-        echo -e "${RED}Error: Project name contains hex-encoded characters (e.g., -2d, -5f)${NC}" >&2
+    # Note: Uses % prefix (standard URL encoding), not - prefix which causes false positives
+    # on valid names like "code-review", "node-app", "test-flywheel-demo"
+    if [[ "$project_name" =~ %[0-9a-fA-F]{2} ]]; then
+        echo -e "${RED}Error: Project name contains URL-encoded characters (e.g., %2d, %5f)${NC}" >&2
         echo -e "${YELLOW}This pattern suggests a test framework encoding leak${NC}" >&2
         exit 1
     fi
@@ -739,19 +738,19 @@ EOF
         echo -e "${CYAN}Git already initialized, skipping${NC}"
     fi
 
-    # Initialize beads (bd) if available and not skipped
-    if [[ "$skip_bd" == "false" ]]; then
-        if command -v bd &>/dev/null; then
+    # Initialize beads (br) if available and not skipped
+    if [[ "$skip_br" == "false" ]]; then
+        if command -v br &>/dev/null; then
             if [[ ! -d .beads ]]; then
-                echo -e "${GREEN}Initializing beads (bd)...${NC}"
-                bd init
+                echo -e "${GREEN}Initializing beads (br)...${NC}"
+                br init
                 CREATED_ITEMS+=("Beads tracking (.beads/)")
             else
                 echo -e "${CYAN}Beads already initialized, skipping${NC}"
             fi
         else
-            echo -e "${YELLOW}Warning: bd not found, skipping beads initialization${NC}"
-            echo -e "${YELLOW}Install with: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only stack.beads_viewer${NC}"
+            echo -e "${YELLOW}Warning: br not found, skipping beads initialization${NC}"
+            echo -e "${YELLOW}Install with: curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --only stack.beads_viewer${NC}"
         fi
     fi
 
@@ -805,9 +804,9 @@ EOF
     if [[ "$skip_agents" == "false" ]] && [[ -f AGENTS.md ]]; then
         echo "  # Edit AGENTS.md to customize for your project"
     fi
-    if [[ "$skip_bd" == "false" ]] && command -v bd &>/dev/null; then
-        echo "  bd ready                    # Check for work"
-        echo "  bd create --title=\"...\"    # Create tasks"
+    if [[ "$skip_br" == "false" ]] && command -v br &>/dev/null; then
+        echo "  br ready                    # Check for work"
+        echo "  br create --title=\"...\"    # Create tasks"
     fi
     echo "  cc                          # Start Claude Code"
 }

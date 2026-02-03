@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { PartyPopper, BookOpen, ExternalLink, Sparkles, ArrowRight, GraduationCap, Terminal, RefreshCw, FolderPlus, FolderOpen } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { CommandCard } from "@/components/command-card";
+import { CommandCard, CodeBlock } from "@/components/command-card";
 import { AlertCard } from "@/components/alert-card";
 import { markStepComplete, setCompletedSteps, TOTAL_STEPS } from "@/lib/wizardSteps";
 import { trackConversion } from "@/lib/analytics";
@@ -21,6 +21,7 @@ import { Jargon } from "@/components/jargon";
 import { useVPSIP } from "@/lib/userPreferences";
 import { withCurrentSearch } from "@/lib/utils";
 import { useLocale, getLaunchOnboardingMessages } from "@/lib/i18n";
+import { CommandBuilderPanel } from "@/components/command-builder-panel";
 
 // Confetti colors
 const CONFETTI_COLORS = [
@@ -151,6 +152,9 @@ export default function LaunchOnboardingPage() {
           </p>
         </div>
       </AlertCard>
+
+      {/* Personalized command quick-reference */}
+      <CommandBuilderPanel />
 
       {/* Important: Authenticate Your AI Tools First */}
       <Card className="border-[oklch(0.78_0.16_75/0.3)] bg-[oklch(0.78_0.16_75/0.08)] p-6">
@@ -562,12 +566,7 @@ export default function LaunchOnboardingPage() {
             <p className="text-sm text-muted-foreground">
               {messages.gettingBackIn.sshConfigTip.intro}
             </p>
-            <pre className="rounded-lg bg-muted p-4 text-sm font-mono overflow-x-auto">
-{`Host myserver
-    HostName ${displayIP}
-    User ubuntu
-    IdentityFile ~/.ssh/acfs_ed25519`}
-            </pre>
+            <CodeBlock code={`Host myserver\n    HostName ${displayIP}\n    User ubuntu\n    IdentityFile ~/.ssh/acfs_ed25519`} language="ssh-config" />
             <p className="text-sm text-muted-foreground">
               {messages.gettingBackIn.sshConfigTip.after}
             </p>

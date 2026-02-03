@@ -163,9 +163,7 @@ export default function ReconnectUbuntuPage() {
               <p className="mt-3 font-medium text-foreground">
                 {messages.permissionDenied.tryRoot}
               </p>
-              <code className="block rounded bg-muted px-3 py-2 font-mono text-xs mt-2">
-                ssh root@{vpsIP}
-              </code>
+              <CommandCard command={`ssh root@${vpsIP}`} runLocation="local" className="mt-2" />
               <p className="mt-2 text-xs text-muted-foreground">
                 {messages.permissionDenied.usePassword}
               </p>

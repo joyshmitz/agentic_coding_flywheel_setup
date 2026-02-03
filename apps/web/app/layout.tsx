@@ -87,7 +87,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#0a0a12",
-  colorScheme: "dark",
+  colorScheme: "dark light",
   viewportFit: "cover", // Enable safe area insets for notch/home bar
 };
 
@@ -97,7 +97,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="uk" className="dark">
+    <html lang="uk" className="dark" suppressHydrationWarning>
+      <head>
+        {/* Flash-prevention: apply stored theme before first paint */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var s=localStorage.getItem("acfs-theme")||"dark";var r=s==="system"?matchMedia("(prefers-color-scheme:light)").matches?"light":"dark":s;var d=document.documentElement;d.classList.remove("dark","light");d.classList.add(r==="light"?"light":"dark")}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body
         className={`${jetbrainsMono.variable} ${instrumentSans.variable} font-sans antialiased`}
       >

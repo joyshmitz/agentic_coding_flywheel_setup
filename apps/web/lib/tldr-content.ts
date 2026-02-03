@@ -3,6 +3,8 @@
  * comprehensive descriptions, implementation highlights, and synergies.
  */
 
+import { getManifestTldr } from './manifest-adapter';
+
 export type TldrToolCategory = "core" | "supporting";
 
 export type TldrFlywheelTool = {
@@ -26,7 +28,7 @@ export type TldrFlywheelTool = {
   useCases: string[];
 };
 
-export const tldrFlywheelTools: TldrFlywheelTool[] = [
+const _tldrFlywheelTools: TldrFlywheelTool[] = [
   // ===========================================================================
   // CORE FLYWHEEL TOOLS - Ordered by importance for workflow
   // ===========================================================================
@@ -63,7 +65,7 @@ export const tldrFlywheelTools: TldrFlywheelTool[] = [
         description: "Launched agents coordinate via mail threads",
       },
     ],
-    techStack: ["Python 3.14+", "FastMCP", "FastAPI", "SQLite"],
+    techStack: ["Python 3.11+", "FastMCP", "FastAPI", "SQLite"],
     keyFeatures: [
       "Threaded messaging between AI agents",
       "Advisory file reservations",
@@ -132,14 +134,14 @@ export const tldrFlywheelTools: TldrFlywheelTool[] = [
     category: "core",
     stars: 128,
     whatItDoes:
-      "Local-first issue tracking for AI agents. Issues live in .beads/*.jsonl files that commit with your code. Full dependency graph with blocking/blocked-by relationships.",
+      "Local-first issue tracking for AI agents. SQLite + JSONL hybrid: fast queries locally, git-friendly export for collaboration. Non-invasive - never auto-commits or touches source code.",
     whyItsUseful:
-      "Your issues travel with your repo - no external service required. Agents can create, update, and close issues with simple CLI commands. The bd alias provides backward compatibility with the original Go version.",
+      "Your issues travel with your repo - no external service required. ~20K lines of Rust focused on one thing: tracking issues without getting in your way. br ready shows actionable work; br sync --flush-only exports for git commit.",
     implementationHighlights: [
-      "Rust port of the original Go beads CLI",
-      "Issues stored in JSONL - human readable, git friendly",
-      "Auto-flush syncs state to disk automatically",
-      "Full dependency graph with blocks/blocked-by",
+      "SQLite for fast queries, JSONL for git-friendly export",
+      "Non-invasive: never runs git commands automatically",
+      "40 commands, all support --json for agents",
+      "br ready/blocked for dependency-aware work queues",
     ],
     synergies: [
       {
@@ -155,16 +157,16 @@ export const tldrFlywheelTools: TldrFlywheelTool[] = [
         description: "NTM spawns agents that pick work from beads",
       },
     ],
-    techStack: ["Rust", "Serde", "JSONL"],
+    techStack: ["Rust", "SQLite", "JSONL", "Serde"],
     keyFeatures: [
-      "Local-first issue storage",
-      "Dependency graph tracking",
-      "Labels, priorities, comments",
-      "JSON output for agents",
+      "SQLite + JSONL hybrid architecture",
+      "br ready: unblocked, non-deferred work",
+      "br dep: full dependency graph management",
+      "br stats: lead time and activity metrics",
     ],
     useCases: [
       "Tracking tasks that travel with the code",
-      "Building dependency graphs for complex projects",
+      "Finding actionable work with br ready --json",
       "Enabling agents to manage their own work queues",
     ],
   },
@@ -468,7 +470,7 @@ export const tldrFlywheelTools: TldrFlywheelTool[] = [
         description: "Session history from all NTM panes is indexed for search",
       },
     ],
-    techStack: ["Go 1.25+", "Bubble Tea", "tmux 3.0+"],
+    techStack: ["Go 1.22+", "Bubble Tea", "tmux 3.0+"],
     keyFeatures: [
       "Spawn named agent panes with type classification",
       "Broadcast prompts to specific agent types",
@@ -713,52 +715,6 @@ export const tldrFlywheelTools: TldrFlywheelTool[] = [
       "Scientific methodology workflows",
     ],
   },
-  {
-    id: "ms",
-    name: "Meta Skill",
-    shortName: "MS",
-    href: "https://github.com/Dicklesworthstone/meta_skill",
-    icon: "BookMarked",
-    color: "from-indigo-500 to-blue-600",
-    category: "core",
-    stars: 35,
-    whatItDoes:
-      "Local-first skill management platform that turns operational knowledge into structured, searchable, reusable artifacts. Provides dual persistence (SQLite + Git), hybrid search, and native AI agent integration via MCP.",
-    whyItsUseful:
-      "As you build expertise across codebases, you need a way to capture and reuse successful patterns. MS indexes SKILL.md files, provides context-aware suggestions with bandit optimization, and exposes skills as native tools for AI agents.",
-    implementationHighlights: [
-      "Dual SQLite + Git persistence for speed and audit trails",
-      "Hybrid BM25 + hash embeddings with Reciprocal Rank Fusion",
-      "UCB bandit algorithm for adaptive suggestions",
-      "MCP server exposing skills as native AI tools",
-    ],
-    synergies: [
-      {
-        toolId: "cm",
-        description: "CM stores playbook rules that MS can query",
-      },
-      {
-        toolId: "cass",
-        description: "Skills can be mined from CASS session history",
-      },
-      {
-        toolId: "bv",
-        description: "Graph analysis via bv for dependency insights",
-      },
-    ],
-    techStack: ["Rust", "SQLite", "Git", "MCP", "Hash Embeddings"],
-    keyFeatures: [
-      "Skill indexing and semantic search",
-      "Context-aware adaptive suggestions",
-      "Multi-machine Git-based sync",
-      "MCP integration for AI agents",
-    ],
-    useCases: [
-      "Capturing operational knowledge as reusable skills",
-      "AI agent augmentation via MCP tools",
-      "Cross-project pattern distribution",
-    ],
-  },
   // ===========================================================================
   // SUPPORTING FLYWHEEL TOOLS
   // ===========================================================================
@@ -861,14 +817,14 @@ export const tldrFlywheelTools: TldrFlywheelTool[] = [
     category: "supporting",
     stars: 156,
     whatItDoes:
-      "Ultra-fast search over X/Twitter data archives. Uses hybrid BM25 + semantic search with Reciprocal Rank Fusion.",
+      "Ultra-fast search over X/Twitter data archives. Indexes tweets, likes, DMs, and Grok chats with hybrid BM25 + semantic search using Reciprocal Rank Fusion.",
     whyItsUseful:
-      "Your X archive is a goldmine of bookmarks, threads, and ideas, but Twitter's search is terrible. XF makes your archive instantly searchable with both keyword and semantic matching.",
+      "Your X archive is a goldmine of bookmarks, threads, and ideas. XF makes your archive instantly searchable with three modes: hybrid (default), lexical (BM25), and semantic (vector similarity).",
     implementationHighlights: [
-      "Rust implementation for maximum performance",
-      "Hybrid BM25 + semantic search with RRF fusion",
-      "Zero-dependency hash embedder (no Python/API calls)",
-      "Privacy-first, fully local processing",
+      "Tantivy-powered BM25 with phrase queries and boolean operators",
+      "Hash-based embeddings (zero deps) or optional MiniLM semantic",
+      "SIMD-accelerated vector ops with F16 quantization",
+      "Parses window.YTD.* JavaScript format from X exports",
     ],
     synergies: [
       {
@@ -880,17 +836,17 @@ export const tldrFlywheelTools: TldrFlywheelTool[] = [
         description: "Found tweets can become memories",
       },
     ],
-    techStack: ["Rust", "Tantivy", "Hash embeddings", "RRF"],
+    techStack: ["Rust", "Tantivy", "SQLite", "FNV-1a hash embeddings"],
     keyFeatures: [
-      "Sub-second search over large archives",
-      "Semantic + keyword hybrid search",
-      "No external API dependencies",
-      "Privacy-preserving local processing",
+      "Sub-millisecond lexical, <10ms hybrid search",
+      "DM context view with full conversation threads",
+      "JSON/CSV/compact output formats",
+      "Interactive REPL shell (xf shell)",
     ],
     useCases: [
       "Finding that thread you bookmarked months ago",
-      "Researching past discussions on a topic",
-      "Building on ideas from your tweet history",
+      "Searching DMs with full conversation context",
+      "Exporting tweets to JSON for analysis pipelines",
     ],
   },
   {
@@ -1074,14 +1030,35 @@ export const tldrFlywheelTools: TldrFlywheelTool[] = [
   },
 ];
 
+// Merge basic metadata from manifest (source of truth for names, shortNames,
+// hrefs, stars, techStack, keyFeatures, useCases). Rich UI data (whatItDoes,
+// whyItsUseful, implementationHighlights, synergies, category, color, icon)
+// stays hand-maintained.
+export const tldrFlywheelTools: TldrFlywheelTool[] = _tldrFlywheelTools.map(
+  (tool) => {
+    const gen = getManifestTldr(tool.id);
+    if (!gen) return tool;
+    return {
+      ...tool,
+      name: gen.displayName,
+      shortName: gen.shortName,
+      href: gen.href ?? tool.href,
+      stars: gen.stars ?? tool.stars,
+      techStack: gen.techStack.length > 0 ? gen.techStack : tool.techStack,
+      keyFeatures: gen.features.length > 0 ? gen.features : tool.keyFeatures,
+      useCases: gen.useCases.length > 0 ? gen.useCases : tool.useCases,
+    };
+  },
+);
+
 export const tldrPageData = {
   hero: {
     title: "The Agentic Coding Flywheel",
     subtitle: "TL;DR Edition",
     description:
-      "11 core tools and 7 supporting utilities that transform multi-agent AI coding workflows. Each tool makes the others more powerful - the more you use it, the faster it spins. While others argue about agentic coding, we're just over here building as fast as we can.",
+      "15 core tools and 7 supporting utilities that transform multi-agent AI coding workflows. Each tool makes the others more powerful - the more you use it, the faster it spins. While others argue about agentic coding, we're just over here building as fast as we can.",
     stats: [
-      { label: "Ecosystem Tools", value: "18" },
+      { label: "Ecosystem Tools", value: "22" },
       { label: "GitHub Stars", value: "3,600+" },
       { label: "Languages", value: "5" },
     ],

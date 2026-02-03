@@ -28,11 +28,11 @@ readonly MIN_TERMINAL_LINES=15
 # ============================================================
 
 # Items to clean up on exit
-declare -a WIZARD_CLEANUP_ITEMS=()
+declare -ga WIZARD_CLEANUP_ITEMS=()
 
 # Transaction state
 WIZARD_TRANSACTION_ACTIVE=false
-declare -a WIZARD_CREATED_FILES=()
+declare -ga WIZARD_CREATED_FILES=()
 WIZARD_PROJECT_ROOT=""
 
 # Saved terminal state
@@ -303,7 +303,7 @@ preflight_check() {
     done
 
     # Check optional commands
-    local optional_cmds=(bd gum glow)
+    local optional_cmds=(br gum glow)
     for cmd in "${optional_cmds[@]}"; do
         if ! command -v "$cmd" &>/dev/null; then
             warnings+=("Optional command not found: $cmd (some features may be limited)")
@@ -420,17 +420,17 @@ try_git_init() {
     return 0
 }
 
-# Try to initialize beads (bd)
-# Usage: try_bd_init "/path/to/dir"
-try_bd_init() {
+# Try to initialize beads (br)
+# Usage: try_br_init "/path/to/dir"
+try_br_init() {
     local dir="$1"
 
-    log_debug "Initializing bd in: $dir" 2>/dev/null || true
+    log_debug "Initializing br in: $dir" 2>/dev/null || true
 
-    # Check if bd is available
-    if ! command -v bd &>/dev/null; then
-        log_warn "bd not found - skipping beads initialization" 2>/dev/null || true
-        echo -e "${NEWPROJ_YELLOW}Note: bd not installed. Skipping beads setup.${NEWPROJ_NC}"
+    # Check if br is available
+    if ! command -v br &>/dev/null; then
+        log_warn "br not found - skipping beads initialization" 2>/dev/null || true
+        echo -e "${NEWPROJ_YELLOW}Note: br not installed. Skipping beads setup.${NEWPROJ_NC}"
         return 0  # Graceful degradation
     fi
 
@@ -440,16 +440,16 @@ try_bd_init() {
         return 0
     fi
 
-    (cd "$dir" && bd init 2>/dev/null)
+    (cd "$dir" && br init 2>/dev/null)
     local errno=$?
     if [[ $errno -ne 0 ]]; then
-        log_warn "bd init failed in $dir (errno: $errno)" 2>/dev/null || true
-        echo -e "${NEWPROJ_YELLOW}Warning: Failed to initialize beads. You can run 'bd init' later.${NEWPROJ_NC}"
+        log_warn "br init failed in $dir (errno: $errno)" 2>/dev/null || true
+        echo -e "${NEWPROJ_YELLOW}Warning: Failed to initialize beads. You can run 'br init' later.${NEWPROJ_NC}"
         return 0  # Graceful degradation - not fatal
     fi
 
     track_created_file "$dir/.beads"
-    log_cmd "bd init" 0 2>/dev/null || true
+    log_cmd "br init" 0 2>/dev/null || true
     return 0
 }
 

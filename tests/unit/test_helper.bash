@@ -338,6 +338,48 @@ EOF
     log_debug "Spied command: $cmd (logging to $log_path)"
 }
 
+# Stub curl to return content (handles -o flag for file output)
+# Usage: stub_curl "content" [exit_code]
+stub_curl() {
+    init_stub_dir
+    local content="$1"
+    local exit_code="${2:-0}"
+    local stub_path="$STUB_DIR/curl"
+
+    cat > "$stub_path" <<'STUB_EOF'
+#!/bin/bash
+CONTENT="__CONTENT_PLACEHOLDER__"
+EXIT_CODE=__EXIT_CODE__
+
+# Parse args to find -o flag
+output_file=""
+args=("$@")
+for ((i=0; i<${#args[@]}; i++)); do
+    if [[ "${args[$i]}" == "-o" ]]; then
+        output_file="${args[$((i+1))]}"
+        break
+    fi
+done
+
+if [[ -n "$output_file" ]]; then
+    # Write to file
+    printf '%s' "$CONTENT" > "$output_file"
+else
+    # Write to stdout
+    printf '%s' "$CONTENT"
+fi
+exit $EXIT_CODE
+STUB_EOF
+
+    # Replace placeholders with actual values
+    # Use @ as sed delimiter since content might have /
+    sed -i "s@__CONTENT_PLACEHOLDER__@$content@g" "$stub_path"
+    sed -i "s@__EXIT_CODE__@$exit_code@g" "$stub_path"
+
+    chmod +x "$stub_path"
+    log_debug "Stubbed curl with content (exit $exit_code)"
+}
+
 # ============================================================
 # Common Setup/Teardown
 # ============================================================

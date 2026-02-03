@@ -20,6 +20,10 @@
 #   --reset-state     Move state file aside and exit (for debugging)
 #   --interactive     Enable interactive prompts for resume decisions
 #   --skip-preflight  Skip pre-flight system validation
+#   --auto-fix        Enable auto-fix for pre-flight issues (prompt mode, default)
+#   --no-auto-fix     Disable auto-fix (only warn about issues)
+#   --auto-fix-accept-all  Auto-fix all issues without prompting (for CI)
+#   --auto-fix-dry-run     Show what auto-fix would do without executing
 #   --skip-ubuntu-upgrade  Skip automatic Ubuntu version upgrade
 #   --target-ubuntu=VER    Set target Ubuntu version (default: 25.10)
 #   --strict          Treat ALL tools as critical (any checksum mismatch aborts)
@@ -90,6 +94,7 @@ export PATH="$HOME/.local/bin:$PATH"
 YES_MODE=false
 DRY_RUN=false
 PRINT_MODE=false
+PIN_REF_MODE=false
 MODE="vibe"
 SKIP_POSTGRES=false
 SKIP_VAULT=false
@@ -113,6 +118,11 @@ RESET_STATE_ONLY=false
 
 # Preflight options
 SKIP_PREFLIGHT=false
+
+# Auto-fix options (bd-19y9.3.4)
+# Modes: "prompt" (default, interactive), "yes" (accept all), "no" (disable), "dry-run" (preview only)
+AUTO_FIX_MODE="prompt"
+export AUTO_FIX_MODE
 
 # Ubuntu upgrade options (nb4: integrate upgrade phase)
 SKIP_UBUNTU_UPGRADE=false
@@ -466,6 +476,63 @@ ${commit_line}
 }
 
 # ============================================================
+# Pinned Ref Output (bd-31ps.8.1)
+# Prints resolved SHA and copy-pasteable pinned command
+# ============================================================
+print_pinned_ref() {
+    local sha="${ACFS_COMMIT_SHA_FULL:-$ACFS_COMMIT_SHA}"
+
+    if [[ -z "$sha" || "$sha" == "(unknown)" || "$sha" == "(curl not available)" ]]; then
+        echo "Error: Could not resolve ref '$ACFS_REF' to SHA" >&2
+        echo "" >&2
+        echo "Possible causes:" >&2
+        echo "  - Invalid ref (branch, tag, or SHA)" >&2
+        echo "  - GitHub API rate limit or network issue" >&2
+        echo "" >&2
+        echo "Try:" >&2
+        echo "  export ACFS_REF=main  # use main branch" >&2
+        echo "  export ACFS_REF=v1.0  # use a tag" >&2
+        exit 1
+    fi
+
+    local short_sha="${sha:0:12}"
+    local install_url="https://raw.githubusercontent.com/${ACFS_REPO_OWNER}/${ACFS_REPO_NAME}/${sha}/install.sh"
+
+    echo ""
+    echo "═════════════════════════════════════════════════════════════════"
+    echo "                    ACFS Pinned Reference"
+    echo "═════════════════════════════════════════════════════════════════"
+    echo ""
+    echo "  Requested ref:  ${ACFS_REF_INPUT:-$ACFS_REF}"
+    echo "  Resolved SHA:   ${short_sha}"
+    if [[ -n "${ACFS_COMMIT_SHA_FULL:-}" ]]; then
+        echo "  Full SHA:       ${ACFS_COMMIT_SHA_FULL}"
+    fi
+    if [[ -n "${ACFS_COMMIT_DATE:-}" ]]; then
+        echo "  Commit date:    ${ACFS_COMMIT_DATE}"
+    fi
+    if [[ -n "${ACFS_COMMIT_AGE:-}" ]]; then
+        echo "  Commit age:     ${ACFS_COMMIT_AGE}"
+    fi
+    echo ""
+    echo "─────────────────────────────────────────────────────────────────"
+    echo "Copy-paste this command to install from this exact commit:"
+    echo ""
+    echo "  curl -fsSL \"${install_url}\" | ACFS_REF=\"${sha}\" bash -s -- --yes --mode vibe"
+    echo ""
+    echo "Or with environment variable:"
+    echo ""
+    echo "  export ACFS_REF=\"${sha}\""
+    echo "  curl -fsSL \"https://agent-flywheel.com/install\" | bash -s -- --yes --mode vibe"
+    echo ""
+    echo "─────────────────────────────────────────────────────────────────"
+    echo ""
+    echo "Tip: Pinned refs ensure reproducible installs across machines."
+    echo "     Use tags (e.g., v1.0.0) for stable releases."
+    echo ""
+}
+
+# ============================================================
 # Logging functions (with gum enhancement)
 # ============================================================
 log_step() {
@@ -539,10 +606,322 @@ log_section() {
 }
 
 # ============================================================
+# Log file capture (tee stderr to file)
+# ============================================================
+
+# Initialize log file capture: tee stderr to a timestamped log file.
+# After calling, all stderr output is captured to ACFS_LOG_FILE.
+acfs_log_init() {
+    local log_dir="${1:-${ACFS_HOME:+${ACFS_HOME}/logs}}"
+
+    # Fallback if ACFS_HOME not set or empty
+    if [[ -z "$log_dir" ]]; then
+        log_dir="${ACFS_LOG_DIR:-/var/log/acfs}"
+    fi
+
+    # Create log directory
+    mkdir -p "$log_dir" 2>/dev/null || return 1
+
+    ACFS_LOG_FILE="${log_dir}/install-$(date +%Y%m%d_%H%M%S).log"
+    export ACFS_LOG_FILE
+
+    # Write log header
+    {
+        printf '=== ACFS Install Log ===\n'
+        printf 'Started: %s\n' "$(date -Iseconds)"
+        printf 'Version: %s\n' "${ACFS_VERSION:-unknown}"
+        printf 'User: %s\n' "${TARGET_USER:-unknown}"
+        printf 'Home: %s\n' "${TARGET_HOME:-unknown}"
+        printf 'Mode: %s\n' "${MODE:-unknown}"
+        printf 'Bash: %s\n' "${BASH_VERSION:-unknown}"
+        printf '========================\n\n'
+    } > "$ACFS_LOG_FILE" 2>/dev/null || return 1
+
+    # Fix ownership so target user can read logs
+    if [[ -n "${TARGET_USER:-}" ]] && [[ "$(id -u)" -eq 0 ]]; then
+        chown "${TARGET_USER}:${TARGET_USER}" "$log_dir" "$ACFS_LOG_FILE" 2>/dev/null || true
+    fi
+
+    # Tee stderr: all stderr output goes to both terminal and log file.
+    # fd 3 = original stderr (preserved for terminal output).
+    #
+    # NOTE: Process substitution >(tee ...) can fail on some systems
+    # (especially Ubuntu 25.04 with bash 5.3+). We use a subshell guard
+    # to prevent set -e from exiting the entire script on failure.
+    # If tee logging fails, we fall back to simple file redirection.
+    local tee_logging_ok=false
+    if command -v tee >/dev/null 2>&1; then
+        # Test if process substitution works before committing to it.
+        # On bash 5.3+, bare `exec` under set -e can exit the script
+        # before `if` catches the failure, so we test in a subshell.
+        # shellcheck disable=SC2261
+        if (exec 3>&1; echo test > >(cat >/dev/null)) 2>/dev/null; then
+            # Process substitution works - set up tee logging
+            # Save original stderr first
+            exec 3>&2 || true
+            # Now redirect stderr to tee (which sends to both log and original stderr)
+            # shellcheck disable=SC2261
+            # Use subshell test first to prevent exec from exiting under bash 5.3+
+            if (set +e; exec 2> >(tee -a "$ACFS_LOG_FILE" >&3)) 2>/dev/null; then
+                exec 2> >(tee -a "$ACFS_LOG_FILE" >&3) && tee_logging_ok=true
+            fi
+        fi
+    fi
+
+    if [[ "$tee_logging_ok" != "true" ]]; then
+        # Fallback: redirect stderr to both terminal (via original fd) and log file
+        # This is less elegant but works on all bash versions
+        echo "Note: Tee logging unavailable on this system, using fallback" >&2 || true
+        # Save original stderr, then append to log file for each command
+        # We'll rely on explicit logging calls instead of automatic tee
+        ACFS_LOG_FALLBACK=true
+        export ACFS_LOG_FALLBACK
+    fi
+
+    log_detail "Log file: $ACFS_LOG_FILE"
+}
+
+# Close log file capture and restore stderr.
+# Strips ANSI color codes from the log for clean text output.
+acfs_log_close() {
+    # Restore original stderr if fd 3 is open
+    if { true >&3; } 2>/dev/null; then
+        exec 2>&3 3>&-
+    fi
+
+    if [[ -n "${ACFS_LOG_FILE:-}" ]] && [[ -f "$ACFS_LOG_FILE" ]]; then
+        # Strip ANSI escape codes for clean log
+        sed -i $'s/\033\[[0-9;]*m//g' "$ACFS_LOG_FILE" 2>/dev/null || true
+
+        # Append footer
+        {
+            printf '\n========================\n'
+            printf 'Finished: %s\n' "$(date -Iseconds)"
+            printf '========================\n'
+        } >> "$ACFS_LOG_FILE"
+
+        # Fix ownership
+        if [[ -n "${TARGET_USER:-}" ]] && [[ "$(id -u)" -eq 0 ]]; then
+            chown "${TARGET_USER}:${TARGET_USER}" "$ACFS_LOG_FILE" 2>/dev/null || true
+        fi
+    fi
+}
+
+# ============================================================
+# Install summary JSON (bd-31ps.3.2)
+# ============================================================
+
+# Emit a JSON summary of the install run for downstream tooling.
+# Usage: acfs_summary_emit <status> [total_seconds]
+#   status: "success" or "failure"
+#   total_seconds: total wall-clock time (optional, default 0)
+# Output: ~/.acfs/logs/install_summary_<timestamp>.json
+acfs_summary_emit() {
+    local status="$1"
+    local total_seconds="${2:-0}"
+
+    # Require jq (installed by ensure_base_deps before phases run)
+    command -v jq &>/dev/null || return 1
+
+    local summary_dir="${ACFS_HOME:-/home/${TARGET_USER:?}/.acfs}/logs"
+    mkdir -p "$summary_dir" 2>/dev/null || return 1
+
+    ACFS_SUMMARY_FILE="${summary_dir}/install_summary_$(date +%Y%m%d_%H%M%S).json"
+    export ACFS_SUMMARY_FILE
+
+    # Read phase data from state.json if available
+    local phases_json="[]"
+    local failure_json="null"
+    if [[ -f "${ACFS_STATE_FILE:-}" ]] && command -v jq &>/dev/null; then
+        # Build phases array: [{id, name, duration_seconds}] in completion order
+        phases_json=$(jq -r '
+            (.completed_phases // []) as $completed |
+            (.phase_durations // {}) as $durations |
+            [$completed[] | {id: ., duration_seconds: ($durations[.] // null)}]
+        ' "$ACFS_STATE_FILE" 2>/dev/null) || phases_json="[]"
+
+        # Build failure object if present with precise resume hint (bd-31ps.9.1)
+        local failed_phase
+        failed_phase=$(jq -r '.failed_phase // empty' "$ACFS_STATE_FILE" 2>/dev/null) || true
+        if [[ -n "$failed_phase" ]]; then
+            local resume_hint
+            resume_hint=$(generate_resume_hint "$failed_phase" "")
+            failure_json=$(jq -n \
+                --arg phase "$failed_phase" \
+                --arg step "$(jq -r '.failed_step // empty' "$ACFS_STATE_FILE" 2>/dev/null)" \
+                --arg error "$(jq -r '.failed_error // empty' "$ACFS_STATE_FILE" 2>/dev/null)" \
+                --arg resume_hint "$resume_hint" \
+                '{phase: $phase, step: (if $step == "" then null else $step end), error: (if $error == "" then null else $error end), resume_hint: $resume_hint}')
+        fi
+    fi
+
+    # Get Ubuntu version
+    local ubuntu_version="unknown"
+    if command -v lsb_release &>/dev/null; then
+        ubuntu_version=$(lsb_release -rs 2>/dev/null) || ubuntu_version="unknown"
+    fi
+
+    # Construct the summary JSON
+    jq -n \
+        --argjson schema_version 1 \
+        --arg status "$status" \
+        --arg timestamp "$(date -Iseconds)" \
+        --argjson total_seconds "$total_seconds" \
+        --arg acfs_version "${ACFS_VERSION:-unknown}" \
+        --arg mode "${MODE:-unknown}" \
+        --arg ubuntu_version "$ubuntu_version" \
+        --arg target_user "${TARGET_USER:-unknown}" \
+        --arg target_home "${TARGET_HOME:-unknown}" \
+        --argjson phases "$phases_json" \
+        --argjson failure "$failure_json" \
+        --arg log_file "${ACFS_LOG_FILE:-}" \
+        '{
+            schema_version: $schema_version,
+            status: $status,
+            timestamp: $timestamp,
+            total_seconds: $total_seconds,
+            environment: {
+                acfs_version: $acfs_version,
+                mode: $mode,
+                ubuntu_version: $ubuntu_version,
+                target_user: $target_user,
+                target_home: $target_home
+            },
+            phases: $phases,
+            failure: $failure,
+            log_file: (if $log_file != "" then $log_file else null end)
+        }' > "$ACFS_SUMMARY_FILE" 2>/dev/null || return 1
+
+    # Fix ownership so target user can read
+    if [[ -n "${TARGET_USER:-}" ]] && [[ "$(id -u)" -eq 0 ]]; then
+        chown "${TARGET_USER}:${TARGET_USER}" "$ACFS_SUMMARY_FILE" 2>/dev/null || true
+    fi
+
+    log_detail "Summary: $ACFS_SUMMARY_FILE"
+}
+
+# ============================================================
+# Resume Hint Generation (bd-31ps.9.1)
+# ============================================================
+# Generates a precise, copyable command to resume installation from failure.
+# Includes all relevant flags to reproduce the original invocation.
+generate_resume_hint() {
+    local failed_phase="${1:-}"
+    local failed_step="${2:-}"
+
+    # Start with base command
+    local cmd=""
+
+    # Prefer curl|bash one-liner for curl invocations; local script for local runs
+    if [[ -z "${SCRIPT_DIR:-}" ]]; then
+        # curl|bash invocation - use one-liner format
+        cmd="curl -sSL"
+        if [[ -n "${ACFS_COMMIT_SHA_FULL:-}" ]]; then
+            # Pin to exact commit SHA for reproducibility
+            cmd="$cmd https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/${ACFS_COMMIT_SHA_FULL}/install.sh"
+        elif [[ -n "${ACFS_REF_INPUT:-}" && "${ACFS_REF_INPUT}" != "main" ]]; then
+            cmd="$cmd https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/${ACFS_REF_INPUT}/install.sh"
+        else
+            cmd="$cmd https://acfs.sh"
+        fi
+        cmd="$cmd | bash -s --"
+    else
+        # Local script invocation
+        cmd="bash install.sh"
+    fi
+
+    # Always add --resume flag (skips completed phases via state.json)
+    cmd="$cmd --resume"
+
+    # Add mode if not default
+    if [[ "${MODE:-vibe}" != "vibe" ]]; then
+        cmd="$cmd --mode $MODE"
+    fi
+
+    # Add skip flags that were used
+    [[ "${SKIP_POSTGRES:-false}" == "true" ]] && cmd="$cmd --skip-postgres"
+    [[ "${SKIP_VAULT:-false}" == "true" ]] && cmd="$cmd --skip-vault"
+    [[ "${SKIP_CLOUD:-false}" == "true" ]] && cmd="$cmd --skip-cloud"
+    [[ "${SKIP_PREFLIGHT:-false}" == "true" ]] && cmd="$cmd --skip-preflight"
+    [[ "${SKIP_UBUNTU_UPGRADE:-false}" == "true" ]] && cmd="$cmd --skip-ubuntu-upgrade"
+
+    # Add --yes if original run was non-interactive
+    [[ "${YES_MODE:-false}" == "true" ]] && cmd="$cmd --yes"
+
+    # Add --strict if it was set
+    [[ "${STRICT_MODE:-false}" == "true" ]] && cmd="$cmd --strict"
+
+    echo "$cmd"
+}
+
+# Print the resume hint with explanation and copyable block
+print_resume_hint() {
+    local failed_phase="${1:-}"
+    local failed_step="${2:-}"
+    local resume_cmd=""
+    resume_cmd=$(generate_resume_hint "${failed_phase:-}" "${failed_step:-}" 2>/dev/null) || resume_cmd="bash install.sh --resume --yes"
+
+    log_info ""
+    log_info "╔══════════════════════════════════════════════════════════════╗"
+    log_info "║  To resume installation from this point:                     ║"
+    log_info "╚══════════════════════════════════════════════════════════════╝"
+    log_info ""
+    log_info "  ${resume_cmd:-bash install.sh --resume --yes}"
+    log_info ""
+
+    if [[ -n "${failed_phase:-}" ]]; then
+        log_detail "Failed phase: ${failed_phase:-}"
+    fi
+    if [[ -n "${failed_step:-}" ]]; then
+        log_detail "Failed step: ${failed_step:-}"
+    fi
+
+    # Also update the summary JSON with the precise resume hint.
+    # Wrap mktemp in || return 0: if /tmp is full, mktemp fails but
+    # cleanup must not abort — the user still needs to see the hint.
+    if [[ -f "${ACFS_STATE_FILE:-}" ]] && command -v jq &>/dev/null; then
+        local tmp_state=""
+        tmp_state=$(mktemp 2>/dev/null) || return 0
+        if jq --arg hint "${resume_cmd:-}" '.resume_hint = $hint' "${ACFS_STATE_FILE:-}" > "$tmp_state" 2>/dev/null; then
+            mv "$tmp_state" "${ACFS_STATE_FILE:-}" 2>/dev/null || true
+        else
+            rm -f "${tmp_state:-}" 2>/dev/null || true
+        fi
+    fi
+}
+
+# ============================================================
 # Error handling
 # ============================================================
+# Track whether cleanup was triggered by a signal (not a normal EXIT).
+_ACFS_SIGNAL_RECEIVED=""
+
+_acfs_signal_handler() {
+    _ACFS_SIGNAL_RECEIVED="$1"
+    # Exit with 128+signum (standard convention) to trigger the EXIT trap.
+    case "$1" in
+        TERM) exit 143 ;;
+        INT)  exit 130 ;;
+        HUP)  exit 129 ;;
+        *)    exit 1   ;;
+    esac
+}
+
 cleanup() {
+    # Capture exit code FIRST, before any other commands can overwrite $?
     local exit_code=$?
+
+    # Cleanup must never abort — disable errexit for the entire function.
+    set +e
+
+    # If a signal triggered this cleanup, mark state as interrupted so
+    # resume logic does not see a partially-started phase.
+    if [[ -n "${_ACFS_SIGNAL_RECEIVED:-}" ]]; then
+        if type -t state_mark_interrupted &>/dev/null; then
+            state_mark_interrupted 2>/dev/null || true
+        fi
+    fi
+
     if [[ $exit_code -ne 0 ]]; then
         log_error ""
         if [[ "${SMOKE_TEST_FAILED:-false}" == "true" ]]; then
@@ -552,14 +931,36 @@ cleanup() {
         fi
         log_error ""
         log_error "To debug:"
-        log_error "  1. Check the log: cat $ACFS_LOG_DIR/install.log"
-        log_error "  2. If installed, run: acfs doctor (try as $TARGET_USER)"
-        log_error "     (If you ran the installer as root: sudo -u $TARGET_USER -i bash -lc 'acfs doctor')"
-        log_error "  3. Re-run this installer (it's safe to run multiple times)"
+        if [[ -n "${ACFS_LOG_FILE:-}" ]] && [[ -f "${ACFS_LOG_FILE:-}" ]]; then
+            log_error "  1. Check the log: cat ${ACFS_LOG_FILE:-}"
+        elif [[ -n "${ACFS_LOG_DIR:-}" ]] && [[ -d "${ACFS_LOG_DIR:-}" ]]; then
+            log_error "  1. Check the log: cat ${ACFS_LOG_DIR:-}/install.log"
+        else
+            log_error "  1. Re-run with ACFS_DEBUG=true for detailed output"
+        fi
+        log_error "  2. If installed, run: acfs doctor (try as ${TARGET_USER:-ubuntu})"
+        log_error "     (If you ran the installer as root: sudo -u ${TARGET_USER:-ubuntu} -i bash -lc 'acfs doctor')"
         log_error ""
+        # Print precise resume hint if available (bd-31ps.9.1)
+        # Get failed phase from state if available
+        local failed_phase=""
+        local failed_step=""
+        if [[ -f "${ACFS_STATE_FILE:-}" ]] && command -v jq &>/dev/null; then
+            failed_phase=$(jq -r '.failed_phase // empty' "${ACFS_STATE_FILE:-}" 2>/dev/null) || true
+            failed_step=$(jq -r '.failed_step // empty' "${ACFS_STATE_FILE:-}" 2>/dev/null) || true
+        fi
+        print_resume_hint "${failed_phase:-}" "${failed_step:-}"
+        log_error ""
+        # Emit failure summary (best-effort)
+        acfs_summary_emit "failure" 0 2>/dev/null || true
     fi
+    # Finalize log file (restore stderr, strip colors, add footer)
+    acfs_log_close 2>/dev/null || true
 }
 trap cleanup EXIT
+trap '_acfs_signal_handler TERM' TERM
+trap '_acfs_signal_handler INT'  INT
+trap '_acfs_signal_handler HUP'  HUP
 
 # ============================================================
 # Parse arguments
@@ -580,7 +981,7 @@ parse_args() {
                 shift
                 ;;
             --mode)
-                if [[ -z "${2:-}" ]]; then
+                if [[ -z "${2:-}" || "$2" == -* ]]; then
                     log_fatal "--mode requires a value (e.g., --mode vibe)"
                 fi
                 MODE="$2"
@@ -630,9 +1031,29 @@ parse_args() {
                 SKIP_PREFLIGHT=true
                 shift
                 ;;
+            --auto-fix)
+                # Enable auto-fix with prompts (default for interactive)
+                AUTO_FIX_MODE="prompt"
+                shift
+                ;;
+            --no-auto-fix)
+                # Disable auto-fix entirely - only show warnings
+                AUTO_FIX_MODE="no"
+                shift
+                ;;
+            --auto-fix-accept-all)
+                # Non-interactive: fix all issues without prompting
+                AUTO_FIX_MODE="yes"
+                shift
+                ;;
+            --auto-fix-dry-run)
+                # Show what auto-fix would do without executing
+                AUTO_FIX_MODE="dry-run"
+                shift
+                ;;
             --checksums-ref|--checksums-ref=*)
                 if [[ "$1" == "--checksums-ref" ]]; then
-                    if [[ -z "${2:-}" ]]; then
+                    if [[ -z "${2:-}" || "$2" == -* ]]; then
                         log_fatal "--checksums-ref requires a ref (e.g., --checksums-ref main)"
                     fi
                     ACFS_CHECKSUMS_REF="$2"
@@ -644,6 +1065,11 @@ parse_args() {
                 ACFS_CHECKSUMS_RAW="https://raw.githubusercontent.com/${ACFS_REPO_OWNER}/${ACFS_REPO_NAME}/${ACFS_CHECKSUMS_REF}"
                 export ACFS_CHECKSUMS_REF ACFS_CHECKSUMS_RAW
                 ;;
+            --pin-ref|--confirm-ref)
+                # Print resolved SHA and pinned command, then exit
+                PIN_REF_MODE=true
+                shift
+                ;;
             --skip-ubuntu-upgrade)
                 # Skip automatic Ubuntu version upgrade (nb4)
                 # shellcheck disable=SC2034  # used by run_ubuntu_upgrade_phase
@@ -653,7 +1079,7 @@ parse_args() {
             --target-ubuntu|--target-ubuntu=*)
                 # Set target Ubuntu version for auto-upgrade (nb4)
                 if [[ "$1" == "--target-ubuntu" ]]; then
-                    if [[ -z "${2:-}" ]]; then
+                    if [[ -z "${2:-}" || "$2" == -* ]]; then
                         log_fatal "--target-ubuntu requires a version (e.g., --target-ubuntu 25.10)"
                     fi
                     # shellcheck disable=SC2034  # used by run_ubuntu_upgrade_phase
@@ -676,7 +1102,7 @@ parse_args() {
                 ;;
             --only)
                 # Add module to ONLY_MODULES list (for manifest-driven selection)
-                if [[ -z "${2:-}" ]]; then
+                if [[ -z "${2:-}" || "$2" == -* ]]; then
                     log_fatal "--only requires a module ID"
                 fi
                 ONLY_MODULES+=("$2")
@@ -684,7 +1110,7 @@ parse_args() {
                 ;;
             --only-phase)
                 # Add phase to ONLY_PHASES list
-                if [[ -z "${2:-}" ]]; then
+                if [[ -z "${2:-}" || "$2" == -* ]]; then
                     log_fatal "--only-phase requires a phase number"
                 fi
                 ONLY_PHASES+=("$2")
@@ -692,7 +1118,7 @@ parse_args() {
                 ;;
             --skip)
                 # Add module to SKIP_MODULES list
-                if [[ -z "${2:-}" ]]; then
+                if [[ -z "${2:-}" || "$2" == -* ]]; then
                     log_fatal "--skip requires a module ID"
                 fi
                 SKIP_MODULES+=("$2")
@@ -717,6 +1143,124 @@ parse_args() {
 command_exists() {
     command -v "$1" &>/dev/null
 }
+
+# Interactive yes/no confirmation prompt
+# Returns 0 for yes, 1 for no
+confirm() {
+    local prompt="${1:-Continue?}"
+    local response=""
+
+    # In --yes mode, auto-accept all prompts (fixes non-TTY curl|bash failure)
+    if [[ "${YES_MODE:-false}" == "true" ]]; then
+        return 0
+    fi
+
+    if [[ -t 0 ]]; then
+        read -r -p "$prompt [y/N] " response < /dev/tty
+    else
+        # Non-interactive mode - default to no
+        return 1
+    fi
+
+    [[ "$response" =~ ^[Yy]$ ]]
+}
+
+# ============================================================
+# Auto-Fix Handler (bd-19y9.3.4)
+# Dispatches auto-fix actions based on AUTO_FIX_MODE
+# ============================================================
+#
+# Usage: handle_autofix <fix_name> <description> <fix_function>
+#   fix_name     - Short identifier (e.g., "unattended_upgrades")
+#   description  - Human-readable description of the issue
+#   fix_function - Function to call for fixing (receives "fix" or "dry-run" as $1)
+#
+# Returns:
+#   0 - Issue was fixed (or dry-run shown)
+#   1 - User declined to fix or auto-fix is disabled
+#   2 - Fix function failed
+#
+handle_autofix() {
+    local fix_name="$1"
+    local description="$2"
+    local fix_function="$3"
+
+    case "${AUTO_FIX_MODE:-prompt}" in
+        "no")
+            # Just warn, don't fix
+            log_warn "[PRE-FLIGHT] $description"
+            log_warn "[PRE-FLIGHT] Use --auto-fix to resolve automatically"
+            return 1
+            ;;
+        "dry-run")
+            # Show what would be done
+            log_info "[DRY-RUN] Would auto-fix: $description"
+            if type -t "$fix_function" &>/dev/null; then
+                "$fix_function" "dry-run" || true
+            fi
+            return 0
+            ;;
+        "yes")
+            # Fix automatically without prompting
+            log_info "[AUTO-FIX] Fixing: $description"
+            if type -t "$fix_function" &>/dev/null; then
+                if "$fix_function" "fix"; then
+                    log_success "[AUTO-FIX] Fixed: $fix_name"
+                    return 0
+                else
+                    log_error "[AUTO-FIX] Failed to fix: $fix_name"
+                    return 2
+                fi
+            else
+                log_error "[AUTO-FIX] Fix function not found: $fix_function"
+                return 2
+            fi
+            ;;
+        "prompt"|*)
+            # Interactive: ask user before fixing
+            log_warn "[PRE-FLIGHT] $description"
+            if [[ "${YES_MODE:-false}" == "true" ]]; then
+                # In --yes mode, default to accepting auto-fix
+                log_info "[AUTO-FIX] Fixing (--yes mode): $description"
+                if type -t "$fix_function" &>/dev/null; then
+                    if "$fix_function" "fix"; then
+                        log_success "[AUTO-FIX] Fixed: $fix_name"
+                        return 0
+                    else
+                        log_error "[AUTO-FIX] Failed to fix: $fix_name"
+                        return 2
+                    fi
+                fi
+            else
+                # Interactive prompt
+                local response=""
+                printf "%b" "${ACFS_YELLOW:-}Would you like ACFS to fix this automatically? [Y/n] ${ACFS_NC:-}" >&2
+                read -r response </dev/tty 2>/dev/null || response="y"
+                case "${response:-y}" in
+                    [Yy]|[Yy][Ee][Ss]|"")
+                        log_info "[AUTO-FIX] Fixing: $description"
+                        if type -t "$fix_function" &>/dev/null; then
+                            if "$fix_function" "fix"; then
+                                log_success "[AUTO-FIX] Fixed: $fix_name"
+                                return 0
+                            else
+                                log_error "[AUTO-FIX] Failed to fix: $fix_name"
+                                return 2
+                            fi
+                        fi
+                        ;;
+                    *)
+                        log_info "[PRE-FLIGHT] Skipped auto-fix for: $fix_name"
+                        return 1
+                        ;;
+                esac
+            fi
+            ;;
+    esac
+}
+
+# Export for use in preflight and autofix scripts
+export -f handle_autofix 2>/dev/null || true
 
 # ============================================================
 # Environment Detection (mjt.5.3)
@@ -810,6 +1354,21 @@ detect_environment() {
     if [[ -f "$ACFS_LIB_DIR/tailscale.sh" ]]; then
         # shellcheck source=scripts/lib/tailscale.sh
         source "$ACFS_LIB_DIR/tailscale.sh"
+    fi
+
+    # Source auto-fix modules (bd-19y9.3.4)
+    if [[ -f "$ACFS_LIB_DIR/autofix.sh" ]]; then
+        # shellcheck source=scripts/lib/autofix.sh
+        source "$ACFS_LIB_DIR/autofix.sh"
+        export ACFS_AUTOFIX_LOADED=1
+    fi
+    if [[ -f "$ACFS_LIB_DIR/autofix_unattended.sh" ]]; then
+        # shellcheck source=scripts/lib/autofix_unattended.sh
+        source "$ACFS_LIB_DIR/autofix_unattended.sh"
+    fi
+    if [[ -f "$ACFS_LIB_DIR/autofix_existing.sh" ]]; then
+        # shellcheck source=scripts/lib/autofix_existing.sh
+        source "$ACFS_LIB_DIR/autofix_existing.sh"
     fi
 
     # Source manifest index (data-only, safe to source)
@@ -982,6 +1541,107 @@ print_execution_plan() {
 }
 
 # ============================================================
+# Auto-Fix Functions (bd-19y9.3.4)
+# ============================================================
+# Handles automatic fixing of pre-flight issues based on AUTO_FIX_MODE
+
+# Handle a single auto-fix item based on current mode
+# Usage: handle_autofix <fix_name> <description>
+handle_autofix() {
+    local fix_name="$1"
+    local description="$2"
+    local fix_func="autofix_${fix_name}_fix"
+
+    case "$AUTO_FIX_MODE" in
+        "no")
+            log_warn "[PRE-FLIGHT] $description"
+            log_warn "[PRE-FLIGHT] Use --auto-fix to resolve automatically"
+            ;;
+        "dry-run")
+            log_info "[DRY-RUN] Would auto-fix: $description"
+            if type "$fix_func" &>/dev/null; then
+                "$fix_func" dry-run 2>&1 | while IFS= read -r line; do
+                    log_detail "  $line"
+                done
+            fi
+            ;;
+        "yes")
+            log_info "[AUTO-FIX] Fixing: $description"
+            if type "$fix_func" &>/dev/null; then
+                "$fix_func" fix
+            else
+                log_warn "[AUTO-FIX] Fix function not available: $fix_func"
+            fi
+            ;;
+        "prompt")
+            log_warn "[PRE-FLIGHT] $description"
+            # In --yes mode or non-TTY (curl|bash), auto-accept the fix
+            if [[ "${YES_MODE:-false}" == "true" ]] || [[ ! -t 0 ]]; then
+                log_info "[AUTO-FIX] Fixing (non-interactive): $description"
+                if type "$fix_func" &>/dev/null; then
+                    "$fix_func" fix
+                else
+                    log_warn "[AUTO-FIX] Fix function not available: $fix_func"
+                fi
+            elif confirm "Would you like ACFS to fix this automatically?"; then
+                log_info "[AUTO-FIX] Fixing: $description"
+                if type "$fix_func" &>/dev/null; then
+                    "$fix_func" fix
+                else
+                    log_warn "[AUTO-FIX] Fix function not available: $fix_func"
+                fi
+            else
+                log_warn "[PRE-FLIGHT] Skipped auto-fix for: $description"
+            fi
+            ;;
+    esac
+}
+
+# Run auto-fix checks before main preflight validation
+run_autofix_checks() {
+    # Skip if auto-fix modules not loaded
+    if [[ "${ACFS_AUTOFIX_LOADED:-0}" != "1" ]]; then
+        log_debug "Auto-fix modules not loaded, skipping auto-fix checks"
+        return 0
+    fi
+
+    # Skip if auto-fix disabled
+    if [[ "$AUTO_FIX_MODE" == "no" ]]; then
+        log_debug "Auto-fix disabled via --no-auto-fix"
+        return 0
+    fi
+
+    log_info "Running auto-fix pre-flight checks..."
+
+    # Check for existing ACFS installation
+    # Skip this check when --only or --only-phase is specified, since the user
+    # is targeting a specific module on an already-installed system
+    if [[ ${#ONLY_MODULES[@]} -eq 0 ]] && [[ ${#ONLY_PHASES[@]} -eq 0 ]]; then
+        if type autofix_existing_acfs_needs_handling &>/dev/null; then
+            if autofix_existing_acfs_needs_handling 2>/dev/null; then
+                local version
+                version=$(get_installed_version 2>/dev/null || echo "unknown")
+                handle_autofix "existing" "Existing ACFS installation detected (version: $version)"
+            fi
+        fi
+    else
+        log_debug "Skipping existing-installation check (--only/--only-phase mode)"
+    fi
+
+    # Check for unattended-upgrades issues
+    if type autofix_unattended_upgrades_needs_fix &>/dev/null; then
+        if autofix_unattended_upgrades_needs_fix 2>/dev/null; then
+            handle_autofix "unattended_upgrades" "unattended-upgrades service may cause apt lock conflicts"
+        fi
+    fi
+
+    # Add more auto-fix checks here as they are implemented
+    # e.g., nvm/pyenv conflicts from bd-19y9.3.2
+
+    log_debug "Auto-fix pre-flight checks complete"
+}
+
+# ============================================================
 # Pre-Flight Validation
 # ============================================================
 # Runs system validation checks before installation begins.
@@ -1091,9 +1751,9 @@ acfs_curl_with_retry() {
 
         if acfs_curl -o "$output_path" "$url"; then
             return 0
+        else
+            exit_code=$?
         fi
-
-        exit_code=$?
         if ! acfs_is_retryable_curl_exit_code "$exit_code"; then
             return "$exit_code"
         fi
@@ -1921,10 +2581,18 @@ acfs_chown_tree() {
     fi
 
     # GNU coreutils: -h = do not dereference symlinks; -R = recursive.
-    if ! $SUDO chown -hR "$owner_group" "$resolved"; then
-        log_error "acfs_chown_tree: chown failed for $resolved"
-        return 1
-    fi
+    # Transient files (SSH control sockets, etc.) may vanish during the
+    # recursive walk of a live home directory.  Only fail on non-transient errors.
+    local _chown_err=""
+    _chown_err=$($SUDO chown -hR "$owner_group" "$resolved" 2>&1) || {
+        local _real_err
+        _real_err=$(printf '%s\n' "$_chown_err" | grep -v "No such file or directory" || true)
+        if [[ -n "$_real_err" ]]; then
+            log_error "acfs_chown_tree: chown failed for $resolved"
+            return 1
+        fi
+        log_detail "acfs_chown_tree: transient file warnings during chown (safe to ignore)"
+    }
 }
 
 confirm_or_exit() {
@@ -1971,8 +2639,8 @@ init_target_paths() {
     fi
 
     # ACFS directories for target user
-    ACFS_HOME="$TARGET_HOME/.acfs"
-    ACFS_STATE_FILE="$ACFS_HOME/state.json"
+    ACFS_HOME="${ACFS_HOME:-$TARGET_HOME/.acfs}"
+    ACFS_STATE_FILE="${ACFS_STATE_FILE:-$ACFS_HOME/state.json}"
 
     # Basic hardening: refuse to use a symlinked ACFS_HOME when running with
     # elevated privileges (prevents clobbering arbitrary paths via symlink tricks).
@@ -3188,11 +3856,11 @@ install_agents_phase() {
         run_as_target mkdir -p "$TARGET_HOME/.local/bin" 2>/dev/null || true
 
         log_detail "Installing Claude Code (native) for $TARGET_USER"
-        try_step "Installing Claude Code (native)" acfs_run_verified_upstream_script_as_target "claude" "bash" stable || true
+        try_step "Installing Claude Code (native)" acfs_run_verified_upstream_script_as_target "claude" "bash" latest || true
 
         if [[ ! -x "$claude_bin_local" && ! -x "$claude_bin_bun" ]]; then
             log_detail "Claude Code not found in standard paths; attempting bun install"
-            try_step "Installing Claude Code (bun)" run_as_target "$bun_bin" install -g --trust @anthropic-ai/claude-code@stable || true
+            try_step "Installing Claude Code (bun)" run_as_target "$bun_bin" install -g --trust @anthropic-ai/claude-code@latest || true
         fi
 
         # Best-effort: if claude landed in ~/.claude/*, link it into ~/.local/bin.
@@ -3669,19 +4337,18 @@ install_stack_phase() {
         if [[ ! -f "$ntm_config_file" ]]; then
             log_detail "Creating NTM config with current model defaults"
             run_as_target mkdir -p "$ntm_config_dir" || true
-            if run_as_target cat > "$ntm_config_file" << 'NTM_CONFIG_EOF'
+            # Write config via tee to ensure proper target user ownership (bd-2od5.2.4)
+            # Using tee avoids redirect-as-root issue with heredoc + run_as_target
+            # Config format fixed for proper [models] section (bd-2od5.2.5)
+            if run_as_target tee "$ntm_config_file" > /dev/null << 'NTM_CONFIG_EOF'
 # NTM Configuration - created by ACFS
 # Updated model defaults for ChatGPT Pro and Gemini accounts
 
-# Codex model - gpt-5.2-codex with xhigh reasoning (works with ChatGPT Pro)
+[models]
+# Default models when no specifier given
+default_claude = "claude-opus-4-5-20251101"
 default_codex = "gpt-5.2-codex"
-codex_reasoning_effort = "xhigh"
-
-# Gemini model - gemini-3 pro preview
 default_gemini = "gemini-3-pro-preview"
-
-# Claude model - Opus 4.5 (most capable)
-default_claude = "claude-opus-4-5"
 NTM_CONFIG_EOF
             then
                 log_success "NTM config created with current model defaults"
@@ -3690,6 +4357,27 @@ NTM_CONFIG_EOF
             fi
         else
             log_detail "NTM config already exists, skipping"
+        fi
+
+        # Install NTM command palette (bd-2od5.2.2)
+        # Provides useful prompts for ntm palette command
+        local ntm_palette_dst="$ntm_config_dir/command_palette.md"
+        if [[ ! -f "$ntm_palette_dst" ]]; then
+            log_detail "Installing NTM command palette"
+            # Ensure config dir exists (install_asset doesn't create parent dirs)
+            run_as_target mkdir -p "$ntm_config_dir" 2>/dev/null || true
+            # Use install_asset for consistency with other assets (works with curl|bash bootstrap)
+            if install_asset "acfs/onboard/docs/ntm/command_palette.md" "$ntm_palette_dst"; then
+                # Fix ownership for target user
+                if [[ -n "${TARGET_USER:-}" ]] && [[ "$(id -u)" -eq 0 ]]; then
+                    chown "${TARGET_USER}:${TARGET_USER}" "$ntm_palette_dst" 2>/dev/null || true
+                fi
+                log_success "NTM command palette installed"
+            else
+                log_warn "Failed to install NTM command palette (asset not found)"
+            fi
+        else
+            log_detail "NTM command palette already exists, skipping"
         fi
     fi
 
@@ -3916,6 +4604,17 @@ finalize() {
     try_step "Setting acfs-update ownership" $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/bin/acfs-update" || return 1
     try_step "Linking acfs-update command" run_as_target ln -sf "$ACFS_HOME/bin/acfs-update" "$TARGET_HOME/.local/bin/acfs-update" || return 1
 
+    # Install root AGENTS.md generator (if available) and generate /AGENTS.md once
+    if [[ -n "${SCRIPT_DIR:-}" ]] && [[ -f "$SCRIPT_DIR/scripts/generate-root-agents-md.sh" ]]; then
+        try_step "Installing flywheel-update-agents-md" install_asset "scripts/generate-root-agents-md.sh" "$ACFS_HOME/bin/flywheel-update-agents-md" || return 1
+        try_step "Setting flywheel-update-agents-md permissions" $SUDO chmod 755 "$ACFS_HOME/bin/flywheel-update-agents-md" || return 1
+        try_step "Setting flywheel-update-agents-md ownership" $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/bin/flywheel-update-agents-md" || return 1
+        try_step "Linking flywheel-update-agents-md command" $SUDO ln -sf "$ACFS_HOME/bin/flywheel-update-agents-md" "/usr/local/bin/flywheel-update-agents-md" || return 1
+        try_step "Generating /AGENTS.md" $SUDO /usr/local/bin/flywheel-update-agents-md || true
+    else
+        log_warn "Root AGENTS.md generator not found; skipping /AGENTS.md generation"
+    fi
+
     # Install services-setup wizard
     try_step "Installing services-setup.sh" install_asset "scripts/services-setup.sh" "$ACFS_HOME/scripts/services-setup.sh" || return 1
     try_step "Setting scripts permissions" $SUDO chmod 755 "$ACFS_HOME/scripts/services-setup.sh" || return 1
@@ -3967,14 +4666,14 @@ finalize() {
     try_step "Installing global acfs wrapper" install_asset "scripts/acfs-global" "/usr/local/bin/acfs" || return 1
     try_step "Setting global acfs permissions" $SUDO chmod 755 "/usr/local/bin/acfs" || return 1
 
-    # Install Claude destructive-command guard hook automatically.
+    # Install DCG (Destructive Command Guard) hook automatically.
     #
     # This is especially important because ACFS config includes "dangerous mode"
     # aliases (e.g., `cc`) that can run commands without interactive approvals.
-    log_detail "Installing Claude Git Safety Guard (PreToolUse hook)"
-    try_step_eval "Installing Claude Git Safety Guard" \
+    log_detail "Installing DCG (Destructive Command Guard) PreToolUse hook"
+    try_step_eval "Installing DCG hook" \
         "TARGET_USER='$TARGET_USER' TARGET_HOME='$TARGET_HOME' '$ACFS_HOME/scripts/services-setup.sh' --install-claude-guard --yes" || \
-        log_warn "Claude Git Safety Guard installation failed (optional)"
+        log_warn "DCG hook installation failed (optional)"
 
     # Legacy state file (only if state.sh is unavailable)
     if type -t state_load &>/dev/null; then
@@ -4382,6 +5081,13 @@ main() {
         export ACFS_INTERACTIVE=false
     fi
 
+    # Handle --pin-ref early (before any heavy setup) - just resolve SHA and exit
+    if [[ "$PIN_REF_MODE" == "true" ]]; then
+        fetch_commit_sha
+        print_pinned_ref
+        exit 0
+    fi
+
     if [[ -z "${SCRIPT_DIR:-}" ]]; then
         # Resolve ACFS_REF to a specific commit SHA early to prevent mixed-ref installs.
         # Without this, we could download a tarball for one commit and later fetch commit metadata
@@ -4398,6 +5104,36 @@ main() {
     # Detect environment and source manifest index (mjt.5.3)
     # This must happen BEFORE any handlers that need module data
     detect_environment
+
+    # Acquire install-wide flock to prevent concurrent install.sh processes.
+    # Uses FD 199 (autofix.sh already uses FD 200 for its own lock).
+    # Read-only modes (--list-modules, --print-plan, --dry-run, --print) skip locking.
+    if [[ "$LIST_MODULES" != "true" ]] && [[ "$PRINT_PLAN_MODE" != "true" ]] \
+       && [[ "$DRY_RUN" != "true" ]] && [[ "$PRINT_MODE" != "true" ]]; then
+        local _acfs_lock_dir="${ACFS_HOME:-$HOME/.acfs}"
+        mkdir -p "$_acfs_lock_dir" 2>/dev/null || true
+        local _acfs_lock_file="$_acfs_lock_dir/.install.lock"
+        # NOTE: On bash 5.3+, `exec N>file` under set -e exits the script
+        # before `if` can catch the failure. We test in a subshell first,
+        # then only exec in the main shell if the subshell succeeded.
+        local _acfs_lock_fd=""
+        if (exec 199>"$_acfs_lock_file") 2>/dev/null; then
+            exec 199>"$_acfs_lock_file"
+            _acfs_lock_fd=199
+        elif (exec 198>"$_acfs_lock_file") 2>/dev/null; then
+            exec 198>"$_acfs_lock_file"
+            _acfs_lock_fd=198
+        fi
+        if [[ -n "$_acfs_lock_fd" ]]; then
+            if ! flock -n "$_acfs_lock_fd"; then
+                log_error "Another ACFS installer is already running."
+                log_error "If you are sure no other installer is running, remove: $_acfs_lock_file"
+                exit 1
+            fi
+        else
+            log_warn "Could not acquire install lock (continuing anyway)"
+        fi
+    fi
 
     # Source generated installers for manifest-driven execution (mjt.5.6)
     # Skip when we're only listing/printing plan or running dry-run/print-only modes.
@@ -4496,6 +5232,11 @@ main() {
         echo ""
     fi
 
+    # Run auto-fix checks before preflight (bd-19y9.3.4)
+    if [[ "$SKIP_PREFLIGHT" != "true" ]]; then
+        run_autofix_checks
+    fi
+
     # Run pre-flight validation (Phase 0)
     if [[ "$SKIP_PREFLIGHT" != "true" ]]; then
         run_preflight_checks
@@ -4534,6 +5275,7 @@ main() {
     disable_needrestart_apt_hook  # Prevent apt hangs on Ubuntu 22.04+ (issue #70)
     validate_target_user
     init_target_paths
+    acfs_log_init   # Start capturing stderr to log file (uses ACFS_HOME/logs)
     ensure_ubuntu
 
     # Ensure base dependencies (like jq) are installed before upgrade logic
@@ -4554,7 +5296,7 @@ main() {
     # ============================================================
     # Initialize state file location (uses TARGET_USER's home)
     ACFS_HOME="${ACFS_HOME:-/home/${TARGET_USER}/.acfs}"
-    ACFS_STATE_FILE="$ACFS_HOME/state.json"
+    ACFS_STATE_FILE="${ACFS_STATE_FILE:-$ACFS_HOME/state.json}"
     export ACFS_HOME ACFS_STATE_FILE
 
     # Validate and handle existing state file
@@ -4621,13 +5363,15 @@ main() {
                     else
                         log_error "Phase $phase_display failed"
                     fi
-                    log_info "Run with --resume to continue from this point."
+                    # Print precise resume hint (bd-31ps.9.1)
+                    print_resume_hint "$phase_id" ""
                     exit 1
                 fi
             else
                 # Fallback: direct call with basic error handling
                 if ! "$phase_func"; then
                     log_error "Phase $phase_display failed"
+                    print_resume_hint "$phase_id" ""
                     exit 1
                 fi
             fi
@@ -4679,6 +5423,9 @@ main() {
         if type -t report_success &>/dev/null; then
             report_success 9 "$total_seconds"
         fi
+
+        # Emit install summary JSON (bd-31ps.3.2)
+        acfs_summary_emit "success" "$total_seconds" 2>/dev/null || true
 
         SMOKE_TEST_FAILED=false
         if ! run_smoke_test; then

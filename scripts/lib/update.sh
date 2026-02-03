@@ -1040,7 +1040,7 @@ update_agents() {
         if ! run_cmd_claude_update; then
             log_to_file "Claude update failed, attempting reinstall via official installer"
             if update_require_security; then
-                run_cmd "Claude Code (reinstall)" update_run_verified_installer claude stable
+                run_cmd "Claude Code (reinstall)" update_run_verified_installer claude latest
             else
                 log_item "fail" "Claude Code" "update failed and reinstall unavailable (missing security.sh)"
             fi
@@ -1053,7 +1053,7 @@ update_agents() {
     elif [[ "$FORCE_MODE" == "true" ]]; then
         capture_version_before "claude"
         if update_require_security; then
-            run_cmd "Claude Code (install)" update_run_verified_installer claude stable
+            run_cmd "Claude Code (install)" update_run_verified_installer claude latest
             if capture_version_after "claude"; then
                 [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[claude]}" "${VERSION_AFTER[claude]}"
             fi
@@ -1679,6 +1679,20 @@ update_stack() {
 }
 
 # ============================================================
+# Root AGENTS.md Generation
+# ============================================================
+update_root_agents_md() {
+    log_section "Root AGENTS.md"
+
+    if ! cmd_exists flywheel-update-agents-md; then
+        log_item "skip" "Root AGENTS.md" "flywheel-update-agents-md not installed"
+        return 0
+    fi
+
+    run_cmd_sudo "Root AGENTS.md" flywheel-update-agents-md
+}
+
+# ============================================================
 # Shell Tool Updates
 # Related: bead db0
 # ============================================================
@@ -2263,6 +2277,7 @@ main() {
     update_go
     update_shell
     update_stack
+    update_root_agents_md
 
     # Summary
     print_summary

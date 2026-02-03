@@ -5,17 +5,44 @@ on:
     branches: [main]
     paths:
       - 'apps/web/**'
+      - 'packages/manifest/**'
+      - 'acfs.manifest.yaml'
       - '.github/workflows/playwright.yml'
   pull_request:
     branches: [main]
     paths:
       - 'apps/web/**'
+      - 'packages/manifest/**'
+      - 'acfs.manifest.yaml'
       - '.github/workflows/playwright.yml'
 
 jobs:
+  verify-generated:
+    name: Verify Generated Files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install manifest package dependencies
+        working-directory: packages/manifest
+        run: bun install --frozen-lockfile
+
+      - name: Verify generated files match manifest
+        working-directory: packages/manifest
+        run: |
+          echo "Checking if generated files are in sync with acfs.manifest.yaml..."
+          bun run generate:diff
+          echo "✓ Generated files are up to date"
+
   test:
     timeout-minutes: 30
     runs-on: ubuntu-latest
+    needs: verify-generated
     defaults:
       run:
         working-directory: apps/web
