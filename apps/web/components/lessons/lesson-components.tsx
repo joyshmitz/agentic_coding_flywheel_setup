@@ -298,7 +298,7 @@ interface Command {
 }
 
 interface CommandListProps {
-  commands: Command[];
+  commands: ReadonlyArray<Command>;
 }
 
 export function CommandList({ commands }: CommandListProps) {

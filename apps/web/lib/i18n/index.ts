@@ -73,5 +73,7 @@ export {
   // Wave 7 Safety Tools Lesson messages
   getRuLessonMessages,
   getDcgLessonMessages,
+  // Wave 8 Additional Tools Lesson messages
+  getMsLessonMessages,
   type ChecklistItem,
 } from "./translations";

@@ -1,6 +1,57 @@
 /**
  * Meta Skill Lesson Messages - English
+ *
+ * Uses schema-based typing for i18n scalability.
+ * Ukrainian and other translations use `as const satisfies MsMessagesSchema`
+ * to get their own literal types while validating against the schema.
  */
+
+// Schema interface - defines structure, values are string
+export interface MsMessagesSchema {
+  goalBanner: {
+    content: string;
+  };
+  sections: {
+    whatIsMetaSkill: {
+      title: string;
+      intro: string;
+      details: string;
+    };
+    essentialCommands: {
+      title: string;
+      tipContent: string;
+    };
+    workingWithSkills: {
+      title: string;
+      content: string;
+    };
+  };
+  featureCards: {
+    localFirst: {
+      title: string;
+      description: string;
+    };
+    easyInstall: {
+      title: string;
+      description: string;
+    };
+    browseSkills: {
+      title: string;
+      description: string;
+    };
+    manage: {
+      title: string;
+      description: string;
+    };
+  };
+  commands: ReadonlyArray<{
+    command: string;
+    description: string;
+  }>;
+  codeBlock: {
+    content: string;
+  };
+}
 
 export const msMessages = {
   goalBanner: {
@@ -60,6 +111,7 @@ ms install idea-wizard
 # Update all skills to latest versions
 ms update`
   }
-} as const;
+} as const satisfies MsMessagesSchema;
 
+// Export the type of English messages for components that need literal types
 export type MsMessages = typeof msMessages;

@@ -1104,6 +1104,9 @@ verify_all_installers_json() {
     # Helper function to escape strings for JSON
     _json_escape() {
         local str="$1"
+        # Strip ANSI escape sequences (color codes like \x1b[0;31m)
+        # Use sed to remove ESC [ ... m patterns
+        str=$(printf '%s' "$str" | sed $'s/\x1b\\[[0-9;]*m//g')
         # Escape backslashes first, then other special characters
         str="${str//\\/\\\\}"
         str="${str//\"/\\\"}"

@@ -1,10 +1,15 @@
 /**
  * Meta Skill Lesson Messages - Ukrainian
+ *
+ * Uses `as const satisfies MsMessagesSchema` to:
+ * 1. Validate structure against schema (catches missing keys)
+ * 2. Keep Ukrainian literal types (for IDE autocomplete)
+ * 3. Allow different string values than English
  */
 
-import type { MsMessages } from './ms-messages';
+import type { MsMessagesSchema } from './ms-messages';
 
-export const msMessagesUk: MsMessages = {
+export const msMessagesUk = {
   goalBanner: {
     content: "Освойте локальне управління skills для Claude Code та інших AI агентів за допомогою Meta Skill."
   },
@@ -46,7 +51,7 @@ export const msMessagesUk: MsMessages = {
     { command: 'ms install <skill>', description: 'Встановити skill з реєстру' },
     { command: 'ms uninstall <skill>', description: 'Видалити встановлений skill' },
     { command: 'ms update', description: 'Оновити всі встановлені skills' },
-    { command: 'ms doctor', description: 'Перевірити здоров\'я системи skills' },
+    { command: 'ms doctor', description: "Перевірити здоров'я системи skills" },
     { command: 'ms search <query>', description: 'Шукати skills у реєстрі' },
   ],
   codeBlock: {
@@ -62,4 +67,4 @@ ms install idea-wizard
 # Update all skills to latest versions
 ms update`
   }
-};
+} as const satisfies MsMessagesSchema;
