@@ -14,6 +14,7 @@ export function LanguageSwitcher() {
         value={locale}
         onChange={(e) => setLocale(e.target.value as Locale)}
         disabled={!mounted}
+        aria-label={locale === "uk" ? "Вибір мови" : "Select language"}
         className={`bg-transparent text-sm cursor-pointer border-none focus:ring-0 focus:outline-none font-medium ${
           mounted
             ? "text-white/80 hover:text-white"

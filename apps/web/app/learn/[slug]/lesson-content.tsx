@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useCompletedLessons } from "@/lib/lessonProgress";
 import type { Lesson } from "@/lib/lessons";
-import { useLocale, getLessons, getLessonBySlug, getLearnMessages } from "@/lib/i18n";
+import { useLocale, getLessons, getLessonBySlug, getLearnMessages, getWizardStepTranslations } from "@/lib/i18n";
 import {
   getStepBySlug,
   TOTAL_STEPS as TOTAL_WIZARD_STEPS,
@@ -331,7 +331,12 @@ export function LessonContent({ lesson: initialLesson }: Props) {
   };
   const wizardStepSlug = wizardStepSlugByLesson[lesson.slug] ?? "os-selection";
   const wizardStep = getStepBySlug(wizardStepSlug);
-  const wizardStepTitle = wizardStep?.title ?? "Setup Wizard";
+  // Get locale-aware wizard step title
+  const wizardStepTranslations = getWizardStepTranslations(locale);
+  const localizedStepTitle = wizardStep && wizardStepTranslations
+    ? wizardStepTranslations.find((t) => t.id === wizardStep.id)?.title
+    : undefined;
+  const wizardStepTitle = localizedStepTitle ?? wizardStep?.title ?? "Setup Wizard";
 
   const handleMarkComplete = useCallback(() => {
     if (isCompleted) {

@@ -105,6 +105,12 @@ export default function RootLayout({
             __html: `(function(){try{var s=localStorage.getItem("acfs-theme")||"dark";var r=s==="system"?matchMedia("(prefers-color-scheme:light)").matches?"light":"dark":s;var d=document.documentElement;d.classList.remove("dark","light");d.classList.add(r==="light"?"light":"dark")}catch(e){}})()`,
           }}
         />
+        {/* Sync html lang attribute with stored locale */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var l=localStorage.getItem("acfs-locale");if(l==="en"||l==="uk")document.documentElement.lang=l}catch(e){}})()`,
+          }}
+        />
       </head>
       <body
         className={`${jetbrainsMono.variable} ${instrumentSans.variable} font-sans antialiased`}

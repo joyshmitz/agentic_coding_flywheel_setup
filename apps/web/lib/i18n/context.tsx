@@ -3,7 +3,7 @@
  */
 "use client";
 
-import { createContext, useContext, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useSyncExternalStore, type ReactNode } from "react";
 import { DEFAULT_LOCALE, LOCALE_STORAGE_KEY, type Locale } from "./config";
 
 interface LocaleContextValue {
@@ -28,19 +28,19 @@ const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
 
 export function LocaleProvider({ children }: LocaleProviderProps) {
-  const [locale, setLocaleState] = useState<Locale>(() => {
-    // Initialize with saved locale if available on client
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(LOCALE_STORAGE_KEY);
-      if (saved && (saved === "en" || saved === "uk")) {
-        return saved;
-      }
-    }
-    return DEFAULT_LOCALE;
-  });
+  // Always initialize with DEFAULT_LOCALE to match server render
+  const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE);
 
   // Hydration-safe mounted state without setState in useEffect
   const mounted = useSyncExternalStore(emptySubscribe, getClientSnapshot, getServerSnapshot);
+
+  // Sync from localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
+    const saved = localStorage.getItem(LOCALE_STORAGE_KEY);
+    if (saved && (saved === "en" || saved === "uk") && saved !== locale) {
+      setLocaleState(saved);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Save locale to localStorage when changed
   const setLocale = (newLocale: Locale) => {

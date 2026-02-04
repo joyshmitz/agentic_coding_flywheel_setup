@@ -14,9 +14,9 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence, springs } from "@/components/motion";
 import { Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getJargon, type JargonTerm } from "@/lib/jargon";
+import type { JargonTerm } from "@/lib/jargon";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
-import { useLocale, getJargonUiMessages } from "@/lib/i18n";
+import { useLocale, getJargonUiMessages, getJargonTerm } from "@/lib/i18n";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 
 type Messages = ReturnType<typeof getJargonUiMessages>;
@@ -58,7 +58,7 @@ export function Jargon({ term, children, className, gradientHeading }: JargonPro
   const messages = getJargonUiMessages(locale);
 
   const termKey = term.toLowerCase().replace(/[\s_]+/g, "-");
-  const jargonData = getJargon(termKey);
+  const jargonData = getJargonTerm(termKey, locale);
 
   // Check if we can use portals (client-side only after hydration)
   const canUsePortal = typeof document !== "undefined";
