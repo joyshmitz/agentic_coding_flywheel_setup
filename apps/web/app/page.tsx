@@ -546,15 +546,19 @@ function WorkflowStepsSection() {
 
         {/* Horizontal scroll on mobile, wrap on desktop */}
         <div className="relative -mx-6 px-6 sm:mx-0 sm:px-0">
-          <motion.div
+          {/* Wrapper div for gesture handling - avoids framer-motion type conflict */}
+          <div
             ref={scrollRef}
             {...bind()}
             style={{ touchAction: "pan-y" }}
-            className="flex gap-3 overflow-x-auto pb-4 sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0 scrollbar-hide cursor-grab active:cursor-grabbing select-none"
-            variants={staggerContainer}
-            initial="hidden"
-            animate={isInView ? "visible" : "hidden"}
+            className="cursor-grab active:cursor-grabbing select-none"
           >
+            <motion.div
+              className="flex gap-3 overflow-x-auto pb-4 sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0 scrollbar-hide"
+              variants={staggerContainer}
+              initial="hidden"
+              animate={isInView ? "visible" : "hidden"}
+            >
             {messages.workflow.steps.map((step, i) => (
               <motion.div
                 key={step}
@@ -569,7 +573,8 @@ function WorkflowStepsSection() {
                 <span className="whitespace-nowrap text-foreground">{step}</span>
               </motion.div>
             ))}
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
 
         <motion.div
