@@ -15,6 +15,8 @@ export {
   getAllJargonTerms,
   getVpsProviders,
   getWizardStepTranslations,
+  getVpsComparisonMessages,
+  getPricingLastUpdated,
   // Wizard messages
   getCommonMessages,
   getGenerateSshKeyMessages,

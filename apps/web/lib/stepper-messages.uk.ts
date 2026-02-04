@@ -13,5 +13,6 @@ export const stepperMessagesUk = {
     step: "Крок",
     of: "з",
     swipeToNavigate: "Свайпніть для навігації",
+    goToStep: "Перейти до кроку",
   },
 };

@@ -248,7 +248,7 @@ export function StepperMobile({
                 !isClickable && "cursor-not-allowed opacity-50"
               )}
               style={{ minWidth: 44, minHeight: 44 }}
-              aria-label={`${messages.mobile.step} ${step.id}: ${stepTitle}`}
+              aria-label={`${messages.mobile.goToStep} ${step.id}: ${stepTitle}`}
               aria-current={isActive ? "step" : undefined}
               whileTap={isClickable ? { scale: 0.9 } : undefined}
             >

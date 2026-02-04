@@ -13,5 +13,6 @@ export const stepperMessages = {
     step: "Step",
     of: "of",
     swipeToNavigate: "Swipe to navigate",
+    goToStep: "Go to step",
   },
 };

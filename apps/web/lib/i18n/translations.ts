@@ -16,8 +16,12 @@ import { COMMANDS, COMMAND_CATEGORIES, ALL_COMMANDS, type CommandRef, type Comma
 import { COMMANDS_UK, COMMAND_CATEGORIES_UK, ALL_COMMANDS_UK } from "../commands.uk";
 
 // VPS Providers
-import { VPS_PROVIDERS, type VPSProvider } from "../vpsProviders";
-import { VPS_PROVIDERS_UK } from "../vpsProviders.uk";
+import { VPS_PROVIDERS, PRICING_LAST_UPDATED, type VPSProvider } from "../vpsProviders";
+import { VPS_PROVIDERS_UK, PRICING_LAST_UPDATED_UK } from "../vpsProviders.uk";
+
+// VPS Comparison Messages
+import { vpsComparisonMessages } from "../vps-comparison-messages";
+import { vpsComparisonMessagesUk } from "../vps-comparison-messages.uk";
 
 // Wizard Steps Translations
 import { WIZARD_STEPS_UK, type WizardStepTranslation } from "../wizardSteps.uk";
@@ -137,6 +141,20 @@ export function getVpsProviders(locale: Locale): VPSProvider[] {
  */
 export function getWizardStepTranslations(locale: Locale): WizardStepTranslation[] | null {
   return locale === "uk" ? WIZARD_STEPS_UK : null;
+}
+
+/**
+ * Get VPS comparison UI messages for the specified locale
+ */
+export function getVpsComparisonMessages(locale: Locale) {
+  return locale === "uk" ? vpsComparisonMessagesUk : vpsComparisonMessages;
+}
+
+/**
+ * Get pricing last updated date for the specified locale
+ */
+export function getPricingLastUpdated(locale: Locale): string {
+  return locale === "uk" ? PRICING_LAST_UPDATED_UK : PRICING_LAST_UPDATED;
 }
 
 /**
