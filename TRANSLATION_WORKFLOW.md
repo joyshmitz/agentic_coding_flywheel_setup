@@ -8,6 +8,35 @@
 
 ---
 
+## Швидкий старт сесії
+
+Перед початком роботи - швидкий скан (1-2 хв), не повне дослідження репо:
+
+```bash
+# 1. Статус i18n файлів
+ls apps/web/lib/*.uk.ts | head -10
+ls apps/web/lib/lessons/*.uk.tsx | head -5
+
+# 2. Перевірити upstream
+git fetch upstream
+git log translate-ukrainian-acfs..upstream/main --oneline | head -10
+
+# 3. Покриття перекладу
+grep -c 'term:' apps/web/lib/jargon.ts apps/web/lib/jargon.uk.ts
+```
+
+### Зразки для копіювання
+
+| Тип файлу | Зразок |
+|-----------|--------|
+| Messages | `apps/web/lib/tools-page-messages.uk.ts` |
+| Lesson component | `apps/web/components/lessons/pt-lesson.uk.tsx` |
+| i18n getter | `apps/web/lib/i18n/translations.ts` → `getToolsPageMessages()` |
+
+> **Принцип:** Контекст набирається органічно. Не потрібно досліджувати installer scripts, build систему чи bash логіку - тільки i18n файли.
+
+---
+
 ## Фаза 0: Підготовка до merge
 
 ```bash
