@@ -333,10 +333,9 @@ export default function CreateVPSPage() {
         {/* IP Address input - placed prominently after checklist */}
         <div className="space-y-4">
           <div className="space-y-2">
-            <h2 className="font-semibold text-foreground">Your VPS IP address</h2>
+            <h2 className="font-semibold text-foreground">{messages.ipInput.title}</h2>
             <p className="text-sm text-muted-foreground">
-              Enter the IP address of your new VPS. You&apos;ll find this in your
-              provider&apos;s control panel after the VPS is created.
+              {messages.ipInput.subtitle}
             </p>
           </div>
 
@@ -347,21 +346,20 @@ export default function CreateVPSPage() {
             </div>
             <div className="min-w-0 space-y-1">
               <p className="text-[13px] font-medium leading-tight text-[oklch(0.82_0.12_145)] sm:text-sm">
-                Your data stays on your device
+                {messages.ipInput.privacy.title}
               </p>
               <p className="text-[12px] leading-relaxed text-muted-foreground sm:text-[13px]">
-                This IP address is stored <strong className="text-foreground/80">only in your browser&apos;s local storage</strong>. It&apos;s
-                never sent to our servers or any third party. The{" "}
+                {messages.ipInput.privacy.content}{" "}
                 <a
                   href="https://github.com/Dicklesworthstone/agentic_coding_flywheel_setup"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-0.5 font-medium text-[oklch(0.75_0.18_195)] hover:underline"
                 >
-                  entire codebase is open source
+                  {messages.ipInput.privacy.openSource}
                   <ExternalLink className="h-3 w-3" />
-                </a>{" "}
-                so you can verify this yourself.
+                </a>
+                {messages.ipInput.privacy.verifySuffix}
               </p>
             </div>
           </div>
@@ -372,7 +370,7 @@ export default function CreateVPSPage() {
               onChange: ({ value }) => {
                 if (!value) return undefined;
                 if (!isValidIP(value)) {
-                  return "Please enter a valid IP address (e.g., 203.0.113.42)";
+                  return messages.ipInput.validation.invalid;
                 }
                 return undefined;
               },
@@ -380,16 +378,16 @@ export default function CreateVPSPage() {
                 // Duplicate validation on blur for Firefox/Safari compatibility
                 if (!value) return undefined;
                 if (!isValidIP(value)) {
-                  return "Please enter a valid IP address (e.g., 203.0.113.42)";
+                  return messages.ipInput.validation.invalid;
                 }
                 return undefined;
               },
               onSubmit: ({ value }) => {
                 if (!value) {
-                  return "Please enter your VPS IP address";
+                  return messages.ipInput.validation.required;
                 }
                 if (!isValidIP(value)) {
-                  return "Please enter a valid IP address";
+                  return messages.ipInput.validation.invalid;
                 }
                 return undefined;
               },
@@ -408,7 +406,7 @@ export default function CreateVPSPage() {
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                     onBlur={field.handleBlur}
-                    placeholder="e.g., 203.0.113.42"
+                    placeholder={messages.ipInput.placeholder}
                     className={cn(
                       "w-full rounded-xl border bg-background px-4 py-3 font-mono text-sm outline-none transition-all",
                       "focus:border-primary focus:ring-2 focus:ring-primary/20",
@@ -426,7 +424,7 @@ export default function CreateVPSPage() {
                   {isValid && (
                     <p className="flex items-center gap-1 text-sm text-[oklch(0.72_0.19_145)]">
                       <Check className="h-4 w-4" />
-                      Valid IP address
+                      {messages.ipInput.validation.valid}
                     </p>
                   )}
 
