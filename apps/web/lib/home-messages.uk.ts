@@ -28,7 +28,7 @@ export const homeMessagesUk = {
     stats: {
       tools: { value: "30+", label: "Інструментів" },
       agents: { value: "3", label: "AI Агенти" },
-      time: { value: "~30хв", label: "Час налаштування" },
+      time: { value: "~30 хв", label: "Час налаштування" },
     },
   },
 

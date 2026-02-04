@@ -13,6 +13,8 @@ export {
   getJargonDictionary,
   getJargonTerm,
   getAllJargonTerms,
+  getVpsProviders,
+  getWizardStepTranslations,
   // Wizard messages
   getCommonMessages,
   getGenerateSshKeyMessages,

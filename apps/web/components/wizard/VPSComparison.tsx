@@ -14,11 +14,8 @@ import { useState } from "react";
 import { ExternalLink, Star, Clock } from "lucide-react";
 import { TrackedLink } from "@/components/tracked-link";
 import { cn } from "@/lib/utils";
-import {
-  VPS_PROVIDERS,
-  PRICING_LAST_UPDATED,
-  type VPSProvider,
-} from "@/lib/vpsProviders";
+import { PRICING_LAST_UPDATED, type VPSProvider } from "@/lib/vpsProviders";
+import { useLocale, getVpsProviders } from "@/lib/i18n";
 
 type PlanTier = "recommended" | "budget";
 
@@ -101,6 +98,8 @@ function ProviderMobileCard({
 
 export function VPSComparison() {
   const [tier, setTier] = useState<PlanTier>("recommended");
+  const { locale } = useLocale();
+  const providers = getVpsProviders(locale);
 
   return (
     <div className="space-y-4">
@@ -169,7 +168,7 @@ export function VPSComparison() {
             </tr>
           </thead>
           <tbody>
-            {VPS_PROVIDERS.map((provider, i) => {
+            {providers.map((provider, i) => {
               const plan = provider[tier];
               return (
                 <tr
@@ -234,7 +233,7 @@ export function VPSComparison() {
 
       {/* Mobile cards — hidden on desktop */}
       <div className="space-y-3 sm:hidden">
-        {VPS_PROVIDERS.map((provider) => (
+        {providers.map((provider) => (
           <ProviderMobileCard
             key={provider.id}
             provider={provider}

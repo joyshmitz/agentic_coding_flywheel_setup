@@ -10,9 +10,20 @@ import {
   type WizardStep,
 } from "@/lib/wizardSteps";
 import { motion } from "@/components/motion";
-import { useLocale, getStepperMessages } from "@/lib/i18n";
+import { useLocale, getStepperMessages, getWizardStepTranslations } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n/config";
 
 type Messages = ReturnType<typeof getStepperMessages>;
+
+/** Get localized step title */
+function getLocalizedStepTitle(step: WizardStep, locale: Locale): string {
+  const translations = getWizardStepTranslations(locale);
+  if (translations) {
+    const translated = translations.find((t) => t.id === step.id);
+    if (translated) return translated.title;
+  }
+  return step.title;
+}
 
 export interface StepperProps {
   /** Current active step (1-indexed) */
@@ -30,6 +41,7 @@ interface StepItemProps {
   isClickable: boolean;
   onClick?: () => void;
   messages: Messages;
+  locale: Locale;
 }
 
 function StepItem({
@@ -39,7 +51,9 @@ function StepItem({
   isClickable,
   onClick,
   messages,
+  locale,
 }: StepItemProps) {
+  const title = getLocalizedStepTitle(step, locale);
   return (
     <button
       type="button"
@@ -84,7 +98,7 @@ function StepItem({
             !isActive && !isCompleted && "text-muted-foreground"
           )}
         >
-          {step.title}
+          {title}
         </div>
         {isActive && (
           <div className="mt-0.5 text-xs text-primary">{messages.status.inProgress}</div>
@@ -147,6 +161,7 @@ export function Stepper({ currentStep, onStepClick, className }: StepperProps) {
               isClickable={isClickable}
               onClick={() => handleStepClick(step.id)}
               messages={messages}
+              locale={locale}
             />
           </div>
         );
@@ -219,6 +234,7 @@ export function StepperMobile({
           const isActive = step.id === currentStep;
           const isCompleted = completedSteps.includes(step.id);
           const isClickable = isCompleted || step.id <= highestCompleted + 1;
+          const stepTitle = getLocalizedStepTitle(step, locale);
 
           return (
             <motion.button
@@ -232,7 +248,7 @@ export function StepperMobile({
                 !isClickable && "cursor-not-allowed opacity-50"
               )}
               style={{ minWidth: 44, minHeight: 44 }}
-              aria-label={`Go to step ${step.id}: ${step.title}`}
+              aria-label={`${messages.mobile.step} ${step.id}: ${stepTitle}`}
               aria-current={isActive ? "step" : undefined}
               whileTap={isClickable ? { scale: 0.9 } : undefined}
             >
@@ -299,7 +315,7 @@ export function StepperMobile({
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
           >
-            {currentStepData.title}
+            {getLocalizedStepTitle(currentStepData, locale)}
           </motion.span>
           <p className="mt-0.5 text-xs text-muted-foreground">
             {messages.mobile.step} {currentStep} {messages.mobile.of} {WIZARD_STEPS.length}

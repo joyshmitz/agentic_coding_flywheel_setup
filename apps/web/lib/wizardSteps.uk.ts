@@ -5,11 +5,9 @@
  * Logic and hooks remain in wizardSteps.ts.
  */
 
-export interface WizardStepTranslation {
-  id: number;
-  title: string;
-  description: string;
-}
+import type { WizardStep } from "./wizardSteps";
+
+export type WizardStepTranslation = Pick<WizardStep, "id" | "title" | "description">;
 
 export const WIZARD_STEPS_UK: WizardStepTranslation[] = [
   {
