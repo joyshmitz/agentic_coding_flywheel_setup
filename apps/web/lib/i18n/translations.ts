@@ -257,6 +257,10 @@ import { agentHeroCardMessagesUk } from "../agent-hero-card-messages.uk";
 import { lessonComponentsMessages } from "../lesson-components-messages";
 import { lessonComponentsMessagesUk } from "../lesson-components-messages.uk";
 
+// Tools page messages
+import { toolsPageMessages } from "../tools-page-messages";
+import { toolsPageMessagesUk } from "../tools-page-messages.uk";
+
 /**
  * Get common wizard messages for the specified locale
  */
@@ -504,6 +508,13 @@ export function getHomeMessages(locale: Locale) {
  */
 export function getToolPageMessages(locale: Locale) {
   return locale === "uk" ? toolPageMessagesUk : toolPageMessages;
+}
+
+/**
+ * Get tools listing page messages for the specified locale
+ */
+export function getToolsPageMessages(locale: Locale) {
+  return locale === "uk" ? toolsPageMessagesUk : toolsPageMessages;
 }
 
 /**

@@ -52,6 +52,7 @@ export {
   getSecurityMessages,
   getHomeMessages,
   getToolPageMessages,
+  getToolsPageMessages,
   getCommandReferenceMessages,
   // Lesson messages
   getWelcomeLessonMessages,
