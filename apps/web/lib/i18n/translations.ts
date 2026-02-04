@@ -12,8 +12,15 @@ import { LESSONS, type Lesson } from "../lessons";
 import { LESSONS_UK } from "../lessons.uk";
 
 // Commands
-import { COMMANDS, COMMAND_CATEGORIES, type CommandRef, type CommandCategory } from "../commands";
-import { COMMANDS_UK, COMMAND_CATEGORIES_UK } from "../commands.uk";
+import { COMMANDS, COMMAND_CATEGORIES, ALL_COMMANDS, type CommandRef, type CommandCategory } from "../commands";
+import { COMMANDS_UK, COMMAND_CATEGORIES_UK, ALL_COMMANDS_UK } from "../commands.uk";
+
+// VPS Providers
+import { VPS_PROVIDERS, type VPSProvider } from "../vpsProviders";
+import { VPS_PROVIDERS_UK } from "../vpsProviders.uk";
+
+// Wizard Steps Translations
+import { WIZARD_STEPS_UK, type WizardStepTranslation } from "../wizardSteps.uk";
 
 // Jargon
 import { jargonDictionary, type JargonTerm } from "../jargon";
@@ -109,6 +116,27 @@ export function getLessonBySlug(slug: string, locale: Locale): Lesson | undefine
  */
 export function getCommands(locale: Locale): CommandRef[] {
   return locale === "uk" ? COMMANDS_UK : COMMANDS;
+}
+
+/**
+ * Get all commands (including auto-generated) for the specified locale
+ */
+export function getAllCommands(locale: Locale): CommandRef[] {
+  return locale === "uk" ? ALL_COMMANDS_UK : ALL_COMMANDS;
+}
+
+/**
+ * Get VPS providers for the specified locale
+ */
+export function getVpsProviders(locale: Locale): VPSProvider[] {
+  return locale === "uk" ? VPS_PROVIDERS_UK : VPS_PROVIDERS;
+}
+
+/**
+ * Get wizard step translations for the specified locale
+ */
+export function getWizardStepTranslations(locale: Locale): WizardStepTranslation[] | null {
+  return locale === "uk" ? WIZARD_STEPS_UK : null;
 }
 
 /**

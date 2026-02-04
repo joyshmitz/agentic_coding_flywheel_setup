@@ -9,6 +9,8 @@ export const homeMessagesUk = {
     github: "GitHub",
     learn: "Навчання",
     getStarted: "Почати",
+    tldr: "Коротко",
+    home: "Головна",
   },
 
   hero: {

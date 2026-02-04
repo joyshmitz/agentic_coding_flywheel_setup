@@ -1005,10 +1005,10 @@ export default function HomePage() {
           <Link
             href="/tldr"
             className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-auto sm:w-auto sm:gap-1 sm:rounded-none sm:bg-transparent sm:hover:bg-transparent"
-            aria-label="TL;DR"
+            aria-label={messages.nav.tldr}
           >
             <Zap className="h-5 w-5 sm:h-4 sm:w-4" />
-            <span className="hidden text-sm sm:inline">TL;DR</span>
+            <span className="hidden text-sm sm:inline">{messages.nav.tldr}</span>
           </Link>
           <Button asChild size="sm" variant="outline" className="border-primary/30 hover:bg-primary/10">
             <Link href="/wizard/os-selection">
@@ -1182,7 +1182,7 @@ export default function HomePage() {
                   href="/tldr"
                   className="rounded-sm underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
-                  TL;DR
+                  {messages.nav.tldr}
                 </Link>
                 <a
                   href="https://github.com/Dicklesworthstone/ntm"

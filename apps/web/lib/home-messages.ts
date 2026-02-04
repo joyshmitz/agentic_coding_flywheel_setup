@@ -9,6 +9,8 @@ export const homeMessages = {
     github: "GitHub",
     learn: "Learn",
     getStarted: "Get Started",
+    tldr: "TL;DR",
+    home: "Home",
   },
 
   hero: {

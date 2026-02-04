@@ -6,6 +6,7 @@
  */
 
 import type { CommandCategory, CommandRef } from "./commands";
+import { manifestCommands } from "./generated/manifest-web-index";
 
 export const COMMAND_CATEGORIES_UK: Array<{
   id: CommandCategory;
@@ -174,11 +175,19 @@ export const COMMANDS_UK: CommandRef[] = [
     example: "direnv allow",
   },
   {
-    name: "bd",
+    name: "ananicy-cpp",
+    fullName: "Ananicy-CPP Daemon",
+    description: "Демон пріоритету процесів з 1700+ правилами автоматичного зниження пріоритету.",
+    category: "system",
+    example: "systemctl status ananicy-cpp",
+    docsUrl: "https://gitlab.com/ananicy-cpp/ananicy-cpp",
+  },
+  {
+    name: "br",
     fullName: "Beads CLI",
     description: "Управління графом задач.",
     category: "stack",
-    example: "bd ready",
+    example: "br ready",
   },
   {
     name: "bv",
@@ -186,6 +195,14 @@ export const COMMANDS_UK: CommandRef[] = [
     description: "Переглядач issues та workflow (--robot-* флаги).",
     category: "stack",
     example: "bv --robot-triage",
+  },
+  {
+    name: "ms",
+    fullName: "Meta Skill",
+    description: "Локальне управління знаннями з гібридним семантичним пошуком.",
+    category: "stack",
+    example: "ms search 'auth flow'",
+    aliases: ["meta-skill"],
   },
   {
     name: "ubs",
@@ -228,6 +245,39 @@ export const COMMANDS_UK: CommandRef[] = [
     description: "Координація та обмін повідомленнями між агентами.",
     category: "stack",
     example: "am status",
+  },
+  {
+    name: "apr",
+    fullName: "Automated Plan Reviser",
+    description: "Автоматичне ітеративне уточнення специфікацій з розширеним AI reasoning.",
+    category: "stack",
+    example: "apr refine plan.md",
+    aliases: ["automated-plan-reviser"],
+  },
+  {
+    name: "jfp",
+    fullName: "JeffreysPrompts CLI",
+    description: "Бібліотека перевірених промптів з установкою скілів одним кліком.",
+    category: "stack",
+    example: "jfp install idea-wizard",
+    aliases: ["jeffreysprompts"],
+    docsUrl: "https://jeffreysprompts.com",
+  },
+  {
+    name: "pt",
+    fullName: "Process Triage",
+    description: "Пошук та завершення зависших/zombie процесів з Bayesian скорінгом.",
+    category: "stack",
+    example: "pt",
+    aliases: ["process-triage"],
+  },
+  {
+    name: "xf",
+    fullName: "X Archive Search",
+    description: "Блискавичний локальний пошук по вашому X/Twitter архіву.",
+    category: "stack",
+    example: 'xf search "machine learning"',
+    docsUrl: "https://github.com/Dicklesworthstone/xf",
   },
   {
     name: "bun",
@@ -317,3 +367,21 @@ export const COMMANDS_UK: CommandRef[] = [
     docsUrl: "https://github.com/Dicklesworthstone/system_resource_protection_script",
   },
 ];
+
+// Auto-merge any manifest-defined commands not already in the hand-maintained list.
+// This ensures new tools added to acfs.manifest.yaml appear automatically.
+const _handMaintainedNames = new Set(COMMANDS_UK.map((c) => c.name));
+const _generatedExtras: CommandRef[] = manifestCommands
+  .filter((mc) => !_handMaintainedNames.has(mc.cliName))
+  .map((mc) => ({
+    name: mc.cliName,
+    fullName: mc.description.split(" - ")[0] || mc.cliName,
+    description: mc.description,
+    category: "stack" as CommandCategory,
+    example: mc.commandExample ?? `${mc.cliName} --help`,
+    aliases: mc.cliAliases.length > 0 ? mc.cliAliases : undefined,
+    docsUrl: mc.docsUrl,
+  }));
+
+/** All commands: hand-maintained + auto-discovered from manifest. */
+export const ALL_COMMANDS_UK: CommandRef[] = [...COMMANDS_UK, ..._generatedExtras];

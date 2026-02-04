@@ -484,7 +484,7 @@ export default function GlossaryPage() {
             <Button asChild size="lg" className="flex-1">
               <Link href="/wizard/os-selection">
                 <Terminal className="mr-2 h-4 w-4" />
-                {messages.navigation?.wizard || "Wizard"}
+                {messages.navigation?.setupWizard || "Wizard"}
               </Link>
             </Button>
           </div>

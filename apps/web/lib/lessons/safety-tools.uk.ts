@@ -90,7 +90,7 @@ export const safetyToolsLessonMessagesUk = {
     title: "CAAM: Coding Agent Account Manager",
     intro: {
       highlight: "CAAM",
-      text: " забезпечує перемикання облікових записів менш ніж за 100мс для AI сервісів на основі підписки (Claude Max, Codex CLI, Gemini Ultra). Миттєво міняйте OAuth токени без повторної аутентифікації.",
+      text: " забезпечує перемикання облікових записів менш ніж за 100 мс для AI сервісів на основі підписки (Claude Max, Codex CLI, Gemini Ultra). Миттєво міняйте OAuth токени без повторної аутентифікації.",
     },
     features: {
       tokenManagement: {
@@ -99,7 +99,7 @@ export const safetyToolsLessonMessagesUk = {
       },
       instantSwitching: {
         title: "Миттєве перемикання",
-        description: "Перемикання облікових записів менш ніж за 100мс через swap symlink",
+        description: "Перемикання облікових записів менш ніж за 100 мс через swap symlink",
       },
       multiTool: {
         title: "Підтримка багатьох інструментів",
