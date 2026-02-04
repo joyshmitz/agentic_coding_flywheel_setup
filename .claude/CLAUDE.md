@@ -81,6 +81,19 @@ bash install.sh --help
 - Git commit messages (keep English)
 - Internal developer comments
 
+### Translation Session Trigger
+
+При фразах **"сесія перекладу"**, **"translation session"**, **"почни переклад"**:
+
+1. Прочитати `TRANSLATION_WORKFLOW.md` в корені репо
+2. Виконати секцію "Швидкий старт сесії":
+   ```bash
+   ls apps/web/lib/*.uk.ts | head -10
+   git fetch upstream
+   git log translate-ukrainian-acfs..upstream/main --oneline | head -10
+   ```
+3. Повідомити статус і запитати що робимо
+
 ---
 
 ## Language Policy
