@@ -117,7 +117,7 @@ $ systemctl status ananicy-cpp
         delay={0.2}
       >
         <Paragraph>
-          TUI <Highlight>sysmoni</Highlight> показує використання CPU та пам'яті
+          TUI <Highlight>sysmoni</Highlight> показує використання CPU та пам&#39;яті
           в реальному часі для кожного процесу, разом з правилом ananicy, що
           застосовується до кожного.
         </Paragraph>
@@ -240,7 +240,7 @@ $ sudo systemctl restart ananicy-cpp`}
 
         <TipBox variant="warning">
           Будьте обережні зі значеннями nice нижче 0 (вищий пріоритет). Тільки root може
-          встановлювати від'ємні значення nice, і надмірне їх використання може зробити
+          встановлювати від&#39;ємні значення nice, і надмірне їх використання може зробити
           вашу систему менш чуйною, а не більш.
         </TipBox>
       </Section>
@@ -265,7 +265,7 @@ $ sudo systemctl restart ananicy-cpp`}
               </>,
               <>
                 <Highlight>slb:</Highlight> Запобігає голодуванню кількох агентів
-                за CPU/пам'ять
+                за CPU/пам&#39;ять
               </>,
               <>
                 <Highlight>dcg:</Highlight> Комбінована безпека — DCG запобігає
