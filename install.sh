@@ -129,10 +129,12 @@ SKIP_UBUNTU_UPGRADE=false
 TARGET_UBUNTU_VERSION="25.10"
 
 # Target user configuration
-# Default: install for the "ubuntu" user (typical VPS images).
-# Advanced: override with env vars (see README):
-#   TARGET_USER=myuser TARGET_HOME=/home/myuser ...
-TARGET_USER="${TARGET_USER:-ubuntu}"
+# Default: detect the current user (or SUDO_USER if running under sudo).
+# Override with env var: TARGET_USER=myuser
+# Note: Previously defaulted to "ubuntu" which broke non-ubuntu VPS installs.
+_ACFS_DETECTED_USER="${SUDO_USER:-$(whoami)}"
+TARGET_USER="${TARGET_USER:-$_ACFS_DETECTED_USER}"
+unset _ACFS_DETECTED_USER
 # Leave TARGET_HOME unset by default; init_target_paths will derive it from:
 # - $HOME when running as TARGET_USER
 # - /home/$TARGET_USER otherwise
@@ -2622,8 +2624,8 @@ confirm_or_exit() {
 # Set up target-specific paths
 # Must be called after ensure_root
 init_target_paths() {
-    # If running as ubuntu, use ubuntu's home
-    # If running as root, install for ubuntu user
+    # If running as the target user, use their $HOME directly.
+    # If running as root (or another user), derive TARGET_HOME from TARGET_USER.
     if [[ "$(whoami)" == "$TARGET_USER" ]]; then
         TARGET_HOME="${TARGET_HOME:-$HOME}"
     else
@@ -3092,8 +3094,13 @@ normalize_user() {
                 
                 # Print password for the operator (important for safe mode)
                 echo "" >&2
-                log_warn "Generated password for '$TARGET_USER': $user_password"
-                log_warn "Save this password! You may need it for sudo access (safe mode)."
+                if declare -f log_sensitive >/dev/null; then
+                    log_sensitive "Generated password for '$TARGET_USER': $user_password"
+                    log_sensitive "Save this password! You may need it for sudo access (safe mode)."
+                else
+                    log_warn "Generated password for '$TARGET_USER': $user_password"
+                    log_warn "Save this password! You may need it for sudo access (safe mode)."
+                fi
                 echo "" >&2
             else
                 log_warn "Failed to generate password for $TARGET_USER"
@@ -3505,12 +3512,17 @@ install_cli_tools() {
         try_step "Configuring git-lfs" run_as_target git lfs install --skip-repo || true
     fi
 
-    # Install optional apt packages individually to prevent one failure from blocking others
+    # Install optional apt packages - batch install for speed (14→1 apt-get calls)
     log_detail "Installing optional apt packages"
     local optional_pkgs=(lsd eza bat fd-find btop dust neovim htop tree ncdu httpie entr mtr pv docker.io docker-compose-plugin)
-    for pkg in "${optional_pkgs[@]}"; do
-        $SUDO apt-get install -y "$pkg" >/dev/null 2>&1 || log_detail "$pkg not available (optional)"
-    done
+    # First attempt: batch install all at once (fastest path)
+    if ! $SUDO apt-get install -y "${optional_pkgs[@]}" >/dev/null 2>&1; then
+        # Fallback: some packages failed, install individually to get what we can
+        log_detail "Batch install failed, trying packages individually"
+        for pkg in "${optional_pkgs[@]}"; do
+            $SUDO apt-get install -y "$pkg" >/dev/null 2>&1 || log_detail "$pkg not available (optional)"
+        done
+    fi
 
     # Robust lazygit install (apt or binary fallback)
     if ! command_exists lazygit; then
@@ -3751,13 +3763,21 @@ install_languages_legacy_tools() {
         try_step "Installing Atuin" acfs_run_verified_upstream_script_as_target "atuin" "sh" || return 1
     fi
 
-    # Zoxide (install as target user)
+    # Zoxide - prefer apt to avoid GitHub API rate limits in CI
     # Check multiple possible locations
     if [[ -x "$TARGET_HOME/.local/bin/zoxide" ]] || [[ -x "/usr/local/bin/zoxide" ]] || command -v zoxide &>/dev/null; then
         log_detail "Zoxide already installed"
     else
         log_detail "Installing Zoxide for $TARGET_USER"
-        try_step "Installing Zoxide" acfs_run_verified_upstream_script_as_target "zoxide" "sh" || return 1
+        # Prefer apt (avoids GitHub API rate limits), fall back to upstream script
+        if apt-cache show zoxide &>/dev/null; then
+            try_step "Installing Zoxide (apt)" $SUDO apt-get install -y zoxide || {
+                log_detail "apt install failed, falling back to upstream script"
+                try_step "Installing Zoxide (upstream)" acfs_run_verified_upstream_script_as_target "zoxide" "sh" || return 1
+            }
+        else
+            try_step "Installing Zoxide" acfs_run_verified_upstream_script_as_target "zoxide" "sh" || return 1
+        fi
     fi
 }
 
@@ -4470,11 +4490,32 @@ NTM_CONFIG_EOF
     fi
 
     # SLB (Simultaneous Launch Button)
+    # The upstream install script calls GitHub API for latest version, which hits rate limits in CI.
+    # We install via .deb package directly to avoid this.
     if binary_installed "slb"; then
         log_detail "SLB already installed"
     else
         log_detail "Installing SLB"
-        try_step "Installing SLB" acfs_run_verified_upstream_script_as_target "slb" "bash" || log_warn "SLB installation may have failed"
+        local slb_version="0.2.0"
+        local slb_arch="amd64"
+        [[ "$(uname -m)" == "aarch64" ]] && slb_arch="arm64"
+        local slb_deb="slb_${slb_version}_linux_${slb_arch}.deb"
+        local slb_url="https://github.com/Dicklesworthstone/slb/releases/download/v${slb_version}/${slb_deb}"
+        local slb_tmp
+        slb_tmp="$(mktemp -d "${TMPDIR:-/tmp}/acfs-slb.XXXXXX" 2>/dev/null)" || slb_tmp=""
+        if [[ -n "$slb_tmp" ]] && [[ -d "$slb_tmp" ]]; then
+            if acfs_curl -o "${slb_tmp}/${slb_deb}" "$slb_url" && \
+               $SUDO dpkg -i "${slb_tmp}/${slb_deb}"; then
+                log_success "SLB installed via .deb"
+            else
+                log_warn "SLB .deb install failed, trying upstream script"
+                try_step "Installing SLB (upstream)" acfs_run_verified_upstream_script_as_target "slb" "bash" || log_warn "SLB installation may have failed"
+            fi
+            rm -rf "$slb_tmp"
+        else
+            log_warn "Failed to create temp directory for SLB, trying upstream script"
+            try_step "Installing SLB (upstream)" acfs_run_verified_upstream_script_as_target "slb" "bash" || log_warn "SLB installation may have failed"
+        fi
     fi
 
     # RU (Repo Updater)

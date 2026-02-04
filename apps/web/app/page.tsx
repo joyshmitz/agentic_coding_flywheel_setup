@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 // import Image from "next/image"; // Hidden with AboutSection
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   Terminal,
@@ -26,6 +26,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "@/components/motion";
+import { useDrag } from "@use-gesture/react";
 import { Button } from "@/components/ui/button";
 import { Jargon } from "@/components/jargon";
 import { springs, fadeUp, staggerContainer, fadeScale } from "@/components/motion";
@@ -247,9 +248,10 @@ function AnimatedTerminal() {
       transition={springs.smooth}
     >
       <div className="terminal-header">
-        <div className="terminal-dot terminal-dot-red" />
-        <div className="terminal-dot terminal-dot-yellow" />
-        <div className="terminal-dot terminal-dot-green" />
+        {/* Decorative window controls - hidden from screen readers since they're non-functional */}
+        <div className="terminal-dot terminal-dot-red" aria-hidden="true" />
+        <div className="terminal-dot terminal-dot-yellow" aria-hidden="true" />
+        <div className="terminal-dot terminal-dot-green" aria-hidden="true" />
         <span className="ml-3 font-mono text-xs text-muted-foreground">
           {messages.terminal.prompt}
         </span>
@@ -446,7 +448,7 @@ function FlywheelSection() {
         >
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">{messages.flywheel.badge}</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-primary">{messages.flywheel.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
           <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight">
@@ -479,7 +481,7 @@ function FlywheelSection() {
               >
                 <span className="text-xs font-bold text-white">{tool.name}</span>
               </motion.div>
-              <span className="text-[10px] text-muted-foreground text-center">{tool.desc}</span>
+              <span className="text-xs text-muted-foreground text-center">{tool.desc}</span>
             </motion.div>
           ))}
         </motion.div>
@@ -506,6 +508,24 @@ function WorkflowStepsSection() {
   const { ref, isInView } = useScrollReveal({ threshold: 0.1 });
   const { locale } = useLocale();
   const messages = getHomeMessages(locale);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const bind = useDrag(
+    ({ active, movement: [mx], memo }) => {
+      const scroller = scrollRef.current;
+      if (!scroller) return memo;
+      const start = memo ?? scroller.scrollLeft;
+      if (active) {
+        scroller.scrollLeft = start - mx;
+      }
+      return start;
+    },
+    {
+      axis: "x",
+      filterTaps: true,
+      threshold: 8,
+    }
+  );
 
   return (
     <section ref={ref as React.RefObject<HTMLElement>} className="border-t border-border/30 bg-card/30 py-24">
@@ -527,7 +547,10 @@ function WorkflowStepsSection() {
         {/* Horizontal scroll on mobile, wrap on desktop */}
         <div className="relative -mx-6 px-6 sm:mx-0 sm:px-0">
           <motion.div
-            className="flex gap-3 overflow-x-auto pb-4 sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0 scrollbar-hide"
+            ref={scrollRef}
+            {...bind()}
+            style={{ touchAction: "pan-y" }}
+            className="flex gap-3 overflow-x-auto pb-4 sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0 scrollbar-hide cursor-grab active:cursor-grabbing select-none"
             variants={staggerContainer}
             initial="hidden"
             animate={isInView ? "visible" : "hidden"}
@@ -584,7 +607,7 @@ function AboutSection() {
         >
           <div className="mb-6 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">{messages.about.badge}</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-primary">{messages.about.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
 
@@ -688,7 +711,7 @@ function WhyVPSSection() {
         >
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">{messages.whyVps.badge}</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-primary">{messages.whyVps.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
           <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight sm:text-4xl">{messages.whyVps.title}</h2>
@@ -756,7 +779,7 @@ function IsThisForYouSection() {
         <motion.div className="mb-12 text-center" initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} transition={springs.smooth}>
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">{messages.isThisForYou.badge}</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-primary">{messages.isThisForYou.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
           <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight sm:text-4xl">{messages.isThisForYou.title}</h2>
@@ -847,7 +870,7 @@ function WhatDoesThisCostSection() {
         <motion.div className="mb-12 text-center" initial={{ opacity: 0, y: 20 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }} transition={springs.smooth}>
           <div className="mb-4 flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">{messages.pricing.badge}</span>
+            <span className="text-xs font-bold uppercase tracking-[0.25em] text-primary">{messages.pricing.badge}</span>
             <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
           </div>
           <h2 className="mb-4 font-mono text-3xl font-bold tracking-tight sm:text-4xl">{messages.pricing.title}</h2>
@@ -958,29 +981,33 @@ export default function HomePage() {
           </div>
           <span className="font-mono text-lg font-bold tracking-tight">Agent Flywheel</span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <LanguageSwitcher />
+          {/* Mobile: icon-only buttons with 44px touch targets (Apple HIG) */}
           <a
             href="https://github.com/joyshmitz/agentic_coding_flywheel_setup"
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden text-sm text-muted-foreground transition-colors hover:text-foreground sm:block"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-auto sm:w-auto sm:rounded-none sm:bg-transparent sm:hover:bg-transparent"
+            aria-label={messages.nav.github}
           >
-            {messages.nav.github}
+            <GitBranch className="h-5 w-5 sm:hidden" />
+            <span className="hidden text-sm sm:inline">{messages.nav.github}</span>
           </a>
           <Link
             href="/learn"
-            className="hidden items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground sm:flex"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-auto sm:w-auto sm:gap-1 sm:rounded-none sm:bg-transparent sm:hover:bg-transparent"
+            aria-label={messages.nav.learn}
           >
-            <BookOpen className="h-4 w-4" />
-            {messages.nav.learn}
+            <BookOpen className="h-5 w-5 sm:h-4 sm:w-4" />
+            <span className="hidden text-sm sm:inline">{messages.nav.learn}</span>
           </Link>
           <Link
             href="/tldr"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-auto sm:w-auto sm:gap-1 sm:rounded-none sm:bg-transparent sm:hover:bg-transparent"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-auto sm:w-auto sm:gap-1 sm:rounded-none sm:bg-transparent sm:hover:bg-transparent"
             aria-label="TL;DR"
           >
-            <Zap className="h-4 w-4" />
+            <Zap className="h-5 w-5 sm:h-4 sm:w-4" />
             <span className="hidden text-sm sm:inline">TL;DR</span>
           </Link>
           <Button asChild size="sm" variant="outline" className="border-primary/30 hover:bg-primary/10">
@@ -1141,19 +1168,19 @@ export default function HomePage() {
                   href="https://github.com/joyshmitz/agentic_coding_flywheel_setup"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition-colors hover:text-foreground"
+                  className="rounded-sm underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   {messages.footer.links.github}
                 </a>
                 <Link
                   href="/learn"
-                  className="transition-colors hover:text-foreground"
+                  className="rounded-sm underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   {messages.footer.links.learn}
                 </Link>
                 <Link
                   href="/tldr"
-                  className="transition-colors hover:text-foreground"
+                  className="rounded-sm underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   TL;DR
                 </Link>
@@ -1161,7 +1188,7 @@ export default function HomePage() {
                   href="https://github.com/Dicklesworthstone/ntm"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition-colors hover:text-foreground"
+                  className="rounded-sm underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   {messages.footer.links.ntm}
                 </a>
@@ -1169,7 +1196,7 @@ export default function HomePage() {
                   href="https://github.com/Dicklesworthstone/mcp_agent_mail"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition-colors hover:text-foreground"
+                  className="rounded-sm underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   {messages.footer.links.agentMail}
                 </a>

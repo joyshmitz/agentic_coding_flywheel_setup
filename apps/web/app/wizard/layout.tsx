@@ -131,6 +131,13 @@ export default function WizardLayout({
               <LanguageSwitcher />
               <HelpPanel currentStep={currentStep} />
               <ThemeToggle />
+              <Link
+                href="/"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                aria-label="Home"
+              >
+                <Home className="h-4 w-4" />
+              </Link>
               <div className="text-xs text-muted-foreground">
                 {messages.layout.step} <span className="font-mono text-primary">{currentStep}</span> {messages.layout.of} {WIZARD_STEPS.length}
               </div>

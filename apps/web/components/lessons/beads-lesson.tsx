@@ -177,7 +177,7 @@ export function BeadsLesson() {
             <h4 className="font-bold text-white mb-4">{messages.issueTypes.priorities.title}</h4>
             <div className="space-y-2">
               {messages.issueTypes.priorities.list.map((item, index) => {
-                const colors = ["text-red-400", "text-amber-400", "text-primary", "text-white/60", "text-white/40"];
+                const colors = ["text-red-400", "text-amber-400", "text-primary", "text-white/60", "text-white/60"];
                 return (
                   <PriorityRow
                     key={index}
@@ -320,8 +320,8 @@ function PriorityRow({
     >
       <span className={`text-sm font-mono font-bold w-6 text-center ${color}`}>{priority}</span>
       <span className={`text-sm font-medium ${color}`}>{label}</span>
-      <span className="text-xs text-white/40">—</span>
-      <span className="text-xs text-white/40 group-hover:text-white/60 transition-colors">{description}</span>
+      <span className="text-xs text-white/50">—</span>
+      <span className="text-xs text-white/60 group-hover:text-white/80 transition-colors">{description}</span>
     </motion.div>
   );
 }

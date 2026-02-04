@@ -308,7 +308,7 @@ function MemoryDiagram({ messages }: { messages: Messages["howItWorks"]["memoryD
             <Database className="h-10 w-10 text-blue-400" />
           </div>
           <span className="text-sm font-semibold text-white group-hover:text-blue-400 transition-colors">{messages.pastSessions.label}</span>
-          <span className="text-xs text-white/40">{messages.pastSessions.sublabel}</span>
+          <span className="text-xs text-white/60">{messages.pastSessions.sublabel}</span>
         </motion.div>
 
         {/* Arrow */}
@@ -316,7 +316,7 @@ function MemoryDiagram({ messages }: { messages: Messages["howItWorks"]["memoryD
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-white/30 text-2xl hidden md:block"
+          className="text-white/50 text-2xl hidden md:block"
         >
           →
         </motion.div>
@@ -324,7 +324,7 @@ function MemoryDiagram({ messages }: { messages: Messages["howItWorks"]["memoryD
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="text-white/30 text-2xl md:hidden rotate-90"
+          className="text-white/50 text-2xl md:hidden rotate-90"
         >
           →
         </motion.div>
@@ -341,7 +341,7 @@ function MemoryDiagram({ messages }: { messages: Messages["howItWorks"]["memoryD
             <Brain className="h-10 w-10 text-primary" />
           </div>
           <span className="text-sm font-semibold text-white group-hover:text-primary transition-colors">{messages.cmAnalysis.label}</span>
-          <span className="text-xs text-white/40">{messages.cmAnalysis.sublabel}</span>
+          <span className="text-xs text-white/60">{messages.cmAnalysis.sublabel}</span>
         </motion.div>
 
         {/* Arrow */}
@@ -349,7 +349,7 @@ function MemoryDiagram({ messages }: { messages: Messages["howItWorks"]["memoryD
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-white/30 text-2xl hidden md:block"
+          className="text-white/50 text-2xl hidden md:block"
         >
           →
         </motion.div>
@@ -357,7 +357,7 @@ function MemoryDiagram({ messages }: { messages: Messages["howItWorks"]["memoryD
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-white/30 text-2xl md:hidden rotate-90"
+          className="text-white/50 text-2xl md:hidden rotate-90"
         >
           →
         </motion.div>
@@ -374,7 +374,7 @@ function MemoryDiagram({ messages }: { messages: Messages["howItWorks"]["memoryD
             <BookOpen className="h-10 w-10 text-emerald-400" />
           </div>
           <span className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">{messages.playbook.label}</span>
-          <span className="text-xs text-white/40">{messages.playbook.sublabel}</span>
+          <span className="text-xs text-white/60">{messages.playbook.sublabel}</span>
         </motion.div>
       </div>
     </div>

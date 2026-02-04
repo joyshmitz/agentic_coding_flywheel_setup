@@ -225,13 +225,13 @@ function ToolNode({
         </div>
 
         {/* Label */}
-        <span className="relative z-10 text-[10px] font-bold uppercase tracking-wider text-white">
+        <span className="relative z-10 text-xs font-bold uppercase tracking-wider text-white">
           {tool.shortName}
         </span>
 
         {/* Star count badge */}
         {tool.stars && tool.stars >= 100 && (
-          <div className="absolute -right-1 -top-1 flex items-center gap-0.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-bold text-amber-400">
+          <div className="absolute -right-1 -top-1 flex items-center gap-0.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-xs font-bold text-amber-400">
             <Star className="h-2.5 w-2.5 fill-current" />
             {tool.stars >= 1000 ? `${(tool.stars / 1000).toFixed(0)}K` : tool.stars}
           </div>
@@ -458,12 +458,20 @@ function MobileBottomSheet({
   useEffect(() => {
     if (tool) {
       document.body.style.overflow = "hidden";
+
+      // Handle escape key
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === "Escape") onClose();
+      };
+      document.addEventListener("keydown", handleEscape);
+
       return () => {
         document.body.style.overflow = "";
+        document.removeEventListener("keydown", handleEscape);
       };
     }
     return;
-  }, [tool]);
+  }, [tool, onClose]);
 
   if (!tool) return null;
 
@@ -479,7 +487,12 @@ function MobileBottomSheet({
       />
 
       {/* Sheet */}
-      <div className="fixed inset-x-0 bottom-0 z-50 lg:hidden animate-slide-up">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${tool.name} details`}
+        className="fixed inset-x-0 bottom-0 z-50 lg:hidden animate-slide-up"
+      >
         <div className="flex max-h-[70vh] flex-col rounded-t-3xl border-t border-border/50 bg-card/95 backdrop-blur-xl">
           {/* Handle */}
           <div className="flex shrink-0 justify-center pt-3 pb-2">

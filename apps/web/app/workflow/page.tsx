@@ -106,7 +106,7 @@ function CollapsibleSection({
             <div className="flex items-center gap-2">
               <span className="text-lg font-semibold tracking-tight">{title}</span>
               {badge && (
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+                <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/20 text-primary">
                   {badge}
                 </span>
               )}
@@ -640,7 +640,7 @@ export default function WorkflowPage() {
             <div className="text-center mb-6">
               <div className="mb-5 md:mb-6 flex items-center justify-center gap-2">
                 <div className="h-px w-8 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">{messages.flywheel.badge}</span>
+                <span className="text-xs font-bold uppercase tracking-[0.25em] text-primary">{messages.flywheel.badge}</span>
                 <div className="h-px w-8 bg-gradient-to-l from-transparent via-primary/50 to-transparent" />
               </div>
               <h3 className="text-xl font-bold tracking-tight mb-2">{messages.flywheel.title}</h3>
@@ -676,7 +676,7 @@ export default function WorkflowPage() {
                           localizedTool.name
                         )}
                       </span>
-                      <span className="text-[10px] text-muted-foreground">{localizedTool.desc}</span>
+                      <span className="text-xs text-muted-foreground">{localizedTool.desc}</span>
                     </div>
                   </motion.div>
                 );

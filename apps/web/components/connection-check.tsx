@@ -175,7 +175,7 @@ export function WhereAmICheck({ className, messages: propMessages }: { className
 
   return (
     <details className={cn("group rounded-xl border border-border/50 bg-card/30", className)}>
-      <summary className="flex cursor-pointer items-center gap-2 p-4 font-medium hover:bg-muted/50">
+      <summary className="flex cursor-pointer items-center gap-2 p-4 font-medium hover:bg-muted/50 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset">
         <Terminal className="h-4 w-4 text-primary" />
         <span>{messages.whereAmI.title}</span>
       </summary>

@@ -19,6 +19,7 @@ import {
   Divider,
   GoalBanner,
   BulletList,
+  InlineCode,
 } from "./lesson-components";
 import { Jargon } from "@/components/jargon";
 import { useLocale, getAgentsLoginLessonMessages } from "@/lib/i18n";
@@ -318,7 +319,7 @@ function AgentInfoCard({
           <Bot className="h-7 w-7 text-white" />
         </div>
         <span className="font-bold text-white">{name}</span>
-        <span className="text-xs text-white/40 mt-1">{company}</span>
+        <span className="text-xs text-white/60 mt-1">{company}</span>
 
         <div className="mt-4 flex flex-col gap-2 w-full">
           <code className="px-3 py-1.5 rounded-lg bg-black/40 border border-white/[0.08] text-xs font-mono text-white/70">
@@ -405,11 +406,91 @@ function LoginStep({
       <h4 className="font-bold text-white mb-3 group-hover:text-primary transition-colors">{agent}</h4>
       <div className="mb-3 rounded-xl bg-black/30 border border-white/[0.06] overflow-hidden group-hover:bg-black/40 transition-colors">
         <pre className="p-3 text-sm font-mono text-emerald-400">
-          <span className="text-white/30">$ </span>
+          <span className="text-white/50">$ </span>
           {command}
         </pre>
       </div>
       <p className="text-sm text-white/60 group-hover:text-white/80 transition-colors">{description}</p>
+    </motion.div>
+  );
+}
+
+// =============================================================================
+// CODEX LOGIN SECTION - Headless VPS auth options
+// =============================================================================
+function CodexLoginSection() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2, scale: 1.01 }}
+      className="group relative rounded-2xl border border-white/[0.08] bg-gradient-to-br from-emerald-500/10 to-teal-500/10 p-6 backdrop-blur-xl transition-all duration-300 hover:border-white/[0.15]"
+    >
+      <h4 className="font-bold text-white mb-3 group-hover:text-primary transition-colors">
+        Codex CLI
+      </h4>
+
+      <p className="text-sm text-white/60 mb-4">
+        <strong className="text-amber-400">On a headless VPS</strong>, Codex requires special handling because its OAuth callback expects{" "}
+        <InlineCode>localhost:1455</InlineCode>.
+      </p>
+
+      {/* Option 1: Device Auth */}
+      <div className="mb-4">
+        <p className="text-xs font-semibold text-emerald-400 mb-2">
+          Option 1: Device Auth (Recommended)
+        </p>
+        <ol className="list-decimal list-inside text-xs text-white/60 space-y-1 mb-2 pl-2">
+          <li>
+            Enable &quot;Device code login&quot; in{" "}
+            <a
+              href="https://chatgpt.com/settings/security"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline"
+            >
+              ChatGPT Settings → Security
+            </a>
+          </li>
+          <li>Then run the command below</li>
+        </ol>
+        <div className="rounded-xl bg-black/30 border border-white/[0.06] overflow-hidden">
+          <pre className="p-3 text-sm font-mono text-emerald-400">
+            <span className="text-white/50">$ </span>codex login --device-auth
+          </pre>
+        </div>
+      </div>
+
+      {/* Option 2: SSH Tunnel */}
+      <div className="mb-4">
+        <p className="text-xs font-semibold text-emerald-400 mb-2">
+          Option 2: SSH Tunnel
+        </p>
+        <ol className="list-decimal list-inside text-xs text-white/60 space-y-1 mb-2 pl-2">
+          <li>On your laptop, create a tunnel</li>
+          <li>Then run <InlineCode>codex login</InlineCode> on VPS</li>
+        </ol>
+        <div className="rounded-xl bg-black/30 border border-white/[0.06] overflow-hidden">
+          <pre className="p-3 text-xs font-mono text-emerald-400 overflow-x-auto">
+            <span className="text-white/50"># On laptop:</span>{"\n"}
+            <span className="text-white/50">$ </span>ssh -L 1455:localhost:1455 ubuntu@YOUR_VPS_IP{"\n"}
+            <span className="text-white/50"># Then on VPS:</span>{"\n"}
+            <span className="text-white/50">$ </span>codex login
+          </pre>
+        </div>
+      </div>
+
+      {/* Option 3: Standard */}
+      <div>
+        <p className="text-xs font-semibold text-white/60 mb-2">
+          Option 3: Standard (if you have a browser)
+        </p>
+        <div className="rounded-xl bg-black/30 border border-white/[0.06] overflow-hidden">
+          <pre className="p-3 text-sm font-mono text-emerald-400">
+            <span className="text-white/50">$ </span>codex login
+          </pre>
+        </div>
+      </div>
     </motion.div>
   );
 }

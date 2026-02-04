@@ -108,7 +108,7 @@ function ServiceCard({ service, isChecked, onToggle, messages }: ServiceCardProp
           />
           <label
             htmlFor={checkboxId}
-            className="text-[10px] text-muted-foreground"
+            className="text-xs text-muted-foreground"
           >
             {sc.authenticated}
           </label>
@@ -177,7 +177,7 @@ function ServiceCard({ service, isChecked, onToggle, messages }: ServiceCardProp
               <Terminal className="h-3 w-3 shrink-0" />
               <span>
                 {sc.afterInstall}{" "}
-                <code className="rounded bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
+                <code className="rounded bg-muted/50 px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
                   {service.postInstallCommand}
                 </code>
               </span>

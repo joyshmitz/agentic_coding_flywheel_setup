@@ -280,7 +280,7 @@ export function AgentHeroCard({
               <span className="text-sm text-white/60">
                 {agent.model}
               </span>
-              <div className="flex items-center gap-2 text-sm text-white/40">
+              <div className="flex items-center gap-2 text-sm text-white/60">
                 <span>{agent.examples.length} {messages.stats.commands}</span>
                 <span className="text-white/20">·</span>
                 <span>{agent.tips.length} {messages.stats.tips}</span>
