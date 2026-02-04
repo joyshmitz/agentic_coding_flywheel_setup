@@ -9,6 +9,7 @@ export const vpsComparisonMessagesUk = {
   topPick: "Найкращий вибір",
   visitSite: "Перейти на сайт",
   visit: "Перейти",
+  priceUnit: "/міс",
   headers: {
     provider: "Провайдер",
     plan: "План",

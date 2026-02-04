@@ -9,6 +9,7 @@ export const vpsComparisonMessages = {
   topPick: "Top pick",
   visitSite: "Visit site",
   visit: "Visit",
+  priceUnit: "/mo",
   headers: {
     provider: "Provider",
     plan: "Plan",

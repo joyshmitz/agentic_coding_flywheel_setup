@@ -19,8 +19,8 @@ import { useLocale, getVpsProviders, getVpsComparisonMessages, getPricingLastUpd
 
 type PlanTier = "recommended" | "budget";
 
-function formatPrice(usd: number): string {
-  return `$${usd}/mo`;
+function formatPrice(usd: number, unit: string): string {
+  return `$${usd}${unit}`;
 }
 
 type VpsComparisonMessages = ReturnType<typeof getVpsComparisonMessages>;
@@ -55,7 +55,7 @@ function ProviderMobileCard({
           )}
         </div>
         <span className="text-lg font-bold text-foreground">
-          {formatPrice(plan.priceUSD)}
+          {formatPrice(plan.priceUSD, messages.priceUnit)}
         </span>
       </div>
 
@@ -215,7 +215,7 @@ export function VPSComparison() {
                     {plan.storageGB}GB
                   </td>
                   <td className="px-4 py-3 text-right font-mono font-semibold text-foreground">
-                    {formatPrice(plan.priceUSD)}
+                    {formatPrice(plan.priceUSD, messages.priceUnit)}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {provider.activationTime}
