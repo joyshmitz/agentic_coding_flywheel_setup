@@ -25,13 +25,14 @@
 ntm attach my-project || ntm new my-project
 
 # 2. Перевірити inbox
-am inbox
+# Agent Mail Web UI: http://localhost:8765/mail
 
 # 3. Синхронізувати репозиторії
 ru sync --quick
 
 # 4. Перевірити пріоритетні задачі
-bv priorities --limit 5
+bv                              # TUI інтерактивний
+# bv -priority-brief brief.md   # експорт в Markdown
 
 # 5. Запустити агент з контекстом
 claude
@@ -41,7 +42,7 @@ claude
 
 ```bash
 # ~/.bashrc або ~/.zshrc
-alias morning='ntm attach work 2>/dev/null || ntm new work && am inbox && bv priorities --limit 5'
+alias morning='ntm attach work 2>/dev/null || ntm new work && bv -priority-brief brief.md && cat brief.md'
 ```
 
 ### Session Management
@@ -76,7 +77,8 @@ br sync --flush-only
 ru status
 
 # 4. Повідомити команду (якщо потрібно)
-am send --to team --subject "EOD update" --body "Progress: [опис]"
+# Agent Mail Web UI: http://localhost:8765/mail
+# Або агент (MCP): send_message(to=["GreenCastle"], subject="EOD update", body_md="Progress: [опис]")
 ```
 
 ---
@@ -93,7 +95,7 @@ am send --to team --subject "EOD update" --body "Progress: [опис]"
 │  │  spec   │    │  spec   │    │ down    │    │ tasks   │      │
 │  └─────────┘    └─────────┘    └─────────┘    └─────────┘      │
 │      │              │              │              │             │
-│    (apr)          (apr)        (br new)      (am send)         │
+│    (apr)          (apr)      (br create)  (Agent Mail)         │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -140,24 +142,24 @@ cat > spec.md << 'EOF'
 EOF
 
 # Покращити специфікацію з APR
-apr refine spec.md --iterations 2 --output spec-v2.md
+apr setup && apr run 1 && apr run 2
 ```
 
 #### 2. Розбиття на задачі
 
 ```bash
 # Створити головну задачу
-br new "Implement OAuth authentication" --label feature
+br create "Implement OAuth authentication" -l feature
 
 # Створити підзадачі
-br new "Setup OAuth providers" --label subtask
-br new "Implement JWT handling" --label subtask
-br new "Add refresh token rotation" --label subtask
-br new "Write integration tests" --label subtask
+br create "Setup OAuth providers" -l subtask
+br create "Implement JWT handling" -l subtask
+br create "Add refresh token rotation" -l subtask
+br create "Write integration tests" -l subtask
 
-# Встановити залежності
-br link jwt-task --blocks tests-task
-br link providers-task --blocks jwt-task
+# Встановити залежності (tests-task залежить від jwt-task, jwt від providers)
+br dep add <tests-task> <jwt-task>
+br dep add <jwt-task> <providers-task>
 ```
 
 #### 3. Розробка з AI-агентом
@@ -392,29 +394,26 @@ claude
 
 ### Coordination Protocol
 
-```bash
-# Coordinator розподіляє задачі
-am send --to "GreenCastle" --subject "Task: Backend API" \
-  --body "Implement REST endpoints for /users. Coordinate with BlueLake for types."
+```
+Coordinator розподіляє задачі через Agent Mail (Web UI або MCP):
+  → GreenCastle: "Task: Backend API"
+    (Implement REST endpoints for /users. Coordinate with BlueLake for types.)
+  → BlueLake: "Task: Frontend components"
+    (Implement UserList and UserProfile. Wait for API types from GreenCastle.)
+  → RedStone: "Task: E2E tests"
+    (Write E2E tests after both API and UI are ready.)
 
-am send --to "BlueLake" --subject "Task: Frontend components" \
-  --body "Implement UserList and UserProfile. Wait for API types from GreenCastle."
-
-am send --to "RedStone" --subject "Task: E2E tests" \
-  --body "Write E2E tests after both API and UI are ready."
+MCP приклад:
+  send_message(to=["GreenCastle"], subject="Task: Backend API",
+               body_md="Implement REST endpoints for /users...")
 ```
 
 ### File Reservation (уникнення конфліктів)
 
-```bash
-# Agent A резервує backend файли
-am file-reserve --paths "src/api/*.ts" --ttl 2h
-
-# Agent B резервує frontend файли
-am file-reserve --paths "src/ui/*.tsx" --ttl 2h
-
-# Перевірка конфліктів
-am file-list --reserved
+```
+File reservations координуються через Agent Mail MCP:
+  Agent A: file_reservation_paths(paths=["src/api/*.ts"], ttl_seconds=7200, exclusive=true)
+  Agent B: file_reservation_paths(paths=["src/ui/*.tsx"], ttl_seconds=7200, exclusive=true)
 ```
 
 ---
@@ -492,7 +491,8 @@ slb exec "vercel deploy --prod"
 curl -s https://myapp.vercel.app/health | jq
 
 # 4. Notify team
-am send --to team --subject "Deploy complete" --body "v1.2.3 deployed to production"
+# Agent Mail Web UI: http://localhost:8765/mail
+# Або агент (MCP): send_message(to=["GreenCastle"], subject="Deploy complete", body_md="v1.2.3 deployed")
 ```
 
 ---
@@ -523,7 +523,7 @@ am send --to team --subject "Deploy complete" --body "v1.2.3 deployed to product
 |----------|------|
 | Clear subjects | "Bug: null pointer in auth" замість "fix" |
 | Thread continuity | Використовувати reply замість нових threads |
-| Acknowledgements | `am ack` для важливих повідомлень |
+| Acknowledgements | Agent Mail acknowledge для важливих повідомлень |
 | Status updates | Регулярні оновлення в Agent Mail |
 
 ### 4. Context Management
@@ -540,9 +540,9 @@ am send --to team --subject "Deploy complete" --body "v1.2.3 deployed to product
 | Practice | Опис |
 |----------|------|
 | Granular tasks | 1-4 години на задачу |
-| Clear dependencies | `br link` для зв'язків |
+| Clear dependencies | `br dep add` для зв'язків |
 | Regular sync | `br sync` щодня |
-| Prioritize visually | `bv priorities` для планування |
+| Prioritize visually | `bv` (TUI) для планування |
 
 ---
 
@@ -553,8 +553,8 @@ am send --to team --subject "Deploy complete" --body "v1.2.3 deployed to product
 **Ситуація:** Legacy auth система з session-based підходом потребувала міграції на JWT.
 
 **Workflow використаний:**
-1. `apr refine` для специфікації міграції
-2. `br new` для розбиття на 15 задач
+1. `apr setup` + `apr run` для специфікації міграції
+2. `br create` для розбиття на 15 задач
 3. Два агенти паралельно (Claude для backend, Codex для frontend)
 4. `am` для координації
 5. `ubs` для виявлення security issues
@@ -571,7 +571,7 @@ am send --to team --subject "Deploy complete" --body "v1.2.3 deployed to product
 **Workflow використаний:**
 1. `ru sync` для синхронізації всіх репо
 2. `ntm` з 3 панелями для кожного репо
-3. `am file-reserve` для уникнення конфліктів
+3. Agent Mail file reservations для уникнення конфліктів
 4. `br` з cross-repo залежностями
 5. Coordinated deploy через `slb`
 

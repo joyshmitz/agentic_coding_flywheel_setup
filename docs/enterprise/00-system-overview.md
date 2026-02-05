@@ -33,7 +33,7 @@ ACFS інструменти існують не самі для себе. Вон
 | Модуль Odoo | Що трекає | Зв'язок з ACFS |
 |-------------|-----------|----------------|
 | Projects | Проєкти та задачі | beads_rust задачі → Odoo Projects |
-| Accounting | Витрати | caut (LLM usage) → Odoo Accounting |
+| Accounting | Витрати | caut (planned — не встановлений) → Odoo Accounting |
 | HR | Персонал | Ролі та компетенції → Odoo HR |
 | Inventory | Ресурси | VPS, API keys → Odoo Inventory |
 
@@ -60,7 +60,7 @@ ACFS інструменти існують не самі для себе. Вон
 | Connector | Напрямок | Що передає |
 |-----------|----------|------------|
 | beads → Odoo | ACFS → ERP | Задачі, статуси, залежності |
-| caut → Odoo | ACFS → ERP | Витрати на LLM API |
+| caut → Odoo | ACFS → ERP | Витрати на LLM API (planned — не встановлений) |
 | Agent Mail → Odoo | ACFS → ERP | Активність агентів |
 | Odoo → beads | ERP → ACFS | Нові задачі, пріоритети |
 
@@ -125,7 +125,7 @@ ACFS інструменти існують не самі для себе. Вон
 
 | Інструменти | Використання |
 |-------------|-------------|
-| caut | Трекінг витрат на LLM |
+| caut (planned) | Трекінг витрат на LLM |
 | CAAM | Управління акаунтами |
 
 **Зв'язок з Odoo:** витрати на API → Odoo Accounting, HR → Odoo HR.

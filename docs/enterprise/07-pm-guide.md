@@ -35,9 +35,9 @@ Project Manager в ACFS координує AI agents в різних домен�
 
 | Аспект | Традиційний PM | PM в ACFS |
 |--------|----------------|-----------|
-| Задачі | Jira, Trello | `br new` + `am send` |
-| Трекінг | Standups, status meetings | `bv priorities` + `am inbox` |
-| Специфікації | Word, Confluence | `apr refine` |
+| Задачі | Jira, Trello | `br create` + Agent Mail |
+| Трекінг | Standups, status meetings | `bv` (TUI) + Agent Mail |
+| Специфікації | Word, Confluence | `apr setup` + `apr run` |
 | Виконавці | Люди | AI agents (кілька паралельно) |
 | Scope | Один домен | Мультидоменний (капелюхи) |
 
@@ -48,7 +48,7 @@ Project Manager в ACFS координує AI agents в різних домен�
 ## Капелюхи PM
 
 PM надягає різний капелюх залежно від типу проєкту.
-Інструменти (`br`, `bv`, `am`, `apr`, `caut`) — ті самі. Різне — контекст, артефакти та метрики.
+Інструменти (`br`, `bv`, Agent Mail, `apr`, `caut`) — ті самі. Різне — контекст, артефакти та метрики.
 
 | Капелюх | Тип проєкту | Артефакти | Приклад задачі |
 |---------|-------------|-----------|----------------|
@@ -62,10 +62,10 @@ PM надягає різний капелюх залежно від типу п�
 
 Незалежно від домену, workflow однаковий:
 
-1. Все починається зі специфікації → `apr refine`
-2. Все розбивається на задачі → `br new` + `br link`
-3. Все координується → `am send`
-4. Все трекається → `bv priorities`
+1. Все починається зі специфікації → `apr setup` + `apr run`
+2. Все розбивається на задачі → `br create` + `br dep add`
+3. Все координується → Agent Mail
+4. Все трекається → `bv` (TUI)
 5. Все звітується → Odoo Projects
 
 ### Приклад з реальності
@@ -85,19 +85,19 @@ PM координує AI agents в БУДЬ-ЯКОМУ з цих напрямк�
 PM використовує п'ять основних інструментів. Всі вони domain-agnostic —
 працюють однаково незалежно від капелюха.
 
-| Інструмент | CLI | Призначення | Деталі |
-|------------|-----|-------------|--------|
+| Інструмент | CLI / UI | Призначення | Деталі |
+|------------|----------|-------------|--------|
 | beads_rust | `br` | Задачі, залежності (будь-який домен) | [02b](./02b-tools-acfs-stack.md) |
-| Beads Viewer | `bv` | PageRank, візуалізація пріоритетів | [02b](./02b-tools-acfs-stack.md) |
-| Agent Mail | `am` | Координація агентів | [02a](./02a-tools-ai-agents.md) |
+| Beads Viewer | `bv` | PageRank, візуалізація пріоритетів (TUI) | [02b](./02b-tools-acfs-stack.md) |
+| Agent Mail | Web UI + MCP | Координація агентів (НЕ CLI inbox/send) | [02a](./02a-tools-ai-agents.md) |
 | APR | `apr` | Уточнення специфікацій | [02b](./02b-tools-acfs-stack.md) |
-| coding_agent_usage_tracker | `caut` | Витрати LLM, контроль бюджету | [02c](./02c-tools-infrastructure.md) |
+| coding_agent_usage_tracker | `caut` (planned — не встановлений) | Витрати LLM, контроль бюджету | [02c](./02c-tools-infrastructure.md) |
 
 > Детальний опис кожного інструменту — у відповідних блоках.
 > PM не потребує знання всіх 60+ інструментів ACFS — лише ці п'ять.
 
 **Виконавці:** AI agents (Claude Code, Codex CLI, Gemini CLI). PM ставить задачі через
-`br new` + `am send`, агенти виконують роботу, PM контролює результат.
+`br create` + Agent Mail, агенти виконують роботу, PM контролює результат.
 
 ---
 
@@ -107,21 +107,23 @@ PM використовує п'ять основних інструментів.
 
 ```bash
 # Перевірити що зробили агенти (за ніч / з моменту останнього перегляду)
-am inbox
+# Agent Mail Web UI: http://localhost:8765/mail
+# Або агент використовує MCP: fetch_inbox
 
-# Топ-10 пріоритетів (cross-project, всі капелюхи)
-bv priorities --limit 10
+# Пріоритети (cross-project, всі капелюхи)
+bv                          # TUI інтерактивний
+bv -robot-priority          # JSON для автоматизації
 
 # Відкриті задачі
-# фільтрувати по статусу вручну
-br list
+br list -s open
 ```
 
 ### Моніторинг впродовж дня
 
 ```bash
 # Нові повідомлення від агентів
-am inbox
+# Agent Mail Web UI: http://localhost:8765/mail
+# Або агент використовує MCP: fetch_inbox
 ```
 
 File reservations координуються через Agent Mail — агенти повідомляють які файли зарезервовано.
@@ -136,10 +138,11 @@ PM реагує на повідомлення: уточнює специфіка
 br sync --flush-only
 
 # Закрити завершені задачі
-br close <id> --reason "delivered and verified"
+br close <id> -r "delivered and verified"
 
 # Повідомити агенту (конкретному по імені)
-am send --to GreenCastle --subject "EOD" --body "Tasks #12, #15 closed. Tomorrow: #18, #20."
+# Agent Mail Web UI: http://localhost:8765/mail
+# Або агент використовує MCP: send_message(to=["GreenCastle"], subject="EOD", body_md="...")
 ```
 
 > Agent Mail адресує конкретних агентів по іменах (GreenCastle, BlueLake),
@@ -158,7 +161,7 @@ Workflow однаковий для всіх капелюхів — три кро
 Ідея → `spec.md` → уточнення через APR:
 
 ```bash
-apr refine --iterations 3
+apr setup && apr run 1 && apr run 2 && apr run 3
 ```
 
 APR допомагає перетворити нечітку ідею в конкретну специфікацію з acceptance criteria.
@@ -167,19 +170,20 @@ APR допомагає перетворити нечітку ідею в кон�
 
 ```bash
 # Створити задачі
-br new "Implement OAuth" --label feature
-br new "Write OAuth tests" --label test
+br create "Implement OAuth" -l feature
+br create "Write OAuth tests" -l test
 
-# Встановити залежності
-br link <impl_id> --blocks <test_id>
+# Встановити залежності (test_id залежить від impl_id)
+br dep add <test_id> <impl_id>
 ```
 
 ### Крок 3: Розподіл агентам
 
-```bash
-# Надіслати задачу агенту з контекстом
-am send --to GreenCastle --subject "Task: OAuth" \
-  --body "Bead #12. Files: src/auth/*. Spec: docs/specs/oauth.md"
+```
+Надіслати задачу агенту з контекстом:
+  PM (людина): Agent Mail Web UI → http://localhost:8765/mail
+  Агент (MCP): send_message(to=["GreenCastle"], subject="Task: OAuth",
+               body_md="Bead #12. Files: src/auth/*. Spec: docs/specs/oauth.md")
 ```
 
 ### Приклади для різних капелюхів
@@ -187,23 +191,25 @@ am send --to GreenCastle --subject "Task: OAuth" \
 **Розробка ПЗ:**
 
 ```bash
-br new "Implement OAuth" --label feature
-am send --to GreenCastle --subject "Task: OAuth" \
-  --body "Bead #12. Files: src/auth/*"
+br create "Implement OAuth" -l feature
+# Agent Mail: надіслати задачу GreenCastle
+# MCP: send_message(to=["GreenCastle"], subject="Task: OAuth",
+#       body_md="Bead #12. Files: src/auth/*")
 ```
 
 **Дослідження:**
 
 ```bash
-br new "Аналіз втрат 110кВ Q4" --label research
-am send --to BlueLake --subject "Task: Grid loss analysis" \
-  --body "Bead #45. Data: grid_data/q4/*.csv. Output: reports/q4-losses.md"
+br create "Аналіз втрат 110кВ Q4" -l research
+# Agent Mail: надіслати задачу BlueLake
+# MCP: send_message(to=["BlueLake"], subject="Task: Grid loss analysis",
+#       body_md="Bead #45. Data: grid_data/q4/*.csv. Output: reports/q4-losses.md")
 ```
 
 ### Flow diagram
 
 ```
-Ідея → spec.md → apr refine → br new → br link → am send → моніторинг → br close
+Ідея → spec.md → apr setup + run → br create → br dep add → Agent Mail → моніторинг → br close
 ```
 
 **Детальніше:** [04-workflows.md#feature-development](./04-workflows.md#feature-development)
@@ -217,14 +223,12 @@ am send --to BlueLake --subject "Task: Grid loss analysis" \
 Розділити задачі по scope: файли, data domains, deliverables.
 Кожен агент отримує чітко визначену зону відповідальності.
 
-```bash
-# Агент 1: backend
-am send --to GreenCastle --subject "OAuth: backend" \
-  --body "Bead #12. Files: src/api/auth/*"
-
-# Агент 2: frontend
-am send --to BlueLake --subject "OAuth: frontend" \
-  --body "Bead #13. Files: src/ui/login/*"
+```
+Розподіл через Agent Mail (Web UI або MCP):
+  Агент 1 (backend): send_message(to=["GreenCastle"], subject="OAuth: backend",
+                      body_md="Bead #12. Files: src/api/auth/*")
+  Агент 2 (frontend): send_message(to=["BlueLake"], subject="OAuth: frontend",
+                       body_md="Bead #13. Files: src/ui/login/*")
 ```
 
 ### File reservation
@@ -232,25 +236,27 @@ am send --to BlueLake --subject "OAuth: frontend" \
 Перевірити що агенти не працюють з одними файлами одночасно:
 
 File reservations координуються через Agent Mail — агенти повідомляють які файли зарезервовано.
-Якщо конфлікт — координувати через `am send`, розділити scope або запланувати послідовно.
+Якщо конфлікт — координувати через Agent Mail, розділити scope або запланувати послідовно.
 
 ### Типи блокерів та PM-дії
 
 | Тип блокера | PM-дія |
 |-------------|--------|
 | Залежність між задачами | Переставити пріоритет blocked задачі |
-| Технічне питання | `am reply <msg_id> --body "..."` з уточненням специфікації |
-| Конфлікт файлів | Координація через `am send` з інструкцією зарезервувати файли |
+| Технічне питання | Agent Mail: reply з уточненням специфікації (MCP: `reply_message`) |
+| Конфлікт файлів | Agent Mail: координація з інструкцією зарезервувати файли |
 | Агент застряг | Перепризначити задачу іншому агенту |
 | Зовнішня залежність | Ескалація в Odoo |
 
 ```bash
 # Перевірити відкриті задачі та залежності
-# фільтрувати по статусу вручну
-br list
+br list -s open
+```
 
-# Відповісти на питання агента
-am reply <msg_id> --body "Clarification: use JWT, not session-based auth"
+```
+Відповісти на питання агента:
+  PM (людина): Agent Mail Web UI → http://localhost:8765/mail
+  Агент (MCP): reply_message(message_id=<id>, body_md="Clarification: use JWT, not session-based auth")
 ```
 
 **Детальніше:** [04-workflows.md#multi-agent-collaboration](./04-workflows.md#multi-agent-collaboration)
@@ -262,11 +268,11 @@ am reply <msg_id> --body "Clarification: use JWT, not session-based auth"
 ### Dashboards та візуалізація
 
 ```bash
-# Поточні пріоритети (PageRank)
-bv priorities
+# Поточні пріоритети (PageRank) — TUI інтерактивний
+bv
 
 # Експорт графа залежностей
-bv export --format svg graph.svg
+bv -export-graph graph.svg
 ```
 
 ### Status updates
@@ -292,11 +298,11 @@ bv export --format svg graph.svg
 
 | Звіт | Частота | Інструменти |
 |------|---------|------------|
-| Пріоритети по проєкту | Щоденно | `bv priorities` |
-| Cross-project overview | Щоденно | `bv priorities` (всі капелюхи) |
-| Velocity | Щотижня | `br list` + закриті (`# фільтрувати по статусу вручну`) |
-| Stakeholder report | Щотижня | `bv export --format svg` + Odoo dashboard |
-| LLM витрати | Щотижня | `caut` |
+| Пріоритети по проєкту | Щоденно | `bv` (TUI) або `bv -robot-priority` (JSON) |
+| Cross-project overview | Щоденно | `bv` (всі капелюхи) |
+| Velocity | Щотижня | `br list -s closed` |
+| Stakeholder report | Щотижня | `bv -export-graph report.svg` + Odoo dashboard |
+| LLM витрати | Щотижня | `caut` (planned — не встановлений) |
 
 ---
 
@@ -369,7 +375,7 @@ PM отримує quality alerts з Odoo → створюються beads з в�
 Бізнес-процес = Σ(Operations) + Σ(Gates) + Σ(Decisions)
                  ↓               ↓           ↓
               br tasks       quality checks  PM decisions
-              → агенти       → Odoo PDCA     → am reply
+              → агенти       → Odoo PDCA     → Agent Mail
 ```
 
 - PM розбиває процес на Operations → кожна стає bead
@@ -387,20 +393,19 @@ PM отримує quality alerts з Odoo → створюються beads з в�
 
 | Метрика | Як виміряти | Ціль |
 |---------|-------------|------|
-| Velocity | `br list` → закриті за тиждень (`# фільтрувати по статусу вручну`) | 15-25/тиждень |
+| Velocity | `br list -s closed` → закриті за тиждень | 15-25/тиждень |
 | Cycle time | Створення → закриття bead | < 3 дні |
 | Blocker resolution | Час від виявлення блокера до вирішення | < 4 години |
 | Agent utilization | Робота vs очікування | > 80% |
 | Spec quality | Кількість ітерацій APR до прийняття | <= 3 |
-| LLM budget | `caut` | В межах бюджету |
+| LLM budget | `caut` (planned — не встановлений) | В межах бюджету |
 
 ```bash
 # Перевірити velocity
-# фільтрувати по статусу вручну
-br list
+br list -s closed
 
 # Перевірити бюджет LLM
-caut
+# caut (planned — не встановлений)
 ```
 
 ---
@@ -420,11 +425,11 @@ caut
 
 | День | Інструмент | Фокус |
 |------|-----------|-------|
-| 1-2 | `br` | `br new`, `br list`, `br close` — задачі |
-| 3 | `am` | `am inbox`, `am send` — координація |
-| 4 | `bv` | `bv priorities`, `bv export` — візуалізація |
-| 5 | `apr` | `apr refine` — специфікації |
-| Далі | `caut` | Бюджет LLM, Odoo інтеграція |
+| 1-2 | `br` | `br create`, `br list`, `br close` — задачі |
+| 3 | Agent Mail | Web UI (`http://localhost:8765/mail`) — координація |
+| 4 | `bv` | `bv` (TUI), `bv -export-graph` — візуалізація |
+| 5 | `apr` | `apr setup` + `apr run` — специфікації |
+| Далі | `caut` | Бюджет LLM, Odoo інтеграція (planned — не встановлений) |
 
 ---
 
@@ -437,31 +442,35 @@ caut
 5 задач OAuth feature → 2 агенти паралельно (GreenCastle, BlueLake):
 
 ```bash
-br new "OAuth: token endpoint" --label feature
-br new "OAuth: refresh flow" --label feature
-br new "OAuth: middleware" --label feature
-br new "OAuth: frontend login" --label feature
-br new "OAuth: integration tests" --label test
-
-am send --to GreenCastle --subject "OAuth backend" \
-  --body "Beads #30-32. Files: src/api/auth/*"
-am send --to BlueLake --subject "OAuth frontend" \
-  --body "Bead #33. Files: src/ui/login/*"
+br create "OAuth: token endpoint" -l feature
+br create "OAuth: refresh flow" -l feature
+br create "OAuth: middleware" -l feature
+br create "OAuth: frontend login" -l feature
+br create "OAuth: integration tests" -l test
 ```
 
-File reservations координуються через `am send` з інструкцією зарезервувати файли.
+```
+Agent Mail — надіслати задачі:
+  → GreenCastle: "OAuth backend" (Beads #30-32. Files: src/api/auth/*)
+  → BlueLake: "OAuth frontend" (Bead #33. Files: src/ui/login/*)
+```
+
+File reservations координуються через Agent Mail з інструкцією зарезервувати файли.
 
 ### Вівторок-Середа — Дослідження
 
 3 задачі аналіз втрат в мережі 110кВ → 1 агент (RedStone):
 
 ```bash
-br new "Зібрати дані Q4 з об'єктів" --label research
-br new "Аналіз втрат по фідерах" --label research
-br new "Звіт з рекомендаціями" --label research
+br create "Зібрати дані Q4 з об'єктів" -l research
+br create "Аналіз втрат по фідерах" -l research
+br create "Звіт з рекомендаціями" -l research
+```
 
-am send --to RedStone --subject "Grid loss analysis Q4" \
-  --body "Beads #35-37. Data: grid_data/q4/*.csv. Output: reports/q4-losses.md"
+```
+Agent Mail — надіслати задачу:
+  → RedStone: "Grid loss analysis Q4"
+    (Beads #35-37. Data: grid_data/q4/*.csv. Output: reports/q4-losses.md)
 ```
 
 - Вхідні дані: CSV з об'єктів за Q4
@@ -473,10 +482,10 @@ am send --to RedStone --subject "Grid loss analysis Q4" \
 2 задачі оновлення СОП обслуговування трансформаторів → 1 агент:
 
 ```bash
-br new "Оновити СОП: розділ 3 (періодичність)" --label docs
-br new "Оновити СОП: додаток А (чеклист)" --label docs
+br create "Оновити СОП: розділ 3 (періодичність)" -l docs
+br create "Оновити СОП: додаток А (чеклист)" -l docs
 
-apr refine --iterations 3
+apr setup && apr run 1 && apr run 2 && apr run 3
 ```
 
 APR refine → уточнення вимог до документу перед передачею агенту.
@@ -485,17 +494,17 @@ APR refine → уточнення вимог до документу перед 
 
 ```bash
 # PageRank cross-project — всі капелюхи в одному view
-bv priorities
+bv
 
 # Повідомлення з усіх напрямків
-am inbox
+# Agent Mail Web UI: http://localhost:8765/mail
 ```
 
 ### П'ятниця — звітність
 
 ```bash
 # Граф залежностей для stakeholders
-bv export --format svg weekly.svg
+bv -export-graph weekly.svg
 
 # Синхронізація з GitHub
 br sync --flush-only

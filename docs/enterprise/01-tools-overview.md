@@ -235,7 +235,7 @@ ACFS встановлює **60+ інструментів**, які разом ф
 | **Source to Prompt TUI** | `s2p` | Code-to-prompt generator |
 | **rust_proxy** | `rust_proxy` | Network proxy |
 | **ASCII Diagram Corrector** | `aadc` | Fix ASCII art |
-| **coding_agent_usage_tracker** | `caut` | LLM usage tracking |
+| **coding_agent_usage_tracker** | `caut` (planned — не встановлений) | LLM usage tracking |
 
 ---
 

@@ -427,16 +427,16 @@ Command Input
 **Workflow:**
 ```bash
 # Create task locally (instant)
-br new "Implement feature X"
+br create "Implement feature X"
 
 # View dependencies
-bv graph
+bv
 
 # Sync to GitHub (async)
 br sync
 
-# Assign via Agent Mail
-am send --to BlueLake --subject "Task: Feature X" --body "See bead #123"
+# Assign via Agent Mail (MCP)
+# send_message(to=["BlueLake"], subject="Task: Feature X", body_md="See bead #123")
 ```
 
 ### 4. Remote Build + Fast Search = Developer Velocity

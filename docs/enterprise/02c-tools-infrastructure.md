@@ -218,7 +218,7 @@ nvm list
 | s2p | `s2p` | Source code to prompt TUI |
 | rust_proxy | `rust_proxy` | Transparent network proxy |
 | aadc | `aadc` | ASCII diagram corrector |
-| caut | `caut` | LLM usage tracker |
+| caut (planned) | `caut` (не встановлений) | LLM usage tracker |
 
 ---
 

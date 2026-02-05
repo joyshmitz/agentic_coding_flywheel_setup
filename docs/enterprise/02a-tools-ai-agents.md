@@ -368,18 +368,27 @@ sessions:
 
 #### Приклади застосування
 
-```bash
-# Відправити повідомлення
-am send --to BlueLake --subject "Review needed" --body "Please review PR #42"
+Agent Mail — це MCP сервер з Web UI, НЕ CLI tool для inbox/send/reply.
 
-# Перевірити inbox
-am inbox
+**PM (людина):** Web UI — `http://localhost:8765/mail`
 
-# Відповісти на повідомлення
-am reply 123 --body "Approved, merging now"
+**Агент (MCP):**
 
-# Пошук
-am search "authentication bug"
+```json
+// Відправити повідомлення
+{"method": "send_message", "params": {
+  "to": ["BlueLake"], "subject": "Review needed",
+  "body_md": "Please review PR #42"}}
+
+// Перевірити inbox
+{"method": "fetch_inbox", "params": {"agent_name": "GreenCastle"}}
+
+// Відповісти на повідомлення
+{"method": "reply_message", "params": {
+  "message_id": 123, "body_md": "Approved, merging now"}}
+
+// Пошук
+{"method": "search_messages", "params": {"query": "authentication bug"}}
 ```
 
 #### API (для MCP)
@@ -401,9 +410,9 @@ am search "authentication bug"
 
 | Проблема | Рішення |
 |----------|---------|
-| "Agent not found" | `am agents` для списку |
+| "Agent not found" | `am list-projects` або Web UI для перегляду агентів |
 | Message not delivered | Перевірити contact policy |
-| Search not working | `am reindex` |
+| Search not working | `am doctor check` |
 
 #### Інтеграції
 

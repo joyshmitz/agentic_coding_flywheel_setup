@@ -342,13 +342,14 @@ sg -p 'function $NAME() {}' --interactive
 
 ```bash
 # Створити issue
-br new "Implement authentication" --label feature
+br create "Implement authentication" -l feature
 
 # Список issues
 br list
+br list -s open           # фільтр по статусу
 
 # З залежностями
-br new "Write tests" --blocks auth-123
+br create "Write tests" --deps blocks:auth-123
 
 # Sync з GitHub
 br sync --flush-only
@@ -402,17 +403,17 @@ br graph --format dot | dot -Tpng > deps.png
 #### Приклади застосування
 
 ```bash
-# Відкрити viewer
+# Відкрити viewer (TUI інтерактивний)
 bv
 
-# Top priorities
-bv priorities --limit 10
+# Top priorities (JSON для автоматизації)
+bv -robot-priority
 
-# Export graph
-bv export --format svg deps.svg
+# Priority brief (Markdown експорт)
+bv -priority-brief brief.md
 
-# Filter by label
-bv --filter "label:bug"
+# Export graph (формат визначається розширенням: .svg, .html, .png)
+bv -export-graph deps.svg
 ```
 
 #### Інтеграції
@@ -567,14 +568,16 @@ ms uninstall outdated-skill
 #### Приклади застосування
 
 ```bash
-# Покращити специфікацію
-apr refine spec.md
+# Ініціалізувати workflow
+apr setup
 
-# З кількома ітераціями
-apr refine spec.md --iterations 3
+# Виконати ітерації (кожен round — окрема ітерація)
+apr run 1
+apr run 2
+apr run 3
 
-# Output to file
-apr refine spec.md --output improved-spec.md
+# Або одним рядком
+apr setup && apr run 1 && apr run 2 && apr run 3
 ```
 
 #### Інтеграції
