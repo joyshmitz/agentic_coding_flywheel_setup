@@ -549,7 +549,8 @@ function WorkflowStepsSection() {
           {/* Wrapper div for gesture handling - avoids framer-motion type conflict */}
           <div
             ref={scrollRef}
-            {...bind()}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            {...(bind() as any)}
             style={{ touchAction: "pan-y" }}
             className="cursor-grab active:cursor-grabbing select-none"
           >
