@@ -139,7 +139,7 @@ ACFS інструменти існують не самі для себе. Вон
 | Роль | Маршрут |
 |------|---------|
 | Developer | [01](./01-tools-overview.md) → [02a](./02a-tools-ai-agents.md) → [04](./04-workflows.md) → [03](./03-tool-integrations.md) |
-| PM | 00 (цей файл) → [02b](./02b-tools-acfs-stack.md) (beads, Agent Mail) → [04](./04-workflows.md) |
+| PM | 00 (цей файл) → [02b](./02b-tools-acfs-stack.md) (beads, Agent Mail) → [04](./04-workflows.md) → [07](./07-pm-guide.md) |
 | DevOps | [02c](./02c-tools-infrastructure.md) → [02b](./02b-tools-acfs-stack.md) (safety) → [04](./04-workflows.md) |
 | HR | [05](./05-candidate-requirements.md) → [06](./06-hr-guide.md) → [01](./01-tools-overview.md) |
 | Operations | 00 (цей файл) → [02b](./02b-tools-acfs-stack.md) (caut, CAAM) |

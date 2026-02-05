@@ -21,6 +21,7 @@
 | **Agent Orchestrator** | Координація multi-agent workflows | Agent Mail, NTM, CASS |
 | **Safety Engineer** | Безпека та якість коду | UBS, DCG, SLB, ast-grep |
 | **Platform Engineer** | Інфраструктура та tooling | Docker, Tailscale, RCH |
+| **Project Manager** | Координація AI agents, пріоритизація, звітність | beads_rust, Agent Mail, APR, Beads Viewer |
 | **DevOps/SRE** | Deployment та operations | Vercel, Supabase, Vault |
 
 ---
@@ -308,16 +309,18 @@ Evaluate:
 
 ### Skill Requirements by Role
 
-| Skill Area | AI Developer | Orchestrator | Safety Eng | Platform Eng |
-|------------|--------------|--------------|------------|--------------|
-| Claude Code | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★★☆☆ |
-| Agent Mail | ★★★☆☆ | ★★★★★ | ★★☆☆☆ | ★★☆☆☆ |
-| NTM | ★★★★☆ | ★★★★★ | ★★★☆☆ | ★★★☆☆ |
-| UBS/DCG/SLB | ★★★☆☆ | ★★☆☆☆ | ★★★★★ | ★★★☆☆ |
-| Docker | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★★★★ |
-| Tailscale/VPN | ★★☆☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★★★★ |
-| beads_rust | ★★★☆☆ | ★★★★☆ | ★★☆☆☆ | ★★☆☆☆ |
-| RCH | ★★☆☆☆ | ★★☆☆☆ | ★☆☆☆☆ | ★★★★★ |
+| Skill Area | AI Developer | Orchestrator | Safety Eng | Platform Eng | PM |
+|------------|--------------|--------------|------------|--------------|-----|
+| Claude Code | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★★☆☆ | ★★☆☆☆ |
+| Agent Mail | ★★★☆☆ | ★★★★★ | ★★☆☆☆ | ★★☆☆☆ | ★★★★★ |
+| NTM | ★★★★☆ | ★★★★★ | ★★★☆☆ | ★★★☆☆ | ★★☆☆☆ |
+| UBS/DCG/SLB | ★★★☆☆ | ★★☆☆☆ | ★★★★★ | ★★★☆☆ | ★☆☆☆☆ |
+| Docker | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★★★★ | ★☆☆☆☆ |
+| Tailscale/VPN | ★★☆☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★★★★ | ★☆☆☆☆ |
+| beads_rust | ★★★☆☆ | ★★★★☆ | ★★☆☆☆ | ★★☆☆☆ | ★★★★★ |
+| RCH | ★★☆☆☆ | ★★☆☆☆ | ★☆☆☆☆ | ★★★★★ | ★☆☆☆☆ |
+| APR | ★★★☆☆ | ★★★☆☆ | ★☆☆☆☆ | ★☆☆☆☆ | ★★★★☆ |
+| Beads Viewer | ★★☆☆☆ | ★★★☆☆ | ★☆☆☆☆ | ★☆☆☆☆ | ★★★★★ |
 
 ---
 
@@ -354,6 +357,7 @@ Evaluate:
 ## Наступні кроки
 
 - **Гайд для HR:** [Блок 6](./06-hr-guide.md)
+- **Гайд для PM:** [Блок 7](./07-pm-guide.md)
 - **Робочі процеси:** [Блок 4](./04-workflows.md)
 
 ---

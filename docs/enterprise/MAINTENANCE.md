@@ -36,7 +36,8 @@ docs/enterprise/
 ├── 03-tool-integrations.md          # ЯК: архітектура, MCP, інтеграції
 ├── 04-workflows.md                  # ПРОЦЕСИ: daily, feature dev, deploy
 ├── 05-candidate-requirements.md     # ХТО: ролі, навички, рівні
-└── 06-hr-guide.md                   # НАЙМ: профілі, інтерв'ю, онбординг
+├── 06-hr-guide.md                   # НАЙМ: профілі, інтерв'ю, онбординг
+└── 07-pm-guide.md                   # PM: капелюхи, координація, Odoo
 ```
 
 ---
