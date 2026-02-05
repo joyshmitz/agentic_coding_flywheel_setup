@@ -67,7 +67,7 @@ ACFS встановлює **60+ інструментів**, які разом ф
 | Інструмент | CLI | Призначення | Ключові можливості |
 |------------|-----|-------------|-------------------|
 | **Named Tmux Manager (NTM)** | `ntm` | Управління tmux-сесіями агентів | Класифікація панелей, multi-agent sessions |
-| **MCP Agent Mail** | `am` | Комунікація між агентами | Gmail-like threading, повідомлення |
+| **MCP Agent Mail** | Web UI + MCP | Комунікація між агентами | Gmail-like threading, повідомлення |
 | **CASS** | `cass` | Пошук по історії сесій | Sub-second search, всі агенти |
 | **CASS Memory** | `cm` | Пам'ять агентів | Episodic/working/procedural layers |
 | **CAAM** | `caam` | Перемикання облікових записів | Sub-100ms auth switching |

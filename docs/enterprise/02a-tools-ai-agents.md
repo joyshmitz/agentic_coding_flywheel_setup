@@ -332,7 +332,7 @@ sessions:
 ### MCP Agent Mail
 
 **Тип:** Inter-Agent Communication
-**CLI:** `am`
+**CLI:** Web UI + MCP
 **Розробник:** Dicklesworthstone
 **Протокол:** MCP (Model Context Protocol)
 
@@ -410,9 +410,9 @@ Agent Mail — це MCP сервер з Web UI, НЕ CLI tool для inbox/send/
 
 | Проблема | Рішення |
 |----------|---------|
-| "Agent not found" | `am list-projects` або Web UI для перегляду агентів |
+| "Agent not found" | Web UI або `resource://agents/{project_key}` |
 | Message not delivered | Перевірити contact policy |
-| Search not working | `am doctor check` |
+| Search not working | `health_check` (MCP tool) |
 
 #### Інтеграції
 
