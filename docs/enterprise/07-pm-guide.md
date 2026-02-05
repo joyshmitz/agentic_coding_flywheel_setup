@@ -48,7 +48,7 @@ Project Manager в ACFS координує AI agents в різних домен�
 ## Капелюхи PM
 
 PM надягає різний капелюх залежно від типу проєкту.
-Інструменти (`br`, `bv`, `am`, `apr`) — ті самі. Різне — контекст, артефакти та метрики.
+Інструменти (`br`, `bv`, `am`, `apr`, `caut`) — ті самі. Різне — контекст, артефакти та метрики.
 
 | Капелюх | Тип проєкту | Артефакти | Приклад задачі |
 |---------|-------------|-----------|----------------|
@@ -113,7 +113,8 @@ am inbox
 bv priorities --limit 10
 
 # Відкриті задачі
-br list --status open
+# фільтрувати по статусу вручну
+br list
 ```
 
 ### Моніторинг впродовж дня
@@ -121,10 +122,9 @@ br list --status open
 ```bash
 # Нові повідомлення від агентів
 am inbox
-
-# Перевірити file reservations (конфлікти між агентами)
-am file-list --reserved
 ```
+
+File reservations координуються через Agent Mail — агенти повідомляють які файли зарезервовано.
 
 PM реагує на повідомлення: уточнює специфікації, вирішує блокери,
 переставляє пріоритети якщо потрібно.
@@ -171,7 +171,7 @@ br new "Implement OAuth" --label feature
 br new "Write OAuth tests" --label test
 
 # Встановити залежності
-br link <test_id> --depends-on <impl_id>
+br link <impl_id> --blocks <test_id>
 ```
 
 ### Крок 3: Розподіл агентам
@@ -231,11 +231,8 @@ am send --to BlueLake --subject "OAuth: frontend" \
 
 Перевірити що агенти не працюють з одними файлами одночасно:
 
-```bash
-am file-list --reserved
-```
-
-Якщо конфлікт — координувати через Agent Mail, розділити scope або запланувати послідовно.
+File reservations координуються через Agent Mail — агенти повідомляють які файли зарезервовано.
+Якщо конфлікт — координувати через `am send`, розділити scope або запланувати послідовно.
 
 ### Типи блокерів та PM-дії
 
@@ -243,13 +240,14 @@ am file-list --reserved
 |-------------|--------|
 | Залежність між задачами | Переставити пріоритет blocked задачі |
 | Технічне питання | `am reply <msg_id> --body "..."` з уточненням специфікації |
-| Конфлікт файлів | Координація через `am file-reserve` |
+| Конфлікт файлів | Координація через `am send` з інструкцією зарезервувати файли |
 | Агент застряг | Перепризначити задачу іншому агенту |
 | Зовнішня залежність | Ескалація в Odoo |
 
 ```bash
 # Перевірити відкриті задачі та залежності
-br list --status open
+# фільтрувати по статусу вручну
+br list
 
 # Відповісти на питання агента
 am reply <msg_id> --body "Clarification: use JWT, not session-based auth"
@@ -296,9 +294,9 @@ bv export --format svg graph.svg
 |------|---------|------------|
 | Пріоритети по проєкту | Щоденно | `bv priorities` |
 | Cross-project overview | Щоденно | `bv priorities` (всі капелюхи) |
-| Velocity | Щотижня | `br list --status in_progress` + закриті |
+| Velocity | Щотижня | `br list` + закриті (`# фільтрувати по статусу вручну`) |
 | Stakeholder report | Щотижня | `bv export --format svg` + Odoo dashboard |
-| LLM витрати | Щотижня | `caut report --detailed` |
+| LLM витрати | Щотижня | `caut` |
 
 ---
 
@@ -318,13 +316,13 @@ FCP (Flywheel Connector Protocol) — протокол зв'язку між ACFS
 
 Криптографічна ізоляція + capability-based дозволи:
 
-| Зона | Рівень | Призначення |
-|------|--------|-------------|
-| `z:owner` | 100 | Повний контроль |
-| `z:private` | 80 | Приватні дані |
-| `z:work` | 60 | Робочі операції (PM working space) |
-| `z:community` | 40 | Командна робота |
-| `z:public` | 20 | Публічні API |
+| Зона | Integrity | Confidentiality | Призначення |
+|------|-----------|-----------------|-------------|
+| `z:owner` | 100 | 100 | Повний контроль |
+| `z:private` | 80 | 90 | Приватні дані |
+| `z:work` | 60 | 70 | Робочі операції (PM working space) |
+| `z:community` | 40 | 40 | Командна робота |
+| `z:public` | 20 | 10 | Публічні API |
 
 ### Синхронізація даних
 
@@ -333,12 +331,16 @@ FCP (Flywheel Connector Protocol) — протокол зв'язку між ACFS
 | Задачі | br tasks → Odoo tasks | Odoo tasks → br tasks |
 | Статуси | br close → stage change | Stage change → br status |
 | Пріоритети | PageRank → Odoo priority | Odoo priority → br |
-| Витрати LLM | caut → Accounting | — |
+| Витрати LLM | caut → Accounting (planned) | — |
 | Quality gates | — | PDCA checks → br gates |
+
+> Синхронізація — planned архітектура. Поточний стан реалізації: див. flywheel_connectors.
 
 ### Odoo v19 Quality API для PM
 
 PDCA (Plan-Do-Check-Act) контролює якість БУДЬ-ЯКИХ процесів, не лише продукції.
+
+> **Proposed workflow** — ще не реалізовано в flywheel_connectors.
 
 **Quality gate workflow:**
 
@@ -385,19 +387,20 @@ PM отримує quality alerts з Odoo → створюються beads з в�
 
 | Метрика | Як виміряти | Ціль |
 |---------|-------------|------|
-| Velocity | `br list --status in_progress` → закриті за тиждень | 15-25/тиждень |
+| Velocity | `br list` → закриті за тиждень (`# фільтрувати по статусу вручну`) | 15-25/тиждень |
 | Cycle time | Створення → закриття bead | < 3 дні |
 | Blocker resolution | Час від виявлення блокера до вирішення | < 4 години |
 | Agent utilization | Робота vs очікування | > 80% |
 | Spec quality | Кількість ітерацій APR до прийняття | <= 3 |
-| LLM budget | `caut report --detailed` | В межах бюджету |
+| LLM budget | `caut` | В межах бюджету |
 
 ```bash
 # Перевірити velocity
-br list --status in_progress
+# фільтрувати по статусу вручну
+br list
 
 # Перевірити бюджет LLM
-caut report --detailed
+caut
 ```
 
 ---
@@ -446,7 +449,7 @@ am send --to BlueLake --subject "OAuth frontend" \
   --body "Bead #33. Files: src/ui/login/*"
 ```
 
-File reservation через `am file-reserve` щоб уникнути конфліктів.
+File reservations координуються через `am send` з інструкцією зарезервувати файли.
 
 ### Вівторок-Середа — Дослідження
 
