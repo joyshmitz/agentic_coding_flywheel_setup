@@ -13,15 +13,19 @@
 Перед початком роботи - швидкий скан (1-2 хв), не повне дослідження репо:
 
 ```bash
-# 1. Статус i18n файлів
+# 1. Статус i18n файлів (web app)
 ls apps/web/lib/*.uk.ts | head -10
 ls apps/web/lib/lessons/*.uk.tsx | head -5
 
-# 2. Перевірити upstream
+# 2. Статус onboarding документації
+ls docs/onboarding/*.md | head -10
+ls docs/onboarding/*.uk.md 2>/dev/null | head -5
+
+# 3. Перевірити upstream
 git fetch upstream
 git log translate-ukrainian-acfs..upstream/main --oneline | head -10
 
-# 3. Покриття перекладу
+# 4. Покриття перекладу
 grep -c 'term:' apps/web/lib/jargon.ts apps/web/lib/jargon.uk.ts
 ```
 
@@ -32,8 +36,9 @@ grep -c 'term:' apps/web/lib/jargon.ts apps/web/lib/jargon.uk.ts
 | Messages | `apps/web/lib/tools-page-messages.uk.ts` |
 | Lesson component | `apps/web/components/lessons/pt-lesson.uk.tsx` |
 | i18n getter | `apps/web/lib/i18n/translations.ts` → `getToolsPageMessages()` |
+| Onboarding docs | `docs/onboarding/01-tools-overview.md` → `.uk.md` |
 
-> **Принцип:** Контекст набирається органічно. Не потрібно досліджувати installer scripts, build систему чи bash логіку - тільки i18n файли.
+> **Принцип:** Контекст набирається органічно. Не потрібно досліджувати installer scripts, build систему чи bash логіку - тільки i18n файли та документацію.
 
 ---
 
@@ -67,6 +72,7 @@ git diff translate-ukrainian-acfs..upstream/main --name-only | grep -E '\.(tsx?|
 | Нові messages | `*-messages.ts` | Створити `.uk.ts` версію |
 | Змінені messages | Оновлення EN тексту | Оновити UK версію |
 | Компоненти з hardcoded strings | `app/*/page.tsx` | Екстрагувати в messages |
+| Onboarding docs | `docs/onboarding/*.md` | Створити `.uk.md` версію |
 
 ---
 
@@ -199,6 +205,85 @@ apps/web/lib/
 
 ---
 
+## Onboarding Documentation (docs/onboarding/)
+
+### Призначення
+
+Документація для онбордингу нових членів команди в екосистему інструментів ACFS.
+
+**Цільова аудиторія:**
+- Нові розробники (AI-Augmented Developers)
+- Agent Orchestrators
+- HR-спеціалісти
+- Technical leads
+
+### Особливість: українська як основна мова
+
+> **Важливо:** На відміну від web app (де EN — base, UK — переклад), onboarding docs
+> написані **українською як основна версія**. Upstream репозиторій не містить цих файлів.
+
+**Наслідки:**
+- НЕ потрібні `.uk.md` дублікати
+- Файли вже містять український текст з англійськими технічними термінами
+- Завдання — **підтримка актуальності**, а не переклад
+
+### Структура директорії
+
+```
+docs/onboarding/
+├── README.md                    # Навігація (UK)
+├── 01-tools-overview.md         # Блок 1: Огляд інструментів (UK)
+├── 02-tools-detailed.md         # Блок 2: Детальний опис (UK)
+├── 03-tool-integrations.md      # Блок 3: Інтеграції (UK)
+├── 04-workflows.md              # Блок 4: Робочі процеси (UK)
+├── 05-candidate-requirements.md # Блок 5: Вимоги до кандидатів (UK)
+└── 06-hr-guide.md               # Блок 6: Гайд для HR (UK)
+```
+
+### Підтримка актуальності
+
+При змінах в upstream (нові інструменти, оновлені версії, нові можливості):
+
+1. **Перевірити manifest** — `packages/manifest/` є джерелом істини для інструментів
+2. **Оновити відповідні блоки** — додати/оновити інформацію про інструменти
+3. **Зберегти стиль** — український текст, англійські технічні терміни
+
+```bash
+# Перевірити зміни в manifest при upstream sync
+git diff upstream/main -- packages/manifest/ --stat
+```
+
+### Правила написання
+
+| Елемент | Мова |
+|---------|------|
+| Заголовки | Українська |
+| Описовий текст | Українська |
+| Code blocks | Англійська (без змін) |
+| CLI команди | Англійська (без змін) |
+| Назви інструментів | Англійська (Claude Code, NTM, UBS) |
+| Технічні терміни | Англійська (див. список нижче) |
+| ASCII-діаграми | Англійська (без змін) |
+
+### Приклад стилю
+
+```markdown
+| Інструмент | CLI | Опис |
+|------------|-----|------|
+| Claude Code | `claude` | AI-асистент для кодингу |
+| Aider | `aider` | Парне програмування з AI |
+```
+
+### Чеклист при оновленні
+
+- [ ] Перевірити зміни в `packages/manifest/`
+- [ ] Оновити статистику інструментів (якщо змінилась)
+- [ ] Додати нові інструменти до відповідних категорій
+- [ ] Оновити версії (якщо вказані)
+- [ ] Зберегти технічні терміни англійською
+
+---
+
 ## Типові проблеми та рішення
 
 | Проблема | Рішення |
@@ -241,6 +326,9 @@ grep -rn "'" apps/web --include="*.uk.tsx" | grep -v "&#39;"
 
 # Перевірити пробіли перед одиницями
 grep -rn '[0-9]мс\|[0-9]GB\|[0-9]MB' apps/web/lib --include="*.uk.ts"
+
+# Перевірити зміни в manifest (для оновлення onboarding docs)
+git diff upstream/main -- packages/manifest/ --name-only
 ```
 
 ---
@@ -253,4 +341,4 @@ React, Next.js, Node.js, Bun, Docker, PostgreSQL, Redis, OAuth, JWT, SSO
 
 ---
 
-*Останнє оновлення: 2026-02-04*
+*Останнє оновлення: 2026-02-05T05:15:30+02:00*
