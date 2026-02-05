@@ -270,10 +270,12 @@ ACFS встановлює **60+ інструментів**, які разом ф
 
 ## Наступні кроки
 
-- **Детальний опис:** Перейдіть до [Блоку 2](./02-tools-detailed.md)
-- **Інтеграції:** Дивіться [Блок 3](./03-tool-integrations.md)
-- **Робочі процеси:** Дивіться [Блок 4](./04-workflows.md)
+- **AI Agents та координація:** [02a: AI Agents](./02a-tools-ai-agents.md)
+- **Safety, Tasks, Analysis, Build:** [02b: ACFS Stack](./02b-tools-acfs-stack.md)
+- **Infrastructure:** [02c: Runtimes, CLI, Cloud](./02c-tools-infrastructure.md)
+- **Інтеграції:** [Блок 3: Взаємозв'язки](./03-tool-integrations.md)
+- **Робочі процеси:** [Блок 4: Workflows](./04-workflows.md)
 
 ---
 
-*Див. також: [README](./README.md) | [Детальний опис](./02-tools-detailed.md)*
+*Див. також: [README](./README.md) | [System Overview](./00-system-overview.md)*

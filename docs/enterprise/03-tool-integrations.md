@@ -541,4 +541,4 @@ claude /code-review
 
 ---
 
-*Див. також: [Детальний опис](./02-tools-detailed.md) | [README](./README.md)*
+*Див. також: [AI Agents](./02a-tools-ai-agents.md) | [ACFS Stack](./02b-tools-acfs-stack.md) | [Infrastructure](./02c-tools-infrastructure.md) | [README](./README.md)*
