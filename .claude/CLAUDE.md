@@ -94,6 +94,18 @@ bash install.sh --help
    ```
 3. Повідомити статус і запитати що робимо
 
+### Enterprise Docs Session Trigger
+
+При фразах **"сесія підприємство"**, **"enterprise docs"**, **"оновити enterprise"**:
+
+1. Прочитати `docs/enterprise/MAINTENANCE.md`
+2. Виконати швидкий скан:
+   ```bash
+   ls docs/enterprise/*.md
+   git diff upstream/main -- packages/manifest/ --stat
+   ```
+3. Повідомити статус і запитати що робимо
+
 ---
 
 ## Language Policy
