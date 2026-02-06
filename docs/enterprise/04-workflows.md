@@ -45,6 +45,133 @@ claude
 alias morning='ntm attach work 2>/dev/null || ntm new work && bv -priority-brief brief.md && cat brief.md'
 ```
 
+### Налаштування ідентичності агентів
+
+При перезапуску агента (`ntm respawn`) втрачається Agent Mail ідентичність.
+Агент не знає свого імені (LilacCat, GreenCastle) і не може надсилати/отримувати повідомлення.
+
+**Три стратегії відновлення:**
+
+| Стратегія | Механізм | Плюси | Мінуси |
+|-----------|----------|-------|--------|
+| A. Startup Instructions | Конфіги агентів | Автоматично | Дублювання в проєктах |
+| B. NTM post-spawn Hook | hooks.toml | Централізовано | НЕ працює для respawn |
+| C. Manual Script | ~/bin скрипт | Працює завжди | Ручний виклик |
+
+#### Стратегія A: Startup Instructions (РЕКОМЕНДОВАНА)
+
+Додати інструкції реєстрації в конфіги кожного агента.
+
+**Claude Code** — `.claude/CLAUDE.md`:
+
+```markdown
+## Agent Mail Identity
+
+При старті сесії виконай одне з:
+
+**Варіант 1 — register_agent:**
+- project_key: поточна робоча директорія (абсолютний шлях)
+- name: "LilacCat"
+- program: "claude-code"
+- model: "opus-4.5"
+
+**Варіант 2 — macro_start_session (все в одному):**
+- human_key: поточна робоча директорія
+- agent_name: "LilacCat"
+- program: "claude-code"
+- model: "opus-4.5"
+```
+
+**Gemini CLI** — `.gemini/rules` (файл, не директорія):
+
+```text
+## Agent Mail Identity
+
+At session start, use MCP tool register_agent:
+- project_key: current working directory (absolute path)
+- name: "GreenCastle"
+- program: "gemini-cli"
+- model: "gemini-2.5-pro"
+
+Alternative: macro_start_session with human_key and agent_name params.
+```
+
+**Codex CLI** — `.codex/rules/agent-mail.md` (директорія з .md файлами):
+
+```markdown
+## Agent Mail Identity
+
+Register with MCP register_agent at session start:
+- project_key: current working directory (absolute path)
+- name: "RedStone"
+- program: "codex-cli"
+- model: "gpt-5.2-codex"
+```
+
+#### Стратегія B: NTM post-spawn Hook
+
+Працює ТІЛЬКИ для `ntm spawn`, НЕ для `ntm respawn`.
+
+**~/.config/ntm/hooks.toml:**
+
+```toml
+[[command_hooks]]
+event = "post-spawn"
+name = "am-register-agents"
+enabled = true
+timeout = "15s"
+continue_on_error = true
+command = '''
+sleep 3
+PROJECT_KEY="$NTM_PROJECT_DIR"
+
+if [ "$NTM_AGENT_COUNT_CC" -gt 0 ]; then
+  ntm send "$NTM_SESSION" --cc "Use MCP tool register_agent with project_key='$PROJECT_KEY', name='LilacCat', program='claude-code', model='opus-4.5'"
+fi
+
+if [ "$NTM_AGENT_COUNT_GMI" -gt 0 ]; then
+  ntm send "$NTM_SESSION" --gmi "Use the MCP tool register_agent with project_key='$PROJECT_KEY', name='GreenCastle', program='gemini-cli', model='gemini-2.5-pro'"
+fi
+'''
+```
+
+**Примітка:** Gemini CLI потребує фразу "Use the MCP tool" для виклику MCP інструментів.
+
+#### Стратегія C: Manual Script
+
+Скрипт для ручного виклику після respawn.
+
+**~/bin/ntm-register-identity.sh:**
+
+```bash
+#!/bin/bash
+SESSION="${1:-acfs}"
+PROJECT_KEY="${2:-/data/projects/agentic_coding_flywheel_setup}"
+
+ntm send "$SESSION" --cc "Use MCP tool register_agent with project_key='$PROJECT_KEY', name='LilacCat', program='claude-code', model='opus-4.5'"
+ntm send "$SESSION" --gmi "Use the MCP tool register_agent with project_key='$PROJECT_KEY', name='GreenCastle', program='gemini-cli', model='gemini-2.5-pro'"
+
+echo "Identity registration sent to agents in session: $SESSION"
+```
+
+**Використання:**
+
+```bash
+chmod +x ~/bin/ntm-register-identity.sh
+ntm-register-identity.sh acfs
+```
+
+#### Troubleshooting
+
+| Проблема | Рішення |
+|----------|---------|
+| "Agent not found" | Перевірити `resource://agents/{project_key}` |
+| Gemini ігнорує MCP | Додати "Use the MCP tool" на початку |
+| Ім'я вже зайняте | Використати інше adjective+noun або опустити `name` |
+
+Для API деталей див. [Реєстрація агентів](./02a-tools-ai-agents.md#reyestratsiya-ahentiv).
+Архітектура persistence — [Збереження ідентичності](./03-tool-integrations.md#zberezhennya-identychnosti-ahentiv).
+
 ### Session Management
 
 Робота з кількома проектами.

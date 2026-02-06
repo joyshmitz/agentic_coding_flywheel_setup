@@ -391,6 +391,58 @@ Agent Mail — це MCP сервер з Web UI, НЕ CLI tool для inbox/send/
 {"method": "search_messages", "params": {"query": "authentication bug"}}
 ```
 
+#### Реєстрація агентів
+
+При старті сесії агент повинен зареєструватися для отримання/відправки повідомлень.
+
+**Два методи реєстрації:**
+
+| Метод | Параметри | Коли використовувати |
+|-------|-----------|---------------------|
+| `register_agent` | `project_key`, `name`, `program`, `model` | Тільки реєстрація |
+| `macro_start_session` | `human_key`, `agent_name`, `program`, `model` | Реєстрація + inbox |
+
+**УВАГА:** Різні назви параметрів! `project_key` vs `human_key`, `name` vs `agent_name`.
+
+**Приклади (MCP JSON):**
+
+```json
+{
+  "method": "register_agent",
+  "params": {
+    "project_key": "/data/projects/myapp",
+    "name": "LilacCat",
+    "program": "claude-code",
+    "model": "opus-4.5"
+  }
+}
+```
+
+```json
+{
+  "method": "macro_start_session",
+  "params": {
+    "human_key": "/data/projects/myapp",
+    "agent_name": "GreenCastle",
+    "program": "gemini-cli",
+    "model": "gemini-2.5-pro",
+    "inbox_limit": 10
+  }
+}
+```
+
+**Правила іменування агентів:**
+- Імена ПОВИННІ бути у форматі adjective+noun: `LilacCat`, `GreenCastle`, `BlueLake`
+- Імена НЕ повинні описувати функцію: ~~`BackendHarmonizer`~~, ~~`DatabaseMigrator`~~
+- Якщо `name`/`agent_name` не вказано — система генерує випадкове ім'я
+
+**Ідемпотентність:** Повторний виклик з тим самим `name` оновлює `last_active_ts`,
+не створює дублікат. Безпечно викликати при кожному старті.
+
+Для архітектури persistence див.
+[Збереження ідентичності](./03-tool-integrations.md#zberezhennya-identychnosti-ahentiv).
+Практичні стратегії — [Налаштування ідентичності](./04-workflows.md#nalashtuvannya-identychnosti-ahentiv).
+
 #### API (для MCP)
 
 ```json
