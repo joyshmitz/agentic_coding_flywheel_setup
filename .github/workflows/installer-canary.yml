@@ -25,10 +25,11 @@ jobs:
       - name: Run installer canary
         env:
           ACFS_CHECKSUMS_REF: main
-          UBUNTU: ${{ inputs.ubuntu || '24.04' }}
-          MODE: ${{ inputs.mode || 'vibe' }}
         run: |
           chmod +x ./tests/vm/test_install_ubuntu.sh
+
+          UBUNTU="${{ inputs.ubuntu || '24.04' }}"
+          MODE="${{ inputs.mode || 'vibe' }}"
 
           if [[ "${{ github.event_name }}" == "workflow_dispatch" && "$UBUNTU" == "all" ]]; then
             ./tests/vm/test_install_ubuntu.sh --all --mode "$MODE"
