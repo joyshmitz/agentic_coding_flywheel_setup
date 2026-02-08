@@ -104,6 +104,7 @@ export const BRAND_NAMES = new Set([
   // Project-specific
   "ACFS",
   "Flywheel",
+  "Agentic",
   "Dicklesworthstone",
   "Jeffrey",
   "Emanuel",
