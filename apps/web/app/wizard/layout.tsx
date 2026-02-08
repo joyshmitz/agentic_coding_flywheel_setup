@@ -9,10 +9,21 @@ import { Stepper, StepperMobile } from "@/components/stepper";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { HelpPanel } from "@/components/wizard/HelpPanel";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { WIZARD_STEPS, getStepBySlug } from "@/lib/wizardSteps";
+import { WIZARD_STEPS, getStepBySlug, type WizardStep } from "@/lib/wizardSteps";
 import { useStepValidation } from "@/lib/hooks/useStepValidation";
 import { withCurrentSearch } from "@/lib/utils";
-import { useLocale, getCommonMessages } from "@/lib/i18n";
+import { useLocale, getCommonMessages, getWizardStepTranslations } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n/config";
+
+/** Get localized step title */
+function getLocalizedStepTitle(step: WizardStep, locale: Locale): string {
+  const translations = getWizardStepTranslations(locale);
+  if (translations) {
+    const translated = translations.find((t) => t.id === step.id);
+    if (translated) return translated.title;
+  }
+  return step.title;
+}
 
 export default function WizardLayout({
   children,
@@ -187,7 +198,7 @@ export default function WizardLayout({
                     className="text-muted-foreground hover:text-foreground"
                   >
                     <ChevronLeft className="mr-1 h-4 w-4" />
-                    {prevStep.title}
+                    {getLocalizedStepTitle(prevStep, locale)}
                   </Button>
                 ) : (
                   <div />
@@ -198,7 +209,7 @@ export default function WizardLayout({
                     onClick={() => handleStepClick(nextStep.id)}
                     className="bg-primary text-primary-foreground"
                   >
-                    {nextStep.title}
+                    {getLocalizedStepTitle(nextStep, locale)}
                     <ChevronRight className="ml-1 h-4 w-4" />
                   </Button>
                 )}

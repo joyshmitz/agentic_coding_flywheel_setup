@@ -268,7 +268,7 @@ export const LESSONS_UK: Lesson[] = [
     id: 32,
     slug: "s2p",
     title: "S2P: Вихідний код у промпт",
-    description: "Об'єднуйте вихідний код у LLM-ready промпти з підрахунком токенів",
+    description: "Об'єднуйте вихідний код у промпти для LLM з підрахунком токенів",
     duration: "6 хв",
     file: "32_s2p.md",
   },

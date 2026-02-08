@@ -45,8 +45,16 @@ async function extractText(page: Page): Promise<string> {
           "select, option"
       )
       .forEach((el) => el.remove());
-    // innerText = user-visible text only (respects CSS visibility)
-    return clone.innerText;
+    // Temporarily attach clone to DOM so innerText respects CSS block boundaries.
+    // Detached clones lose computed styles, causing block elements (h3, p) to
+    // concatenate without newlines (e.g., "Mac" + "macOS" → "MacmacOS").
+    clone.style.position = "absolute";
+    clone.style.left = "-99999px";
+    clone.style.visibility = "hidden";
+    document.body.appendChild(clone);
+    const text = clone.innerText;
+    clone.remove();
+    return text;
   });
 }
 

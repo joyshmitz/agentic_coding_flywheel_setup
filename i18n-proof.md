@@ -49,3 +49,32 @@ Top offenders (remaining):
 Remaining batches:
   Batch 2: lesson components (~30 routes) — EN content in JSX
   Batch 3: wizard + glossary + shared pages (~27 routes)
+
+---
+
+## GREEN: 0/77
+
+Date: 2026-02-08
+Detector: v5 (attached-clone innerText for correct block boundaries)
+Gate: 0/77 routes failing, 77 pass
+
+Changes from Batch 1 → GREEN:
+  - Detector: extractText now temporarily attaches clone to DOM for correct
+    innerText block boundaries (fixes h3+p gluing like "MacmacOS")
+  - Whitelist: added brand names (Mac, Debian, Fedora, Arch, Contabo, OVH,
+    Microsoft, ChromeOS, Manjaro, Hubspot, Stripe)
+  - Compound brands: added Agent Flywheel, Mac Mini, Mac Studio, Mac Pro,
+    Oh My Zsh
+  - Wizard layout: nav buttons use localized step titles via
+    getWizardStepTranslations()
+  - Lesson data: fixed "LLM-ready" → "промпти для LLM" in lessons.uk.ts
+  - Tools page: fixed framer-motion LazyMotion strict mode error
+    (import from @/components/motion instead of framer-motion)
+
+All gates:
+  check-tool-ids: 19/19 ✅
+  check-lessons: 33/33 ✅
+  type-check: ✅
+  lint: 0 errors ✅
+  build: ✅
+  i18n:check: 77/77 ✅

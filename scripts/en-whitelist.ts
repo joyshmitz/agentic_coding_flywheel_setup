@@ -117,6 +117,12 @@ export const BRAND_NAMES = new Set([
   "Android",
   "MacBook",
   "iMac",
+  "Mac",
+  "Debian",
+  "Fedora",
+  "Arch",
+  "Manjaro",
+  "ChromeOS",
   // Project-specific
   "ACFS",
   "Flywheel",
@@ -130,12 +136,17 @@ export const BRAND_NAMES = new Set([
   "DigitalOcean",
   "Linode",
   "Vultr",
+  "Contabo",
+  "OVH",
   "AWS",
   "GCP",
   "Azure",
   "Twitter",
   "Gmail",
   "Grok",
+  "Microsoft",
+  "Hubspot",
+  "Stripe",
 ]);
 
 // EN words that indicate untranslated UI (should FAIL)
@@ -501,9 +512,14 @@ export const CSS_HTML_KEYWORDS = new Set([
 // (e.g. "Code" from "Claude Code") don't trigger false positives.
 // Rule: any new compound brand must be added HERE, not in check-i18n.ts.
 export const COMPOUND_BRANDS = [
+  "Agent Flywheel",
   "Claude Code",
   "Codex CLI",
   "Gemini CLI",
+  "Mac Mini",
+  "Mac Studio",
+  "Mac Pro",
+  "Oh My Zsh",
 ];
 
 // Ukrainian words in Latin script (need reviewer approval)
