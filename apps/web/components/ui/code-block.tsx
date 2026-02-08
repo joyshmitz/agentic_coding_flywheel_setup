@@ -3,6 +3,7 @@
 import { useState, useCallback, type ReactNode } from "react";
 import { Copy, Check, Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLocale, getLessonComponentsMessages } from "@/lib/i18n";
 
 // =============================================================================
 // COPY-TO-CLIPBOARD HOOK
@@ -49,12 +50,14 @@ function CopyButton({
   compact?: boolean;
 }) {
   const { copied, copy } = useCopyToClipboard();
+  const { locale } = useLocale();
+  const messages = getLessonComponentsMessages(locale);
 
   return (
     <button
       type="button"
       onClick={() => copy(text)}
-      aria-label={copied ? "Copied!" : "Copy to clipboard"}
+      aria-label={copied ? messages.codeBlock.copied : messages.codeBlock.copy}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-lg text-xs font-medium",
         "transition-all duration-200",
@@ -75,12 +78,12 @@ function CopyButton({
               compact ? "text-[oklch(0.72_0.19_145)]" : "text-emerald-400",
             )}
           />
-          {!compact && <span className="text-emerald-400">Copied!</span>}
+          {!compact && <span className="text-emerald-400">{messages.codeBlock.copied}</span>}
         </>
       ) : (
         <>
           <Copy className="h-4 w-4" />
-          {!compact && <span>Copy</span>}
+          {!compact && <span>{messages.codeBlock.copy}</span>}
         </>
       )}
     </button>

@@ -52,6 +52,11 @@ export const TECHNICAL_TERMS = new Set([
   "Vercel",
   "Supabase",
   "Cloudflare",
+  "Wezterm",
+  "PowerShell",
+  "Bitwarden",
+  "MCP",
+  "LLM",
   // Frameworks
   "Next",
   "React",
@@ -59,7 +64,7 @@ export const TECHNICAL_TERMS = new Set([
   "Drizzle",
   "TanStack",
   "Framer",
-  // Our tools (acronyms)
+  // Our tools (acronyms + full names)
   "NTM",
   "UBS",
   "CASS",
@@ -78,6 +83,15 @@ export const TECHNICAL_TERMS = new Set([
   "SRPS",
   "BV",
   "BR",
+  "Beads",
+  "Brenner",
+  // Hardware/specs
+  "RAM",
+  "CPU",
+  "vCPU",
+  "NVMe",
+  "SSD",
+  "SMS",
   // Security/auth
   "SSO",
   "MFA",
@@ -101,6 +115,8 @@ export const BRAND_NAMES = new Set([
   "macOS",
   "iOS",
   "Android",
+  "MacBook",
+  "iMac",
   // Project-specific
   "ACFS",
   "Flywheel",
@@ -117,6 +133,9 @@ export const BRAND_NAMES = new Set([
   "AWS",
   "GCP",
   "Azure",
+  "Twitter",
+  "Gmail",
+  "Grok",
 ]);
 
 // EN words that indicate untranslated UI (should FAIL)
@@ -179,9 +198,15 @@ export const EN_UI_VIOLATIONS = new Set([
 
 export function isAllowedEN(word: string): boolean {
   const upper = word.toUpperCase();
+  const lower = word.toLowerCase();
 
-  // Technical terms and brands are allowed
+  // Technical terms - check exact, uppercase, and case-insensitive
   if (TECHNICAL_TERMS.has(word) || TECHNICAL_TERMS.has(upper)) return true;
+  for (const term of TECHNICAL_TERMS) {
+    if (term.toLowerCase() === lower) return true;
+  }
+
+  // Brand names are allowed (exact match)
   if (BRAND_NAMES.has(word)) return true;
 
   return false;

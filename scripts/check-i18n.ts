@@ -50,12 +50,36 @@ async function extractText(page: Page): Promise<string> {
   });
 }
 
+/**
+ * Split glued tokens by camelCase boundaries.
+ * "FlywheelGitHub" → "Flywheel Git Hub"
+ * "MacmacOS" → "Macmac OS"
+ * "CodeCodex" → "Code Codex"
+ */
+function normalizeGluedTokens(text: string): string {
+  return text
+    // Split on camelCase: "FlywheelGitHub" → "Flywheel Git Hub"
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    // Split on case change followed by lowercase: "CLIGemini" → "CLI Gemini"
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2");
+}
+
 function findViolations(text: string): string[] {
-  const words = text.match(/\b[A-Za-z]{2,}\b/g) || [];
+  // Step 1: extract raw tokens from original text
+  const rawTokens = text.match(/[A-Za-z]{2,}/g) || [];
   const violations: string[] = [];
-  for (const word of words) {
-    if (isAllowedEN(word)) continue;
-    if (isViolation(word)) violations.push(word);
+
+  for (const raw of rawTokens) {
+    // Step 2: check whitelist on the RAW token first (before splitting)
+    // This preserves compound terms like "GitHub", "ChatGPT", "MacBook"
+    if (isAllowedEN(raw)) continue;
+
+    // Step 3: split glued tokens and check each part
+    const parts = normalizeGluedTokens(raw).split(/\s+/).filter(p => p.length >= 2);
+    for (const part of parts) {
+      if (isAllowedEN(part)) continue;
+      if (isViolation(part)) violations.push(part);
+    }
   }
   return [...new Set(violations)];
 }
@@ -102,6 +126,7 @@ async function main() {
 
   let failed = 0;
   let errors = 0;
+  const wordFreq: Record<string, number> = {};
 
   for (const route of SCOPE_ROUTES) {
     try {
@@ -125,6 +150,9 @@ async function main() {
           `[FAIL] ${route}: ${violations.slice(0, 5).join(", ")}${violations.length > 5 ? "..." : ""}`
         );
         failed++;
+        for (const v of violations) {
+          wordFreq[v] = (wordFreq[v] || 0) + 1;
+        }
       } else {
         console.log(`[PASS] ${route}`);
       }
@@ -135,6 +163,17 @@ async function main() {
   }
 
   await browser.close();
+
+  // Top offenders report
+  const sorted = Object.entries(wordFreq)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 20);
+  if (sorted.length > 0) {
+    console.error("\n── Top offenders (word × routes) ──");
+    for (const [word, count] of sorted) {
+      console.error(`  ${String(count).padStart(3)} × ${word}`);
+    }
+  }
 
   if (errors > 0) {
     console.error(`\n❌ ${errors} route errors (check scope.ts sources)`);
