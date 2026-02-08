@@ -77,17 +77,19 @@ function DynamicIcon({ name, className }: { name: string; className?: string }) 
 // HELPERS
 // =============================================================================
 
-function getCategory(tool: ManifestWebTool): string {
-  if (tool.moduleId.startsWith("stack.")) return "Flywheel Stack";
-  if (tool.moduleId.startsWith("utils.")) return "Utilities";
-  return "Other";
+type CategoryKey = "flywheelStack" | "utilities" | "other";
+
+function getCategoryKey(tool: ManifestWebTool): CategoryKey {
+  if (tool.moduleId.startsWith("stack.")) return "flywheelStack";
+  if (tool.moduleId.startsWith("utils.")) return "utilities";
+  return "other";
 }
 
-function getCategoryColor(category: string): string {
-  switch (category) {
-    case "Flywheel Stack":
+function getCategoryColor(categoryKey: CategoryKey): string {
+  switch (categoryKey) {
+    case "flywheelStack":
       return "from-violet-500 to-purple-600";
-    case "Utilities":
+    case "utilities":
       return "from-slate-500 to-gray-600";
     default:
       return "from-blue-500 to-indigo-600";
@@ -113,7 +115,9 @@ interface ToolCardProps {
 function ToolCard({ tool, index }: ToolCardProps) {
   const prefersReducedMotion = useReducedMotion();
   const reducedMotion = prefersReducedMotion ?? false;
-  const category = getCategory(tool);
+  const { locale } = useLocale();
+  const messages = getToolsPageMessages(locale);
+  const catKey = getCategoryKey(tool);
 
   return (
     <motion.div
@@ -137,7 +141,7 @@ function ToolCard({ tool, index }: ToolCardProps) {
         <div
           className={cn(
             "absolute inset-x-0 top-0 h-1 bg-gradient-to-r opacity-60 group-hover:opacity-100 transition-opacity",
-            getCategoryColor(category)
+            getCategoryColor(catKey)
           )}
         />
 
@@ -148,7 +152,7 @@ function ToolCard({ tool, index }: ToolCardProps) {
             <div
               className={cn(
                 "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br",
-                getCategoryColor(category)
+                getCategoryColor(catKey)
               )}
             >
               <DynamicIcon name={tool.icon} className="h-5 w-5 text-white" />
@@ -184,7 +188,7 @@ function ToolCard({ tool, index }: ToolCardProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/5 text-muted-foreground ring-1 ring-white/10 transition-all hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-ring outline-none"
-                aria-label={`View ${tool.displayName} on GitHub`}
+                aria-label={messages.card.viewOnGithub(tool.displayName)}
               >
                 <ExternalLink className="h-4 w-4" />
               </Link>
@@ -209,7 +213,7 @@ function ToolCard({ tool, index }: ToolCardProps) {
               ))}
               {tool.features.length > 3 && (
                 <span className="rounded-md bg-white/5 px-2 py-1 text-xs text-muted-foreground">
-                  +{tool.features.length - 3} more
+                  {messages.card.moreFeatures(tool.features.length - 3)}
                 </span>
               )}
             </div>
@@ -226,7 +230,7 @@ function ToolCard({ tool, index }: ToolCardProps) {
           {/* Tech stack */}
           {tool.techStack.length > 0 && (
             <div className="mt-3 flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Built with:</span>
+              <span className="text-xs text-muted-foreground">{messages.card.builtWith}</span>
               <div className="flex flex-wrap gap-1">
                 {tool.techStack.slice(0, 4).map((tech) => (
                   <span
@@ -250,12 +254,15 @@ function ToolCard({ tool, index }: ToolCardProps) {
 // =============================================================================
 
 interface CategoryFilterProps {
-  categories: string[];
-  selected: string | null;
-  onSelect: (category: string | null) => void;
+  categories: CategoryKey[];
+  selected: CategoryKey | null;
+  onSelect: (category: CategoryKey | null) => void;
 }
 
 function CategoryFilter({ categories, selected, onSelect }: CategoryFilterProps) {
+  const { locale } = useLocale();
+  const messages = getToolsPageMessages(locale);
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button
@@ -267,20 +274,20 @@ function CategoryFilter({ categories, selected, onSelect }: CategoryFilterProps)
             : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
         )}
       >
-        All
+        {messages.categories.all}
       </button>
-      {categories.map((category) => (
+      {categories.map((catKey) => (
         <button
-          key={category}
-          onClick={() => onSelect(category)}
+          key={catKey}
+          onClick={() => onSelect(catKey)}
           className={cn(
             "rounded-full px-4 py-2 text-sm font-medium transition-all",
-            selected === category
+            selected === catKey
               ? "bg-primary text-white"
               : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
           )}
         >
-          {category}
+          {messages.categories[catKey]}
         </button>
       ))}
     </div>
@@ -337,6 +344,8 @@ function SearchInput({ value, onChange }: SearchInputProps) {
 function ToolsHero({ toolCount }: { toolCount: number }) {
   const prefersReducedMotion = useReducedMotion();
   const reducedMotion = prefersReducedMotion ?? false;
+  const { locale } = useLocale();
+  const messages = getToolsPageMessages(locale);
 
   return (
     <section className="relative overflow-hidden py-16 md:py-24">
@@ -351,11 +360,10 @@ function ToolsHero({ toolCount }: { toolCount: number }) {
           className="text-center"
         >
           <h1 className="text-3xl font-bold text-white sm:text-4xl md:text-5xl">
-            ACFS Tool Status
+            {messages.hero.title}
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
-            All {toolCount} tools installed by the Agentic Coding Flywheel Setup.
-            Search, filter, and explore the complete toolkit.
+            {messages.hero.description(toolCount)}
           </p>
         </motion.div>
       </div>
@@ -370,25 +378,28 @@ function ToolsHero({ toolCount }: { toolCount: number }) {
 function StatsBar({
   total,
   filtered,
-  categories,
+  categoryCounts,
 }: {
   total: number;
   filtered: number;
-  categories: Record<string, number>;
+  categoryCounts: Record<CategoryKey, number>;
 }) {
+  const { locale } = useLocale();
+  const messages = getToolsPageMessages(locale);
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-card/30 px-4 py-3 ring-1 ring-border/50">
       <div className="flex items-center gap-2">
         <Filter className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm text-muted-foreground">
-          Showing <span className="font-medium text-white">{filtered}</span> of{" "}
-          <span className="font-medium text-white">{total}</span> tools
+          {messages.stats.showing} <span className="font-medium text-white">{filtered}</span> {messages.stats.of}{" "}
+          <span className="font-medium text-white">{total}</span> {messages.stats.tools}
         </span>
       </div>
       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-        {Object.entries(categories).map(([cat, count]) => (
-          <span key={cat}>
-            {cat}: <span className="text-white">{count}</span>
+        {(Object.entries(categoryCounts) as [CategoryKey, number][]).map(([catKey, count]) => (
+          <span key={catKey}>
+            {messages.categories[catKey]}: <span className="text-white">{count}</span>
           </span>
         ))}
       </div>
@@ -402,20 +413,22 @@ function StatsBar({
 
 export default function ToolsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CategoryKey | null>(null);
+  const { locale } = useLocale();
+  const messages = getToolsPageMessages(locale);
 
   // Get unique categories
   const categories = useMemo(() => {
-    const cats = new Set<string>();
-    manifestTools.forEach((tool) => cats.add(getCategory(tool)));
+    const cats = new Set<CategoryKey>();
+    manifestTools.forEach((tool) => cats.add(getCategoryKey(tool)));
     return Array.from(cats).sort();
   }, []);
 
   // Category counts
   const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
+    const counts = {} as Record<CategoryKey, number>;
     manifestTools.forEach((tool) => {
-      const cat = getCategory(tool);
+      const cat = getCategoryKey(tool);
       counts[cat] = (counts[cat] || 0) + 1;
     });
     return counts;
@@ -425,7 +438,7 @@ export default function ToolsPage() {
   const filteredTools = useMemo(() => {
     return manifestTools.filter((tool) => {
       // Category filter
-      if (selectedCategory && getCategory(tool) !== selectedCategory) {
+      if (selectedCategory && getCategoryKey(tool) !== selectedCategory) {
         return false;
       }
 
@@ -450,7 +463,7 @@ export default function ToolsPage() {
     setSearchQuery(value);
   }, []);
 
-  const handleCategorySelect = useCallback((category: string | null) => {
+  const handleCategorySelect = useCallback((category: CategoryKey | null) => {
     setSelectedCategory(category);
   }, []);
 
@@ -478,7 +491,7 @@ export default function ToolsPage() {
               <StatsBar
                 total={manifestTools.length}
                 filtered={filteredTools.length}
-                categories={categoryCounts}
+                categoryCounts={categoryCounts}
               />
             </div>
 
@@ -492,8 +505,8 @@ export default function ToolsPage() {
             ) : (
               <EmptyState
                 icon={Search}
-                title="No tools found"
-                description="Try adjusting your search or filter criteria."
+                title={messages.empty.title}
+                description={messages.empty.description}
                 action={
                   <Button
                     onClick={() => {
@@ -501,7 +514,7 @@ export default function ToolsPage() {
                       setSelectedCategory(null);
                     }}
                   >
-                    Clear filters
+                    {messages.empty.clearFilters}
                   </Button>
                 }
               />

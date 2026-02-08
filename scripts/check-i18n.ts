@@ -6,7 +6,7 @@
  */
 
 import { chromium, type Page } from "playwright";
-import { isAllowedEN, isViolation } from "./en-whitelist";
+import { isAllowedEN, isViolation, TECHNICAL_TERMS, BRAND_NAMES } from "./en-whitelist";
 import { SCOPE_ROUTES, validateScope } from "./scope";
 
 // === SCOPE VALIDATION (catch drift before running tests) ===
@@ -64,9 +64,51 @@ function normalizeGluedTokens(text: string): string {
     .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2");
 }
 
+/**
+ * Split all-uppercase glued tokens by known acronyms.
+ * "CLINTM" → ["CLI", "NTM"]
+ * "MCPUBS" → ["MCP", "UBS"]
+ * "SLBDCG" → ["SLB", "DCG"]
+ * Returns null if cannot fully decompose.
+ */
+function splitAllCapsToken(token: string): string[] | null {
+  if (!/^[A-Z]{4,}$/.test(token)) return null;
+
+  // Collect known uppercase acronyms from whitelist, sorted longest-first
+  const acronyms = [...TECHNICAL_TERMS, ...BRAND_NAMES]
+    .filter((t) => /^[A-Z]{2,}$/.test(t))
+    .sort((a, b) => b.length - a.length);
+
+  const parts: string[] = [];
+  let remaining = token;
+  while (remaining.length > 0) {
+    let matched = false;
+    for (const acr of acronyms) {
+      if (remaining.startsWith(acr)) {
+        parts.push(acr);
+        remaining = remaining.slice(acr.length);
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) return null; // can't decompose
+  }
+  return parts;
+}
+
+// Compound brand names that should be treated as single entities
+// (individual words like "Code" may trigger false positives when split)
+const COMPOUND_BRANDS = ["Claude Code", "Codex CLI", "Gemini CLI"];
+
 function findViolations(text: string): string[] {
-  // Step 1: extract raw tokens from original text
-  const rawTokens = text.match(/[A-Za-z]{2,}/g) || [];
+  // Step 0: strip compound brand names so their parts don't trigger violations
+  let cleanText = text;
+  for (const brand of COMPOUND_BRANDS) {
+    cleanText = cleanText.replaceAll(brand, "");
+  }
+
+  // Step 1: extract raw tokens from cleaned text
+  const rawTokens = cleanText.match(/[A-Za-z]{2,}/g) || [];
   const violations: string[] = [];
 
   for (const raw of rawTokens) {
@@ -74,10 +116,16 @@ function findViolations(text: string): string[] {
     // This preserves compound terms like "GitHub", "ChatGPT", "MacBook"
     if (isAllowedEN(raw)) continue;
 
+    // Step 2b: try splitting all-caps glued tokens (e.g., "CLINTM" → "CLI"+"NTM")
+    const allCapsParts = splitAllCapsToken(raw);
+    if (allCapsParts) continue; // fully decomposed into known acronyms
+
     // Step 3: split glued tokens and check each part
     const parts = normalizeGluedTokens(raw).split(/\s+/).filter(p => p.length >= 2);
     for (const part of parts) {
       if (isAllowedEN(part)) continue;
+      // Try splitting all-caps part (e.g., "SLBDCG" from "tmuxSLBDCG")
+      if (splitAllCapsToken(part)) continue;
       if (isViolation(part)) violations.push(part);
     }
   }

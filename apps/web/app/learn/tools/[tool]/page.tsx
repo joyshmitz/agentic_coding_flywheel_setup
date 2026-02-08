@@ -49,7 +49,11 @@ function FloatingOrb({
 
 function RelatedToolCard({ toolId }: { toolId: ToolId }) {
   const tool = TOOLS[toolId];
+  const { locale } = useLocale();
+  const messages = getToolPageMessages(locale);
   if (!tool) return null;
+
+  const relatedMessages = messages.tools[toolId];
 
   return (
     <Link href={`/learn/tools/${toolId}`}>
@@ -73,7 +77,7 @@ function RelatedToolCard({ toolId }: { toolId: ToolId }) {
         </div>
         <div className="relative min-w-0 flex-1">
           <div className="truncate font-medium text-sm text-white/90 group-hover:text-white transition-colors">
-            {tool.title}
+            {relatedMessages?.title || tool.title}
           </div>
         </div>
         <ChevronRight className="relative h-4 w-4 text-white/40 group-hover:text-white/70 transition-colors" />
@@ -96,8 +100,9 @@ export default function ToolCardPage({ params }: Props) {
     notFound();
   }
 
-  // Get translated tagline
+  // Get translated title and tagline
   const toolMessages = messages.tools[tool as ToolId];
+  const title = toolMessages?.title || doc.title;
   const tagline = toolMessages?.tagline || "";
 
   return (
@@ -196,7 +201,7 @@ export default function ToolCardPage({ params }: Props) {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.5, delay: 0.3 }}
                   >
-                    {doc.title}
+                    {title}
                   </motion.h1>
                   <motion.p
                     className="text-lg text-white/60"
@@ -226,7 +231,7 @@ export default function ToolCardPage({ params }: Props) {
                   }}
                 >
                   <Sparkles className="h-5 w-5 text-primary" />
-                  <span>{messages.ui.viewDocs} {doc.docsLabel}</span>
+                  <span>{messages.ui.viewDocs} {messages.docsLabels?.[doc.docsLabel] || doc.docsLabel}</span>
                   <ArrowUpRight className="h-5 w-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1" />
                 </a>
               </motion.div>
@@ -245,7 +250,7 @@ export default function ToolCardPage({ params }: Props) {
                       {messages.ui.quickStart}
                     </span>
                   </div>
-                  <div className="relative group/cmd rounded-xl border border-white/[0.08] bg-black/40 backdrop-blur-sm overflow-hidden">
+                  <div className="relative group/cmd rounded-xl border border-white/[0.08] bg-black/40 backdrop-blur-sm overflow-hidden" data-terminal>
                     <div className="flex items-center gap-2 px-4 py-2 border-b border-white/[0.05]">
                       <div className="w-3 h-3 rounded-full bg-red-500/70" />
                       <div className="w-3 h-3 rounded-full bg-yellow-500/70" />
