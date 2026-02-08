@@ -61,6 +61,7 @@ QUIET=false
 YES_MODE=false
 ABORT_ON_FAILURE=false
 REBOOT_REQUIRED=false
+CLAUDE_LATEST=false
 
 # Logging
 UPDATE_LOG_DIR="${HOME}/.acfs/logs/updates"
@@ -1150,13 +1151,22 @@ update_agents() {
     if cmd_exists claude && [[ "$bun_claude_detected" != "true" || "$FORCE_MODE" != "true" ]]; then
         capture_version_before "claude"
 
-        # Try native update first
-        if ! run_cmd_claude_update; then
-            log_to_file "Claude update failed, attempting reinstall via official installer"
+        if [[ "$CLAUDE_LATEST" == "true" ]]; then
+            # Use verified installer with latest channel (skips stable-only "claude update")
             if update_require_security; then
-                run_cmd "Claude Code (reinstall)" update_run_verified_installer claude latest
+                run_cmd "Claude Code (latest)" update_run_verified_installer claude latest
             else
-                log_item "fail" "Claude Code" "update failed and reinstall unavailable (missing security.sh)"
+                log_item "fail" "Claude Code" "latest channel requires security.sh/checksums.yaml"
+            fi
+        else
+            # Try native update first (updates to stable channel)
+            if ! run_cmd_claude_update; then
+                log_to_file "Claude update failed, attempting reinstall via official installer"
+                if update_require_security; then
+                    run_cmd "Claude Code (reinstall)" update_run_verified_installer claude latest
+                else
+                    log_item "fail" "Claude Code" "update failed and reinstall unavailable (missing security.sh)"
+                fi
             fi
         fi
 
@@ -1164,7 +1174,7 @@ update_agents() {
         if capture_version_after "claude"; then
             [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[claude]}" "${VERSION_AFTER[claude]}"
         fi
-    elif [[ "$FORCE_MODE" == "true" ]]; then
+    elif [[ "$FORCE_MODE" == "true" ]] || [[ "$CLAUDE_LATEST" == "true" ]]; then
         capture_version_before "claude"
         if update_require_security; then
             run_cmd "Claude Code (install)" update_run_verified_installer claude latest
@@ -2109,6 +2119,7 @@ SKIP OPTIONS (exclude categories from update):
 
 BEHAVIOR OPTIONS:
   --force            Force reinstallation even if already up to date
+  --claude-latest    Update Claude Code to latest channel (not stable)
   --dry-run          Preview changes without making them
   --yes, -y          Non-interactive mode, skip all prompts
   --quiet, -q        Minimal output, only show errors and summary
@@ -2142,13 +2153,16 @@ EXAMPLES:
   # Strict mode: stop on first error
   acfs-update --abort-on-failure
 
+  # Update Claude Code to latest channel (includes newest features like Opus 4.6)
+  acfs-update --agents-only --claude-latest
+
 WHAT EACH CATEGORY UPDATES:
   self:     ACFS itself (git pull) - runs FIRST to ensure latest update logic
             If update.sh changes, automatically re-executes with new version
   apt:      System packages via apt update && apt upgrade && apt autoremove
   shell:    Oh-My-Zsh, Powerlevel10k, zsh plugins (git pull)
             Atuin, Zoxide (reinstall from upstream)
-  agents:   Claude Code (claude update)
+  agents:   Claude Code (claude update → stable, or --claude-latest → latest channel)
             Codex CLI (bun install -g --trust @openai/codex@latest)
             Gemini CLI (bun install -g --trust @google/gemini-cli@latest)
   cloud:    Wrangler, Vercel (bun install -g --trust <pkg>@latest)
@@ -2184,7 +2198,8 @@ TROUBLESHOOTING:
       sudo systemctl start unattended-upgrades
 
   - If an agent update fails: try running the update command directly:
-    claude update
+    claude update                                      # stable channel
+    curl -fsSL https://claude.ai/install.sh | bash -s -- latest  # latest channel
     bun install -g --trust @openai/codex@latest
     bun install -g --trust @google/gemini-cli@latest
 
@@ -2289,6 +2304,10 @@ main() {
                 ;;
             --force)
                 FORCE_MODE=true
+                shift
+                ;;
+            --claude-latest)
+                CLAUDE_LATEST=true
                 shift
                 ;;
             --dry-run)
