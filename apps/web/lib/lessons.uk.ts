@@ -67,7 +67,7 @@ export const LESSONS_UK: Lesson[] = [
   {
     id: 7,
     slug: "ntm-core",
-    title: "NTM Command Center",
+    title: "NTM Командний центр",
     description: "Оркестрація термінальних сесій",
     duration: "8 хв",
     file: "07_ntm_core.md",
@@ -75,7 +75,7 @@ export const LESSONS_UK: Lesson[] = [
   {
     id: 8,
     slug: "ntm-palette",
-    title: "NTM Prompt Palette",
+    title: "NTM Палітра промптів",
     description: "Швидкий доступ до частих команд",
     duration: "6 хв",
     file: "08_ntm_command_palette.md",
@@ -83,7 +83,7 @@ export const LESSONS_UK: Lesson[] = [
   {
     id: 9,
     slug: "flywheel-loop",
-    title: "Flywheel Loop",
+    title: "Flywheel цикл",
     description: "Об'єднайте все для максимальної швидкості",
     duration: "10 хв",
     file: "09_flywheel_loop.md",
@@ -187,7 +187,7 @@ export const LESSONS_UK: Lesson[] = [
   {
     id: 22,
     slug: "ms",
-    title: "Meta Skill: Локальні Skills",
+    title: "Meta Skill: Локальні скіли",
     description: "Керування та обмін Claude Code skills локально",
     duration: "10 хв",
     file: "22_meta_skill.md",
@@ -235,7 +235,7 @@ export const LESSONS_UK: Lesson[] = [
   {
     id: 28,
     slug: "rch",
-    title: "RCH: Remote Code Host",
+    title: "RCH: Віддалений хост коду",
     description: "Відвантажуйте збірки Rust на віддалені воркери для швидшої компіляції",
     duration: "8 хв",
     file: "28_rch.md",
@@ -243,7 +243,7 @@ export const LESSONS_UK: Lesson[] = [
   {
     id: 29,
     slug: "wa",
-    title: "WA: Wezterm Automata",
+    title: "WA: Wezterm автоматизація",
     description: "Координуйте кілька AI агентів з спостереженням терміналу в реальному часі",
     duration: "7 хв",
     file: "29_wa.md",
@@ -251,7 +251,7 @@ export const LESSONS_UK: Lesson[] = [
   {
     id: 30,
     slug: "brenner",
-    title: "Brenner: AI Bot Manager",
+    title: "Brenner: Менеджер AI-ботів",
     description: "Оркеструйте та моніторте життєві цикли AI агентів",
     duration: "6 хв",
     file: "30_brenner.md",

@@ -20,15 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { STEP_HELP, getDebugInfo, type StepHelp } from "@/lib/stepHelp";
-
-const DEFAULT_HELP: StepHelp = {
-  commonIssues: [],
-  tips: [
-    "Make sure you're following the steps in order.",
-    "If a command fails, try running it again — transient errors are common.",
-    "Check that you're running commands in the right place (local terminal vs. VPS).",
-  ],
-};
+import { useLocale, getHelpPanelMessages } from "@/lib/i18n";
 
 interface HelpPanelProps {
   currentStep: number;
@@ -37,8 +29,15 @@ interface HelpPanelProps {
 export function HelpPanel({ currentStep }: HelpPanelProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [copied, setCopied] = useState(false);
+  const { locale } = useLocale();
+  const messages = getHelpPanelMessages(locale);
 
-  const help = STEP_HELP[currentStep] ?? DEFAULT_HELP;
+  const defaultHelp: StepHelp = {
+    commonIssues: [],
+    tips: messages.defaultTips,
+  };
+
+  const help = STEP_HELP[currentStep] ?? defaultHelp;
   const hasIssues = help.commonIssues.length > 0;
   const hasTips = help.tips.length > 0;
 
@@ -77,10 +76,10 @@ export function HelpPanel({ currentStep }: HelpPanelProps) {
         size="sm"
         onClick={openDialog}
         className="gap-1.5 text-muted-foreground hover:text-foreground"
-        aria-label="Need help?"
+        aria-label={messages.trigger.ariaLabel}
       >
         <HelpCircle className="h-4 w-4" />
-        <span className="hidden sm:inline">Need help?</span>
+        <span className="hidden sm:inline">{messages.trigger.label}</span>
       </Button>
 
       {/* Dialog */}
@@ -97,12 +96,12 @@ export function HelpPanel({ currentStep }: HelpPanelProps) {
           <div className="flex items-center justify-between border-b border-border/50 px-6 py-4">
             <h2 className="flex items-center gap-2 text-lg font-semibold">
               <HelpCircle className="h-5 w-5 text-primary" />
-              Step {currentStep} Help
+              {messages.dialog.title.replace("{step}", String(currentStep))}
             </h2>
             <button
               onClick={closeDialog}
               className="flex h-10 w-10 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background outline-none"
-              aria-label="Close"
+              aria-label={messages.dialog.closeAriaLabel}
             >
               <X className="h-4 w-4" />
             </button>
@@ -114,7 +113,7 @@ export function HelpPanel({ currentStep }: HelpPanelProps) {
             {hasIssues && (
               <section>
                 <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Common Issues
+                  {messages.sections.commonIssues}
                 </h3>
                 <div className="space-y-3">
                   {help.commonIssues.map((issue) => (
@@ -139,7 +138,7 @@ export function HelpPanel({ currentStep }: HelpPanelProps) {
             {hasTips && (
               <section>
                 <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Tips
+                  {messages.sections.tips}
                 </h3>
                 <ul className="space-y-2">
                   {help.tips.map((tip) => (
@@ -158,11 +157,10 @@ export function HelpPanel({ currentStep }: HelpPanelProps) {
             {/* Debug Info */}
             <section className="rounded-lg border border-border/50 bg-muted/20 p-4">
               <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
-                Share Debug Info
+                {messages.debug.title}
               </h3>
               <p className="mb-3 text-xs text-muted-foreground">
-                Copy this information when asking for help — it helps us
-                diagnose the issue faster.
+                {messages.debug.description}
               </p>
               <Button
                 variant="outline"
@@ -173,12 +171,12 @@ export function HelpPanel({ currentStep }: HelpPanelProps) {
                 {copied ? (
                   <>
                     <Check className="h-3.5 w-3.5 text-[oklch(0.72_0.19_145)]" />
-                    Copied
+                    {messages.debug.copied}
                   </>
                 ) : (
                   <>
                     <Copy className="h-3.5 w-3.5" />
-                    Copy Debug Info
+                    {messages.debug.copyButton}
                   </>
                 )}
               </Button>

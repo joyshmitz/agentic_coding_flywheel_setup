@@ -245,6 +245,10 @@ import { jargonUiMessagesUk } from "../jargon-ui-messages.uk";
 import { stepperMessages } from "../stepper-messages";
 import { stepperMessagesUk } from "../stepper-messages.uk";
 
+// HelpPanel component messages
+import { helpPanelMessages } from "../help-panel-messages";
+import { helpPanelMessagesUk } from "../help-panel-messages.uk";
+
 // Flywheel visualization component messages
 import { flywheelVizMessages } from "../flywheel-viz-messages";
 import { flywheelVizMessagesUk } from "../flywheel-viz-messages.uk";
@@ -399,6 +403,13 @@ export function getJargonUiMessages(locale: Locale) {
  */
 export function getStepperMessages(locale: Locale) {
   return locale === "uk" ? stepperMessagesUk : stepperMessages;
+}
+
+/**
+ * Get HelpPanel component messages for the specified locale
+ */
+export function getHelpPanelMessages(locale: Locale) {
+  return locale === "uk" ? helpPanelMessagesUk : helpPanelMessages;
 }
 
 /**

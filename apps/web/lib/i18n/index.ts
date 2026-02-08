@@ -39,6 +39,7 @@ export {
   getConnectionCheckMessages,
   getJargonUiMessages,
   getStepperMessages,
+  getHelpPanelMessages,
   getFlywheelVizMessages,
   getAgentHeroCardMessages,
   getLessonComponentsMessages,
