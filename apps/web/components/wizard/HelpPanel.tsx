@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { STEP_HELP, getDebugInfo, type StepHelp } from "@/lib/stepHelp";
+import { STEP_HELP_UK } from "@/lib/stepHelp.uk";
 import { useLocale, getHelpPanelMessages } from "@/lib/i18n";
 
 interface HelpPanelProps {
@@ -37,7 +38,8 @@ export function HelpPanel({ currentStep }: HelpPanelProps) {
     tips: messages.defaultTips,
   };
 
-  const help = STEP_HELP[currentStep] ?? defaultHelp;
+  const stepHelpSource = locale === "uk" ? STEP_HELP_UK : STEP_HELP;
+  const help = stepHelpSource[currentStep] ?? defaultHelp;
   const hasIssues = help.commonIssues.length > 0;
   const hasTips = help.tips.length > 0;
 

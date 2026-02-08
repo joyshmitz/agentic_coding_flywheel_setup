@@ -1402,7 +1402,7 @@ export const preflightCheckMessagesUk = {
   troubleshooting: {
     title: "Усунення поширених помилок",
     bashNotRecognized: {
-      title: "'bash' is not recognized / Get-Date error (Windows)",
+      title: "Помилка 'bash' або 'Get-Date' (Windows)",
       fixes: [
         "Ви запускаєте це на Windows-комп'ютері, а не на VPS!",
         "Спочатку підключіться до VPS: ssh root@YOUR_VPS_IP",

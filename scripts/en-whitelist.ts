@@ -101,14 +101,10 @@ export const BRAND_NAMES = new Set([
   "macOS",
   "iOS",
   "Android",
-  // Language names (in language switcher)
-  "English",
   // Project-specific
   "ACFS",
   "Flywheel",
   "Agentic",
-  "Agent",
-  "Mail",
   "Dicklesworthstone",
   "Jeffrey",
   "Emanuel",

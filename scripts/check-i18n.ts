@@ -40,7 +40,9 @@ async function extractText(page: Page): Promise<string> {
       .querySelectorAll(
         "code, pre, script, style, noscript, [data-code], [data-terminal], " +
           "[class*='code'], [class*='terminal'], [class*='syntax'], " +
-          "svg, canvas, [aria-hidden='true']"
+          "svg, canvas, [aria-hidden='true'], " +
+          // Language switcher shows language names in their native form (English, Українська)
+          "select, option"
       )
       .forEach((el) => el.remove());
     // innerText = user-visible text only (respects CSS visibility)
