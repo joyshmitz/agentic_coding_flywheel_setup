@@ -5,20 +5,22 @@ import { motion } from "@/components/motion";
 import {
   Check,
   Copy,
-  Terminal,
   Lightbulb,
   AlertTriangle,
   ChevronRight,
   Sparkles,
   Zap,
 } from "lucide-react";
-import { useLocale, getLessonComponentsMessages } from "@/lib/i18n";
+import {
+  CodeBlock as SharedCodeBlock,
+  type CodeBlockProps as SharedCodeBlockProps,
+} from "@/components/ui/code-block";
 
 // =============================================================================
 // SECTION COMPONENT - Beautiful section dividers with gradient headers
 // =============================================================================
 interface SectionProps {
-  title: ReactNode;
+  title: string;
   icon?: ReactNode;
   children: ReactNode;
   delay?: number;
@@ -70,107 +72,12 @@ export function Paragraph({ children, highlight }: ParagraphProps) {
 }
 
 // =============================================================================
-// CODE BLOCK - Interactive terminal-style code display
+// CODE BLOCK - Re-exported from shared ui/code-block
 // =============================================================================
-interface CodeBlockProps {
-  code: string;
-  language?: string;
-  filename?: string;
-  showLineNumbers?: boolean;
-}
-
-export function CodeBlock({
-  code,
-  language = "bash",
-  filename,
-  showLineNumbers = false,
-}: CodeBlockProps) {
-  const { locale } = useLocale();
-  const messages = getLessonComponentsMessages(locale);
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard access denied - silently fail
-    }
-  };
-
-  const lines = code.trim().split("\n");
-
-  return (
-    <div className="group relative rounded-2xl overflow-hidden border border-white/[0.08] bg-black/60 backdrop-blur-xl">
-      {/* Terminal header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500/80" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-            <div className="w-3 h-3 rounded-full bg-green-500/80" />
-          </div>
-          {filename && (
-            <span className="text-xs text-white/60 font-mono">{filename}</span>
-          )}
-          {!filename && (
-            <div className="flex items-center gap-1.5 text-white/60">
-              <Terminal className="h-3.5 w-3.5" />
-              <span className="text-xs font-mono">{language}</span>
-            </div>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-300 text-white/60 hover:text-white hover:bg-white/10"
-        >
-          {copied ? (
-            <>
-              <Check className="h-3.5 w-3.5 text-emerald-400" />
-              <span className="text-emerald-400">{messages.codeBlock.copied}</span>
-            </>
-          ) : (
-            <>
-              <Copy className="h-3.5 w-3.5" />
-              <span>{messages.codeBlock.copy}</span>
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Code content */}
-      <div className="relative p-5 overflow-x-auto">
-        <pre className="font-mono text-sm">
-          {lines.map((line, i) => (
-            <div key={i} className="flex">
-              {showLineNumbers && (
-                <span className="select-none w-8 text-white/20 text-right pr-4">
-                  {i + 1}
-                </span>
-              )}
-              <code className="text-white/90">
-                {line.startsWith("$") ? (
-                  <>
-                    <span className="text-emerald-400">$</span>
-                    <span className="text-white/90">{line.slice(1)}</span>
-                  </>
-                ) : line.startsWith("#") ? (
-                  <span className="text-white/50">{line}</span>
-                ) : (
-                  line
-                )}
-              </code>
-            </div>
-          ))}
-        </pre>
-
-        {/* Subtle glow effect */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-violet-500/5 pointer-events-none" />
-      </div>
-    </div>
-  );
+export function CodeBlock(
+  props: Omit<SharedCodeBlockProps, "variant" | "copyable">,
+) {
+  return <SharedCodeBlock {...props} variant="terminal" copyable />;
 }
 
 // =============================================================================
@@ -189,8 +96,8 @@ export function InlineCode({ children }: { children: ReactNode }) {
 // =============================================================================
 interface FeatureCardProps {
   icon: ReactNode;
-  title: ReactNode;
-  description: ReactNode;
+  title: string;
+  description: string;
   gradient?: string;
 }
 
@@ -243,30 +150,27 @@ interface TipBoxProps {
 }
 
 export function TipBox({ children, variant = "tip" }: TipBoxProps) {
-  const { locale } = useLocale();
-  const messages = getLessonComponentsMessages(locale);
-
   const config = {
     tip: {
       icon: <Lightbulb className="h-5 w-5" />,
       gradient: "from-amber-500/20 to-orange-500/20",
       border: "border-amber-500/30",
       iconColor: "text-amber-400",
-      title: messages.tipBox.proTip,
+      title: "Pro Tip",
     },
     warning: {
       icon: <AlertTriangle className="h-5 w-5" />,
       gradient: "from-red-500/20 to-rose-500/20",
       border: "border-red-500/30",
       iconColor: "text-red-400",
-      title: messages.tipBox.warning,
+      title: "Warning",
     },
     info: {
       icon: <Sparkles className="h-5 w-5" />,
       gradient: "from-primary/20 to-violet-500/20",
       border: "border-primary/30",
       iconColor: "text-primary",
-      title: messages.tipBox.note,
+      title: "Note",
     },
   };
 
@@ -298,7 +202,7 @@ interface Command {
 }
 
 interface CommandListProps {
-  commands: ReadonlyArray<Command>;
+  commands: Command[];
 }
 
 export function CommandList({ commands }: CommandListProps) {
@@ -389,7 +293,7 @@ export function StepList({ steps }: StepListProps) {
 // DIAGRAM - Visual architecture diagram
 // =============================================================================
 interface DiagramBoxProps {
-  label: ReactNode;
+  label: string;
   sublabel?: string;
   icon?: ReactNode;
   gradient?: string;
@@ -478,9 +382,6 @@ interface GoalBannerProps {
 }
 
 export function GoalBanner({ children }: GoalBannerProps) {
-  const { locale } = useLocale();
-  const messages = getLessonComponentsMessages(locale);
-
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -496,7 +397,7 @@ export function GoalBanner({ children }: GoalBannerProps) {
         </div>
         <div>
           <span className="text-xs font-bold text-primary uppercase tracking-wider">
-            {messages.goalBanner.goal}
+            Goal
           </span>
           <p className="text-lg text-white font-medium">{children}</p>
         </div>
