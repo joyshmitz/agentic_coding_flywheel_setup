@@ -23,6 +23,13 @@ export const TECHNICAL_TERMS = new Set([
   "UUID",
   "MD5",
   "SHA",
+  "VPS",
+  "IP",
+  "FTP",
+  "SFTP",
+  "SMTP",
+  "POP",
+  "IMAP",
   // Languages/runtimes
   "Rust",
   "Go",
@@ -71,20 +78,46 @@ export const TECHNICAL_TERMS = new Set([
   "SRPS",
   "BV",
   "BR",
+  // Security/auth
+  "SSO",
+  "MFA",
+  "TOTP",
+  "VPN",
 ]);
 
 export const BRAND_NAMES = new Set([
+  // AI providers
   "Claude",
   "Codex",
   "Gemini",
   "Anthropic",
   "OpenAI",
   "Google",
+  "ChatGPT",
+  // OS/platforms
   "Ubuntu",
   "Linux",
+  "Windows",
+  "macOS",
+  "iOS",
+  "Android",
+  // Project-specific
+  "ACFS",
+  "Flywheel",
+  "Agentic",
+  "Agent",
   "Dicklesworthstone",
   "Jeffrey",
   "Emanuel",
+  "Tailscale",
+  // Services
+  "Hetzner",
+  "DigitalOcean",
+  "Linode",
+  "Vultr",
+  "AWS",
+  "GCP",
+  "Azure",
 ]);
 
 // EN words that indicate untranslated UI (should FAIL)
@@ -446,6 +479,9 @@ export const TRANSLITERATIONS = new Set<string>([
 ]);
 
 export function isViolation(word: string): boolean {
+  // First check: is it explicitly allowed?
+  if (isAllowedEN(word)) return false;
+
   const lower = word.toLowerCase();
 
   // Whitelist categories (not violations)
@@ -457,12 +493,10 @@ export function isViolation(word: string): boolean {
   if (COMMON_EN_WORDS.has(lower)) return true;
 
   // Capitalized word not in whitelist = likely EN
-  if (/^[A-Z][a-z]+/.test(word) && !isAllowedEN(word)) return true;
+  if (/^[A-Z][a-z]+/.test(word)) return true;
 
-  // Pure Latin word 3+ chars not in whitelist = suspicious
-  if (/^[a-z]{3,}$/.test(lower) && !isAllowedEN(word)) {
-    return true;
-  }
+  // Pure Latin word 3+ chars = suspicious
+  if (/^[a-z]{3,}$/.test(lower)) return true;
 
   return false;
 }
