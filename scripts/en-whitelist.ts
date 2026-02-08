@@ -496,6 +496,16 @@ export const CSS_HTML_KEYWORDS = new Set([
   "provider",
 ]);
 
+// Compound brand names (multi-word, space-separated)
+// Stripped from DOM text before tokenization so individual words
+// (e.g. "Code" from "Claude Code") don't trigger false positives.
+// Rule: any new compound brand must be added HERE, not in check-i18n.ts.
+export const COMPOUND_BRANDS = [
+  "Claude Code",
+  "Codex CLI",
+  "Gemini CLI",
+];
+
 // Ukrainian words in Latin script (need reviewer approval)
 export const TRANSLITERATIONS = new Set<string>([
   // Add with context comment

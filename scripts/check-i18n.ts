@@ -6,7 +6,7 @@
  */
 
 import { chromium, type Page } from "playwright";
-import { isAllowedEN, isViolation, TECHNICAL_TERMS, BRAND_NAMES } from "./en-whitelist";
+import { isAllowedEN, isViolation, TECHNICAL_TERMS, BRAND_NAMES, COMPOUND_BRANDS } from "./en-whitelist";
 import { SCOPE_ROUTES, validateScope } from "./scope";
 
 // === SCOPE VALIDATION (catch drift before running tests) ===
@@ -96,12 +96,9 @@ function splitAllCapsToken(token: string): string[] | null {
   return parts;
 }
 
-// Compound brand names that should be treated as single entities
-// (individual words like "Code" may trigger false positives when split)
-const COMPOUND_BRANDS = ["Claude Code", "Codex CLI", "Gemini CLI"];
-
 function findViolations(text: string): string[] {
   // Step 0: strip compound brand names so their parts don't trigger violations
+  // (e.g. "Code" from "Claude Code"). Source: en-whitelist.ts COMPOUND_BRANDS.
   let cleanText = text;
   for (const brand of COMPOUND_BRANDS) {
     cleanText = cleanText.replaceAll(brand, "");
