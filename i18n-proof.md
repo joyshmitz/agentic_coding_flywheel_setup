@@ -52,11 +52,10 @@ Remaining batches:
 
 ---
 
-## GREEN: 0/77
-
+GREEN: 0/77 routes failing, 77 pass
+Scope: 13c0ef54
 Date: 2026-02-08
 Detector: v5 (attached-clone innerText for correct block boundaries)
-Gate: 0/77 routes failing, 77 pass
 
 Changes from Batch 1 → GREEN:
   - Detector: extractText now temporarily attaches clone to DOM for correct
