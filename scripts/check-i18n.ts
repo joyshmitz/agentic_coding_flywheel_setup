@@ -43,17 +43,8 @@ async function extractText(page: Page): Promise<string> {
           "svg, canvas, [aria-hidden='true']"
       )
       .forEach((el) => el.remove());
-
-    // Get text with proper spacing (textContent can glue words together)
-    // Add spaces between block elements
-    const walker = document.createTreeWalker(clone, NodeFilter.SHOW_TEXT);
-    const texts: string[] = [];
-    let node: Text | null;
-    while ((node = walker.nextNode() as Text | null)) {
-      const text = node.textContent?.trim();
-      if (text) texts.push(text);
-    }
-    return texts.join(" ");
+    // innerText = user-visible text only (respects CSS visibility)
+    return clone.innerText;
   });
 }
 
