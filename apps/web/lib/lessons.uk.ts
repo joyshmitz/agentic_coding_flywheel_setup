@@ -256,6 +256,22 @@ export const LESSONS_UK: Lesson[] = [
     duration: "6 хв",
     file: "30_brenner.md",
   },
+  {
+    id: 31,
+    slug: "giil",
+    title: "GIIL: Завантаження хмарних зображень",
+    description: "Завантажуйте хмарні зображення для візуального дебагу",
+    duration: "6 хв",
+    file: "31_giil.md",
+  },
+  {
+    id: 32,
+    slug: "s2p",
+    title: "S2P: Вихідний код у промпт",
+    description: "Об'єднуйте вихідний код у LLM-ready промпти з підрахунком токенів",
+    duration: "6 хв",
+    file: "32_s2p.md",
+  },
 ];
 
 export const TOTAL_LESSONS_UK = LESSONS_UK.length;

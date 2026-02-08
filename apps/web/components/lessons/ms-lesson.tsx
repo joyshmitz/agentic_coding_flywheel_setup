@@ -77,7 +77,7 @@ export function MsLesson() {
       {/* Section 2: Essential Commands */}
       <Section title={messages.sections.essentialCommands.title} icon={<Terminal className="h-5 w-5" />} delay={0.2}>
         <CommandList
-          commands={messages.commands}
+          commands={[...messages.commands]}
         />
 
         <TipBox>

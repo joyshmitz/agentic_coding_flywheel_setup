@@ -12,27 +12,10 @@ import {
   ShieldCheck,
   Wrench,
 } from "lucide-react";
+import { type ToolId } from "@/lib/tool-ids";
 
-export type ToolId =
-  | "claude-code"
-  | "codex-cli"
-  | "gemini-cli"
-  | "ntm"
-  | "beads"
-  | "agent-mail"
-  | "ubs"
-  | "cass"
-  | "cm"
-  | "caam"
-  | "slb"
-  | "dcg"
-  | "ru"
-  | "ms"
-  | "apr"
-  | "jfp"
-  | "pt"
-  | "srps"
-  | "xf";
+// Re-export for convenience
+export type { ToolId } from "@/lib/tool-ids";
 
 export type ToolCard = {
   id: ToolId;

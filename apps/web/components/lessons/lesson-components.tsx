@@ -293,7 +293,7 @@ export function StepList({ steps }: StepListProps) {
 // DIAGRAM - Visual architecture diagram
 // =============================================================================
 interface DiagramBoxProps {
-  label: string;
+  label: ReactNode;
   sublabel?: string;
   icon?: ReactNode;
   gradient?: string;
