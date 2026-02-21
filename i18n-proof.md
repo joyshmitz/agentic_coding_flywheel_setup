@@ -77,3 +77,27 @@ All gates:
   lint: 0 errors ✅
   build: ✅
   i18n:check: 77/77 ✅
+
+---
+
+## Post-merge re-validation: GREEN
+
+Commit: 0c93018a
+Date: 2026-02-21
+Merge: upstream/main (71 commits) into translate-ukrainian-acfs
+
+Upstream changes absorbed:
+  - Claude update refactor (verified installer fallback)
+  - AGENTS.md rewrite (+1017/-626 lines)
+  - ntfy.sh notifications, git strategy lesson
+  - Security checksums (dcg, pt, uv, mcp_agent_mail)
+  - Mobile Safari fix (wizard os-selection, stepper)
+
+Conflicts resolved (2):
+  - keeping-updated-lesson.tsx — kept our .map() i18n iteration
+  - scripts/lib/update.sh — accepted upstream's corrected logic
+
+All gates:
+  type-check: ✅
+  build: ✅
+  i18n:check: 77/77 ✅
