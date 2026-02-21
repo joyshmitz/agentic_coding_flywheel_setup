@@ -649,7 +649,7 @@ modules:
     verify:
       - ~/.local/bin/claude --version || ~/.local/bin/claude --help
     notes:
-      - "Uses native installer with built-in 'claude update' command"
+      - "Updated via verified installer (curl claude.ai/install.sh | bash -- latest); 'claude update --channel' flag does not exist"
       - "Binary installed to ~/.local/bin/claude"
 
   - id: agents.codex
@@ -707,6 +707,8 @@ modules:
         exec ~/.bun/bin/bun ~/.bun/bin/gemini "$@"
         WRAPPER
         chmod +x ~/.local/bin/gemini
+      # Apply patches (EBADF crash fix, rate-limit retry 3→1000, quota retry)
+      - curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/misc_coding_agent_tips_and_scripts/main/fix-gemini-cli-ebadf-crash.sh | bash
     verify:
       - ~/.local/bin/gemini --version || ~/.local/bin/gemini --help
 

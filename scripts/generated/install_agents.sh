@@ -259,6 +259,17 @@ INSTALL_AGENTS_GEMINI
             return 1
         fi
     fi
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: install: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/misc_coding_agent_tips_and_scripts/main/fix-gemini-cli-ebadf-crash.sh | bash (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_AGENTS_GEMINI'
+curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/misc_coding_agent_tips_and_scripts/main/fix-gemini-cli-ebadf-crash.sh | bash
+INSTALL_AGENTS_GEMINI
+        then
+            log_error "agents.gemini: install command failed: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/misc_coding_agent_tips_and_scripts/main/fix-gemini-cli-ebadf-crash.sh | bash"
+            return 1
+        fi
+    fi
 
     # Verify
     if [[ "${DRY_RUN:-false}" = "true" ]]; then

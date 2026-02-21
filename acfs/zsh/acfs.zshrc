@@ -155,7 +155,7 @@ alias install='sudo apt install'
 alias search='apt search'
 
 # Update agent CLIs
-alias uca='~/.local/bin/claude update && (bun install -g --trust @openai/codex@latest || bun install -g --trust @openai/codex) && bun install -g --trust @google/gemini-cli@latest'
+alias uca='(curl -fsSL https://claude.ai/install.sh | bash -s -- latest) && ("$HOME/.bun/bin/bun" install -g --trust @openai/codex@latest || "$HOME/.bun/bin/bun" install -g --trust @openai/codex) && "$HOME/.bun/bin/bun" install -g --trust @google/gemini-cli@latest && curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/misc_coding_agent_tips_and_scripts/main/fix-gemini-cli-ebadf-crash.sh | bash'
 
 # --- Custom functions ---
 mkcd() { mkdir -p "$1" && cd "$1" || return; }
@@ -385,6 +385,17 @@ acfs() {
         return 1
       fi
       ;;
+    notifications|notify)
+      if [[ -f "$acfs_home/scripts/lib/notifications.sh" ]]; then
+        bash "$acfs_home/scripts/lib/notifications.sh" "$@"
+      elif [[ -x "$acfs_bin" ]]; then
+        "$acfs_bin" notifications "$@"
+      else
+        echo "Error: notifications.sh not found"
+        echo "Re-run the ACFS installer to get the latest scripts"
+        return 1
+      fi
+      ;;
     export-config|export)
       if [[ -f "$acfs_home/scripts/lib/export-config.sh" ]]; then
         bash "$acfs_home/scripts/lib/export-config.sh" "$@"
@@ -422,6 +433,7 @@ acfs() {
       echo "  support-bundle  Collect diagnostic data for troubleshooting"
       echo "  changelog       Show recent changes (--all, --since 7d, --json)"
       echo "  export-config   Export config for backup/migration (--json, --minimal)"
+      echo "  notifications   Manage push notifications via ntfy.sh"
       echo "  update          Update ACFS tools to latest versions"
       echo "  version         Show ACFS version"
       echo "  help            Show this help message"
@@ -455,7 +467,16 @@ fi
 # --- Agent aliases (dangerously enabled by design) ---
 alias cc='NODE_OPTIONS="--max-old-space-size=32768" ~/.local/bin/claude --dangerously-skip-permissions'
 alias cod='codex --dangerously-bypass-approvals-and-sandbox'
-alias gmi='gemini --yolo'
+
+# gmi: update gemini-cli via bun, apply patches, then launch (hardcoded bun path to avoid npm hijacking)
+gmi() {
+  echo "▶ Updating gemini-cli to latest..."
+  "$HOME/.bun/bin/bun" install -g --trust @google/gemini-cli@latest 2>&1 | tail -1
+  echo "▶ Applying patches..."
+  curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/misc_coding_agent_tips_and_scripts/main/fix-gemini-cli-ebadf-crash.sh | bash
+  echo "▶ Launching gemini..."
+  "$HOME/.bun/bin/gemini" --yolo "$@"
+}
 
 # bun project helpers (common)
 alias bdev='bun run dev'

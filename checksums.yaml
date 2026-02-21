@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-02-07T07:01:17+00:00
+# checksums.yaml - Auto-generated 2026-02-21T04:46:46+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -24,19 +24,19 @@ installers:
 
   cass:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh"
-    sha256: "d7a17e7677600514df13ea1d064f0b48c0da0d1e4bed34915345314b1adc313a"
+    sha256: "616223707fe05a86c24ed9ef1bf437009d42ee1af8cc10495cb19876b85bff3e"
 
   mcp_agent_mail:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail/main/scripts/install.sh"
-    sha256: "b3b6c52ba7b63516ab4dcdbe386d8f8fc8c429c8ee6037718c3dc194b3bf74f4"
+    sha256: "4bab82d54419acc36a3d62b4319775df2f1ff5138c3e53048892521d58806f6a"
 
   dcg:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh"
-    sha256: "b3a4a7b5195cc7c95c31afc663103c216d005ab2bd72b7a2f133dde1a6e43e68"
+    sha256: "e4ee5aaf2fea324c98290073da70d5c5cd8a9936d85ca76a7f6adc6ecc5213a0"
 
   claude:
     url: "https://claude.ai/install.sh"
-    sha256: "363382bed8849f78692bd2f15167a1020e1f23e7da1476ab8808903b6bebae05"
+    sha256: "a27f0c75029d86eab7313ce4d5a2464e4e68dcce76905a1462a76ab4f19937de"
 
   atuin:
     url: "https://setup.atuin.sh"
@@ -60,15 +60,15 @@ installers:
 
   uv:
     url: "https://astral.sh/uv/install.sh"
-    sha256: "7a0b1e0810e59a27e5b34427f111be5c2420c70697eba086038a637760091ea5"
+    sha256: "169fd7c68bdd40f80ab25635b1e10adfc8cef58b4935017e8560c87639d4544c"
 
   pt:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/process_triage/master/install.sh"
-    sha256: "90439a3779d7a05f5d068a2a2ca45e6346360e73bc28e8219529449e4562192f"
+    sha256: "927cb2470a99ef3a0e4bc61ca879f37ae7e9ca9f77535df61e484dd3d5b6ff92"
 
   tru:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/toon_rust/master/install.sh"
-    sha256: "4996301850402a0e18eb4f0f501e42c32b4871cb7f745e53aaec356180ac4989"
+    sha256: "19b9e7d1de4509e54c4ba1646fc0d18c5e39e6b2e1c8b6775dbdda6d268dc316"
 
   ntm:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/ntm/main/install.sh"
