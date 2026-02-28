@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-02-21T04:46:46+00:00
+# checksums.yaml - Auto-generated 2026-02-28T04:27:05+00:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -24,7 +24,7 @@ installers:
 
   cass:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh"
-    sha256: "616223707fe05a86c24ed9ef1bf437009d42ee1af8cc10495cb19876b85bff3e"
+    sha256: "7a8fcb981e84a815e808bdb133518631cb5b19ab6da035aa79e32e5c70e4c4d5"
 
   mcp_agent_mail:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail/main/scripts/install.sh"
@@ -32,11 +32,11 @@ installers:
 
   dcg:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/destructive_command_guard/main/install.sh"
-    sha256: "e4ee5aaf2fea324c98290073da70d5c5cd8a9936d85ca76a7f6adc6ecc5213a0"
+    sha256: "9b8326a505fbca0c07569420acb01aa16f55ceca1e928d81704e55fe2ef75146"
 
   claude:
     url: "https://claude.ai/install.sh"
-    sha256: "a27f0c75029d86eab7313ce4d5a2464e4e68dcce76905a1462a76ab4f19937de"
+    sha256: "431889ac7d056f636aaf5b71524666d04c89c45560f80329940846479d484778"
 
   atuin:
     url: "https://setup.atuin.sh"
@@ -48,7 +48,7 @@ installers:
 
   bun:
     url: "https://bun.sh/install"
-    sha256: "16d1ca592a28bd08b3304073491c4304e50073da6b8af34f8d1e5e8c00fc64d5"
+    sha256: "bab8acfb046aac8c72407bdcce903957665d655d7acaa3e11c7c4616beae68dd"
 
   apr:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/automated_plan_reviser_pro/main/install.sh"
@@ -56,11 +56,11 @@ installers:
 
   mdwb:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/markdown_web_browser/main/install.sh"
-    sha256: "bb7dbf762dd5333c42d0f255e3b90e39724775d3eb7862e3df4801d2b84eb460"
+    sha256: "72134e3c004ea8680962acf82663cc971c5943d4bd1c5b8717386f7e4e199734"
 
   uv:
     url: "https://astral.sh/uv/install.sh"
-    sha256: "169fd7c68bdd40f80ab25635b1e10adfc8cef58b4935017e8560c87639d4544c"
+    sha256: "bcada2f4ddb9d0196fcf33510633a1a892b948fc0d0a8dc7650ddb67f074b6c6"
 
   pt:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/process_triage/master/install.sh"
@@ -76,7 +76,7 @@ installers:
 
   ms:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/meta_skill/main/scripts/install.sh"
-    sha256: "013b8f4dc4c52a4da49e3d011a9f2bd185202d8329af8dae666a1b99f3171181"
+    sha256: "12832a89cb5ba9102bd60672e09ac8e3c40c54b154723f1f8e4832aeafbcb7d0"
 
   cm:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/cass_memory_system/main/install.sh"

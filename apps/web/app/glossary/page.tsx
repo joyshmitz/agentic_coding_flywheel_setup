@@ -300,6 +300,24 @@ export default function GlossaryPage() {
 
   // Hash-based deep linking (preserved functionality)
   useEffect(() => {
+    const openByKey = (key: string): boolean => {
+      const target = document.getElementById(key);
+      if (!target) return false;
+
+      // Open the <details> element if the id is set on the wrapper.
+      if (target instanceof HTMLDetailsElement) {
+        target.open = true;
+      } else {
+        const details = target.closest("details");
+        if (details instanceof HTMLDetailsElement) {
+          details.open = true;
+        }
+      }
+
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      return true;
+    };
+
     const openFromHash = () => {
       const raw = window.location.hash.replace(/^#/, "");
       if (!raw) return;
@@ -311,25 +329,29 @@ export default function GlossaryPage() {
         return;
       }
 
-      // Find the row and expand it
-      const rowIndex = table.getFilteredRowModel().rows.findIndex(row => row.original.key === key);
-      if (rowIndex >= 0) {
-        setExpanded(prev => ({ ...(prev as Record<string, boolean>), [rowIndex]: true }));
+      if (openByKey(key)) return;
 
-        // Scroll to the element
-        setTimeout(() => {
-          const target = document.getElementById(key);
-          if (target) {
-            target.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        }, 100);
-      }
+      const keyExists = entries.some((entry) => entry.key === key);
+      if (!keyExists) return;
+
+      const needsFilterReset = query.length > 0 || category !== "all";
+      if (!needsFilterReset) return;
+
+      setQuery("");
+      setCategory("all");
+
+      // Wait for filtered results to render, then retry opening target.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          openByKey(key);
+        });
+      });
     };
 
     openFromHash();
     window.addEventListener("hashchange", openFromHash);
     return () => window.removeEventListener("hashchange", openFromHash);
-  }, [table]);
+  }, [entries, query, category]);
 
   return (
     <div className="relative min-h-screen bg-background">
