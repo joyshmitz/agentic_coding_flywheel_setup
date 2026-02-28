@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, type ReactNode } from "react";
+import React, { useCallback, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
@@ -39,13 +39,40 @@ import { withCurrentSearch } from "@/lib/utils";
 import { useLocale, getStatusCheckMessages, getCommonMessages } from "@/lib/i18n";
 
 // Helper to render template with bold markers and injected node
+// Handles multiple placeholders and multiple bold sections with composite keys
 function renderTemplate(template: string, placeholder: string, node: ReactNode): ReactNode {
-  const [before = "", after = ""] = template.split(placeholder);
-  const parseBold = (text: string) =>
-    text.split(/\*\*(.*?)\*\*/g).map((part, i) =>
-      i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-    );
-  return <>{parseBold(before)}{node}{parseBold(after)}</>;
+  // Escape special regex characters in placeholder
+  const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Split by placeholder, keeping placeholder as separator for position tracking
+  const parts = template.split(new RegExp(`(${escapedPlaceholder})`));
+
+  return (
+    <>
+      {parts.map((part, partIdx) => {
+        // If this part is the placeholder itself, render the node
+        if (part === placeholder) {
+          return <React.Fragment key={`ph-${partIdx}`}>{node}</React.Fragment>;
+        }
+
+        // Skip empty parts
+        if (!part) return null;
+
+        // Parse **bold** markers in this text segment
+        const boldParts = part.split(/\*\*(.*?)\*\*/g);
+        return (
+          <React.Fragment key={`seg-${partIdx}`}>
+            {boldParts.map((boldPart, boldIdx) =>
+              boldIdx % 2 === 1 ? (
+                <strong key={`b-${partIdx}-${boldIdx}`}>{boldPart}</strong>
+              ) : (
+                boldPart
+              )
+            )}
+          </React.Fragment>
+        );
+      })}
+    </>
+  );
 }
 
 // Category icons for auth section
