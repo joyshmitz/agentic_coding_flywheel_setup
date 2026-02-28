@@ -99,7 +99,7 @@ export default function ReconnectUbuntuPage() {
           <div>
             <p className="font-medium text-foreground">{messages.alreadyUbuntu.title}</p>
             <p className="text-sm text-muted-foreground">
-              <JargonText>{messages.alreadyUbuntu.content}</JargonText>
+              <JargonText page="reconnect-ubuntu">{messages.alreadyUbuntu.content}</JargonText>
             </p>
             <Button
               variant="outline"

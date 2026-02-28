@@ -106,13 +106,13 @@ export default function PreflightCheckPage() {
       <AlertCard variant="error" icon={AlertTriangle} title={messages.windowsWarning.title}>
         <div className="space-y-2">
           <p>
-            <JargonText>{messages.windowsWarning.intro}</JargonText>
+            <JargonText page="preflight-check">{messages.windowsWarning.intro}</JargonText>
           </p>
           <p className="font-semibold">
-            <JargonText>{messages.windowsWarning.mistake}</JargonText>
+            <JargonText page="preflight-check">{messages.windowsWarning.mistake}</JargonText>
           </p>
           <p>
-            <JargonText>{messages.windowsWarning.fix.replace("YOUR_VPS_IP", displayIP)}</JargonText>
+            <JargonText page="preflight-check">{messages.windowsWarning.fix.replace("YOUR_VPS_IP", displayIP)}</JargonText>
           </p>
         </div>
       </AlertCard>

@@ -18,7 +18,7 @@ import type { JargonTerm } from "@/lib/jargon";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import { useLocale, getJargonUiMessages, getJargonTerm } from "@/lib/i18n";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { isJargonTextEnabled } from "@/lib/feature-flags";
+import { isJargonTextEnabled, type WizardPage } from "@/lib/feature-flags";
 
 type Messages = ReturnType<typeof getJargonUiMessages>;
 
@@ -472,7 +472,7 @@ interface JargonTextProps {
    * Optional: wizard page for feature flag check.
    * If provided, JargonText only renders with tooltips if the page is enabled in the rollout.
    */
-  page?: 'launch-onboarding' | 'ssh-connect' | 'status-check' | 'reconnect-ubuntu' | 'verify-key-connection' | 'preflight-check' | 'install-terminal' | 'create-vps' | 'accounts';
+  page?: WizardPage;
 }
 
 /**

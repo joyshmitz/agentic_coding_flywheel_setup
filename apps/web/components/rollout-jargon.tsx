@@ -12,7 +12,7 @@
 
 import React, { ReactNode } from 'react';
 import { JargonText } from '@/components/jargon';
-import { isJargonTextEnabled, WizardPage } from '@/lib/feature-flags';
+import { isJargonTextEnabled, getEnabledPages, WizardPage } from '@/lib/feature-flags';
 
 interface RolloutJargonTextProps {
   children: string | ReactNode;
@@ -55,14 +55,13 @@ export function RolloutDebugBanner() {
   // Only show in development
   if (process.env.NODE_ENV !== 'development') return null;
 
-  const enabledPages = ['launch-onboarding', 'ssh-connect', 'status-check']
-    .filter(page => isJargonTextEnabled(page as WizardPage));
+  const enabledPages = getEnabledPages();
 
   return (
     <div className="fixed bottom-4 right-4 z-50 bg-amber-100 border border-amber-400 rounded px-3 py-2 text-xs max-w-xs">
       <p className="font-semibold text-amber-900">JargonText Rollout Debug</p>
       <p className="text-amber-800">
-        Enabled pages: <strong>{enabledPages.join(', ')}</strong>
+        Enabled pages ({enabledPages.length}): <strong>{enabledPages.join(', ')}</strong>
       </p>
     </div>
   );
