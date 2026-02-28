@@ -207,7 +207,7 @@ function TerminalBasicsSection({ os, messages }: { os: "mac" | "windows" | "linu
 
       {/* Copy/Paste in Terminal */}
       <div className="space-y-3">
-        <h3 className="font-semibold">Copy/Paste in <Jargon term="terminal">Terminal</Jargon></h3>
+        <h3 className="font-semibold">{tb.copyPaste.title}</h3>
         <p className="text-sm text-muted-foreground">
           {tb.copyPaste.intro}
         </p>
@@ -285,9 +285,9 @@ function WindowsContent({ messages }: { messages: Messages }) {
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-medium">Verify <Jargon term="ssh">SSH</Jargon> is available</h3>
+        <h3 className="font-medium">{m.verifySsh.title}</h3>
         <p className="text-sm text-muted-foreground">
-          Open Windows <Jargon term="terminal">Terminal</Jargon> and run this command. You should see a version number.
+          {m.verifySsh.content}
         </p>
         <CommandCard
           command="ssh -V"

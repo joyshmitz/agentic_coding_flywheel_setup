@@ -226,6 +226,7 @@ export const createVpsMessages = {
     title: "Setup checklist",
     subtitle: "Check each item as you complete it to unlock the next step",
     progress: "{done} of {total}",
+    readyPrompt: "Great! Now enter your VPS IP address below to continue",
     items: {
       ubuntu: "Selected Ubuntu 24.04+ (25.10 preferred)",
       region: "Picked a region close to me",
@@ -287,11 +288,22 @@ export const createVpsMessages = {
     detailedSteps: {
       title: "Detailed Steps for Creating Your VPS",
       step1: { title: "Log into your VPS provider", content: "Go to the website where you created your account (OVH or Contabo) and sign in with the email and password you created earlier." },
-      step2: { title: "Find the 'Create Server' or 'Add VPS' button", ovh: "OVH: Click \"Create an instance\" or \"Order\"", contabo: "Contabo: Go to \"Your services\" → click the VPS you ordered" },
+      step2: { title: "Find the 'Create Server' or 'Add VPS' button", lookFor: "Look for a button that says something like:", ovh: "OVH: Click \"Create an instance\" or \"Order\"", contabo: "Contabo: Go to \"Your services\" → click the VPS you ordered" },
       step3: { title: "Choose your server location", content: "Pick a data center close to you for faster speeds. The closer the server, the faster your typing appears and AI responses stream back." },
       step4: { title: "Select Ubuntu as the operating system", content: "You'll see a list of \"images\" or \"operating systems\".", lookFor: "Look for: Ubuntu 25.10 (or newest available)", fallback: "If only Ubuntu 24.04 LTS is offered, that's fine. The installer automatically upgrades to 25.10 before ACFS installs." },
-      step5: { title: "Set a root password", skipSsh: "If asked about SSH keys, skip that section", choosePassword: "Choose \"Password\" authentication", setPassword: "Set a strong root password", saveIt: "Save this password! You'll need it once to connect", emailNote: "Some providers email you a password instead - that's fine too!" },
-      step6: { title: "Choose your plan size", specs: "12-16 vCPU, 48-64 GB RAM, 250GB+ NVMe storage, ~$40-56/month", recommendation: "64GB is strongly recommended. You're investing $400+/month in AI subscriptions, so don't bottleneck that with insufficient RAM." },
+      step5: { title: "Set a root password", lookFor: "Look for a section called \"Authentication\" or \"Password\".", skipSsh: "If asked about SSH keys, skip that section", choosePassword: "Choose \"Password\" authentication", setPassword: "Set a strong root password", saveIt: "Save this password! You'll need it once to connect", emailNote: "Some providers email you a password instead - that's fine too!" },
+      step6: {
+        title: "Choose your plan size",
+        lookFor: "Look for a plan with:",
+        items: [
+          "12-16 vCPU (virtual CPUs)",
+          "48-64 GB RAM (each AI agent uses ~2GB, you want to run 10+)",
+          "250GB+ NVMe storage",
+          "Cost: ~$40-56/month for 64GB (worth it!)",
+        ],
+        specs: "12-16 vCPU, 48-64 GB RAM, 250GB+ NVMe storage, ~$40-56/month",
+        recommendation: "64GB is strongly recommended. You're investing $400+/month in AI subscriptions, so don't bottleneck that with insufficient RAM.",
+      },
       step7: { title: "Create and wait", content: "Click the \"Create\", \"Deploy\", or \"Order\" button.", waitTime: "Your VPS will take 1-5 minutes to start up. You'll see a status like \"Running\" or a green indicator when it's ready." },
       step8: { title: "Find and copy the IP address", content: "Once your VPS is running, look for the IP address.", locations: ["On the main server overview page", "In a \"Network\" or \"IP Addresses\" section"], example: "It looks like: 123.45.67.89", action: "Copy this number and paste it in the box below!" },
     },
@@ -373,7 +385,7 @@ export const windowsTerminalSetupMessages = {
     },
     step4: {
       title: "Save and Test",
-      save: "Click Save at the bottom of the page.",
+      save: "Click {save} at the bottom of the page.",
       test: "Now click the dropdown arrow (▼) next to your tabs — you should see your new \"My VPS\" profile! Click it to connect.",
     },
   },
@@ -1667,6 +1679,7 @@ export const statusCheckMessages = {
     checks: [
       { command: "cc --version", description: "Check Claude Code is installed" },
       { command: "bun --version", description: "Check bun is installed" },
+      { command: "ms --version", description: "Check Meta Skill is installed" },
       { command: "which tmux", description: "Check tmux is installed" },
     ],
   },
@@ -1674,6 +1687,7 @@ export const statusCheckMessages = {
   authenticateServices: {
     title: "Authenticate your services",
     subtitle: "Log in to the tools you plan to use now (you can do the rest later)",
+    loginDescription: "Log in to {name}",
   },
 
   headlessAuth: {
@@ -1687,6 +1701,56 @@ export const statusCheckMessages = {
       "Return to your terminal — it should confirm success",
     ],
     note: "If you see \"Opening browser...\" but nothing happens, that's normal! Just copy the URL shown and open it manually on your laptop.",
+    codex: {
+      title: "Codex CLI: Special Headless Setup",
+      introStrong: "Codex requires extra steps",
+      intro: "because its OAuth callback expects",
+      introSuffix: "which doesn't work on a remote VPS.",
+      option1Title: "Option 1: Device Auth (Recommended)",
+      securityLinkLabel: "ChatGPT Settings → Security",
+      option1Steps: [
+        "Go to",
+        "Enable \"Device code login\" (may be in beta)",
+        "Then run:",
+      ],
+      option2Title: "Option 2: SSH Tunnel",
+      option2Steps: [
+        "On your laptop:",
+        "In that SSH session (on VPS):",
+        "The OAuth redirect will reach your VPS through the tunnel",
+      ],
+    },
+    wrangler: {
+      title: "Wrangler: Headless VPS Setup",
+      introStrong: "Wrangler requires a browser",
+      intro: "for",
+      introSuffix: "which doesn't work on a headless VPS.",
+      solutionTitle: "Solution: Use API Token",
+      linkLabel: "Cloudflare → API Tokens",
+      steps: [
+        "Go to",
+        "Create a token with the permissions you need (e.g., Workers, Pages)",
+        "Add to your",
+      ],
+      after: "Then run",
+      afterSuffix: "or start a new shell.",
+    },
+    cloud: {
+      title: "Supabase & Vercel: Headless VPS Setup",
+      intro: "These CLIs also use browser-based OAuth. For headless VPS, use access tokens instead.",
+      supabaseTitle: "Supabase:",
+      supabaseLinkLabel: "Supabase → Access Tokens",
+      supabaseSteps: [
+        "Go to",
+        "Create a token, then add to",
+      ],
+      vercelTitle: "Vercel:",
+      vercelLinkLabel: "Vercel → Tokens",
+      vercelSteps: [
+        "Go to",
+        "Create a token, then use with commands:",
+      ],
+    },
   },
 
   dontNeedAll: {

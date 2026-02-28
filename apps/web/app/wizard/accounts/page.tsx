@@ -43,33 +43,25 @@ import { Jargon } from "@/components/jargon";
 // Type for messages
 type Messages = ReturnType<typeof getAccountsMessages>;
 
-const TIER_META: Record<
+const TIER_UI_META: Record<
   ServiceTier,
   {
-    title: string;
-    description: string;
     icon: React.ReactNode;
     accentClass: string;
     defaultOpen: boolean;
   }
 > = {
   essential: {
-    title: "Essential (Do these now)",
-    description: "Two accounts you need to start your first project.",
     icon: <Shield className="h-5 w-5" />,
     accentClass: "bg-[oklch(0.72_0.19_145/0.2)] text-[oklch(0.72_0.19_145)]",
     defaultOpen: true,
   },
   recommended: {
-    title: "Recommended (After your first project)",
-    description: "Add more AI agents when you want extra coverage.",
     icon: <Bot className="h-5 w-5" />,
     accentClass: "bg-[oklch(0.75_0.18_195/0.18)] text-[oklch(0.75_0.18_195)]",
     defaultOpen: false,
   },
   optional: {
-    title: "Optional (When you need them)",
-    description: "Deployment, databases, and infrastructure extras.",
     icon: <Cloud className="h-5 w-5" />,
     accentClass: "bg-muted text-muted-foreground",
     defaultOpen: false,
@@ -207,11 +199,11 @@ function TierSection({
   onToggleService,
   messages,
 }: TierSectionProps) {
-  const [isOpen, setIsOpen] = useState(TIER_META[tier].defaultOpen);
+  const [isOpen, setIsOpen] = useState(TIER_UI_META[tier].defaultOpen);
   const checkedCount = services.filter((service) =>
     checkedServices.has(service.id)
   ).length;
-  const meta = TIER_META[tier];
+  const meta = TIER_UI_META[tier];
   const tierMessages = messages.tierMeta[tier];
 
   if (services.length === 0) return null;

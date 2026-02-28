@@ -168,9 +168,23 @@ async function main() {
   }
   console.log("✓ localStorage locale: uk");
 
-  // Verify UI actually shows Ukrainian (not just localStorage)
-  const bodyText = await page.evaluate(() => document.body.innerText);
-  const hasCyrillic = /[\u0400-\u04FF]/.test(bodyText);
+  // Verify UI actually shows Ukrainian (not just localStorage).
+  // Some root routes are intentionally brand/English-heavy, so probe a few
+  // known localized routes before failing.
+  const localeProbeRoutes = ["/wizard/os-selection", ...SCOPE_ROUTES];
+  let hasCyrillic = false;
+  for (const route of localeProbeRoutes) {
+    const res = await page.goto(`${baseUrl}${route}`, {
+      waitUntil: "networkidle",
+      timeout: 15000,
+    });
+    if (!res || !res.ok()) continue;
+    const bodyText = await page.evaluate(() => document.body.innerText);
+    if (/[\u0400-\u04FF]/.test(bodyText)) {
+      hasCyrillic = true;
+      break;
+    }
+  }
   if (!hasCyrillic) {
     console.error("❌ UI does not contain Cyrillic text - locale not applied");
     process.exit(1);
