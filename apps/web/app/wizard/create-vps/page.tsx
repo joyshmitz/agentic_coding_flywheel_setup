@@ -519,8 +519,8 @@ export default function CreateVPSPage() {
                 <GuideStep number={2} title={messages.guide.detailedSteps.step2.title}>
                   {messages.guide.detailedSteps.step2.lookFor}
                   <ul className="mt-2 list-disc space-y-1 pl-5">
-                    <li><span dangerouslySetInnerHTML={{ __html: messages.guide.detailedSteps.step2.ovh.replace(/^([^:]+:)/, '<strong>$1</strong>') }} /></li>
-                    <li><span dangerouslySetInnerHTML={{ __html: messages.guide.detailedSteps.step2.contabo.replace(/^([^:]+:)/, '<strong>$1</strong>') }} /></li>
+                    <li><JargonText page="create-vps">{messages.guide.detailedSteps.step2.ovh}</JargonText></li>
+                    <li><JargonText page="create-vps">{messages.guide.detailedSteps.step2.contabo}</JargonText></li>
                   </ul>
                 </GuideStep>
 
@@ -597,9 +597,7 @@ export default function CreateVPSPage() {
             </GuideTip>
 
             <GuideCaution>
-              <span dangerouslySetInnerHTML={{
-                __html: messages.guide.passwordCaution.replace(/^([^!]+!)/, '<strong>$1</strong>')
-              }} />
+              <JargonText page="create-vps">{messages.guide.passwordCaution}</JargonText>
             </GuideCaution>
           </div>
         </SimplerGuide>

@@ -67,9 +67,9 @@ function MacContent({ messages }: { messages: Messages }) {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <p className="text-muted-foreground" dangerouslySetInnerHTML={{
-          __html: m.intro.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>')
-        }} />
+        <p className="text-muted-foreground">
+          <JargonText page="install-terminal">{m.intro}</JargonText>
+        </p>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <TerminalCard
@@ -101,9 +101,9 @@ function MacContent({ messages }: { messages: Messages }) {
           </GuideExplain>
 
           <GuideSection title={g.quickDownload.title}>
-            <p className="mb-4" dangerouslySetInnerHTML={{
-              __html: g.quickDownload.intro.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            }} />
+            <p className="mb-4">
+              <JargonText page="install-terminal">{g.quickDownload.intro}</JargonText>
+            </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <DirectDownloadButton
                 href={GHOSTTY_MAC_DMG}
@@ -273,9 +273,9 @@ function WindowsContent({ messages }: { messages: Messages }) {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <p className="text-muted-foreground" dangerouslySetInnerHTML={{
-          __html: m.intro.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>')
-        }} />
+        <p className="text-muted-foreground">
+          <JargonText page="install-terminal">{m.intro}</JargonText>
+        </p>
 
         <TerminalCard
           name={m.terminal.name}
