@@ -163,9 +163,8 @@ function validateRolloutConfig() {
     if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') {
       throw new Error(`[JargonText] Invalid configuration:\n${message}`);
     }
-  } else {
-    console.log('[JargonText] Configuration validated ✓');
   }
+  // Skip success log to avoid noise in server logs
 }
 
 // Run validation at module load time
@@ -209,10 +208,19 @@ export const pendingJargonTextPages: PendingPageInfo[] = [
  * Useful for dashboards, reporting, and progress tracking.
  */
 export interface CoverageStats {
-  total: number; // Total wizard pages
+  total: number; // Total wizard pages (tracked + pending)
   covered: number; // Pages with JargonText enabled
   pending: number; // Pages pending coverage
-  percentage: number; // Coverage percentage
+  /**
+   * Coverage percentage of tracked pages only (6/9 = 67%).
+   * Use this for milestone reporting: "67% of tracked wizard pages have JargonText"
+   */
+  percentageTracked: number;
+  /**
+   * Overall coverage percentage including pending (6/11 = 55%).
+   * Use this for long-term goal reporting: "55% of all wizard pages have JargonText"
+   */
+  percentageOverall: number;
   details: {
     phase1Count: number;
     phase2Count: number;
@@ -235,13 +243,15 @@ export function getCoverageStats(): CoverageStats {
 
   const covered = getEnabledPages().length;
   const pending = pendingJargonTextPages.length;
-  const total = allPages.length + pending;
+  const trackedPages = allPages.length; // 9 pages
+  const total = trackedPages + pending; // 11 pages
 
   return {
     total,
     covered,
     pending,
-    percentage: Math.round((covered / (allPages.length)) * 100),
+    percentageTracked: Math.round((covered / trackedPages) * 100), // 6/9 = 67%
+    percentageOverall: Math.round((covered / total) * 100), // 6/11 = 55%
     details: {
       phase1Count: jargonTextRollout.phase1.pages.length,
       phase2Count: jargonTextRollout.phase2.pages.length,

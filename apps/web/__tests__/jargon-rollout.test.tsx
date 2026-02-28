@@ -14,7 +14,9 @@ import {
   isJargonTextEnabled,
   getRolloutPhase,
   getEnabledPages,
+  getCoverageStats,
   jargonTextRollout,
+  pendingJargonTextPages,
 } from '@/lib/feature-flags';
 import { JargonText } from '@/components/jargon';
 
@@ -36,12 +38,24 @@ describe('JargonText Feature Flags', () => {
       expect(isJargonTextEnabled('status-check')).toBe(true);
     });
 
+    it('should include install-terminal in phase1', () => {
+      expect(isJargonTextEnabled('install-terminal')).toBe(true);
+    });
+
+    it('should include create-vps in phase1', () => {
+      expect(isJargonTextEnabled('create-vps')).toBe(true);
+    });
+
+    it('should include accounts in phase1', () => {
+      expect(isJargonTextEnabled('accounts')).toBe(true);
+    });
+
     it('should return phase1 as current rollout phase', () => {
       expect(getRolloutPhase()).toBe('phase1');
     });
 
-    it('should have exactly 3 pages in phase1', () => {
-      expect(jargonTextRollout.phase1.pages.length).toBe(3);
+    it('should have exactly 6 pages in phase1', () => {
+      expect(jargonTextRollout.phase1.pages.length).toBe(6);
     });
   });
 
@@ -59,11 +73,6 @@ describe('JargonText Feature Flags', () => {
       expect(isJargonTextEnabled('verify-key-connection')).toBe(false);
       expect(isJargonTextEnabled('preflight-check')).toBe(false);
     });
-
-    it('should not enable phase3 pages', () => {
-      expect(isJargonTextEnabled('install-terminal')).toBe(false);
-      expect(isJargonTextEnabled('create-vps')).toBe(false);
-    });
   });
 
   describe('Enabled Pages Collection', () => {
@@ -72,6 +81,9 @@ describe('JargonText Feature Flags', () => {
       expect(enabled).toContain('launch-onboarding');
       expect(enabled).toContain('ssh-connect');
       expect(enabled).toContain('status-check');
+      expect(enabled).toContain('install-terminal');
+      expect(enabled).toContain('create-vps');
+      expect(enabled).toContain('accounts');
     });
 
     it('should not return phase2 pages when disabled', () => {
@@ -81,9 +93,9 @@ describe('JargonText Feature Flags', () => {
       expect(enabled).not.toContain('preflight-check');
     });
 
-    it('should have exactly 3 enabled pages in phase1', () => {
+    it('should have exactly 6 enabled pages in phase1', () => {
       const enabled = getEnabledPages();
-      expect(enabled.length).toBe(3);
+      expect(enabled.length).toBe(6);
     });
   });
 });
@@ -176,6 +188,51 @@ describe('JargonText Component Rendering', () => {
 
       expect(container.firstChild).toMatchSnapshot('status-check-jargon');
     });
+  });
+});
+
+describe('Coverage Statistics', () => {
+  it('should track pending pages', () => {
+    expect(pendingJargonTextPages.length).toBe(2);
+    expect(pendingJargonTextPages[0].page).toBe('generate-ssh-key');
+    expect(pendingJargonTextPages[1].page).toBe('rent-vps');
+  });
+
+  it('should calculate coverage stats correctly', () => {
+    const stats = getCoverageStats();
+
+    // 6 covered (phase1), 9 tracked total, 2 pending = 11 total
+    expect(stats.covered).toBe(6);
+    expect(stats.pending).toBe(2);
+    expect(stats.total).toBe(11);
+
+    // percentageTracked: 6/9 = 67%
+    expect(stats.percentageTracked).toBe(67);
+
+    // percentageOverall: 6/11 = 55%
+    expect(stats.percentageOverall).toBe(55);
+  });
+
+  it('should have correct phase breakdown in coverage stats', () => {
+    const stats = getCoverageStats();
+
+    expect(stats.details.phase1Count).toBe(6);
+    expect(stats.details.phase2Count).toBe(3);
+    expect(stats.details.phase3Count).toBe(0);
+  });
+
+  it('should indicate pending pages have estimated effort', () => {
+    const generateSshKey = pendingJargonTextPages.find(p => p.page === 'generate-ssh-key');
+    expect(generateSshKey).toBeDefined();
+    expect(generateSshKey?.estimatedEffort).toBe('2-3 hours');
+    expect(generateSshKey?.dangerouslySetInnerHTMLCount).toBe(15);
+  });
+
+  it('should indicate rent-vps is highest priority pending page', () => {
+    const rentVps = pendingJargonTextPages.find(p => p.page === 'rent-vps');
+    expect(rentVps).toBeDefined();
+    expect(rentVps?.dangerouslySetInnerHTMLCount).toBe(26);
+    expect(rentVps?.estimatedEffort).toBe('3-4 hours');
   });
 });
 
