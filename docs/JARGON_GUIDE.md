@@ -145,7 +145,35 @@ const good2 = (
     <code>server.com</code> securely
   </p>
 );
+
+// Solution 3: Use wrapJargonInMixed() helper (RECOMMENDED)
+import { wrapJargonInMixed } from "@/lib/jargon-helpers.tsx";
+
+const good3 = (
+  <p>
+    {wrapJargonInMixed(
+      <>SSH connects to <code>server.com</code> securely</>
+    )}
+  </p>
+);
+
+// Solution 3 with feature flag and styling
+const good3WithOptions = (
+  <p>
+    {wrapJargonInMixed(
+      <>SSH connects to <code>server.com</code> securely</>,
+      { page: "ssh-connect", className: "text-sm" }
+    )}
+  </p>
+);
 ```
+
+**Why Solution 3?**
+- ✅ Automatically wraps text segments in JargonText
+- ✅ Preserves all JSX elements exactly as-is
+- ✅ Handles fragments, nested JSX, and mixed content
+- ✅ Supports feature flags and custom styling
+- ✅ Cleaner than manually segmenting text
 
 ---
 
@@ -378,6 +406,71 @@ When you add JargonText to a new wizard page:
 
 ---
 
+## 🛠️ JSX Helper Functions
+
+For complex mixed content (text + JSX elements), use helpers from `@/lib/jargon-helpers.tsx`:
+
+### `wrapJargonInMixed(children, options?)`
+
+Automatically wraps text segments in JargonText while preserving JSX elements.
+
+```tsx
+import { wrapJargonInMixed } from "@/lib/jargon-helpers.tsx";
+
+// Before: Manual segmentation required
+<p>
+  <JargonText>SSH connects to </JargonText>
+  <code>server.com</code>
+  <JargonText> securely</JargonText>
+</p>
+
+// After: Automatic wrapping
+<p>
+  {wrapJargonInMixed(
+    <>SSH connects to <code>server.com</code> securely</>
+  )}
+</p>
+
+// With feature flag and styling
+<p>
+  {wrapJargonInMixed(
+    <>SSH is <strong>important</strong> for VPS access</>,
+    { page: "ssh-connect", className: "text-sm" }
+  )}
+</p>
+```
+
+### `wrapJargonInMixedFlat(children, options?)`
+
+Same as `wrapJargonInMixed` but returns a flat array for use in fragments:
+
+```tsx
+import { wrapJargonInMixedFlat } from "@/lib/jargon-helpers.tsx";
+
+<>
+  {wrapJargonInMixedFlat(
+    <>SSH to <code>host.com</code> is secure</>
+  )}
+</>
+```
+
+### `wrapJargonTextSegments(text, placeholder, replacement, options?)`
+
+For template-based text with placeholders:
+
+```tsx
+import { wrapJargonTextSegments } from "@/lib/jargon-helpers.tsx";
+
+{wrapJargonTextSegments(
+  'SSH connects to {host} securely',
+  '{host}',
+  <code>example.com</code>,
+  { page: "ssh-connect" }
+)}
+```
+
+---
+
 ## 🔗 Related Files
 
 - `apps/web/lib/feature-flags.ts` - Rollout configuration & utilities
@@ -385,6 +478,7 @@ When you add JargonText to a new wizard page:
 - `apps/web/components/jargon.tsx` - JargonText implementation & defaultJargonMappings
 - `apps/web/components/rollout-jargon.tsx` - Feature-flag-aware wrapper
 - `apps/web/lib/jargon.ts` - Term definitions
+- `apps/web/lib/jargon-helpers.tsx` - JSX helper functions (20 unit tests)
 
 ---
 
