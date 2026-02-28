@@ -381,9 +381,9 @@ When you add JargonText to a new wizard page:
 ## 🔗 Related Files
 
 - `apps/web/lib/feature-flags.ts` - Rollout configuration & utilities
+- `apps/web/lib/__tests__/feature-flags.test.ts` - Integration tests (46 tests)
 - `apps/web/components/jargon.tsx` - JargonText implementation & defaultJargonMappings
 - `apps/web/components/rollout-jargon.tsx` - Feature-flag-aware wrapper
-- `apps/web/e2e/feature-flags-rollout.spec.ts` - Playwright E2E tests for rollout logic
 - `apps/web/lib/jargon.ts` - Term definitions
 
 ---
