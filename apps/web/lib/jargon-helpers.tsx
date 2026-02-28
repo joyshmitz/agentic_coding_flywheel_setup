@@ -60,7 +60,7 @@ export function wrapJargonInMixed(
     if (React.isValidElement(child) && child.type === React.Fragment) {
       return (
         <React.Fragment key={`fragment-${index}`}>
-          {wrapJargonInMixed(child.props.children, options)}
+          {wrapJargonInMixed((child.props as any).children, options)}
         </React.Fragment>
       );
     }
@@ -113,7 +113,7 @@ export function wrapJargonInMixedFlat(
     }
     // Fragment: recursively flatten
     else if (React.isValidElement(child) && child.type === React.Fragment) {
-      const flattened = wrapJargonInMixedFlat(child.props.children, options);
+      const flattened = wrapJargonInMixedFlat((child.props as any).children, options);
       result.push(...flattened);
     }
     // JSX Element: preserve as-is
