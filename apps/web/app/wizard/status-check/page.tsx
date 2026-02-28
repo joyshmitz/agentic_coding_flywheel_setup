@@ -39,12 +39,33 @@ import { withCurrentSearch } from "@/lib/utils";
 import { useLocale, getStatusCheckMessages, getCommonMessages } from "@/lib/i18n";
 
 // Helper to render template with bold markers and injected node
-// Handles multiple placeholders and multiple bold sections with composite keys
+// Handles multiple placeholders, bold sections, and missing placeholders with fallback
 function renderTemplate(template: string, placeholder: string, node: ReactNode): ReactNode {
   // Escape special regex characters in placeholder
   const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   // Split by placeholder, keeping placeholder as separator for position tracking
   const parts = template.split(new RegExp(`(${escapedPlaceholder})`));
+
+  // Check if placeholder was actually found in template
+  const foundPlaceholder = parts.some((p) => p === placeholder);
+  if (!foundPlaceholder) {
+    console.warn(
+      `[renderTemplate] Placeholder "${placeholder}" not found in template. ` +
+      `Node will be appended at end as fallback. This may indicate a translation error.`,
+      { template, placeholder }
+    );
+  }
+
+  const parseBold = (text: string, segIdx: number) => {
+    const boldParts = text.split(/\*\*(.*?)\*\*/g);
+    return boldParts.map((boldPart, boldIdx) =>
+      boldIdx % 2 === 1 ? (
+        <strong key={`b-${segIdx}-${boldIdx}`}>{boldPart}</strong>
+      ) : (
+        boldPart
+      )
+    );
+  };
 
   return (
     <>
@@ -58,19 +79,14 @@ function renderTemplate(template: string, placeholder: string, node: ReactNode):
         if (!part) return null;
 
         // Parse **bold** markers in this text segment
-        const boldParts = part.split(/\*\*(.*?)\*\*/g);
         return (
           <React.Fragment key={`seg-${partIdx}`}>
-            {boldParts.map((boldPart, boldIdx) =>
-              boldIdx % 2 === 1 ? (
-                <strong key={`b-${partIdx}-${boldIdx}`}>{boldPart}</strong>
-              ) : (
-                boldPart
-              )
-            )}
+            {parseBold(part, partIdx)}
           </React.Fragment>
         );
       })}
+      {/* Fallback: if placeholder not found, append node at end */}
+      {!foundPlaceholder && <React.Fragment key="fallback">{node}</React.Fragment>}
     </>
   );
 }
