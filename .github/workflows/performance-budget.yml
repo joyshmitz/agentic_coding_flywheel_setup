@@ -8,10 +8,12 @@ on:
     paths:
       - 'apps/web/components/jargon.tsx'
       - 'apps/web/lib/feature-flags.ts'
+      - 'apps/web/lib/lru-cache.ts'
       - 'apps/web/lib/__tests__/feature-flags.test.ts'
       - 'apps/web/lib/jargon.ts'
       - 'apps/web/package.json'
       - 'scripts/benchmark-jargon.js'
+      - '.github/workflows/performance-budget.yml'
   pull_request:
     branches:
       - main
@@ -19,10 +21,12 @@ on:
     paths:
       - 'apps/web/components/jargon.tsx'
       - 'apps/web/lib/feature-flags.ts'
+      - 'apps/web/lib/lru-cache.ts'
       - 'apps/web/lib/__tests__/feature-flags.test.ts'
       - 'apps/web/lib/jargon.ts'
       - 'apps/web/package.json'
       - 'scripts/benchmark-jargon.js'
+      - '.github/workflows/performance-budget.yml'
 
 jobs:
   performance-budget:
@@ -39,6 +43,10 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Build web app (required for bundle measurement)
+        run: bun run build
+        working-directory: ./apps/web
+
       - name: Run performance budget check
         id: benchmark
         run: bun scripts/benchmark-jargon.js
@@ -46,8 +54,8 @@ jobs:
           WEB_DIR: ./apps/web
           GITHUB_ACTIONS: ${{ runner.os != '' }}
 
-      - name: Run integration tests
-        run: bun test lib/__tests__/feature-flags.test.ts
+      - name: Run feature-flags integration tests
+        run: bun test lib/__tests__/feature-flags.test.ts --no-coverage
         working-directory: ./apps/web
 
       - name: TypeScript check
