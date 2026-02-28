@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
@@ -37,6 +37,16 @@ import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
 import { Jargon, JargonText } from "@/components/jargon";
 import { withCurrentSearch } from "@/lib/utils";
 import { useLocale, getStatusCheckMessages, getCommonMessages } from "@/lib/i18n";
+
+// Helper to render template with bold markers and injected node
+function renderTemplate(template: string, placeholder: string, node: ReactNode): ReactNode {
+  const [before = "", after = ""] = template.split(placeholder);
+  const parseBold = (text: string) =>
+    text.split(/\*\*(.*?)\*\*/g).map((part, i) =>
+      i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+    );
+  return <>{parseBold(before)}{node}{parseBold(after)}</>;
+}
 
 // Category icons for auth section
 const AUTH_CATEGORY_ICONS: Record<ServiceCategory, React.ReactNode> = {
@@ -85,9 +95,6 @@ export default function StatusCheckPage() {
 
   // Compute auth services once, not on every category iteration
   const authServices = getAuthServices();
-  const codexIntroSegments = messages.headlessAuth.codex.introTemplate.split("{callback}");
-  const wranglerIntroSegments = messages.headlessAuth.wrangler.introTemplate.split("{command}");
-  const wranglerAfterSegments = messages.headlessAuth.wrangler.afterTemplate.split("{command}");
 
   return (
     <div className="space-y-8">
@@ -231,9 +238,11 @@ export default function StatusCheckPage() {
         <AlertCard variant="warning" icon={AlertCircle} title={messages.headlessAuth.codex.title}>
           <div className="space-y-2">
             <p>
-              <strong>{codexIntroSegments[0]}</strong>
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">localhost:1455</code>
-              {codexIntroSegments[1] ?? ""}
+              {renderTemplate(
+                messages.headlessAuth.codex.introTemplate,
+                "{callback}",
+                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">localhost:1455</code>
+              )}
             </p>
             <p className="text-sm font-medium">{messages.headlessAuth.codex.option1Title}</p>
             <ol className="list-decimal list-inside space-y-1 text-sm pl-2">
@@ -268,9 +277,11 @@ export default function StatusCheckPage() {
         <AlertCard variant="warning" icon={AlertCircle} title={messages.headlessAuth.wrangler.title}>
           <div className="space-y-2">
             <p>
-              <strong>{wranglerIntroSegments[0]}</strong>
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">wrangler login</code>
-              {wranglerIntroSegments[1] ?? ""}
+              {renderTemplate(
+                messages.headlessAuth.wrangler.introTemplate,
+                "{command}",
+                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">wrangler login</code>
+              )}
             </p>
             <p className="text-sm font-medium">{messages.headlessAuth.wrangler.solutionTitle}</p>
             <ol className="list-decimal list-inside space-y-1 text-sm pl-2">
@@ -288,9 +299,11 @@ export default function StatusCheckPage() {
             </ol>
             <CodeBlock code={`export CLOUDFLARE_API_TOKEN="your-token-here"\nexport CLOUDFLARE_ACCOUNT_ID="your-account-id"`} language="bash" className="mt-1" />
             <p className="text-xs text-muted-foreground mt-1">
-              {wranglerAfterSegments[0]}
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">source ~/.zshrc</code>
-              {wranglerAfterSegments[1] ?? ""}
+              {renderTemplate(
+                messages.headlessAuth.wrangler.afterTemplate,
+                "{command}",
+                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">source ~/.zshrc</code>
+              )}
             </p>
           </div>
         </AlertCard>

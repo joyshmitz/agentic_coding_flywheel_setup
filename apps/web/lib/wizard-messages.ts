@@ -239,12 +239,12 @@ export const createVpsMessages = {
   regionTip: {
     title: "Why region matters",
     content: "Closer servers = faster response times. When you type, commands reach your VPS faster. When AI generates code, it appears on your screen faster.",
-    regions: {
-      usa: { label: "USA:", hint: "Pick US-West (Los Angeles/Seattle) or US-East (Virginia/New York)" },
-      europe: { label: "Europe:", hint: "Pick Germany (Nuremberg/Frankfurt), France, or Finland" },
-      asiaPacific: { label: "Asia-Pacific:", hint: "Pick Singapore, Sydney, or Tokyo" },
-      unsure: { label: "Unsure?", hint: "Any region works fine—pick one!" },
-    },
+    regions: [
+      { label: "USA:", hint: "Pick US-West (Los Angeles/Seattle) or US-East (Virginia/New York)" },
+      { label: "Europe:", hint: "Pick Germany (Nuremberg/Frankfurt), France, or Finland" },
+      { label: "Asia-Pacific:", hint: "Pick Singapore, Sydney, or Tokyo" },
+      { label: "Unsure?", hint: "Any region works fine—pick one!" },
+    ],
   },
 
   providerHelp: {
@@ -294,13 +294,6 @@ export const createVpsMessages = {
       step3: {
         title: "Choose your server location",
         content: "Pick a data center close to you for faster speeds. The closer the server, the faster your typing appears and AI responses stream back.",
-        regions: [
-          "USA West Coast: Pick US-West, Los Angeles, or Seattle",
-          "USA East Coast: Pick US-East, Virginia, or New York",
-          "Europe: Pick Germany (Nuremberg/Frankfurt), France, or Finland",
-          "Asia-Pacific: Pick Singapore, Sydney, or Tokyo",
-          "If unsure: Just pick one! Any region works, and the difference is small.",
-        ],
       },
       step4: { title: "Select Ubuntu as the operating system", content: "You'll see a list of \"images\" or \"operating systems\".", lookFor: "Look for: Ubuntu 25.10 (or newest available)", fallback: "If only Ubuntu 24.04 LTS is offered, that's fine. The installer automatically upgrades to 25.10 before ACFS installs." },
       step5: { title: "Set a root password", lookFor: "Look for a section called \"Authentication\" or \"Password\".", skipSsh: "If asked about SSH keys, skip that section", choosePassword: "Choose \"Password\" authentication", setPassword: "Set a strong root password", saveIt: "Save this password! You'll need it once to connect", emailNote: "Some providers email you a password instead - that's fine too!" },
@@ -1715,7 +1708,7 @@ export const statusCheckMessages = {
     note: "If you see \"Opening browser...\" but nothing happens, that's normal! Just copy the URL shown and open it manually on your laptop.",
     codex: {
       title: "Codex CLI: Special Headless Setup",
-      introTemplate: "Codex requires extra steps because its OAuth callback expects {callback}, which doesn't work on a remote VPS.",
+      introTemplate: "**Codex requires extra steps** because its OAuth callback expects {callback}, which doesn't work on a remote VPS.",
       option1Title: "Option 1: Device Auth (Recommended)",
       securityLinkLabel: "ChatGPT Settings → Security",
       option1Steps: [
@@ -1732,7 +1725,7 @@ export const statusCheckMessages = {
     },
     wrangler: {
       title: "Wrangler: Headless VPS Setup",
-      introTemplate: "Wrangler requires a browser for {command}, which doesn't work on a headless VPS.",
+      introTemplate: "**Wrangler requires a browser** for {command}, which doesn't work on a headless VPS.",
       solutionTitle: "Solution: Use API Token",
       linkLabel: "Cloudflare → API Tokens",
       steps: [

@@ -468,22 +468,12 @@ export default function CreateVPSPage() {
             <JargonText>{messages.regionTip.content}</JargonText>
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 text-sm">
-            <div className="rounded-lg bg-background/50 px-3 py-2">
-              <span className="font-medium text-foreground">{messages.regionTip.regions.usa.label}</span>{" "}
-              <span className="text-muted-foreground">{messages.regionTip.regions.usa.hint}</span>
-            </div>
-            <div className="rounded-lg bg-background/50 px-3 py-2">
-              <span className="font-medium text-foreground">{messages.regionTip.regions.europe.label}</span>{" "}
-              <span className="text-muted-foreground">{messages.regionTip.regions.europe.hint}</span>
-            </div>
-            <div className="rounded-lg bg-background/50 px-3 py-2">
-              <span className="font-medium text-foreground">{messages.regionTip.regions.asiaPacific.label}</span>{" "}
-              <span className="text-muted-foreground">{messages.regionTip.regions.asiaPacific.hint}</span>
-            </div>
-            <div className="rounded-lg bg-background/50 px-3 py-2">
-              <span className="font-medium text-foreground">{messages.regionTip.regions.unsure.label}</span>{" "}
-              <span className="text-muted-foreground">{messages.regionTip.regions.unsure.hint}</span>
-            </div>
+            {messages.regionTip.regions.map((region, idx) => (
+              <div key={idx} className="rounded-lg bg-background/50 px-3 py-2">
+                <span className="font-medium text-foreground">{region.label}</span>{" "}
+                <span className="text-muted-foreground">{region.hint}</span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -537,8 +527,8 @@ export default function CreateVPSPage() {
                 <GuideStep number={3} title={messages.guide.detailedSteps.step3.title}>
                   {messages.guide.detailedSteps.step3.content}
                   <ul className="mt-2 list-disc space-y-1 pl-5">
-                    {messages.guide.detailedSteps.step3.regions.map((region, idx) => (
-                      <li key={idx}>{region}</li>
+                    {messages.regionTip.regions.map((region, idx) => (
+                      <li key={idx}>{region.label} {region.hint}</li>
                     ))}
                   </ul>
                 </GuideStep>
