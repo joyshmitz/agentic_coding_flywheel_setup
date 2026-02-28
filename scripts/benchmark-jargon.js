@@ -99,25 +99,59 @@ async function runBenchmarks() {
         .sort((a, b) => b.length - a.length) // Match longer patterns first
         .map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 
-      // Warm up - build regex and test it
+      // Simulate real JargonText.tsx path:
+      // 1. Build regex from patterns
+      // 2. regex.exec() loop to find matches
+      // 3. Create parts array with text + regex matches
+      // 4. (Cache would skip this, but we measure cache miss path)
+
+      // Helper to simulate JargonText matching logic
+      const simulateJargonTextMatch = (text) => {
+        const regexPattern = escapedPatterns
+          .map(p => p.includes(' ') ? `(${p})` : `\\b(${p})\\b`)
+          .join('|');
+
+        const regex = new RegExp(regexPattern, 'gi');
+        const parts = [];
+        let lastIndex = 0;
+        let match;
+
+        // This is the real path: regex.exec() loop, not split()
+        while ((match = regex.exec(text)) !== null) {
+          // Add text before match
+          if (match.index > lastIndex) {
+            parts.push(text.slice(lastIndex, match.index));
+          }
+          // Add matched term
+          parts.push(match[0]);
+          lastIndex = match.index + match[0].length;
+        }
+
+        // Add remaining text
+        if (lastIndex < text.length) {
+          parts.push(text.slice(lastIndex));
+        }
+
+        return parts;
+      };
+
+      // Warm up - execute real path
       for (let i = 0; i < 10; i++) {
-        const regex = new RegExp('\\b(' + escapedPatterns.join('|') + ')\\b', 'gi');
-        testText.split(regex);
+        simulateJargonTextMatch(testText);
       }
 
-      // Actual benchmark
+      // Actual benchmark - measure real JargonText path
       const iterations = 100;
       const start = performance.now();
 
       for (let i = 0; i < iterations; i++) {
-        const regex = new RegExp('\\b(' + escapedPatterns.join('|') + ')\\b', 'gi');
-        const result = testText.split(regex);
+        simulateJargonTextMatch(testText);
       }
 
       const end = performance.now();
       const totalTime = end - start;
       const avgTime = totalTime / iterations;
-      // FIXED: avgTime is in ms, multiply by total terms to estimate full page (not divide by 1000)
+      // avgTime is per occurrence; multiply by totalTerms to estimate full page
       metrics.renderTime = avgTime * BUDGET.totalTerms;
 
       console.log(`Total time (${iterations} iterations): ${totalTime.toFixed(2)}ms`);
