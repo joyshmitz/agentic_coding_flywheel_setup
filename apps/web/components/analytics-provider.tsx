@@ -91,9 +91,6 @@ function AnalyticsTracker() {
 
   // Initialize session tracking on mount
   useEffect(() => {
-    // Initialize JargonTelemetry (independent of GA)
-    JargonTelemetry.initialize();
-
     if (!gaId) return;
 
     // Get or create user ID
