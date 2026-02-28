@@ -2,6 +2,19 @@ import { describe, it, expect } from 'bun:test';
 import React from 'react';
 import { wrapJargonInMixed, wrapJargonInMixedFlat, wrapJargonTextSegments } from '@/lib/jargon-helpers.tsx';
 
+type NamedComponent = { name?: string };
+
+function isCodeElement(el: React.ReactNode): el is React.ReactElement {
+  return React.isValidElement(el) && el.type === 'code';
+}
+
+function isJargonTextElement(el: React.ReactNode): el is React.ReactElement {
+  if (!React.isValidElement(el) || typeof el.type === 'string') {
+    return false;
+  }
+  return (el.type as NamedComponent).name === 'JargonText';
+}
+
 describe('jargon-helpers', () => {
   describe('wrapJargonInMixed', () => {
     it('wraps string children in JargonText', () => {
@@ -90,7 +103,7 @@ describe('jargon-helpers', () => {
         ' is secure',
       ]);
       const result = wrapJargonInMixedFlat(input);
-      expect(result.some(el => React.isValidElement(el) && (el as any).type === 'code')).toBe(true);
+      expect(result.some(isCodeElement)).toBe(true);
     });
 
     it('filters out false/null/undefined elements', () => {
@@ -118,8 +131,9 @@ describe('jargon-helpers', () => {
 
       // Extract keys from JargonText elements
       const keys = result
-        .filter(el => React.isValidElement(el) && (el as any).type.name === 'JargonText')
-        .map((el: any) => el.key);
+        .filter(isJargonTextElement)
+        .map((el) => el.key)
+        .filter((key): key is React.Key => key !== null);
 
       // All keys should be unique
       const uniqueKeys = new Set(keys);
@@ -219,7 +233,7 @@ describe('jargon-helpers', () => {
 
     it('supports multiple placeholders concept', () => {
       // First wrap one segment
-      let result = wrapJargonTextSegments(
+      const result = wrapJargonTextSegments(
         'Use {cmd1} to connect to {host}',
         '{cmd1}',
         React.createElement('code', {}, 'ssh')

@@ -4,6 +4,12 @@ import React, { type ReactNode, type ReactElement } from 'react';
 import { JargonText } from '@/components/jargon';
 import type { WizardPage } from '@/lib/feature-flags';
 
+type FragmentElement = ReactElement<{ children?: ReactNode }>;
+
+function isFragmentElement(node: ReactNode): node is FragmentElement {
+  return React.isValidElement<{ children?: ReactNode }>(node) && node.type === React.Fragment;
+}
+
 /**
  * Wraps text segments in JargonText while preserving JSX elements
  *
@@ -57,10 +63,10 @@ export function wrapJargonInMixed(
     }
 
     // Fragment: recursively process its children
-    if (React.isValidElement(child) && child.type === React.Fragment) {
+    if (isFragmentElement(child)) {
       return (
         <React.Fragment key={`fragment-${index}`}>
-          {wrapJargonInMixed((child.props as any).children, options)}
+          {wrapJargonInMixed(child.props.children, options)}
         </React.Fragment>
       );
     }
@@ -119,8 +125,8 @@ function flattenJargonInMixed(
       );
     }
     // Fragment: recursively flatten (FIXED: no index reset on recursion)
-    else if (React.isValidElement(child) && child.type === React.Fragment) {
-      const flattened = flattenJargonInMixed((child.props as any).children, options);
+    else if (isFragmentElement(child)) {
+      const flattened = flattenJargonInMixed(child.props.children, options);
       result.push(...flattened);
     }
     // JSX Element: preserve as-is

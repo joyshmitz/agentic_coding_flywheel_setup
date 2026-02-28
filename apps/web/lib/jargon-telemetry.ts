@@ -27,6 +27,22 @@ export interface TelemetryEvent {
   userAgent?: string;
 }
 
+type GtagParams = {
+  term?: string;
+  page?: string;
+  success?: boolean;
+  action?: string;
+  error?: string;
+  timestamp: number;
+};
+
+type GtagFunction = (command: 'event', eventName: string, params: GtagParams) => void;
+
+type TelemetryWindow = Window & {
+  gtag?: GtagFunction;
+  __JARGON_TELEMETRY_ENDPOINT__?: string;
+};
+
 export class JargonTelemetry {
   private static eventQueue: TelemetryEvent[] = [];
   private static flushInterval: NodeJS.Timeout | null = null;
@@ -242,10 +258,13 @@ export class JargonTelemetry {
     this.eventQueue = [];
 
     // Send to Google Analytics if available
-    if (typeof window !== 'undefined' && (window as any).gtag) {
+    if (typeof window !== 'undefined') {
+      const telemetryWindow = window as TelemetryWindow;
+      const gtag = telemetryWindow.gtag;
+      if (gtag) {
       events.forEach(event => {
         try {
-          (window as any).gtag('event', event.event, {
+          gtag('event', event.event, {
             term: event.term,
             page: event.page,
             success: event.success,
@@ -257,21 +276,26 @@ export class JargonTelemetry {
           console.error('[JargonText] Failed to send to GA:', error);
         }
       });
+      }
     }
 
     // Send to custom endpoint if configured
-    if (typeof fetch !== 'undefined' && typeof window !== 'undefined' && (window as any).__JARGON_TELEMETRY_ENDPOINT__) {
-      fetch((window as any).__JARGON_TELEMETRY_ENDPOINT__, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          events,
-          page: typeof window !== 'undefined' ? window.location.pathname : null,
-          timestamp: Date.now(),
-        }),
-      }).catch(error => {
-        console.error('[JargonText] Failed to send telemetry:', error);
-      });
+    if (typeof fetch !== 'undefined' && typeof window !== 'undefined') {
+      const telemetryWindow = window as TelemetryWindow;
+      const endpoint = telemetryWindow.__JARGON_TELEMETRY_ENDPOINT__;
+      if (endpoint) {
+        fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            events,
+            page: typeof window !== 'undefined' ? window.location.pathname : null,
+            timestamp: Date.now(),
+          }),
+        }).catch(error => {
+          console.error('[JargonText] Failed to send telemetry:', error);
+        });
+      }
     }
   }
 

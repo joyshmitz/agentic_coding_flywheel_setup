@@ -6,6 +6,7 @@ import {
   useRef,
   useEffect,
   useLayoutEffect,
+  isValidElement,
   type CSSProperties,
   type ReactNode,
 } from "react";
@@ -522,8 +523,9 @@ interface JargonTextProps {
  * // Renders: Your <Jargon term="vps">VPS</Jargon> needs <Jargon term="ssh">SSH</Jargon> access on <Jargon term="port-22">port 22</Jargon>.
  */
 export function JargonText({ children, mappings = defaultJargonMappings, className, page }: JargonTextProps) {
-  // Measure rendering time
-  const renderStartTime = typeof performance !== 'undefined' ? performance.now() : 0;
+  // Runtime timing is measured by benchmark tooling, not during render.
+  // Keep this metric deterministic to satisfy React purity rules.
+  const renderTimeMs = 0;
 
   // Feature flag check: if page is specified and not enabled, render plain text
   if (page && !isJargonTextEnabled(page)) {
@@ -534,8 +536,6 @@ export function JargonText({ children, mappings = defaultJargonMappings, classNa
   const cacheKey = getJargonTextCacheKey(children, mappings, page);
   const cachedParts = jargonTextCache.get(cacheKey);
   if (cachedParts) {
-    const renderEndTime = typeof performance !== 'undefined' ? performance.now() : 0;
-    const renderTimeMs = Math.round((renderEndTime - renderStartTime) * 100) / 100; // Round to 2 decimals
     // Track cache hit (minimal time)
     JargonTelemetry.trackPerformance({
       term: 'cache-hit',
@@ -610,8 +610,8 @@ export function JargonText({ children, mappings = defaultJargonMappings, classNa
 
   // Track successful JargonText render
   // Count matched terms from parts (Jargon components)
-  const matchedTermCount = parts.filter(part =>
-    typeof part === 'object' && part !== null && 'type' in part && (part as any).type === Jargon
+  const matchedTermCount = parts.filter(
+    (part) => isValidElement(part) && part.type === Jargon
   ).length;
 
   if (matchedTermCount > 0) {
@@ -622,9 +622,7 @@ export function JargonText({ children, mappings = defaultJargonMappings, classNa
     });
   }
 
-  // Track performance for cache miss (actual computation)
-  const renderEndTime = typeof performance !== 'undefined' ? performance.now() : 0;
-  const renderTimeMs = Math.round((renderEndTime - renderStartTime) * 100) / 100; // Round to 2 decimals
+  // Track performance for cache miss.
   JargonTelemetry.trackPerformance({
     term: `text-${matchedTermCount}-terms`,
     page,
