@@ -85,6 +85,9 @@ export default function StatusCheckPage() {
 
   // Compute auth services once, not on every category iteration
   const authServices = getAuthServices();
+  const codexIntroSegments = messages.headlessAuth.codex.introTemplate.split("{callback}");
+  const wranglerIntroSegments = messages.headlessAuth.wrangler.introTemplate.split("{command}");
+  const wranglerAfterSegments = messages.headlessAuth.wrangler.afterTemplate.split("{command}");
 
   return (
     <div className="space-y-8">
@@ -228,10 +231,9 @@ export default function StatusCheckPage() {
         <AlertCard variant="warning" icon={AlertCircle} title={messages.headlessAuth.codex.title}>
           <div className="space-y-2">
             <p>
-              <strong>{messages.headlessAuth.codex.introStrong}</strong>{" "}
-              {messages.headlessAuth.codex.intro}{" "}
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">localhost:1455</code>,
-              {messages.headlessAuth.codex.introSuffix}
+              {codexIntroSegments[0]}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">localhost:1455</code>
+              {codexIntroSegments[1] ?? ""}
             </p>
             <p className="text-sm font-medium">{messages.headlessAuth.codex.option1Title}</p>
             <ol className="list-decimal list-inside space-y-1 text-sm pl-2">
@@ -266,10 +268,9 @@ export default function StatusCheckPage() {
         <AlertCard variant="warning" icon={AlertCircle} title={messages.headlessAuth.wrangler.title}>
           <div className="space-y-2">
             <p>
-              <strong>{messages.headlessAuth.wrangler.introStrong}</strong>{" "}
-              {messages.headlessAuth.wrangler.intro}{" "}
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">wrangler login</code>,
-              {messages.headlessAuth.wrangler.introSuffix}
+              {wranglerIntroSegments[0]}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">wrangler login</code>
+              {wranglerIntroSegments[1] ?? ""}
             </p>
             <p className="text-sm font-medium">{messages.headlessAuth.wrangler.solutionTitle}</p>
             <ol className="list-decimal list-inside space-y-1 text-sm pl-2">
@@ -287,7 +288,9 @@ export default function StatusCheckPage() {
             </ol>
             <CodeBlock code={`export CLOUDFLARE_API_TOKEN="your-token-here"\nexport CLOUDFLARE_ACCOUNT_ID="your-account-id"`} language="bash" className="mt-1" />
             <p className="text-xs text-muted-foreground mt-1">
-              {messages.headlessAuth.wrangler.after} <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">source ~/.zshrc</code> {messages.headlessAuth.wrangler.afterSuffix}
+              {wranglerAfterSegments[0]}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">source ~/.zshrc</code>
+              {wranglerAfterSegments[1] ?? ""}
             </p>
           </div>
         </AlertCard>

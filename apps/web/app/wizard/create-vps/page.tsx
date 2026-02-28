@@ -148,7 +148,7 @@ function getProviderGuides(messages: ReturnType<typeof getCreateVpsMessages>) {
       screenshots: [
         {
           file: "contabo_us_03_order_page.png",
-          alt: "Contabo order/configure page with region and Ubuntu image selections",
+          alt: messages.providerHelp.contabo.screenshotAlt,
           caption: messages.providerHelp.contabo.screenshotCaption,
         },
       ],
@@ -159,7 +159,7 @@ function getProviderGuides(messages: ReturnType<typeof getCreateVpsMessages>) {
       screenshots: [
         {
           file: "ovh_us_03_order.png",
-          alt: "OVH order/configuration flow showing OS and region selections",
+          alt: messages.providerHelp.ovh.screenshotAlt,
           caption: messages.providerHelp.ovh.screenshotCaption,
         },
       ],
@@ -436,6 +436,14 @@ export default function CreateVPSPage() {
                     </p>
                   )}
 
+                  {/* Hint when checklist is complete but IP is invalid */}
+                  {allChecked && field.state.value && hasErrors && (
+                    <p className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <AlertCircle className="h-4 w-4" />
+                      {messages.ipInput.validation.invalid}
+                    </p>
+                  )}
+
                   {/* Continue button - rendered inside field for access to validation state */}
                   <div className="flex justify-end pt-6">
                     <Button
@@ -528,10 +536,9 @@ export default function CreateVPSPage() {
                 <GuideStep number={3} title={messages.guide.detailedSteps.step3.title}>
                   {messages.guide.detailedSteps.step3.content}
                   <ul className="mt-2 list-disc space-y-1 pl-5">
-                    <li><strong>{messages.regionTip.regions.usa.label}</strong> {messages.regionTip.regions.usa.hint}</li>
-                    <li><strong>{messages.regionTip.regions.europe.label}</strong> {messages.regionTip.regions.europe.hint}</li>
-                    <li><strong>{messages.regionTip.regions.asiaPacific.label}</strong> {messages.regionTip.regions.asiaPacific.hint}</li>
-                    <li><strong>{messages.regionTip.regions.unsure.label}</strong> {messages.regionTip.regions.unsure.hint}</li>
+                    {messages.guide.detailedSteps.step3.regions.map((region, idx) => (
+                      <li key={idx}>{region}</li>
+                    ))}
                   </ul>
                 </GuideStep>
 
@@ -583,8 +590,9 @@ export default function CreateVPSPage() {
                       <li key={idx}>{location}</li>
                     ))}
                     <li>
-                      {messages.guide.detailedSteps.step8.example.split(":")[0]}:{" "}
+                      {messages.guide.detailedSteps.step8.exampleTemplate.split("{ip}")[0]}
                       <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">203.0.113.42</code>
+                      {messages.guide.detailedSteps.step8.exampleTemplate.split("{ip}")[1] ?? ""}
                     </li>
                   </ul>
                   <br />

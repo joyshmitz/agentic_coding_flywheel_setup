@@ -259,6 +259,7 @@ export const createVpsMessages = {
         "Complete checkout (servers activate within minutes, occasionally up to 1 hour)",
         "Go to \"Your services\" > \"VPS control\" to find your IP address",
       ],
+      screenshotAlt: "Contabo order/configure page with region and Ubuntu image selections",
       screenshotCaption: "Contabo order page — select region + Ubuntu image here.",
     },
     ovh: {
@@ -271,6 +272,7 @@ export const createVpsMessages = {
         "Complete the order (activation is usually instant)",
         "Copy the IP address from your control panel",
       ],
+      screenshotAlt: "OVH order/configuration flow showing OS and region selections",
       screenshotCaption: "OVH order flow — select Ubuntu + region during configuration.",
     },
   },
@@ -289,7 +291,17 @@ export const createVpsMessages = {
       title: "Detailed Steps for Creating Your VPS",
       step1: { title: "Log into your VPS provider", content: "Go to the website where you created your account (OVH or Contabo) and sign in with the email and password you created earlier." },
       step2: { title: "Find the 'Create Server' or 'Add VPS' button", lookFor: "Look for a button that says something like:", ovh: "OVH: Click \"Create an instance\" or \"Order\"", contabo: "Contabo: Go to \"Your services\" → click the VPS you ordered" },
-      step3: { title: "Choose your server location", content: "Pick a data center close to you for faster speeds. The closer the server, the faster your typing appears and AI responses stream back." },
+      step3: {
+        title: "Choose your server location",
+        content: "Pick a data center close to you for faster speeds. The closer the server, the faster your typing appears and AI responses stream back.",
+        regions: [
+          "USA West Coast: Pick US-West, Los Angeles, or Seattle",
+          "USA East Coast: Pick US-East, Virginia, or New York",
+          "Europe: Pick Germany (Nuremberg/Frankfurt), France, or Finland",
+          "Asia-Pacific: Pick Singapore, Sydney, or Tokyo",
+          "If unsure: Just pick one! Any region works, and the difference is small.",
+        ],
+      },
       step4: { title: "Select Ubuntu as the operating system", content: "You'll see a list of \"images\" or \"operating systems\".", lookFor: "Look for: Ubuntu 25.10 (or newest available)", fallback: "If only Ubuntu 24.04 LTS is offered, that's fine. The installer automatically upgrades to 25.10 before ACFS installs." },
       step5: { title: "Set a root password", lookFor: "Look for a section called \"Authentication\" or \"Password\".", skipSsh: "If asked about SSH keys, skip that section", choosePassword: "Choose \"Password\" authentication", setPassword: "Set a strong root password", saveIt: "Save this password! You'll need it once to connect", emailNote: "Some providers email you a password instead - that's fine too!" },
       step6: {
@@ -305,7 +317,7 @@ export const createVpsMessages = {
         recommendation: "64GB is strongly recommended. You're investing $400+/month in AI subscriptions, so don't bottleneck that with insufficient RAM.",
       },
       step7: { title: "Create and wait", content: "Click the \"Create\", \"Deploy\", or \"Order\" button.", waitTime: "Your VPS will take 1-5 minutes to start up. You'll see a status like \"Running\" or a green indicator when it's ready." },
-      step8: { title: "Find and copy the IP address", content: "Once your VPS is running, look for the IP address.", locations: ["On the main server overview page", "In a \"Network\" or \"IP Addresses\" section"], example: "It looks like: 123.45.67.89", action: "Copy this number and paste it in the box below!" },
+      step8: { title: "Find and copy the IP address", content: "Once your VPS is running, look for the IP address.", locations: ["On the main server overview page", "In a \"Network\" or \"IP Addresses\" section"], exampleTemplate: "It looks like: {ip}", action: "Copy this number and paste it in the box below!" },
     },
     ipTip: "The IP address should be 4 groups of numbers separated by periods, like 192.168.1.100. Don't include any letters or extra characters!",
     passwordCaution: "Save your password! You'll need it once to connect for the first time. After that, the installer will set up SSH key access so you won't need the password anymore.",
@@ -1703,9 +1715,7 @@ export const statusCheckMessages = {
     note: "If you see \"Opening browser...\" but nothing happens, that's normal! Just copy the URL shown and open it manually on your laptop.",
     codex: {
       title: "Codex CLI: Special Headless Setup",
-      introStrong: "Codex requires extra steps",
-      intro: "because its OAuth callback expects",
-      introSuffix: "which doesn't work on a remote VPS.",
+      introTemplate: "Codex requires extra steps because its OAuth callback expects {callback}, which doesn't work on a remote VPS.",
       option1Title: "Option 1: Device Auth (Recommended)",
       securityLinkLabel: "ChatGPT Settings → Security",
       option1Steps: [
@@ -1722,9 +1732,7 @@ export const statusCheckMessages = {
     },
     wrangler: {
       title: "Wrangler: Headless VPS Setup",
-      introStrong: "Wrangler requires a browser",
-      intro: "for",
-      introSuffix: "which doesn't work on a headless VPS.",
+      introTemplate: "Wrangler requires a browser for {command}, which doesn't work on a headless VPS.",
       solutionTitle: "Solution: Use API Token",
       linkLabel: "Cloudflare → API Tokens",
       steps: [
@@ -1732,8 +1740,7 @@ export const statusCheckMessages = {
         "Create a token with the permissions you need (e.g., Workers, Pages)",
         "Add to your",
       ],
-      after: "Then run",
-      afterSuffix: "or start a new shell.",
+      afterTemplate: "Then run {command} or start a new shell.",
     },
     cloud: {
       title: "Supabase & Vercel: Headless VPS Setup",

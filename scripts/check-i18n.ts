@@ -169,9 +169,8 @@ async function main() {
   console.log("✓ localStorage locale: uk");
 
   // Verify UI actually shows Ukrainian (not just localStorage).
-  // Some root routes are intentionally brand/English-heavy, so probe a few
-  // known localized routes before failing.
-  const localeProbeRoutes = ["/wizard/os-selection", ...SCOPE_ROUTES];
+  // Probe all scoped routes to avoid coupling this check to a single route.
+  const localeProbeRoutes = SCOPE_ROUTES;
   let hasCyrillic = false;
   for (const route of localeProbeRoutes) {
     const res = await page.goto(`${baseUrl}${route}`, {
