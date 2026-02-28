@@ -19,8 +19,33 @@ import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import { useLocale, getJargonUiMessages, getJargonTerm } from "@/lib/i18n";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { isJargonTextEnabled, type WizardPage } from "@/lib/feature-flags";
+import { LRUCache } from "@/lib/lru-cache";
 
 type Messages = ReturnType<typeof getJargonUiMessages>;
+
+/**
+ * Module-level LRU cache for JargonText processing results
+ * Stores up to 200 processed text results to avoid re-rendering
+ * the same content multiple times.
+ *
+ * Cache key: `${text}||${JSON.stringify(mappings)}||${page || ''}`
+ * This ensures different inputs are cached separately.
+ */
+const jargonTextCache = new LRUCache<string, ReactNode[]>(200);
+
+/**
+ * Generate cache key from JargonText input parameters
+ * Includes text, mappings configuration, and page flag
+ */
+function getJargonTextCacheKey(
+  text: string,
+  mappings: JargonTermMapping[],
+  page?: WizardPage
+): string {
+  // Create deterministic key from all input parameters
+  // Note: Using JSON.stringify for mappings (small array, typically 30-40 items)
+  return `${text}||${JSON.stringify(mappings)}||${page || ''}`;
+}
 
 interface JargonProps {
   /** The term key to look up in the dictionary */
@@ -491,6 +516,13 @@ export function JargonText({ children, mappings = defaultJargonMappings, classNa
     return <span className={className}>{children}</span>;
   }
 
+  // Check cache first (Improvement #10: Dedup & Cache)
+  const cacheKey = getJargonTextCacheKey(children, mappings, page);
+  const cachedParts = jargonTextCache.get(cacheKey);
+  if (cachedParts) {
+    return <span className={className}>{cachedParts}</span>;
+  }
+
   // Build a regex that matches any of the patterns (case-insensitive, word boundaries)
   // Sort by pattern length descending to match longer patterns first (e.g., "API key" before "API")
   const sortedMappings = [...mappings].sort((a, b) => b.pattern.length - a.pattern.length);
@@ -503,51 +535,55 @@ export function JargonText({ children, mappings = defaultJargonMappings, classNa
     m.pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   );
 
+  let parts: ReactNode[] = [];
+
   if (escapedPatterns.length === 0) {
-    return <span className={className}>{children}</span>;
-  }
+    parts = [children];
+  } else {
+    // Use word boundaries for most terms, but not for patterns with spaces
+    const regexPattern = escapedPatterns
+      .map(p => p.includes(' ') ? `(${p})` : `\\b(${p})\\b`)
+      .join('|');
 
-  // Use word boundaries for most terms, but not for patterns with spaces
-  const regexPattern = escapedPatterns
-    .map(p => p.includes(' ') ? `(${p})` : `\\b(${p})\\b`)
-    .join('|');
+    const regex = new RegExp(regexPattern, 'gi');
 
-  const regex = new RegExp(regexPattern, 'gi');
+    // Split text by matches and rebuild with Jargon components
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+    let keyIndex = 0;
 
-  // Split text by matches and rebuild with Jargon components
-  const parts: ReactNode[] = [];
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-  let keyIndex = 0;
+    while ((match = regex.exec(children)) !== null) {
+      // Add text before this match
+      if (match.index > lastIndex) {
+        parts.push(children.slice(lastIndex, match.index));
+      }
 
-  while ((match = regex.exec(children)) !== null) {
-    // Add text before this match
-    if (match.index > lastIndex) {
-      parts.push(children.slice(lastIndex, match.index));
+      // Find which term this matched
+      const matchedText = match[0];
+      const termKey = patternToTerm.get(matchedText.toLowerCase());
+
+      if (termKey) {
+        parts.push(
+          <Jargon key={keyIndex++} term={termKey}>
+            {matchedText}
+          </Jargon>
+        );
+      } else {
+        // Fallback: just add the text
+        parts.push(matchedText);
+      }
+
+      lastIndex = match.index + matchedText.length;
     }
 
-    // Find which term this matched
-    const matchedText = match[0];
-    const termKey = patternToTerm.get(matchedText.toLowerCase());
-
-    if (termKey) {
-      parts.push(
-        <Jargon key={keyIndex++} term={termKey}>
-          {matchedText}
-        </Jargon>
-      );
-    } else {
-      // Fallback: just add the text
-      parts.push(matchedText);
+    // Add remaining text after last match
+    if (lastIndex < children.length) {
+      parts.push(children.slice(lastIndex));
     }
-
-    lastIndex = match.index + matchedText.length;
   }
 
-  // Add remaining text after last match
-  if (lastIndex < children.length) {
-    parts.push(children.slice(lastIndex));
-  }
+  // Cache the result before returning
+  jargonTextCache.set(cacheKey, parts);
 
   // If no matches found, return original text
   if (parts.length === 0) {
