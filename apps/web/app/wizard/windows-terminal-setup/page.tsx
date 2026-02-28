@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   Terminal,
@@ -25,6 +25,43 @@ import {
 } from "@/components/simpler-guide";
 import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
 import { useLocale, getWindowsTerminalSetupMessages } from "@/lib/i18n";
+import { Jargon } from "@/components/jargon";
+
+interface JargonReplacement {
+  match: string;
+  term: string;
+}
+
+function renderWithJargon(text: string, replacements: JargonReplacement[]): ReactNode {
+  let nodes: ReactNode[] = [text];
+
+  replacements.forEach(({ match, term }) => {
+    nodes = nodes.flatMap((node, nodeIndex) => {
+      if (typeof node !== "string" || !node.includes(match)) {
+        return [node];
+      }
+
+      const parts = node.split(match);
+
+      return parts.flatMap((part, partIndex) => {
+        const fragments: ReactNode[] = [];
+        if (part) {
+          fragments.push(part);
+        }
+        if (partIndex < parts.length - 1) {
+          fragments.push(
+            <Jargon key={`${term}-${match}-${nodeIndex}-${partIndex}`} term={term}>
+              {match}
+            </Jargon>
+          );
+        }
+        return fragments;
+      });
+    });
+  });
+
+  return <>{nodes}</>;
+}
 
 export default function WindowsTerminalSetupPage() {
   const router = useRouter();
@@ -110,10 +147,19 @@ export default function WindowsTerminalSetupPage() {
       {/* Why this is helpful */}
       <AlertCard variant="success" icon={Terminal} title={messages.whySetup.title}>
         <div className="space-y-2">
-          <p>{messages.whySetup.intro}</p>
+          <p>
+            {renderWithJargon(messages.whySetup.intro, [
+              { match: "SSH", term: "ssh" },
+            ])}
+          </p>
           <ul className="list-disc list-inside space-y-1 text-sm">
             {messages.whySetup.benefits.map((benefit, i) => (
-              <li key={i}>{benefit}</li>
+              <li key={i}>
+                {renderWithJargon(benefit, [
+                  { match: "Windows Terminal", term: "terminal" },
+                  { match: "VPS", term: "vps" },
+                ])}
+              </li>
             ))}
           </ul>
         </div>
@@ -199,7 +245,13 @@ export default function WindowsTerminalSetupPage() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {messages.steps.step3.commandLine.hint.replace("{ip}", displayIP)}
+                {renderWithJargon(
+                  messages.steps.step3.commandLine.hint.replace("{ip}", displayIP),
+                  [
+                    { match: "SSH", term: "ssh" },
+                    { match: "VPS", term: "vps" },
+                  ]
+                )}
               </p>
             </div>
             <div>
@@ -288,19 +340,26 @@ export default function WindowsTerminalSetupPage() {
               <div>
                 <p className="font-medium">{messages.guide.troubleshooting.permissionDenied.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  {messages.guide.troubleshooting.permissionDenied.content}
+                  {renderWithJargon(messages.guide.troubleshooting.permissionDenied.content, [
+                    { match: "SSH", term: "ssh" },
+                  ])}
                 </p>
               </div>
               <div>
                 <p className="font-medium">{messages.guide.troubleshooting.connectionRefused.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  {messages.guide.troubleshooting.connectionRefused.content.replace("{ip}", displayIP)}
+                  {renderWithJargon(
+                    messages.guide.troubleshooting.connectionRefused.content.replace("{ip}", displayIP),
+                    [{ match: "VPS", term: "vps" }]
+                  )}
                 </p>
               </div>
               <div>
                 <p className="font-medium">{messages.guide.troubleshooting.hostKeyFailed.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  {messages.guide.troubleshooting.hostKeyFailed.content}
+                  {renderWithJargon(messages.guide.troubleshooting.hostKeyFailed.content, [
+                    { match: "VPS", term: "vps" },
+                  ])}
                 </p>
               </div>
             </div>
