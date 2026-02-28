@@ -17,6 +17,7 @@
     "check-tool-ids": "bun run scripts/check-tool-ids.ts",
     "check-fallbacks": "bun run scripts/check-fallbacks.ts",
     "check-routes": "bun run scripts/check-routes.ts",
+    "verify:i18n": "bun run scripts/verify-i18n-jargon.ts",
     "i18n:check": "bun run build && (bun run start & PID=$!; sleep 5; kill -0 $PID 2>/dev/null || { echo '❌ Server failed to start (port conflict?)'; exit 1; }; bun run scripts/check-i18n.ts; EXIT=$?; kill $PID 2>/dev/null; exit $EXIT)"
   },
   "devDependencies": {
