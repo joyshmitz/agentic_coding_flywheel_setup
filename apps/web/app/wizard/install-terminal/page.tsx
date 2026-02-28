@@ -23,7 +23,7 @@ import {
   DirectDownloadButton,
 } from "@/components/simpler-guide";
 import { useLocale, getInstallTerminalMessages } from "@/lib/i18n";
-import { Jargon } from "@/components/jargon";
+import { Jargon, JargonText } from "@/components/jargon";
 
 // Type for messages
 type Messages = ReturnType<typeof getInstallTerminalMessages>;
@@ -183,7 +183,7 @@ function TerminalBasicsSection({ os, messages }: { os: "mac" | "windows" | "linu
           {tb.title}
         </h2>
         <p className="text-muted-foreground">
-          {tb.intro}
+          <JargonText>{tb.intro}</JargonText>
         </p>
       </div>
 
@@ -209,7 +209,7 @@ function TerminalBasicsSection({ os, messages }: { os: "mac" | "windows" | "linu
       <div className="space-y-3">
         <h3 className="font-semibold">{tb.copyPaste.title}</h3>
         <p className="text-sm text-muted-foreground">
-          {tb.copyPaste.intro}
+          <JargonText>{tb.copyPaste.intro}</JargonText>
         </p>
         {os === "mac" ? (
           <AlertCard variant="info" title={tb.copyPaste.mac.title}>
@@ -287,7 +287,7 @@ function WindowsContent({ messages }: { messages: Messages }) {
       <div className="space-y-3">
         <h3 className="font-medium">{m.verifySsh.title}</h3>
         <p className="text-sm text-muted-foreground">
-          {m.verifySsh.content}
+          <JargonText>{m.verifySsh.content}</JargonText>
         </p>
         <CommandCard
           command="ssh -V"
@@ -457,7 +457,7 @@ export default function InstallTerminalPage() {
           </div>
         </div>
         <p className="text-muted-foreground">
-          {messages.description}
+          <JargonText>{messages.description}</JargonText>
         </p>
       </div>
 

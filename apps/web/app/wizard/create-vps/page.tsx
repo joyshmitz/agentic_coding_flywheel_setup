@@ -20,7 +20,7 @@ import {
   GuideTip,
   GuideCaution,
 } from "@/components/simpler-guide";
-import { Jargon } from "@/components/jargon";
+import { Jargon, JargonText } from "@/components/jargon";
 import { useLocale, getCreateVpsMessages } from "@/lib/i18n";
 
 type ScreenshotSpec = {
@@ -250,7 +250,7 @@ export default function CreateVPSPage() {
           </div>
         </div>
         <p className="text-muted-foreground">
-          {messages.description}
+          <JargonText>{messages.description}</JargonText>
         </p>
       </div>
 
@@ -465,7 +465,7 @@ export default function CreateVPSPage() {
         <div className="rounded-xl border border-[oklch(0.75_0.18_195/0.3)] bg-[oklch(0.75_0.18_195/0.05)] p-4">
           <h3 className="font-medium text-foreground mb-2">{messages.regionTip.title}</h3>
           <p className="text-sm text-muted-foreground">
-            {messages.regionTip.content}
+            <JargonText>{messages.regionTip.content}</JargonText>
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 text-sm">
             <div className="rounded-lg bg-background/50 px-3 py-2">

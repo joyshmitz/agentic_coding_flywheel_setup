@@ -34,7 +34,7 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
-import { Jargon } from "@/components/jargon";
+import { Jargon, JargonText } from "@/components/jargon";
 import { withCurrentSearch } from "@/lib/utils";
 import { useLocale, getStatusCheckMessages, getCommonMessages } from "@/lib/i18n";
 
@@ -122,7 +122,7 @@ export default function StatusCheckPage() {
           </p>
           <CommandCard command="ssh -i ~/.ssh/acfs_ed25519 ubuntu@YOUR_VPS_IP" runLocation="local" className="mt-1" />
           <p className="text-sm text-muted-foreground">
-            {messages.reconnectionReminder.readyWhen}
+            <JargonText>{messages.reconnectionReminder.readyWhen}</JargonText>
           </p>
         </div>
       </AlertCard>
@@ -154,7 +154,7 @@ export default function StatusCheckPage() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold text-foreground">{messages.doctorCommand.title}</h2>
         <p className="text-sm text-muted-foreground">
-          {messages.doctorCommand.description}
+          <JargonText>{messages.doctorCommand.description}</JargonText>
         </p>
         <CommandCard
           command="acfs doctor"
@@ -182,7 +182,7 @@ export default function StatusCheckPage() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">{messages.quickChecks.title}</h2>
         <p className="text-sm text-muted-foreground">
-          {messages.quickChecks.intro}
+          <JargonText>{messages.quickChecks.intro}</JargonText>
         </p>
         <div className="space-y-3">
           {messages.quickChecks.checks.map((check, i) => (
@@ -205,7 +205,7 @@ export default function StatusCheckPage() {
           <div>
             <h2 className="text-xl font-semibold">{messages.authenticateServices.title}</h2>
             <p className="text-sm text-muted-foreground">
-              {messages.authenticateServices.subtitle}
+              <JargonText>{messages.authenticateServices.subtitle}</JargonText>
             </p>
           </div>
         </div>

@@ -17,7 +17,7 @@ import {
   GuideTip,
 } from "@/components/simpler-guide";
 import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
-import { Jargon } from "@/components/jargon";
+import { Jargon, JargonText } from "@/components/jargon";
 import { useVPSIP } from "@/lib/userPreferences";
 import { withCurrentSearch } from "@/lib/utils";
 import { useLocale, getLaunchOnboardingMessages } from "@/lib/i18n";
@@ -145,10 +145,10 @@ export default function LaunchOnboardingPage() {
       <AlertCard variant="warning" title={messages.p10kWarning.title}>
         <div className="space-y-2 text-sm">
           <p>
-            {messages.p10kWarning.intro}
+            <JargonText>{messages.p10kWarning.intro}</JargonText>
           </p>
           <p className="text-muted-foreground">
-            {messages.p10kWarning.optional}
+            <JargonText>{messages.p10kWarning.optional}</JargonText>
           </p>
         </div>
       </AlertCard>
@@ -164,7 +164,7 @@ export default function LaunchOnboardingPage() {
             <h2 className="text-xl font-semibold">{messages.authenticateTools.title}</h2>
           </div>
           <p className="text-muted-foreground">
-            {messages.authenticateTools.intro}
+            <JargonText>{messages.authenticateTools.intro}</JargonText>
           </p>
           <div className="space-y-3">
             <div className="flex gap-3">
@@ -223,7 +223,7 @@ export default function LaunchOnboardingPage() {
             <h2 className="text-xl font-semibold">{messages.learningHub.title}</h2>
           </div>
           <p className="text-muted-foreground">
-            {messages.learningHub.content}
+            <JargonText>{messages.learningHub.content}</JargonText>
           </p>
           <Link href="/learn" onClick={() => trackConversion('learning_hub_started')}>
             <Button size="lg" className="w-full sm:w-auto">
@@ -248,7 +248,7 @@ export default function LaunchOnboardingPage() {
             <h2 className="text-xl font-semibold">{messages.dailyWorkflow.title}</h2>
           </div>
           <p className="text-muted-foreground">
-            {messages.dailyWorkflow.intro}
+            <JargonText>{messages.dailyWorkflow.intro}</JargonText>
           </p>
         </div>
 
@@ -264,7 +264,7 @@ export default function LaunchOnboardingPage() {
                 windowsCommand={`ssh -i $HOME\\.ssh\\acfs_ed25519 ubuntu@${displayIP}`}
                 runLocation="local"
               />
-              <p className="text-sm text-muted-foreground">{messages.dailyWorkflow.step1.note}</p>
+              <p className="text-sm text-muted-foreground"><JargonText>{messages.dailyWorkflow.step1.note}</JargonText></p>
             </div>
           </div>
 
@@ -320,7 +320,7 @@ export default function LaunchOnboardingPage() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
-                {messages.dailyWorkflow.step4.keepRunning}
+                <JargonText>{messages.dailyWorkflow.step4.keepRunning}</JargonText>
               </p>
             </div>
           </div>
@@ -341,7 +341,7 @@ export default function LaunchOnboardingPage() {
             <h2 className="text-xl font-semibold">{messages.startingProject.title}</h2>
           </div>
           <p className="text-muted-foreground">
-            {messages.startingProject.intro}
+            <JargonText>{messages.startingProject.intro}</JargonText>
           </p>
         </div>
 
@@ -350,7 +350,7 @@ export default function LaunchOnboardingPage() {
             <h3 className="font-medium">{messages.startingProject.step1.title}</h3>
             <CommandCard command="ntm new my-awesome-app" runLocation="vps" />
             <p className="text-sm text-muted-foreground">
-              {messages.startingProject.step1.note}
+              <JargonText>{messages.startingProject.step1.note}</JargonText>
             </p>
           </div>
 
@@ -527,14 +527,14 @@ export default function LaunchOnboardingPage() {
         </div>
 
         <p className="text-muted-foreground mb-4">
-          {messages.gettingBackIn.intro}
+          <JargonText>{messages.gettingBackIn.intro}</JargonText>
         </p>
 
         <div className="space-y-4">
           <div>
             <h3 className="font-medium">{messages.gettingBackIn.step1.title}</h3>
             <p className="text-sm text-muted-foreground">
-              {messages.gettingBackIn.step1.note}
+              <JargonText>{messages.gettingBackIn.step1.note}</JargonText>
             </p>
           </div>
 
@@ -552,7 +552,7 @@ export default function LaunchOnboardingPage() {
             <CommandCard command="ntm list" description={messages.gettingBackIn.step3.listDesc} runLocation="vps" />
             <CommandCard command="ntm attach myproject" description={messages.gettingBackIn.step3.attachDesc} runLocation="vps" />
             <p className="text-sm text-muted-foreground mt-2">
-              {messages.gettingBackIn.step3.note}
+              <JargonText>{messages.gettingBackIn.step3.note}</JargonText>
             </p>
           </div>
         </div>
@@ -564,7 +564,7 @@ export default function LaunchOnboardingPage() {
           </summary>
           <div className="mt-4 space-y-4 pl-6 border-l-2 border-[oklch(0.75_0.18_195/0.3)]">
             <p className="text-sm text-muted-foreground">
-              {messages.gettingBackIn.sshConfigTip.intro}
+              <JargonText>{messages.gettingBackIn.sshConfigTip.intro}</JargonText>
             </p>
             <CodeBlock code={`Host myserver\n    HostName ${displayIP}\n    User ubuntu\n    IdentityFile ~/.ssh/acfs_ed25519`} language="ssh-config" />
             <p className="text-sm text-muted-foreground">
@@ -599,28 +599,28 @@ export default function LaunchOnboardingPage() {
           <Card className="p-4">
             <h3 className="mb-2 font-medium">{messages.whatYouCanDo.claudeCode.title}</h3>
             <p className="mb-3 text-sm text-muted-foreground">
-              {messages.whatYouCanDo.claudeCode.desc}
+              <JargonText>{messages.whatYouCanDo.claudeCode.desc}</JargonText>
             </p>
             <code className="rounded bg-muted px-2 py-1 text-sm">cc</code>
           </Card>
           <Card className="p-4">
             <h3 className="mb-2 font-medium">{messages.whatYouCanDo.ntm.title}</h3>
             <p className="mb-3 text-sm text-muted-foreground">
-              {messages.whatYouCanDo.ntm.desc}
+              <JargonText>{messages.whatYouCanDo.ntm.desc}</JargonText>
             </p>
             <code className="rounded bg-muted px-2 py-1 text-sm">ntm new myproject</code>
           </Card>
           <Card className="p-4">
             <h3 className="mb-2 font-medium">{messages.whatYouCanDo.ripgrep.title}</h3>
             <p className="mb-3 text-sm text-muted-foreground">
-              {messages.whatYouCanDo.ripgrep.desc}
+              <JargonText>{messages.whatYouCanDo.ripgrep.desc}</JargonText>
             </p>
             <code className="rounded bg-muted px-2 py-1 text-sm">rg &quot;pattern&quot;</code>
           </Card>
           <Card className="p-4">
             <h3 className="mb-2 font-medium">{messages.whatYouCanDo.lazygit.title}</h3>
             <p className="mb-3 text-sm text-muted-foreground">
-              {messages.whatYouCanDo.lazygit.desc}
+              <JargonText>{messages.whatYouCanDo.lazygit.desc}</JargonText>
             </p>
             <code className="rounded bg-muted px-2 py-1 text-sm">lazygit</code>
           </Card>
@@ -772,25 +772,25 @@ export default function LaunchOnboardingPage() {
               <div>
                 <p className="font-medium text-foreground">{messages.guide.understandingTools.cc.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  {messages.guide.understandingTools.cc.content}
+                  <JargonText>{messages.guide.understandingTools.cc.content}</JargonText>
                 </p>
               </div>
               <div>
                 <p className="font-medium text-foreground">{messages.guide.understandingTools.ntm.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  {messages.guide.understandingTools.ntm.content}
+                  <JargonText>{messages.guide.understandingTools.ntm.content}</JargonText>
                 </p>
               </div>
               <div>
                 <p className="font-medium text-foreground">{messages.guide.understandingTools.rg.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  {messages.guide.understandingTools.rg.content}
+                  <JargonText>{messages.guide.understandingTools.rg.content}</JargonText>
                 </p>
               </div>
               <div>
                 <p className="font-medium text-foreground">{messages.guide.understandingTools.lazygit.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  {messages.guide.understandingTools.lazygit.content}
+                  <JargonText>{messages.guide.understandingTools.lazygit.content}</JargonText>
                 </p>
               </div>
             </div>
@@ -826,7 +826,7 @@ export default function LaunchOnboardingPage() {
             <h2 className="text-xl font-semibold">{messages.advancedWorkflow.title}</h2>
           </div>
           <p className="text-muted-foreground">
-            {messages.advancedWorkflow.content}
+            <JargonText>{messages.advancedWorkflow.content}</JargonText>
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link href="/learn" onClick={() => trackConversion('learning_hub_started')}>

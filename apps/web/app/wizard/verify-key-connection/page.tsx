@@ -19,7 +19,7 @@ import {
   GuideTip,
   GuideCaution,
 } from "@/components/simpler-guide";
-import { Jargon } from "@/components/jargon";
+import { Jargon, JargonText } from "@/components/jargon";
 import { useLocale, getVerifyKeyConnectionMessages } from "@/lib/i18n";
 
 export default function VerifyKeyConnectionPage() {
@@ -93,7 +93,7 @@ export default function VerifyKeyConnectionPage() {
       <div className="space-y-3">
         <h2 className="text-xl font-semibold">{messages.step1.title}</h2>
         <p className="text-sm text-muted-foreground">
-          {messages.step1.description}
+          <JargonText>{messages.step1.description}</JargonText>
         </p>
         <CommandCard command="exit" description={messages.step1.commandDesc} runLocation="vps" />
       </div>
@@ -102,7 +102,7 @@ export default function VerifyKeyConnectionPage() {
       <div className="space-y-3">
         <h2 className="text-xl font-semibold">{messages.step2.title}</h2>
         <p className="text-sm text-muted-foreground">
-          {messages.step2.description}
+          <JargonText>{messages.step2.description}</JargonText>
         </p>
         <CommandCard
           command={sshKeyCommand}

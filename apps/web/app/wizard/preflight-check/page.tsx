@@ -19,7 +19,7 @@ import {
   GuideExplain,
   GuideCaution,
 } from "@/components/simpler-guide";
-import { Jargon } from "@/components/jargon";
+import { Jargon, JargonText } from "@/components/jargon";
 import { useLocale, getPreflightCheckMessages } from "@/lib/i18n";
 
 const PREFLIGHT_COMMAND =
@@ -106,13 +106,13 @@ export default function PreflightCheckPage() {
       <AlertCard variant="error" icon={AlertTriangle} title={messages.windowsWarning.title}>
         <div className="space-y-2">
           <p>
-            {messages.windowsWarning.intro}
+            <JargonText>{messages.windowsWarning.intro}</JargonText>
           </p>
           <p className="font-semibold">
-            {messages.windowsWarning.mistake}
+            <JargonText>{messages.windowsWarning.mistake}</JargonText>
           </p>
           <p>
-            {messages.windowsWarning.fix.replace("YOUR_VPS_IP", displayIP)}
+            <JargonText>{messages.windowsWarning.fix.replace("YOUR_VPS_IP", displayIP)}</JargonText>
           </p>
         </div>
       </AlertCard>

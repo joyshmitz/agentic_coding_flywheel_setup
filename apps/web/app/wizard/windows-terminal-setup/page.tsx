@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Terminal,
@@ -25,43 +25,14 @@ import {
 } from "@/components/simpler-guide";
 import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
 import { useLocale, getWindowsTerminalSetupMessages } from "@/lib/i18n";
-import { Jargon } from "@/components/jargon";
+import { JargonText, defaultJargonMappings } from "@/components/jargon";
 
-interface JargonReplacement {
-  match: string;
-  term: string;
-}
-
-function renderWithJargon(text: string, replacements: JargonReplacement[]): ReactNode {
-  let nodes: ReactNode[] = [text];
-
-  replacements.forEach(({ match, term }) => {
-    nodes = nodes.flatMap((node, nodeIndex) => {
-      if (typeof node !== "string" || !node.includes(match)) {
-        return [node];
-      }
-
-      const parts = node.split(match);
-
-      return parts.flatMap((part, partIndex) => {
-        const fragments: ReactNode[] = [];
-        if (part) {
-          fragments.push(part);
-        }
-        if (partIndex < parts.length - 1) {
-          fragments.push(
-            <Jargon key={`${term}-${match}-${nodeIndex}-${partIndex}`} term={term}>
-              {match}
-            </Jargon>
-          );
-        }
-        return fragments;
-      });
-    });
-  });
-
-  return <>{nodes}</>;
-}
+// Filter out bare "terminal" to avoid matching it inside "Windows Terminal",
+// then add compound "Windows Terminal" mapping that takes priority by length
+const wtMappings = [
+  { pattern: "Windows Terminal", term: "terminal" },
+  ...defaultJargonMappings.filter(m => m.pattern !== "terminal"),
+];
 
 export default function WindowsTerminalSetupPage() {
   const router = useRouter();
@@ -140,7 +111,7 @@ export default function WindowsTerminalSetupPage() {
           </div>
         </div>
         <p className="text-muted-foreground">
-          {messages.description}
+          <JargonText mappings={wtMappings}>{messages.description}</JargonText>
         </p>
       </div>
 
@@ -148,17 +119,12 @@ export default function WindowsTerminalSetupPage() {
       <AlertCard variant="success" icon={Terminal} title={messages.whySetup.title}>
         <div className="space-y-2">
           <p>
-            {renderWithJargon(messages.whySetup.intro, [
-              { match: "SSH", term: "ssh" },
-            ])}
+            <JargonText mappings={wtMappings}>{messages.whySetup.intro}</JargonText>
           </p>
           <ul className="list-disc list-inside space-y-1 text-sm">
             {messages.whySetup.benefits.map((benefit, i) => (
               <li key={i}>
-                {renderWithJargon(benefit, [
-                  { match: "Windows Terminal", term: "terminal" },
-                  { match: "VPS", term: "vps" },
-                ])}
+                <JargonText mappings={wtMappings}>{benefit}</JargonText>
               </li>
             ))}
           </ul>
@@ -245,13 +211,9 @@ export default function WindowsTerminalSetupPage() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {renderWithJargon(
-                  messages.steps.step3.commandLine.hint.replace("{ip}", displayIP),
-                  [
-                    { match: "SSH", term: "ssh" },
-                    { match: "VPS", term: "vps" },
-                  ]
-                )}
+                <JargonText mappings={wtMappings}>
+                  {messages.steps.step3.commandLine.hint.replace("{ip}", displayIP)}
+                </JargonText>
               </p>
             </div>
             <div>
@@ -340,26 +302,21 @@ export default function WindowsTerminalSetupPage() {
               <div>
                 <p className="font-medium">{messages.guide.troubleshooting.permissionDenied.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  {renderWithJargon(messages.guide.troubleshooting.permissionDenied.content, [
-                    { match: "SSH", term: "ssh" },
-                  ])}
+                  <JargonText mappings={wtMappings}>{messages.guide.troubleshooting.permissionDenied.content}</JargonText>
                 </p>
               </div>
               <div>
                 <p className="font-medium">{messages.guide.troubleshooting.connectionRefused.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  {renderWithJargon(
-                    messages.guide.troubleshooting.connectionRefused.content.replace("{ip}", displayIP),
-                    [{ match: "VPS", term: "vps" }]
-                  )}
+                  <JargonText mappings={wtMappings}>
+                    {messages.guide.troubleshooting.connectionRefused.content.replace("{ip}", displayIP)}
+                  </JargonText>
                 </p>
               </div>
               <div>
                 <p className="font-medium">{messages.guide.troubleshooting.hostKeyFailed.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  {renderWithJargon(messages.guide.troubleshooting.hostKeyFailed.content, [
-                    { match: "VPS", term: "vps" },
-                  ])}
+                  <JargonText mappings={wtMappings}>{messages.guide.troubleshooting.hostKeyFailed.content}</JargonText>
                 </p>
               </div>
             </div>
