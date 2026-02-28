@@ -30,23 +30,30 @@ export interface TelemetryEvent {
 export class JargonTelemetry {
   private static eventQueue: TelemetryEvent[] = [];
   private static flushInterval: NodeJS.Timeout | null = null;
+  private static isInitialized = false;
 
   /**
    * Initialize telemetry system
-   * Should be called once at app startup
+   * Should be called once at app startup (idempotent - safe to call multiple times)
    */
   static initialize() {
+    // Guard against multiple initializations
+    if (this.isInitialized) {
+      return;
+    }
+
+    this.isInitialized = true;
 
     // Flush events every 30 seconds
     this.flushInterval = setInterval(() => {
       this.flush();
     }, 30000);
 
-    // Flush on page unload
+    // Flush on page unload (only add listener once)
     if (typeof window !== 'undefined') {
       window.addEventListener('beforeunload', () => {
         this.flush();
-      });
+      }, { once: false });
     }
   }
 
@@ -278,6 +285,8 @@ export class JargonTelemetry {
     this.flush();
     // Clear the queue after flushing
     this.eventQueue = [];
+    // Reset initialization flag
+    this.isInitialized = false;
   }
 
   /**
@@ -290,6 +299,8 @@ export class JargonTelemetry {
       clearInterval(this.flushInterval);
       this.flushInterval = null;
     }
+    // Reset initialization flag
+    this.isInitialized = false;
   }
 
   // Private helpers

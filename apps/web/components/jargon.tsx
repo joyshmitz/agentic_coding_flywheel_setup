@@ -20,6 +20,7 @@ import { useLocale, getJargonUiMessages, getJargonTerm } from "@/lib/i18n";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { isJargonTextEnabled, type WizardPage } from "@/lib/feature-flags";
 import { LRUCache } from "@/lib/lru-cache";
+import { JargonTelemetry } from "@/lib/jargon-telemetry";
 
 type Messages = ReturnType<typeof getJargonUiMessages>;
 
@@ -139,7 +140,12 @@ export function Jargon({ term, children, className, gradientHeading }: JargonPro
       clearTimeout(closeTimeoutRef.current);
     }
     setIsOpen(true);
-  }, [isMobile]);
+    // Track desktop hover interaction
+    JargonTelemetry.trackTooltipInteraction({
+      term,
+      action: 'hover',
+    });
+  }, [isMobile, term]);
 
   const handleMouseLeave = useCallback(() => {
     if (isMobile) return;
@@ -176,7 +182,12 @@ export function Jargon({ term, children, className, gradientHeading }: JargonPro
   const handleClick = useCallback(() => {
     // Always open on click - supports both mobile tap and desktop keyboard activation
     setIsOpen(true);
-  }, []);
+    // Track tap/click interaction
+    JargonTelemetry.trackTooltipInteraction({
+      term,
+      action: isMobile ? 'tap' : 'hover',
+    });
+  }, [isMobile, term]);
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
@@ -584,6 +595,27 @@ export function JargonText({ children, mappings = defaultJargonMappings, classNa
 
   // Cache the result before returning
   jargonTextCache.set(cacheKey, parts);
+
+  // Track successful JargonText render
+  // Count matched terms from parts (Jargon components)
+  const matchedTermCount = parts.filter(part =>
+    typeof part === 'object' && part !== null && 'type' in part && (part as any).type === Jargon
+  ).length;
+
+  if (matchedTermCount > 0) {
+    JargonTelemetry.trackTooltipRender({
+      term: `text-${matchedTermCount}-terms`,
+      page,
+      success: true,
+    });
+    // Track performance
+    JargonTelemetry.trackPerformance({
+      term: `text-${matchedTermCount}-terms`,
+      page,
+      renderTimeMs: 0, // Will be negligible with cache
+      textLengthChars: children.length,
+    });
+  }
 
   // If no matches found, return original text
   if (parts.length === 0) {

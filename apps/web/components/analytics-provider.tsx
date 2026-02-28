@@ -14,6 +14,7 @@ import {
   sendEvent,
 } from '@/lib/analytics';
 import { safeGetItem, safeSetItem } from '@/lib/utils';
+import { JargonTelemetry } from '@/lib/jargon-telemetry';
 
 interface AnalyticsProviderProps {
   children: ReactNode;
@@ -90,6 +91,9 @@ function AnalyticsTracker() {
 
   // Initialize session tracking on mount
   useEffect(() => {
+    // Initialize JargonTelemetry (independent of GA)
+    JargonTelemetry.initialize();
+
     if (!gaId) return;
 
     // Get or create user ID
