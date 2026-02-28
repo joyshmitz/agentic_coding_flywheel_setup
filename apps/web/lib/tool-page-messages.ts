@@ -14,9 +14,16 @@ export const toolPageMessages = {
     quickStart: "Quick Start",
     terminal: "terminal",
     clickToCopy: "Click to copy",
+    copied: "Copied!",
+    copy: "Copy",
     relatedTools: "Related Tools",
     viewDocs: "View Full Documentation on",
     seeAllCommands: "See all commands in the Command Reference",
+    uninstallation: "Uninstallation",
+    dcgUninstallDesc: "Remove the hook only, or fully purge DCG from your system. You can re-enable it anytime with",
+    dcgUninstallComment1: "# Remove hook only",
+    dcgUninstallComment2: "# Full removal (hook + binary + config)",
+    dcgUninstallComment3: "# Verify removal",
   },
 
   docsLabels: {

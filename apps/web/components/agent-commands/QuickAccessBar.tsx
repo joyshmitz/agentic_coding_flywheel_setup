@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, Terminal } from "lucide-react";
 import { motion, AnimatePresence, springs } from "@/components/motion";
 import { cn } from "@/lib/utils";
+import { useLocale, getAgentHeroCardMessages } from "@/lib/i18n";
 import type { AgentType } from "./AgentHeroCard";
 
 interface QuickCommand {
@@ -22,6 +23,8 @@ const quickCommands: QuickCommand[] = [
 
 export function QuickAccessBar() {
   const [copiedAlias, setCopiedAlias] = useState<string | null>(null);
+  const { locale } = useLocale();
+  const messages = getAgentHeroCardMessages(locale);
 
   const handleCopy = async (command: QuickCommand, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -139,7 +142,7 @@ export function QuickAccessBar() {
                     exit={{ scale: 0, y: -10 }}
                     transition={springs.snappy}
                   >
-                    Copied!
+                    {messages.quickAccess.copied}
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -150,7 +153,7 @@ export function QuickAccessBar() {
 
       {/* Hint text */}
       <p className="mt-2 text-center text-xs text-white/60">
-        Tap to copy command
+        {messages.quickAccess.hint}
       </p>
     </motion.div>
   );

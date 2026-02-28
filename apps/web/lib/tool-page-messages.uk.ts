@@ -14,9 +14,16 @@ export const toolPageMessagesUk = {
     quickStart: "Швидкий старт",
     terminal: "термінал",
     clickToCopy: "Натисніть для копіювання",
+    copied: "Скопійовано!",
+    copy: "Копіювати",
     relatedTools: "Пов'язані інструменти",
     viewDocs: "Переглянути повну документацію на",
     seeAllCommands: "Переглянути всі команди в довіднику команд",
+    uninstallation: "Видалення",
+    dcgUninstallDesc: "Видаліть лише хук або повністю очистіть DCG з вашої системи. Ви можете знову увімкнути його будь-коли за допомогою",
+    dcgUninstallComment1: "# Видалити лише хук",
+    dcgUninstallComment2: "# Повне видалення (хук + бінарний файл + конфігурація)",
+    dcgUninstallComment3: "# Перевірити видалення",
   },
 
   docsLabels: {

@@ -15,6 +15,7 @@ import {
   Terminal,
 } from "lucide-react";
 import { motion } from "@/components/motion";
+import { useLocale, getToolPageMessages } from "@/lib/i18n";
 import type { ToolCard, ToolId } from "./tool-data";
 import { TOOLS } from "./tool-data";
 
@@ -44,7 +45,11 @@ function FloatingOrb({
 
 function RelatedToolCard({ toolId }: { toolId: ToolId }) {
   const tool = TOOLS[toolId];
+  const { locale } = useLocale();
+  const messages = getToolPageMessages(locale);
   if (!tool) return null;
+
+  const relatedMessages = messages.tools[toolId];
 
   return (
     <Link href={`/learn/tools/${toolId}`}>
@@ -66,7 +71,7 @@ function RelatedToolCard({ toolId }: { toolId: ToolId }) {
         </div>
         <div className="relative min-w-0 flex-1">
           <div className="truncate font-medium text-sm text-white/90 group-hover:text-white transition-colors">
-            {tool.title}
+            {relatedMessages?.title || tool.title}
           </div>
         </div>
         <ChevronRight
@@ -80,6 +85,8 @@ function RelatedToolCard({ toolId }: { toolId: ToolId }) {
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
+  const { locale } = useLocale();
+  const messages = getToolPageMessages(locale);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -103,17 +110,17 @@ function CopyButton({ text }: { text: string }) {
     <button
       onClick={handleCopy}
       className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 rounded-md px-2 py-1 text-xs text-white/60 transition-colors hover:bg-white/10 hover:text-white/80"
-      aria-label={copied ? "Copied!" : "Copy command"}
+      aria-label={copied ? messages.ui.copied : messages.ui.copy}
     >
       {copied ? (
         <>
           <Check className="h-3 w-3" aria-hidden="true" />
-          <span>Copied!</span>
+          <span>{messages.ui.copied}</span>
         </>
       ) : (
         <>
           <Copy className="h-3 w-3" aria-hidden="true" />
-          <span>Copy</span>
+          <span>{messages.ui.copy}</span>
         </>
       )}
     </button>
@@ -125,6 +132,12 @@ interface ToolPageContentProps {
 }
 
 export function ToolPageContent({ tool: doc }: ToolPageContentProps) {
+  const { locale } = useLocale();
+  const messages = getToolPageMessages(locale);
+  const toolMessages = messages.tools[doc.id as keyof typeof messages.tools];
+  const title = toolMessages?.title || doc.title;
+  const tagline = toolMessages?.tagline || doc.tagline;
+
   return (
     <div className="min-h-screen bg-black relative overflow-x-hidden">
       {/* Dramatic ambient background */}
@@ -165,14 +178,14 @@ export function ToolPageContent({ tool: doc }: ToolPageContentProps) {
               className="h-4 w-4 transition-transform group-hover:-translate-x-1"
               aria-hidden="true"
             />
-            <span className="text-sm font-medium">Learning Hub</span>
+            <span className="text-sm font-medium">{messages.navigation.learningHub}</span>
           </Link>
           <Link
             href="/"
             className="group flex items-center gap-2 text-white/50 transition-colors hover:text-white"
           >
             <Home className="h-4 w-4" aria-hidden="true" />
-            <span className="text-sm font-medium">Home</span>
+            <span className="text-sm font-medium">{messages.navigation.home}</span>
           </Link>
         </motion.div>
 
@@ -224,7 +237,7 @@ export function ToolPageContent({ tool: doc }: ToolPageContentProps) {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.5, delay: 0.3 }}
                   >
-                    {doc.title}
+                    {title}
                   </motion.h1>
                   <motion.p
                     className="text-lg text-white/60"
@@ -232,7 +245,7 @@ export function ToolPageContent({ tool: doc }: ToolPageContentProps) {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.5, delay: 0.4 }}
                   >
-                    {doc.tagline}
+                    {tagline}
                   </motion.p>
                 </div>
               </div>
@@ -254,7 +267,7 @@ export function ToolPageContent({ tool: doc }: ToolPageContentProps) {
                   }}
                 >
                   <Sparkles className="h-5 w-5 text-primary" aria-hidden="true" />
-                  <span>View Full Documentation on {doc.docsLabel}</span>
+                  <span>{messages.ui.viewDocs} {messages.docsLabels?.[doc.docsLabel] || doc.docsLabel}</span>
                   <ArrowUpRight
                     className="h-5 w-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"
                     aria-hidden="true"
@@ -273,7 +286,7 @@ export function ToolPageContent({ tool: doc }: ToolPageContentProps) {
                   <div className="flex items-center gap-2 mb-3">
                     <Terminal className="h-4 w-4 text-primary" aria-hidden="true" />
                     <span className="text-sm font-semibold text-white/70 uppercase tracking-wider">
-                      Quick Start
+                      {messages.ui.quickStart}
                     </span>
                   </div>
                   <div className="relative group/cmd rounded-xl border border-white/[0.08] bg-black/40 backdrop-blur-sm overflow-hidden">
@@ -282,7 +295,7 @@ export function ToolPageContent({ tool: doc }: ToolPageContentProps) {
                       <div className="w-3 h-3 rounded-full bg-yellow-500/70" aria-hidden="true" />
                       <div className="w-3 h-3 rounded-full bg-green-500/70" aria-hidden="true" />
                       <span className="ml-2 text-xs text-white/50">
-                        terminal
+                        {messages.ui.terminal}
                       </span>
                     </div>
                     <div className="p-4 font-mono text-sm pr-24">
@@ -306,23 +319,22 @@ export function ToolPageContent({ tool: doc }: ToolPageContentProps) {
                   <div className="flex items-center gap-2 mb-3">
                     <ShieldAlert className="h-4 w-4 text-primary" aria-hidden="true" />
                     <span className="text-sm font-semibold text-white/70 uppercase tracking-wider">
-                      Uninstallation
+                      {messages.ui.uninstallation}
                     </span>
                   </div>
                   <div className="rounded-xl border border-white/[0.08] bg-black/40 p-4 text-sm text-white/70">
                     <p className="mb-4">
-                      Remove the hook only, or fully purge DCG from your system.
-                      You can re-enable it anytime with{" "}
+                      {messages.ui.dcgUninstallDesc}{" "}
                       <code className="font-mono text-white/90 bg-white/5 px-1 rounded">dcg install</code>.
                     </p>
                     <pre className="rounded-lg border border-white/[0.08] bg-black/60 p-3 text-xs font-mono text-white/90 whitespace-pre overflow-x-auto">
-{`# Remove hook only
+{`${messages.ui.dcgUninstallComment1}
 dcg uninstall
 
-# Full removal (hook + binary + config)
+${messages.ui.dcgUninstallComment2}
 dcg uninstall --purge
 
-# Verify removal
+${messages.ui.dcgUninstallComment3}
 dcg doctor`}
                     </pre>
                   </div>
@@ -339,7 +351,7 @@ dcg doctor`}
                   <div className="flex items-center gap-2 mb-4">
                     <LayoutGrid className="h-4 w-4 text-primary" aria-hidden="true" />
                     <span className="text-sm font-semibold text-white/70 uppercase tracking-wider">
-                      Related Tools
+                      {messages.ui.relatedTools}
                     </span>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -371,7 +383,7 @@ dcg doctor`}
             href="/learn/commands"
             className="group flex items-center gap-2 text-white/50 transition-colors hover:text-primary"
           >
-            <span className="text-sm">See all commands in the Command Reference</span>
+            <span className="text-sm">{messages.ui.seeAllCommands}</span>
             <ChevronRight
               className="h-4 w-4 transition-transform group-hover:translate-x-1"
               aria-hidden="true"

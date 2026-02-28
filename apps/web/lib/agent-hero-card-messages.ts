@@ -14,4 +14,18 @@ export const agentHeroCardMessages = {
     commands: "commands",
     tips: "tips",
   },
+  tabs: {
+    commands: "Commands",
+    tips: "Tips",
+    aliases: "Aliases",
+  },
+  aliases: {
+    description: "All these commands launch {agentName}. Copy and paste into your terminal.",
+    copied: "Copied!",
+    copy: "Copy",
+  },
+  quickAccess: {
+    copied: "Copied!",
+    hint: "Tap to copy command",
+  },
 };

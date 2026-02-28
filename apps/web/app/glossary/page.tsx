@@ -334,10 +334,10 @@ export default function GlossaryPage() {
       const keyExists = entries.some((entry) => entry.key === key);
       if (!keyExists) return;
 
-      const needsFilterReset = query.length > 0 || category !== "all";
+      const needsFilterReset = globalFilter.length > 0 || category !== "all";
       if (!needsFilterReset) return;
 
-      setQuery("");
+      setGlobalFilter("");
       setCategory("all");
 
       // Wait for filtered results to render, then retry opening target.
@@ -351,7 +351,7 @@ export default function GlossaryPage() {
     openFromHash();
     window.addEventListener("hashchange", openFromHash);
     return () => window.removeEventListener("hashchange", openFromHash);
-  }, [entries, query, category]);
+  }, [entries, globalFilter, category]);
 
   return (
     <div className="relative min-h-screen bg-background">
