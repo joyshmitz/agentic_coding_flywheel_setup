@@ -243,11 +243,31 @@ Reserves:
 `);
 
     // Export metrics for CI
-    process.env.PERF_RENDER_TIME = metrics.renderTime.toString();
-    process.env.PERF_BUNDLE_SIZE = metrics.bundleSize?.toString() || 'unknown';
-    process.env.PERF_TESTS_PASS = metrics.testsPass ? 'true' : 'false';
+    // For GitHub Actions, we need to use echo with GitHub Actions syntax
+    if (process.env.GITHUB_ACTIONS) {
+      // GitHub Actions syntax: ::set-env name=KEY::VALUE
+      console.log(`\n📤 Metrics for CI:`);
+      console.log(`PERF_RENDER_TIME=${metrics.renderTime.toString()}`);
+      console.log(`PERF_BUNDLE_SIZE=${metrics.bundleSize?.toString() || 'unknown'}`);
+      console.log(`PERF_TESTS_PASS=${metrics.testsPass ? 'true' : 'false'}`);
 
-    console.log('\n📤 Metrics exported for CI reporting');
+      // Also try the modern GitHub Actions output format
+      if (process.env.GITHUB_OUTPUT) {
+        const fs = require('fs');
+        const output = [
+          `PERF_RENDER_TIME=${metrics.renderTime.toString()}`,
+          `PERF_BUNDLE_SIZE=${metrics.bundleSize?.toString() || 'unknown'}`,
+          `PERF_TESTS_PASS=${metrics.testsPass ? 'true' : 'false'}`,
+        ].join('\n');
+        fs.appendFileSync(process.env.GITHUB_OUTPUT, output + '\n');
+      }
+    } else {
+      // Local environment - just set env vars
+      process.env.PERF_RENDER_TIME = metrics.renderTime.toString();
+      process.env.PERF_BUNDLE_SIZE = metrics.bundleSize?.toString() || 'unknown';
+      process.env.PERF_TESTS_PASS = metrics.testsPass ? 'true' : 'false';
+      console.log('\n📤 Metrics exported for CI reporting');
+    }
   } catch (error) {
     console.error('\n✗ Benchmark failed:', error.message);
     process.exit(1);

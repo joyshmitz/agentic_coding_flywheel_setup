@@ -40,9 +40,11 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Run performance budget check
+        id: benchmark
         run: bun scripts/benchmark-jargon.js
         env:
           WEB_DIR: ./apps/web
+          GITHUB_ACTIONS: ${{ runner.os != '' }}
 
       - name: Run integration tests
         run: bun test lib/__tests__/feature-flags.test.ts
@@ -61,21 +63,16 @@ jobs:
           echo "✅ Integration Tests: 46/46 PASSED"
           echo "✅ TypeScript: PASS"
 
-      - name: Extract performance metrics
-        id: metrics
-        if: always()
-        run: |
-          echo "render_time=${{ env.PERF_RENDER_TIME }}" >> $GITHUB_OUTPUT
-          echo "bundle_size=${{ env.PERF_BUNDLE_SIZE }}" >> $GITHUB_OUTPUT
-          echo "tests_pass=${{ env.PERF_TESTS_PASS }}" >> $GITHUB_OUTPUT
-
       - name: Comment on PR with metrics
         if: github.event_name == 'pull_request' && success()
         uses: actions/github-script@v7
+        env:
+          RENDER_TIME: ${{ steps.benchmark.outputs.PERF_RENDER_TIME || 'unknown' }}
+          BUNDLE_SIZE: ${{ steps.benchmark.outputs.PERF_BUNDLE_SIZE || 'unknown' }}
         with:
           script: |
-            const renderTime = process.env.PERF_RENDER_TIME || 'unknown';
-            const bundleSize = process.env.PERF_BUNDLE_SIZE || 'unknown';
+            const renderTime = process.env.RENDER_TIME || 'unknown';
+            const bundleSize = process.env.BUNDLE_SIZE || 'unknown';
 
             const body = `## ✅ Performance Budget Check: PASSED
 
