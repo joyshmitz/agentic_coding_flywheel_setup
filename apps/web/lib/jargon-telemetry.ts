@@ -31,6 +31,7 @@ export class JargonTelemetry {
   private static eventQueue: TelemetryEvent[] = [];
   private static flushInterval: NodeJS.Timeout | null = null;
   private static isInitialized = false;
+  private static beforeUnloadListener: (() => void) | null = null;
 
   /**
    * Initialize telemetry system
@@ -49,11 +50,12 @@ export class JargonTelemetry {
       this.flush();
     }, 30000);
 
-    // Flush on page unload (only add listener once)
+    // Flush on page unload (only add listener once, but store reference for cleanup)
     if (typeof window !== 'undefined') {
-      window.addEventListener('beforeunload', () => {
+      this.beforeUnloadListener = () => {
         this.flush();
-      }, { once: false });
+      };
+      window.addEventListener('beforeunload', this.beforeUnloadListener, { once: false });
     }
   }
 
@@ -282,6 +284,13 @@ export class JargonTelemetry {
       clearInterval(this.flushInterval);
       this.flushInterval = null;
     }
+
+    // Remove beforeunload listener
+    if (typeof window !== 'undefined' && this.beforeUnloadListener) {
+      window.removeEventListener('beforeunload', this.beforeUnloadListener);
+      this.beforeUnloadListener = null;
+    }
+
     this.flush();
     // Clear the queue after flushing
     this.eventQueue = [];
@@ -299,6 +308,13 @@ export class JargonTelemetry {
       clearInterval(this.flushInterval);
       this.flushInterval = null;
     }
+
+    // Remove beforeunload listener
+    if (typeof window !== 'undefined' && this.beforeUnloadListener) {
+      window.removeEventListener('beforeunload', this.beforeUnloadListener);
+      this.beforeUnloadListener = null;
+    }
+
     // Reset initialization flag
     this.isInitialized = false;
   }

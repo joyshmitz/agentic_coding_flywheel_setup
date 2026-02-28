@@ -86,7 +86,7 @@ jobs:
 
 ### Measured Metrics
 - **Render time:** ${renderTime}ms / budget 20ms
-- **Bundle size:** ${bundleSize}KB / budget 3KB
+- **Bundle size:** ${bundleSize}KB / budget 7KB
 - **Integration tests:** 46/46 passing
 
 ### Budgets Status

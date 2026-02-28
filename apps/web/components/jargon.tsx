@@ -522,6 +522,9 @@ interface JargonTextProps {
  * // Renders: Your <Jargon term="vps">VPS</Jargon> needs <Jargon term="ssh">SSH</Jargon> access on <Jargon term="port-22">port 22</Jargon>.
  */
 export function JargonText({ children, mappings = defaultJargonMappings, className, page }: JargonTextProps) {
+  // Measure rendering time
+  const renderStartTime = typeof performance !== 'undefined' ? performance.now() : 0;
+
   // Feature flag check: if page is specified and not enabled, render plain text
   if (page && !isJargonTextEnabled(page)) {
     return <span className={className}>{children}</span>;
@@ -531,6 +534,15 @@ export function JargonText({ children, mappings = defaultJargonMappings, classNa
   const cacheKey = getJargonTextCacheKey(children, mappings, page);
   const cachedParts = jargonTextCache.get(cacheKey);
   if (cachedParts) {
+    const renderEndTime = typeof performance !== 'undefined' ? performance.now() : 0;
+    const renderTimeMs = Math.round((renderEndTime - renderStartTime) * 100) / 100; // Round to 2 decimals
+    // Track cache hit (minimal time)
+    JargonTelemetry.trackPerformance({
+      term: 'cache-hit',
+      page,
+      renderTimeMs,
+      textLengthChars: children.length,
+    });
     return <span className={className}>{cachedParts}</span>;
   }
 
@@ -608,14 +620,17 @@ export function JargonText({ children, mappings = defaultJargonMappings, classNa
       page,
       success: true,
     });
-    // Track performance
-    JargonTelemetry.trackPerformance({
-      term: `text-${matchedTermCount}-terms`,
-      page,
-      renderTimeMs: 0, // Will be negligible with cache
-      textLengthChars: children.length,
-    });
   }
+
+  // Track performance for cache miss (actual computation)
+  const renderEndTime = typeof performance !== 'undefined' ? performance.now() : 0;
+  const renderTimeMs = Math.round((renderEndTime - renderStartTime) * 100) / 100; // Round to 2 decimals
+  JargonTelemetry.trackPerformance({
+    term: `text-${matchedTermCount}-terms`,
+    page,
+    renderTimeMs,
+    textLengthChars: children.length,
+  });
 
   // If no matches found, return original text
   if (parts.length === 0) {

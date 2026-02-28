@@ -233,25 +233,42 @@ function verifyStructureParity(
         );
       }
       // Check structure of array elements (especially for objects in array)
+      // Verify all elements have consistent structure, not just [0]
       else if (enValue.length > 0 && ukValue.length > 0) {
+        // Check if elements are objects (need structural comparison)
         const enFirst = enValue[0];
-        const ukFirst = ukValue[0];
         const enFirstType = typeof enFirst;
-        const ukFirstType = typeof ukFirst;
+        const isObjectArray = enFirstType === 'object' && enFirst !== null && Array.isArray(enFirst) === false;
 
-        if (enFirstType === 'object' && enFirst !== null && Array.isArray(enFirst) === false) {
-          if (ukFirstType !== 'object' || ukFirst === null) {
-            errors.push(
-              `${newPath}[0]: EN element is object, UK element is ${ukFirstType}`
-            );
-          } else {
-            // Recursively check first element's structure
+        if (isObjectArray) {
+          // Verify all EN and UK array elements match structure
+          for (let i = 0; i < Math.min(enValue.length, ukValue.length); i++) {
+            const enElem = enValue[i];
+            const ukElem = ukValue[i];
+            const enElemType = typeof enElem;
+            const ukElemType = typeof ukElem;
+
+            if (enElemType !== 'object' || enElem === null) {
+              errors.push(
+                `${newPath}[${i}]: EN element is ${enElemType}, UK element is ${ukElemType}`
+              );
+              continue;
+            }
+
+            if (ukElemType !== 'object' || ukElem === null) {
+              errors.push(
+                `${newPath}[${i}]: EN element is object, UK element is ${ukElemType}`
+              );
+              continue;
+            }
+
+            // Recursively check element structure
             const elementCheck = verifyStructureParity(
-              `${enName}.${key}[0]`,
-              enFirst,
-              `${ukName}.${key}[0]`,
-              ukFirst,
-              `${newPath}[0]`
+              `${enName}.${key}[${i}]`,
+              enElem,
+              `${ukName}.${key}[${i}]`,
+              ukElem,
+              `${newPath}[${i}]`
             );
             errors.push(...elementCheck.errors);
           }
