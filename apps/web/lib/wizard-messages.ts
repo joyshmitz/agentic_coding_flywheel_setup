@@ -240,8 +240,8 @@ export const createVpsMessages = {
     title: "Why region matters",
     content: "Closer servers = faster response times. When you type, commands reach your VPS faster. When AI generates code, it appears on your screen faster.",
     regions: {
-      usa: { label: "USA:", hint: "Pick US-West (California) or US-East (Virginia)" },
-      europe: { label: "Europe:", hint: "Pick Germany, France, or Finland" },
+      usa: { label: "USA:", hint: "Pick US-West (Los Angeles/Seattle) or US-East (Virginia/New York)" },
+      europe: { label: "Europe:", hint: "Pick Germany (Nuremberg/Frankfurt), France, or Finland" },
       asiaPacific: { label: "Asia-Pacific:", hint: "Pick Singapore, Sydney, or Tokyo" },
       unsure: { label: "Unsure?", hint: "Any region works fine—pick one!" },
     },

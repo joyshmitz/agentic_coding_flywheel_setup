@@ -230,6 +230,7 @@ export default function CreateVPSPage() {
   };
 
   const allChecked = checklistItems.every((item) => checkedItems.has(item.id));
+  const ipExampleSegments = messages.guide.detailedSteps.step8.exampleTemplate.split("{ip}");
 
   return (
     <div className="space-y-8">
@@ -590,9 +591,9 @@ export default function CreateVPSPage() {
                       <li key={idx}>{location}</li>
                     ))}
                     <li>
-                      {messages.guide.detailedSteps.step8.exampleTemplate.split("{ip}")[0]}
+                      {ipExampleSegments[0]}
                       <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">203.0.113.42</code>
-                      {messages.guide.detailedSteps.step8.exampleTemplate.split("{ip}")[1] ?? ""}
+                      {ipExampleSegments[1] ?? ""}
                     </li>
                   </ul>
                   <br />

@@ -231,7 +231,7 @@ export default function StatusCheckPage() {
         <AlertCard variant="warning" icon={AlertCircle} title={messages.headlessAuth.codex.title}>
           <div className="space-y-2">
             <p>
-              {codexIntroSegments[0]}
+              <strong>{codexIntroSegments[0]}</strong>
               <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">localhost:1455</code>
               {codexIntroSegments[1] ?? ""}
             </p>
@@ -268,7 +268,7 @@ export default function StatusCheckPage() {
         <AlertCard variant="warning" icon={AlertCircle} title={messages.headlessAuth.wrangler.title}>
           <div className="space-y-2">
             <p>
-              {wranglerIntroSegments[0]}
+              <strong>{wranglerIntroSegments[0]}</strong>
               <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">wrangler login</code>
               {wranglerIntroSegments[1] ?? ""}
             </p>
