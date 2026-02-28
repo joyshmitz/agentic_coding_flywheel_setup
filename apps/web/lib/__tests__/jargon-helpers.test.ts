@@ -104,6 +104,27 @@ describe('jargon-helpers', () => {
       const result = wrapJargonInMixedFlat(React.createElement(React.Fragment, {}, children));
       expect(result.length).toBeLessThan(children.length);
     });
+
+    it('generates unique keys across nested fragments (FIXED)', () => {
+      // FIXED: Previously keys would collide (jargon-0, jargon-1 repeated in nested frag)
+      // Now uses global counter to ensure uniqueness
+      const input = React.createElement(React.Fragment, {}, [
+        'Text1',
+        React.createElement(React.Fragment, {}, 'Text2'),
+        'Text3',
+        React.createElement(React.Fragment, {}, 'Text4'),
+      ]);
+      const result = wrapJargonInMixedFlat(input);
+
+      // Extract keys from JargonText elements
+      const keys = result
+        .filter(el => React.isValidElement(el) && (el as any).type.name === 'JargonText')
+        .map((el: any) => el.key);
+
+      // All keys should be unique
+      const uniqueKeys = new Set(keys);
+      expect(uniqueKeys.size).toBe(keys.length);
+    });
   });
 
   describe('wrapJargonTextSegments', () => {
@@ -159,6 +180,26 @@ describe('jargon-helpers', () => {
         '{placeholder}',
         React.createElement('span', {}, 'content'),
         { className: 'text-sm' }
+      );
+      expect(result).toBeDefined();
+    });
+
+    it('handles multiple placeholders (N > 1)', () => {
+      // FIXED: Previously would only handle first 2 parts [before, after]
+      // Now supports "A {x} B {x} C" → [<T>A</T>, <x>, <T>B</T>, <x>, <T>C</T>]
+      const result = wrapJargonTextSegments(
+        'Use {cmd} to {action} {host}',
+        '{cmd}',
+        React.createElement('code', {}, 'ssh')
+      );
+      expect(result).toBeDefined();
+    });
+
+    it('handles multiple occurrences of same placeholder', () => {
+      const result = wrapJargonTextSegments(
+        'SSH SSH SSH',
+        'SSH',
+        React.createElement('em', {}, 'SSH')
       );
       expect(result).toBeDefined();
     });

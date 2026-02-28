@@ -93,7 +93,14 @@ export function wrapJargonInMixed(
  *   <>SSH is used for <code>remote access</code> to your VPS</>
  * )}</p>
  */
-export function wrapJargonInMixedFlat(
+// Global key counter to ensure unique keys across nested fragments
+let keyCounter = 0;
+
+/**
+ * Internal recursive helper for wrapJargonInMixedFlat
+ * Uses keyCounter to ensure globally unique keys
+ */
+function flattenJargonInMixed(
   children: ReactNode,
   options?: {
     page?: WizardPage;
@@ -102,18 +109,18 @@ export function wrapJargonInMixedFlat(
 ): ReactNode[] {
   const result: ReactNode[] = [];
 
-  React.Children.forEach(children, (child, index) => {
+  React.Children.forEach(children, (child) => {
     // String: wrap in JargonText
     if (typeof child === 'string') {
       result.push(
-        <JargonText key={`jargon-${index}`} page={options?.page} className={options?.className}>
+        <JargonText key={`jargon-${keyCounter++}`} page={options?.page} className={options?.className}>
           {child}
         </JargonText>
       );
     }
-    // Fragment: recursively flatten
+    // Fragment: recursively flatten (FIXED: no index reset on recursion)
     else if (React.isValidElement(child) && child.type === React.Fragment) {
-      const flattened = wrapJargonInMixedFlat((child.props as any).children, options);
+      const flattened = flattenJargonInMixed((child.props as any).children, options);
       result.push(...flattened);
     }
     // JSX Element: preserve as-is
@@ -127,6 +134,18 @@ export function wrapJargonInMixedFlat(
   });
 
   return result;
+}
+
+export function wrapJargonInMixedFlat(
+  children: ReactNode,
+  options?: {
+    page?: WizardPage;
+    className?: string;
+  }
+): ReactNode[] {
+  // Reset key counter for each top-level call
+  keyCounter = 0;
+  return flattenJargonInMixed(children, options);
 }
 
 /**
@@ -149,21 +168,40 @@ export function wrapJargonTextSegments(
     className?: string;
   }
 ): ReactNode {
-  const [before = '', after = ''] = text.split(placeholder);
+  // FIXED: Support N placeholders, not just 1 (was: const [before = '', after = ''] = split())
+  const parts = text.split(placeholder);
 
-  return (
-    <>
-      {before && (
-        <JargonText page={options?.page} className={options?.className}>
-          {before}
+  // If only one part, placeholder not found - return text wrapped in JargonText
+  if (parts.length === 1) {
+    return (
+      <JargonText page={options?.page} className={options?.className}>
+        {text}
+      </JargonText>
+    );
+  }
+
+  // Interleave text parts with replacements
+  // For "A {x} B {x} C" split by "{x}" gives ["A ", " B ", " C"]
+  // Result: [<JargonText>A </JargonText>, replacement, <JargonText> B </JargonText>, replacement, <JargonText> C</JargonText>]
+  const result: ReactNode[] = [];
+
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+
+    // Add text segment (wrapped in JargonText if non-empty)
+    if (part) {
+      result.push(
+        <JargonText key={`text-${i}`} page={options?.page} className={options?.className}>
+          {part}
         </JargonText>
-      )}
-      {replacement}
-      {after && (
-        <JargonText page={options?.page} className={options?.className}>
-          {after}
-        </JargonText>
-      )}
-    </>
-  );
+      );
+    }
+
+    // Add replacement between segments (but not after the last segment)
+    if (i < parts.length - 1) {
+      result.push(<React.Fragment key={`repl-${i}`}>{replacement}</React.Fragment>);
+    }
+  }
+
+  return <>{result}</>;
 }

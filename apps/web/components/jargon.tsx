@@ -38,7 +38,7 @@ const jargonTextCache = new LRUCache<string, ReactNode[]>(200);
  * Generate cache key from JargonText input parameters
  * Includes text, mappings configuration, and page flag
  */
-function getJargonTextCacheKey(
+export function getJargonTextCacheKey(
   text: string,
   mappings: JargonTermMapping[],
   page?: WizardPage

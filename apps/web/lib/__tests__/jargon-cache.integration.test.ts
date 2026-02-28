@@ -1,26 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import React from 'react';
-// Note: Full component testing would require a React testing library setup
-// This test validates the cache key generation logic used by JargonText
+import { getJargonTextCacheKey, type JargonTermMapping } from '@/components/jargon';
 
 /**
  * Integration tests for JargonText caching (Improvement #10)
  * Tests the cache key generation and semantics
  */
-
-interface JargonTermMapping {
-  pattern: string;
-  term: string;
-}
-
-// Replicate the cache key generation function from jargon.tsx
-function getJargonTextCacheKey(
-  text: string,
-  mappings: JargonTermMapping[],
-  page?: string
-): string {
-  return `${text}||${JSON.stringify(mappings)}||${page || ''}`;
-}
 
 describe('JargonText Cache Integration', () => {
   describe('cache key generation', () => {

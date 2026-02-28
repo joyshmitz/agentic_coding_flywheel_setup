@@ -232,6 +232,31 @@ function verifyStructureParity(
           `${newPath}: Array length mismatch (EN: ${enValue.length}, UK: ${ukValue.length})`
         );
       }
+      // Check structure of array elements (especially for objects in array)
+      else if (enValue.length > 0 && ukValue.length > 0) {
+        const enFirst = enValue[0];
+        const ukFirst = ukValue[0];
+        const enFirstType = typeof enFirst;
+        const ukFirstType = typeof ukFirst;
+
+        if (enFirstType === 'object' && enFirst !== null && Array.isArray(enFirst) === false) {
+          if (ukFirstType !== 'object' || ukFirst === null) {
+            errors.push(
+              `${newPath}[0]: EN element is object, UK element is ${ukFirstType}`
+            );
+          } else {
+            // Recursively check first element's structure
+            const elementCheck = verifyStructureParity(
+              `${enName}.${key}[0]`,
+              enFirst,
+              `${ukName}.${key}[0]`,
+              ukFirst,
+              `${newPath}[0]`
+            );
+            errors.push(...elementCheck.errors);
+          }
+        }
+      }
     } else if (enType === 'object' && enValue !== null) {
       // Nested objects
       if (ukType !== 'object' || ukValue === null) {
