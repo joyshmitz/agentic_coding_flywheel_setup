@@ -132,7 +132,7 @@ export default function ReconnectUbuntuPage() {
           <div className="space-y-3">
             <h3 className="font-semibold">{messages.ifRoot.noticeDifferent}</h3>
             <p className="text-sm text-muted-foreground">
-              <JargonText>{messages.ifRoot.keyExplanation}</JargonText>
+              <JargonText page="reconnect-ubuntu">{messages.ifRoot.keyExplanation}</JargonText>
             </p>
             <AlertCard variant="success" title={messages.ifRoot.noPassword.title}>
               {messages.ifRoot.noPassword.content}

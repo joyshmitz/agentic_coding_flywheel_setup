@@ -102,7 +102,7 @@ export default function VerifyKeyConnectionPage() {
       <div className="space-y-3">
         <h2 className="text-xl font-semibold">{messages.step2.title}</h2>
         <p className="text-sm text-muted-foreground">
-          <JargonText>{messages.step2.description}</JargonText>
+          <JargonText page="verify-key-connection">{messages.step2.description}</JargonText>
         </p>
         <CommandCard
           command={sshKeyCommand}
