@@ -38,7 +38,7 @@ import {
 } from "@/lib/services";
 import { TrackedLink } from "@/components/tracked-link";
 import { useLocale, getAccountsMessages, getCommonMessages } from "@/lib/i18n";
-import { Jargon } from "@/components/jargon";
+import { Jargon, JargonText } from "@/components/jargon";
 
 // Type for messages
 type Messages = ReturnType<typeof getAccountsMessages>;
@@ -411,13 +411,13 @@ export default function AccountsPage() {
             {messages.guide.whyAccounts.content}
             <br />
             <br />
-            <span dangerouslySetInnerHTML={{ __html: messages.guide.whyAccounts.essential.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
+            <JargonText page="accounts">{messages.guide.whyAccounts.essential}</JargonText>
             <br />
             <br />
-            <span dangerouslySetInnerHTML={{ __html: messages.guide.whyAccounts.recommended.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
+            <JargonText page="accounts">{messages.guide.whyAccounts.recommended}</JargonText>
             <br />
             <br />
-            <span dangerouslySetInnerHTML={{ __html: messages.guide.whyAccounts.optional.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
+            <JargonText page="accounts">{messages.guide.whyAccounts.optional}</JargonText>
           </GuideExplain>
 
           <GuideSection title={messages.guide.howToSignUp.title}>
@@ -441,7 +441,7 @@ export default function AccountsPage() {
           </GuideSection>
 
           <GuideTip>
-            <span dangerouslySetInnerHTML={{ __html: messages.guide.tip.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
+            <JargonText page="accounts">{messages.guide.tip}</JargonText>
           </GuideTip>
 
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">

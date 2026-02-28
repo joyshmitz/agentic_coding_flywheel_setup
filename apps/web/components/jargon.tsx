@@ -472,7 +472,7 @@ interface JargonTextProps {
    * Optional: wizard page for feature flag check.
    * If provided, JargonText only renders with tooltips if the page is enabled in the rollout.
    */
-  page?: 'launch-onboarding' | 'ssh-connect' | 'status-check' | 'reconnect-ubuntu' | 'verify-key-connection' | 'preflight-check' | 'install-terminal' | 'create-vps';
+  page?: 'launch-onboarding' | 'ssh-connect' | 'status-check' | 'reconnect-ubuntu' | 'verify-key-connection' | 'preflight-check' | 'install-terminal' | 'create-vps' | 'accounts';
 }
 
 /**
