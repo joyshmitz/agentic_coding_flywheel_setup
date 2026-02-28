@@ -18,6 +18,7 @@ import type { JargonTerm } from "@/lib/jargon";
 import { useReducedMotion } from "@/lib/hooks/useReducedMotion";
 import { useLocale, getJargonUiMessages, getJargonTerm } from "@/lib/i18n";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { isJargonTextEnabled } from "@/lib/feature-flags";
 
 type Messages = ReturnType<typeof getJargonUiMessages>;
 
@@ -467,6 +468,11 @@ interface JargonTextProps {
   mappings?: JargonTermMapping[];
   /** Optional: additional class name for the wrapper span */
   className?: string;
+  /**
+   * Optional: wizard page for feature flag check.
+   * If provided, JargonText only renders with tooltips if the page is enabled in the rollout.
+   */
+  page?: 'launch-onboarding' | 'ssh-connect' | 'status-check' | 'reconnect-ubuntu' | 'verify-key-connection' | 'preflight-check' | 'install-terminal' | 'create-vps';
 }
 
 /**
@@ -479,7 +485,12 @@ interface JargonTextProps {
  * <JargonText>Your VPS needs SSH access on port 22.</JargonText>
  * // Renders: Your <Jargon term="vps">VPS</Jargon> needs <Jargon term="ssh">SSH</Jargon> access on <Jargon term="port-22">port 22</Jargon>.
  */
-export function JargonText({ children, mappings = defaultJargonMappings, className }: JargonTextProps) {
+export function JargonText({ children, mappings = defaultJargonMappings, className, page }: JargonTextProps) {
+  // Feature flag check: if page is specified and not enabled, render plain text
+  if (page && !isJargonTextEnabled(page)) {
+    return <span className={className}>{children}</span>;
+  }
+
   // Build a regex that matches any of the patterns (case-insensitive, word boundaries)
   // Sort by pattern length descending to match longer patterns first (e.g., "API key" before "API")
   const sortedMappings = [...mappings].sort((a, b) => b.pattern.length - a.pattern.length);
