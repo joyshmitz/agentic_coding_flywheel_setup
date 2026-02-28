@@ -48,28 +48,30 @@
 
 ---
 
-### 4. Regression Tests (Commit bfe04372)
+### 4. Regression Tests (Playwright E2E)
 
 **File Created**:
-- `apps/web/__tests__/jargon-rollout.test.tsx` (250 lines)
+- `apps/web/e2e/feature-flags-rollout.spec.ts` (Playwright E2E tests)
 
 **Test Coverage**:
-- ✅ Feature flag phase activation (12 tests)
-- ✅ Technical term detection (3 tests)
-- ✅ Tooltip interactions (2 tests)
-- ✅ Snapshot testing (3 tests)
-- ✅ Integration tests (2 tests)
-- ✅ Performance benchmarks (2 tests)
+- ✅ Phase 1 activation (6 pages enabled)
+- ✅ Phase 2 disabled verification (3 pages)
+- ✅ Feature-flag enforcement on all pages
+- ✅ Coverage statistics validation
+- ✅ Configuration integrity checks
+- ✅ Regression detection (rendering, page prop enforcement)
 
 **Run Tests**:
 ```bash
-bun run test jargon-rollout
+bun run test -- feature-flags-rollout
 ```
 
 **Expected Results**:
-- Phase 1: 3 pages enabled, 6 pages disabled
-- Render time: <100ms
+- Phase 1: 6 pages enabled (launch-onboarding, ssh-connect, status-check, install-terminal, create-vps, accounts)
+- Phase 2: 3 pages disabled (reconnect-ubuntu, verify-key-connection, preflight-check)
+- All JargonText components on Phase 2 pages have `page` prop
 - No console errors
+- All pages load successfully
 
 ---
 

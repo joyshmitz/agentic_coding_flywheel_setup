@@ -383,7 +383,7 @@ When you add JargonText to a new wizard page:
 - `apps/web/lib/feature-flags.ts` - Rollout configuration & utilities
 - `apps/web/components/jargon.tsx` - JargonText implementation & defaultJargonMappings
 - `apps/web/components/rollout-jargon.tsx` - Feature-flag-aware wrapper
-- `apps/web/__tests__/jargon-rollout.test.tsx` - Regression tests
+- `apps/web/e2e/feature-flags-rollout.spec.ts` - Playwright E2E tests for rollout logic
 - `apps/web/lib/jargon.ts` - Term definitions
 
 ---
@@ -391,7 +391,7 @@ When you add JargonText to a new wizard page:
 ## ❓ FAQ
 
 **Q: Why are some wizard pages not getting JargonText?**
-A: Phase 1 (3 pages) is active. Phase 2 & 3 activate on Day 3 and Day 5. See feature-flags.ts.
+A: Phase 1 (6 pages: launch-onboarding, ssh-connect, status-check, install-terminal, create-vps, accounts) is active. Phase 2 (3 pages) activates on Day 3. See `lib/feature-flags.ts`.
 
 **Q: Can I enable all pages at once?**
 A: Not recommended - use feature flags for controlled rollout. See IMPROVEMENTS_#1_PHASED_ROLLOUT.md
