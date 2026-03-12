@@ -114,6 +114,12 @@ autofix_nvm_fix() {
     local nvm_dir nvm_version
     nvm_dir=$(echo "$check_result" | jq -r '.nvm_dir')
     nvm_version=$(echo "$check_result" | jq -r '.version')
+
+    # SECURITY: Prevent accidental deletion of critical directories
+    if [[ -z "$nvm_dir" || "$nvm_dir" == "/" || "$nvm_dir" == "$HOME" || "$nvm_dir" == "/usr" || "$nvm_dir" == "/usr/local" ]]; then
+        log_error "[AUTO-FIX:nvm] Unsafe nvm_dir detected: '$nvm_dir'. Aborting fix."
+        return 2
+    fi
     local config_count
     config_count=$(echo "$check_result" | jq -r '.shell_configs | length')
 
@@ -122,7 +128,7 @@ autofix_nvm_fix() {
 
     if [[ "$mode" == "dry-run" ]]; then
         log_info "[DRY-RUN] Would backup $nvm_dir"
-        echo "$check_result" | jq -r '.shell_configs[]' | while read -r config; do
+        echo "$check_result" | jq -r '.shell_configs[]' | while IFS= read -r config; do
             log_info "[DRY-RUN] Would backup and clean nvm references from $config"
         done
         return 0
@@ -325,6 +331,12 @@ autofix_pyenv_fix() {
     local pyenv_root pyenv_version
     pyenv_root=$(echo "$check_result" | jq -r '.pyenv_root')
     pyenv_version=$(echo "$check_result" | jq -r '.version')
+
+    # SECURITY: Prevent accidental deletion of critical directories
+    if [[ -z "$pyenv_root" || "$pyenv_root" == "/" || "$pyenv_root" == "$HOME" || "$pyenv_root" == "/usr" || "$pyenv_root" == "/usr/local" ]]; then
+        log_error "[AUTO-FIX:pyenv] Unsafe pyenv_root detected: '$pyenv_root'. Aborting fix."
+        return 2
+    fi
     local config_count
     config_count=$(echo "$check_result" | jq -r '.shell_configs | length')
 
@@ -333,7 +345,7 @@ autofix_pyenv_fix() {
 
     if [[ "$mode" == "dry-run" ]]; then
         log_info "[DRY-RUN] Would backup $pyenv_root"
-        echo "$check_result" | jq -r '.shell_configs[]' | while read -r config; do
+        echo "$check_result" | jq -r '.shell_configs[]' | while IFS= read -r config; do
             log_info "[DRY-RUN] Would backup and clean pyenv references from $config"
         done
         return 0
@@ -468,8 +480,10 @@ autofix_version_managers_fix() {
     log_info "[AUTO-FIX] Starting version managers fix (mode=$mode)"
 
     # Fix nvm
-    if ! autofix_nvm_fix "$mode"; then
-        local nvm_result=$?
+    local nvm_result=0
+    autofix_nvm_fix "$mode"
+    nvm_result=$?
+    if [[ $nvm_result -ne 0 ]]; then
         if [[ $nvm_result -eq 2 ]]; then
             log_error "[AUTO-FIX] nvm fix failed critically"
             overall_result=2
@@ -480,8 +494,10 @@ autofix_version_managers_fix() {
     fi
 
     # Fix pyenv
-    if ! autofix_pyenv_fix "$mode"; then
-        local pyenv_result=$?
+    local pyenv_result=0
+    autofix_pyenv_fix "$mode"
+    pyenv_result=$?
+    if [[ $pyenv_result -ne 0 ]]; then
         if [[ $pyenv_result -eq 2 ]]; then
             log_error "[AUTO-FIX] pyenv fix failed critically"
             overall_result=2

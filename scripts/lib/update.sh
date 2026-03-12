@@ -10,6 +10,9 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
 ACFS_VERSION="${ACFS_VERSION:-0.1.0}"
+ACFS_REPO_OWNER="${ACFS_REPO_OWNER:-Dicklesworthstone}"
+ACFS_REPO_NAME="${ACFS_REPO_NAME:-agentic_coding_flywheel_setup}"
+ACFS_CHECKSUMS_REF="${ACFS_CHECKSUMS_REF:-main}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ACFS_REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
@@ -20,6 +23,18 @@ ACFS_SELF_UPDATE_DONE="${ACFS_SELF_UPDATE_DONE:-false}"
 if [[ -f "$SCRIPT_DIR/../../VERSION" ]]; then
     ACFS_VERSION="$(cat "$SCRIPT_DIR/../../VERSION" 2>/dev/null || echo "$ACFS_VERSION")"
 fi
+
+# Build display version: v0.6.0+a7598d0 (with short commit hash when available)
+_acfs_short_hash=""
+if command -v git &>/dev/null && [[ -d "$SCRIPT_DIR/../../.git" ]]; then
+    _acfs_short_hash=$(git -C "$SCRIPT_DIR/../.." rev-parse --short HEAD 2>/dev/null) || true
+fi
+if [[ -n "$_acfs_short_hash" ]]; then
+    ACFS_VERSION_DISPLAY="v${ACFS_VERSION}+${_acfs_short_hash}"
+else
+    ACFS_VERSION_DISPLAY="v${ACFS_VERSION}"
+fi
+unset _acfs_short_hash
 
 # Colors - respect NO_COLOR standard (https://no-color.org/)
 # Related: bd-39ye
@@ -77,9 +92,10 @@ declare -gA VERSION_AFTER=()
 ensure_path() {
     local dir
     local to_add=()
+    local _acfs_bin="${ACFS_BIN_DIR:-$HOME/.local/bin}"
 
     for dir in \
-        "$HOME/.local/bin" \
+        "$_acfs_bin" \
         "$HOME/.bun/bin" \
         "$HOME/.cargo/bin" \
         "$HOME/go/bin" \
@@ -98,6 +114,34 @@ ensure_path() {
     fi
 }
 
+is_expected_acfs_origin_url() {
+    local url="$1"
+    local normalized="$url"
+    normalized="${normalized%/}"
+
+    case "$normalized" in
+        https://github.com/*)
+            normalized="${normalized#https://github.com/}"
+            ;;
+        git@github.com:*)
+            normalized="${normalized#git@github.com:}"
+            ;;
+        ssh://git@github.com/*)
+            normalized="${normalized#ssh://git@github.com/}"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    normalized="${normalized%.git}"
+    normalized="${normalized,,}"
+
+    local expected="${ACFS_REPO_OWNER}/${ACFS_REPO_NAME}"
+    expected="${expected,,}"
+    [[ "$normalized" == "$expected" ]]
+}
+
 # ============================================================
 # Logging Infrastructure
 # ============================================================
@@ -112,7 +156,7 @@ init_logging() {
         echo "ACFS Update Log"
         echo "Started: $(date -Iseconds)"
         echo "User: $(whoami)"
-        echo "Version: $ACFS_VERSION"
+        echo "Version: $ACFS_VERSION_DISPLAY"
         echo "==============================================="
         echo ""
     } >> "$UPDATE_LOG_FILE"
@@ -141,7 +185,7 @@ get_version() {
             version=$("$HOME/.cargo/bin/rustc" --version 2>/dev/null | awk '{print $2}' || echo "unknown")
             ;;
         uv)
-            version=$("$HOME/.local/bin/uv" --version 2>/dev/null | awk '{print $2}' || echo "unknown")
+            version=$("${ACFS_BIN_DIR:-$HOME/.local/bin}/uv" --version 2>/dev/null | awk '{print $2}' || echo "unknown")
             ;;
         claude)
             version=$(claude --version 2>/dev/null | head -1 || echo "unknown")
@@ -161,7 +205,7 @@ get_version() {
         vercel)
             version=$(vercel --version 2>/dev/null || echo "unknown")
             ;;
-        ntm|ubs|bv|cass|cm|caam|slb|ru|dcg|apr|pt|xf|jfp|ms|br|rch|giil|csctf|srps|tru|rano|mdwb|s2p|brenner)
+        ntm|ubs|bv|cass|cm|caam|slb|ru|dcg|apr|pt|xf|jfp|ms|br|rch|giil|csctf|srps|tru|rano|mdwb|s2p|brenner|fsfs|sbh|casr|dsr|asb|pcr)
             version=$("$tool" --version 2>/dev/null | head -1 || echo "unknown")
             ;;
         sg|lsd|dust|tldr)
@@ -608,7 +652,7 @@ sync_acfs_zshrc() {
 # Checksums Refresh (Auto-update from GitHub)
 # ============================================================
 
-CHECKSUMS_URL="https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/checksums.yaml"
+CHECKSUMS_URL="https://raw.githubusercontent.com/${ACFS_REPO_OWNER}/${ACFS_REPO_NAME}/${ACFS_CHECKSUMS_REF}/checksums.yaml"
 CHECKSUMS_LOCAL="${HOME}/.acfs/checksums.yaml"
 
 # Refresh checksums.yaml from GitHub before verifying installers
@@ -622,7 +666,12 @@ refresh_checksums() {
 
     # Download with timeout and retry
     local tmp_checksums
-    tmp_checksums=$(mktemp "${TMPDIR:-/tmp}/acfs-checksums.XXXXXX")
+    tmp_checksums=$(mktemp "${TMPDIR:-/tmp}/acfs-checksums.XXXXXX" 2>/dev/null || true)
+    if [[ -z "$tmp_checksums" ]]; then
+        [[ "$quiet" != "true" ]] && log_item "warn" "checksums refresh" "failed to create temp file, using cached"
+        log_to_file "Checksums refresh failed: mktemp failed"
+        return 1
+    fi
 
     if curl -fsSL --connect-timeout 5 --max-time 30 -o "$tmp_checksums" "$CHECKSUMS_URL" 2>/dev/null; then
         # Validate it looks like a checksums file
@@ -702,8 +751,10 @@ update_require_security() {
         return 1
     fi
 
-    # shellcheck source=security.sh
-    # shellcheck disable=SC1091  # runtime relative source
+    if [[ -f "$CHECKSUMS_LOCAL" ]]; then
+        export CHECKSUMS_FILE="$CHECKSUMS_LOCAL"
+    fi
+    # shellcheck disable=SC1090,SC1091  # runtime-resolved absolute path source
     source "$security_script"
     load_checksums || return 1
 
@@ -731,8 +782,8 @@ update_run_verified_installer() {
     fi
 
     (
-        set -o pipefail
-        verify_checksum "$url" "$expected_sha256" "$tool" | bash -s -- "$@"
+        script=$(verify_checksum "$url" "$expected_sha256" "$tool") || exit $?
+        bash -c "$script" bash "$@" </dev/null
     )
 }
 
@@ -761,6 +812,25 @@ update_acfs_self() {
         return 0
     fi
 
+    # Recovery for orphaned git init (issue #200)
+    if [[ -d "$ACFS_REPO_ROOT/.git" ]] && ! git -C "$ACFS_REPO_ROOT" rev-parse HEAD &>/dev/null; then
+        log_info "Detected incomplete git bootstrap — attempting recovery..."
+        local actual_origin
+        actual_origin=$(git -C "$ACFS_REPO_ROOT" remote get-url origin 2>/dev/null || true)
+        if [[ "$actual_origin" == *"agentic_coding_flywheel_setup"* ]]; then
+            git -C "$ACFS_REPO_ROOT" fetch origin main 2>/dev/null || true
+            if git -C "$ACFS_REPO_ROOT" checkout --force -B main --track origin/main; then
+                log_info "Git bootstrap recovery succeeded"
+            else
+                log_warn "Git bootstrap recovery failed — removing .git for fresh init"
+                rm -rf "$ACFS_REPO_ROOT/.git"
+            fi
+        else
+            log_warn "Unknown origin '$actual_origin' — removing .git for fresh init"
+            rm -rf "$ACFS_REPO_ROOT/.git"
+        fi
+    fi
+
     # Check if ACFS repo exists and is a git repo.
     # If installed via tarball (no .git dir), bootstrap a git repo so
     # the existing pull-based self-update logic works on subsequent runs.
@@ -773,17 +843,18 @@ update_acfs_self() {
             return 0
         fi
 
-        if ! git -C "$ACFS_REPO_ROOT" init 2>/dev/null; then
+        if ! git -C "$ACFS_REPO_ROOT" init -b main 2>/dev/null; then
             log_item "warn" "ACFS self-update" "git init failed at $ACFS_REPO_ROOT"
             return 0
         fi
 
-        if ! git -C "$ACFS_REPO_ROOT" remote add origin \
-                https://github.com/Dicklesworthstone/agentic_coding_flywheel_setup.git 2>/dev/null; then
+        local expected_origin
+        expected_origin="https://github.com/${ACFS_REPO_OWNER}/${ACFS_REPO_NAME}.git"
+        if ! git -C "$ACFS_REPO_ROOT" remote add origin "$expected_origin" 2>/dev/null; then
             # Remote may already exist from a partial prior run; verify it points to the right URL
             local existing_url
             existing_url=$(git -C "$ACFS_REPO_ROOT" remote get-url origin 2>/dev/null) || true
-            if [[ "$existing_url" != *"agentic_coding_flywheel_setup"* ]]; then
+            if ! is_expected_acfs_origin_url "$existing_url"; then
                 log_item "warn" "ACFS self-update" "unexpected origin remote: $existing_url"
                 return 0
             fi
@@ -794,16 +865,15 @@ update_acfs_self() {
             return 0
         fi
 
-        # Use --mixed reset so local modifications (custom configs, etc.) are
-        # preserved as unstaged changes rather than being destroyed.
-        if ! git -C "$ACFS_REPO_ROOT" reset --mixed origin/main 2>/dev/null; then
-            log_item "warn" "ACFS self-update" "git reset failed during bootstrap"
+        # Use a hard reset via checkout so the working tree is updated to match
+        # origin/main exactly (tarball files are replaced with the real repo state).
+        if ! git -C "$ACFS_REPO_ROOT" checkout -B main --track origin/main; then
+            log_item "warn" "ACFS self-update" "git checkout failed during bootstrap"
             return 0
         fi
 
         log_item "ok" "ACFS" "git repo bootstrapped from tarball install"
-        log_to_file "ACFS git repo initialized at $ACFS_REPO_ROOT — run 'acfs update' again for full self-update"
-        return 0
+        log_to_file "ACFS git repo initialized at $ACFS_REPO_ROOT — continuing with self-update"
     fi
 
     # Check if git is available
@@ -812,12 +882,30 @@ update_acfs_self() {
         return 0
     fi
 
+    # Security: verify we are pulling from the expected ACFS origin.
+    # Do this for normal runs too (not only bootstrap mode) to prevent
+    # accidental or malicious self-update from an unexpected remote.
+    local origin_url
+    origin_url=$(git -C "$ACFS_REPO_ROOT" remote get-url origin 2>/dev/null || true)
+    if [[ -z "$origin_url" ]]; then
+        log_item "warn" "ACFS self-update" "origin remote not configured"
+        return 0
+    fi
+    if ! is_expected_acfs_origin_url "$origin_url"; then
+        log_item "warn" "ACFS self-update" "unexpected origin remote: $origin_url"
+        return 0
+    fi
+
     # Get current branch
-    local current_branch
-    current_branch=$(git -C "$ACFS_REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null) || {
+    local current_branch=""
+    current_branch=$(git -C "$ACFS_REPO_ROOT" branch --show-current 2>/dev/null) || true
+    if [[ -z "$current_branch" ]]; then
+        current_branch=$(git -C "$ACFS_REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null) || true
+    fi
+    if [[ -z "$current_branch" ]] || [[ "$current_branch" == "HEAD" ]]; then
         log_item "warn" "ACFS self-update" "failed to get current branch"
         return 0
-    }
+    fi
 
     # Only auto-update on main branch
     if [[ "$current_branch" != "main" ]]; then
@@ -850,7 +938,7 @@ update_acfs_self() {
     fi
 
     if [[ "$local_head" == "$remote_head" ]]; then
-        log_item "ok" "ACFS" "already up to date"
+        log_item "ok" "ACFS $ACFS_VERSION_DISPLAY" "already up to date"
         return 0
     fi
 
@@ -865,33 +953,34 @@ update_acfs_self() {
         return 0
     fi
 
-    # Stash local modifications so they don't block the pull
-    local stashed=false
-    if ! git -C "$ACFS_REPO_ROOT" diff --quiet 2>/dev/null || ! git -C "$ACFS_REPO_ROOT" diff --cached --quiet 2>/dev/null; then
-        log_to_file "Local modifications detected, stashing before update..."
-        if git -C "$ACFS_REPO_ROOT" stash --quiet 2>/dev/null; then
-            stashed=true
-        fi
+    # Never mutate a dirty working tree during self-update.
+    # Auto-stash/reapply can create conflicts and unexpectedly rewrite local work.
+    if [[ -n "$(git -C "$ACFS_REPO_ROOT" status --porcelain --untracked-files=all 2>/dev/null)" ]]; then
+        log_item "warn" "ACFS self-update" "local or untracked files detected; skipping self-update"
+        log_to_file "Self-update skipped: working tree has tracked or untracked modifications"
+        return 0
     fi
 
     # Pull updates
     log_to_file "Pulling updates..."
     if ! git -C "$ACFS_REPO_ROOT" pull --ff-only origin main 2>/dev/null; then
-        # ff-only failed (diverged history?), try reset --mixed
-        log_to_file "ff-only pull failed, using reset --mixed"
-        git -C "$ACFS_REPO_ROOT" reset --mixed origin/main 2>/dev/null || {
-            log_item "warn" "ACFS self-update" "git update failed"
-            [[ "$stashed" == "true" ]] && git -C "$ACFS_REPO_ROOT" stash pop --quiet 2>/dev/null || true
-            return 0
-        }
+        log_item "warn" "ACFS self-update" "ff-only pull failed; skipping (branch divergence?)"
+        log_to_file "Self-update skipped: git pull --ff-only failed"
+        return 0
     fi
 
-    # Restore local modifications
-    if [[ "$stashed" == "true" ]]; then
-        git -C "$ACFS_REPO_ROOT" stash pop --quiet 2>/dev/null || true
+    # Refresh version display with new commit hash after pull
+    local _new_short_hash=""
+    _new_short_hash=$(git -C "$ACFS_REPO_ROOT" rev-parse --short HEAD 2>/dev/null) || true
+    if [[ -n "$_new_short_hash" ]]; then
+        # Re-read VERSION in case it changed
+        if [[ -f "$ACFS_REPO_ROOT/VERSION" ]]; then
+            ACFS_VERSION="$(cat "$ACFS_REPO_ROOT/VERSION" 2>/dev/null || echo "$ACFS_VERSION")"
+        fi
+        ACFS_VERSION_DISPLAY="v${ACFS_VERSION}+${_new_short_hash}"
     fi
 
-    log_item "ok" "ACFS" "updated ($commit_count commits)"
+    log_item "ok" "ACFS $ACFS_VERSION_DISPLAY" "updated ($commit_count commits)"
     log_to_file "ACFS updated from $local_head to $remote_head"
 
     # Check if update.sh itself changed - if so, re-exec
@@ -966,6 +1055,49 @@ update_apt() {
 
 # Wait for apt lock to be released, with automatic retry
 # Returns 0 if lock is free, 1 if still locked after max attempts
+apt_lock_is_held() {
+    local lockfile="$1"
+
+    command -v fuser &>/dev/null || return 1
+    [[ -f "$lockfile" ]] || return 1
+
+    # Try as current user first (works when lockfile is readable).
+    if fuser "$lockfile" &>/dev/null; then
+        return 0
+    fi
+
+    # Fallback to non-interactive sudo to avoid hanging in safe mode / CI.
+    if command -v sudo &>/dev/null; then
+        sudo -n fuser "$lockfile" &>/dev/null && return 0
+    fi
+
+    return 1
+}
+
+apt_lock_holder_details() {
+    local lockfile="$1"
+    local details=""
+
+    command -v fuser &>/dev/null || return 1
+    [[ -f "$lockfile" ]] || return 1
+
+    details=$(fuser -v "$lockfile" 2>&1 || true)
+    if [[ -n "$details" ]]; then
+        printf '%s\n' "$details"
+        return 0
+    fi
+
+    if command -v sudo &>/dev/null; then
+        details=$(sudo -n fuser -v "$lockfile" 2>/dev/null || true)
+        if [[ -n "$details" ]]; then
+            printf '%s\n' "$details"
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
 wait_for_apt_lock() {
     local max_wait=${1:-120}  # Default 120 seconds (2 minutes)
     local interval=5
@@ -981,7 +1113,7 @@ wait_for_apt_lock() {
         # daemon) don't hold locks unless actively installing
         local lock_held=false
         for lockfile in /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock /var/lib/dpkg/lock; do
-            if [[ -f "$lockfile" ]] && fuser "$lockfile" &>/dev/null; then
+            if apt_lock_is_held "$lockfile"; then
                 lock_held=true
                 break
             fi
@@ -995,7 +1127,7 @@ wait_for_apt_lock() {
             log_item "wait" "apt lock" "waiting for other package operations to complete..."
             log_to_file "APT lock detected, waiting up to ${max_wait}s for release"
             local lock_info=""
-            lock_info=$(fuser -v /var/lib/dpkg/lock-frontend 2>&1 || true)
+            lock_info=$(apt_lock_holder_details /var/lib/dpkg/lock-frontend 2>/dev/null || true)
             [[ -n "$lock_info" ]] && log_to_file "Lock holder: $lock_info"
         fi
 
@@ -1056,7 +1188,7 @@ check_apt_lock() {
     # actively installing, so pgrep-based checks cause false positives.
     local locks_held=false
     for lockfile in /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock /var/lib/dpkg/lock; do
-        if [[ -f "$lockfile" ]] && fuser "$lockfile" &>/dev/null; then
+        if apt_lock_is_held "$lockfile"; then
             locks_held=true
             break
         fi
@@ -1077,7 +1209,7 @@ check_apt_lock() {
     log_to_file "APT lock still held after waiting"
 
     local lock_holder=""
-    lock_holder=$(sudo fuser -v /var/lib/dpkg/lock-frontend 2>&1 || true)
+    lock_holder=$(apt_lock_holder_details /var/lib/dpkg/lock-frontend 2>/dev/null || true)
     if [[ -n "$lock_holder" ]]; then
         log_to_file "Lock holder: $lock_holder"
         if [[ "$QUIET" != "true" ]]; then
@@ -1234,7 +1366,7 @@ update_agents() {
     # Uses fallback chain: @latest -> unversioned -> pinned 0.87.0
     # npm can 404 briefly after publishing; pinned version is reliable fallback
     if cmd_exists codex || [[ "$FORCE_MODE" == "true" ]]; then
-        local codex_bin_local="$HOME/.local/bin/codex"
+        local codex_bin_local="${ACFS_BIN_DIR:-$HOME/.local/bin}/codex"
         local codex_bin_bun="$HOME/.bun/bin/codex"
         local codex_fallback_version="0.87.0"
 
@@ -1268,8 +1400,7 @@ update_agents() {
             [[ "$QUIET" != "true" ]] && printf "       ${DIM}%s → %s${NC}\n" "${VERSION_BEFORE[gemini]}" "${VERSION_AFTER[gemini]}"
         fi
         # Apply Gemini CLI patches (EBADF crash fix, rate-limit retry, quota retry)
-        log_item "run" "Gemini CLI patches" "EBADF, retry, quota"
-        curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/misc_coding_agent_tips_and_scripts/main/fix-gemini-cli-ebadf-crash.sh | bash 2>&1 | tail -5 || true
+        run_cmd "Gemini CLI patches" update_run_verified_installer gemini_patch
     else
         log_item "skip" "Gemini CLI" "not installed (use --force to install)"
     fi
@@ -1351,9 +1482,9 @@ supabase_release_update_script() {
     cat <<'EOF'
 set -euo pipefail
 
-CURL_ARGS=(-fsSL)
+CURL_ARGS=(--connect-timeout 30 --max-time 300 -fsSL)
 if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
-  CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+  CURL_ARGS=(--proto '=https' --proto-redir '=https' --connect-timeout 30 --max-time 300 -fsSL)
 fi
 
 arch=""
@@ -1381,11 +1512,23 @@ checksums="supabase_${version}_checksums.txt"
 tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/acfs-supabase.XXXXXX" 2>/dev/null)" || tmp_dir=""
 tmp_tgz="$(mktemp "${TMPDIR:-/tmp}/acfs-supabase.tgz.XXXXXX" 2>/dev/null)" || tmp_tgz=""
 tmp_checksums="$(mktemp "${TMPDIR:-/tmp}/acfs-supabase.sha.XXXXXX" 2>/dev/null)" || tmp_checksums=""
+extracted_bin=""
 
 if [[ -z "$tmp_dir" ]] || [[ -z "$tmp_tgz" ]] || [[ -z "$tmp_checksums" ]]; then
   echo "Supabase CLI: failed to create temp files" >&2
   exit 1
 fi
+
+cleanup() {
+  [[ -n "${tmp_tgz:-}" ]] && rm -f "$tmp_tgz" 2>/dev/null || true
+  [[ -n "${tmp_checksums:-}" ]] && rm -f "$tmp_checksums" 2>/dev/null || true
+  [[ -n "${extracted_bin:-}" ]] && rm -f "$extracted_bin" 2>/dev/null || true
+  if [[ -n "${tmp_dir:-}" ]] && [[ -d "$tmp_dir" ]]; then
+    find "$tmp_dir" -type f -delete 2>/dev/null || true
+    find "$tmp_dir" -depth -type d -empty -delete 2>/dev/null || true
+  fi
+}
+trap cleanup EXIT
 
 if ! curl "${CURL_ARGS[@]}" -o "$tmp_tgz" "${base_url}/${tarball}" 2>/dev/null; then
   echo "Supabase CLI: failed to download ${tarball}" >&2
@@ -1435,24 +1578,20 @@ if [[ -z "$extracted_bin" ]] || [[ ! -f "$extracted_bin" ]]; then
   exit 1
 fi
 
-mkdir -p "$HOME/.local/bin"
-install -m 0755 "$extracted_bin" "$HOME/.local/bin/supabase"
+mkdir -p "${ACFS_BIN_DIR:-$HOME/.local/bin}"
+install -m 0755 "$extracted_bin" "${ACFS_BIN_DIR:-$HOME/.local/bin}/supabase"
 
 if command -v timeout &>/dev/null; then
-  timeout 5 "$HOME/.local/bin/supabase" --version >/dev/null 2>&1 || {
+  timeout 5 "${ACFS_BIN_DIR:-$HOME/.local/bin}/supabase" --version >/dev/null 2>&1 || {
     echo "Supabase CLI: installed but failed to run" >&2
     exit 1
   }
 else
-  "$HOME/.local/bin/supabase" --version >/dev/null 2>&1 || {
+  "${ACFS_BIN_DIR:-$HOME/.local/bin}/supabase" --version >/dev/null 2>&1 || {
     echo "Supabase CLI: installed but failed to run" >&2
     exit 1
   }
 fi
-
-# Best-effort cleanup
-rm -f "$tmp_tgz" "$tmp_checksums" "$extracted_bin" 2>/dev/null || true
-rmdir "$tmp_dir" 2>/dev/null || true
 EOF
 }
 
@@ -1622,7 +1761,7 @@ update_uv() {
         return 0
     fi
 
-    local uv_bin="$HOME/.local/bin/uv"
+    local uv_bin="${ACFS_BIN_DIR:-$HOME/.local/bin}/uv"
 
     if [[ ! -x "$uv_bin" ]]; then
         log_item "skip" "uv" "not installed"
@@ -1697,58 +1836,82 @@ update_stack() {
         return 0
     fi
 
-    # Brenner Bot - MUST run BEFORE individual tool installs (NTM, CASS, CM, etc.)
-    # because Brenner Bot's installer bundles and pins its own copies of these tools
-    # at older versions. By running it first, its pinned deps get laid down, then the
-    # individual tool updates below bring them to the latest versions.
-    run_cmd "Brenner Bot" update_run_verified_installer brenner_bot
+    # Brenner Bot - skip all toolchain deps (NTM, CASS, CM) because ACFS
+    # installs/updates them individually below.  Previously only --skip-cass
+    # was passed, causing brenner's install_toolchain() to redundantly rebuild
+    # NTM and CM from source — a 5+ hour hang on slow machines (fixes #210).
+    run_cmd "Brenner Bot" update_run_verified_installer brenner_bot --skip-ntm --skip-cass --skip-cm
 
     # NTM - always install/update (installer is idempotent)
     run_cmd "NTM" update_run_verified_installer ntm
 
-    # MCP Agent Mail - always install/update (requires tmux for server process)
-    # Note: Version tracking not possible for async tmux updates
-    if cmd_exists tmux; then
-        local tool="mcp_agent_mail"
-        local url="${KNOWN_INSTALLERS[$tool]:-}"
-        local expected_sha256
-        expected_sha256="$(get_checksum "$tool")"
+    # MCP Agent Mail - always install/update via non-blocking installer mode,
+    # then enable the managed user service on port 8765.
+    local tool="mcp_agent_mail"
+    local url="${KNOWN_INSTALLERS[$tool]:-}"
+    local expected_sha256
+    expected_sha256="$(get_checksum "$tool")"
 
-        if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
-            # Fetch and verify content first
-            local tmp_install
-            tmp_install=$(mktemp "${TMPDIR:-/tmp}/acfs-install-am.XXXXXX" 2>/dev/null) || tmp_install=""
-            if [[ -z "$tmp_install" ]]; then
-                log_item "fail" "MCP Agent Mail" "failed to create temp file for verified installer"
-            else
-                if verify_checksum "$url" "$expected_sha256" "$tool" > "$tmp_install"; then
-                    chmod +x "$tmp_install"
+    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+        local tmp_install
+        tmp_install=$(mktemp "${TMPDIR:-/tmp}/acfs-install-am.XXXXXX" 2>/dev/null) || tmp_install=""
+        if [[ -z "$tmp_install" ]]; then
+            log_item "fail" "MCP Agent Mail" "failed to create temp file for verified installer"
+        else
+            if verify_checksum "$url" "$expected_sha256" "$tool" > "$tmp_install"; then
+                chmod +x "$tmp_install"
+                log_item "run" "MCP Agent Mail"
 
-                    local tmux_session="acfs-services"
-                    # Kill old session if exists
-                    tmux kill-session -t "$tmux_session" 2>/dev/null || true
+                if bash "$tmp_install" --dir "$HOME/mcp_agent_mail" --yes --no-start; then
+                    local uid
+                    local runtime_dir
+                    local user_bus
+                    uid="$(id -u)"
+                    runtime_dir="/run/user/$uid"
+                    user_bus="$runtime_dir/bus"
 
-                    # Launch in tmux (tmux does not split a single string into argv).
-                    # NOTE: run_cmd always returns 0 (unless aborting), so do not use it in an `if ...; then` check.
-                    run_cmd "MCP Agent Mail (tmux)" tmux new-session -d -s "$tmux_session" "$tmp_install" --dir "$HOME/mcp_agent_mail" --yes
-
-                    # Confirm session exists before printing "running" hint (avoids misleading output on failure).
-                    if tmux has-session -t "$tmux_session" 2>/dev/null; then
-                        log_to_file "Started MCP Agent Mail update in tmux session: $tmux_session"
-                        [[ "$QUIET" != "true" ]] && printf "       ${DIM}Update running in tmux session '%s'${NC}\n" "$tmux_session"
+                    local -a service_env=("HOME=$HOME")
+                    if [[ -d "$runtime_dir" ]]; then
+                        service_env+=("XDG_RUNTIME_DIR=$runtime_dir")
+                        if [[ -S "$user_bus" ]]; then
+                            service_env+=("DBUS_SESSION_BUS_ADDRESS=unix:path=$user_bus")
+                        fi
                     fi
 
-                    # Cleanup happens when system tmp is cleaned
+                    if env "${service_env[@]}" am service install >/dev/null 2>&1; then
+                        env "${service_env[@]}" systemctl --user daemon-reload >/dev/null 2>&1 || true
+                        if ! env "${service_env[@]}" systemctl --user enable --now agent-mail.service >/dev/null 2>&1; then
+                            env "${service_env[@]}" systemctl --user restart agent-mail.service >/dev/null 2>&1
+                        fi
+                    fi
+
+                    if curl -sf http://127.0.0.1:8765/health/liveness >/dev/null 2>&1; then
+                        if [[ "$QUIET" != "true" ]] && [[ "$VERBOSE" != "true" ]]; then
+                            printf "\033[1A\033[2K  ${GREEN}[ok]${NC} %s\n" "MCP Agent Mail"
+                        elif [[ "$QUIET" != "true" ]]; then
+                            printf "  ${GREEN}[ok]${NC} %s\n" "MCP Agent Mail"
+                        fi
+                        log_to_file "Success: MCP Agent Mail"
+                        ((SUCCESS_COUNT += 1))
+                    else
+                        if [[ "$QUIET" != "true" ]]; then
+                            printf "  ${RED}[fail]${NC} %s\n" "MCP Agent Mail - service not healthy on 127.0.0.1:8765"
+                        fi
+                        log_to_file "Failed: MCP Agent Mail - service not healthy after install"
+                        ((FAIL_COUNT += 1))
+                    fi
                 else
-                    rm -f "$tmp_install"
-                    log_item "fail" "MCP Agent Mail" "verification failed"
+                    log_item "fail" "MCP Agent Mail" "installer failed"
                 fi
+
+                rm -f "$tmp_install" 2>/dev/null || true
+            else
+                rm -f "$tmp_install"
+                log_item "fail" "MCP Agent Mail" "verification failed"
             fi
-        else
-            log_item "fail" "MCP Agent Mail" "unknown installer URL/checksum"
         fi
     else
-        log_item "skip" "MCP Agent Mail" "tmux not found (required for install)"
+        log_item "fail" "MCP Agent Mail" "unknown installer URL/checksum"
     fi
 
     # Meta Skill (ms) - always install/update (installer is idempotent)
@@ -1791,7 +1954,7 @@ update_stack() {
     run_cmd "SLB" update_run_verified_installer slb
 
     # RU (Repo Updater) - always install/update
-    run_cmd "RU" update_run_verified_installer ru --easy-mode
+    run_cmd "RU" update_run_verified_installer ru
 
     # DCG (Destructive Command Guard) - always install/update
     run_cmd "DCG" update_run_verified_installer dcg --easy-mode
@@ -1819,10 +1982,39 @@ update_stack() {
     run_cmd "RANO" update_run_verified_installer rano
 
     # MDWB (Markdown Web Browser) - always install/update
-    run_cmd "MDWB" update_run_verified_installer mdwb
+    run_cmd "MDWB" update_run_verified_installer mdwb --yes
 
     # S2P (Source to Prompt TUI) - always install/update
     run_cmd "S2P" update_run_verified_installer s2p
+
+    # FrankenSearch (fsfs) - always install/update
+    run_cmd "FrankenSearch" update_run_verified_installer fsfs --easy-mode
+
+    # Storage Ballast Helper (sbh) - always install/update
+    run_cmd "SBH" update_run_verified_installer sbh
+
+    # Cross-Agent Session Resumer (casr) - always install/update
+    run_cmd "CASR" update_run_verified_installer casr
+
+    # Agent Settings Backup (asb) - always install/update
+    run_cmd "ASB" update_run_verified_installer asb
+
+    # Post-Compact Reminder (pcr) - always install/update
+    run_cmd "PCR" update_run_verified_installer pcr --update
+
+    # DSR (Doodlestein Self-Releaser) - standalone bash script, update via git clone
+    if cmd_exists dsr; then
+        run_cmd "DSR" bash -c '
+            dsr_tmp="$(mktemp -d "${TMPDIR:-/tmp}/acfs-dsr-update.XXXXXX")"
+            if git clone --depth 1 https://github.com/Dicklesworthstone/doodlestein_self_releaser.git "$dsr_tmp/dsr" 2>/dev/null; then
+                if [[ -f "$dsr_tmp/dsr/dsr" ]]; then
+                    cp "$dsr_tmp/dsr/dsr" "$HOME/.local/bin/dsr"
+                    chmod 755 "$HOME/.local/bin/dsr"
+                fi
+            fi
+            rm -rf "$dsr_tmp"
+        '
+    fi
 }
 
 # ============================================================
@@ -1832,8 +2024,16 @@ update_root_agents_md() {
     log_section "Root AGENTS.md"
 
     if ! cmd_exists flywheel-update-agents-md; then
-        log_item "skip" "Root AGENTS.md" "flywheel-update-agents-md not installed"
-        return 0
+        local generator="${ACFS_REPO_ROOT:-$HOME/.acfs}/scripts/generate-root-agents-md.sh"
+        if [[ -f "$generator" ]]; then
+            if ! run_cmd_sudo "Install flywheel-update-agents-md" ln -sf "$generator" /usr/local/bin/flywheel-update-agents-md; then
+                log_item "skip" "Root AGENTS.md" "flywheel-update-agents-md not installed"
+                return 0
+            fi
+        else
+            log_item "skip" "Root AGENTS.md" "flywheel-update-agents-md not installed"
+            return 0
+        fi
     fi
 
     run_cmd_sudo "Root AGENTS.md" flywheel-update-agents-md
@@ -1987,19 +2187,33 @@ update_atuin() {
     # Try atuin self-update first (available in newer versions)
     if atuin --help 2>&1 | grep -q "self-update"; then
         run_cmd "Atuin self-update" atuin self-update
+
+        # If self-update succeeded, check whether version is now current;
+        # skip the heavier reinstall path to avoid a stalling curl download.
+        local ver_after
+        ver_after=$(get_version "atuin")
+        if [[ -n "$ver_after" && "$ver_after" != "unknown" ]]; then
+            log_to_file "Atuin self-update succeeded (version: $ver_after), skipping reinstall"
+        else
+            # self-update ran but we can't determine version — fall through
+            log_to_file "Atuin self-update ran but version check inconclusive, trying reinstall"
+            if update_require_security; then
+                run_cmd "Atuin (reinstall)" update_run_verified_installer atuin --non-interactive
+            fi
+        fi
     else
         # Fallback to reinstall via official installer with checksum verification
         if update_require_security; then
-            run_cmd "Atuin (reinstall)" update_run_verified_installer atuin
+            run_cmd "Atuin (reinstall)" update_run_verified_installer atuin --non-interactive
         else
             # Last resort: no checksum verification available
             if [[ "$YES_MODE" == "true" ]]; then
                 log_item "skip" "Atuin" "checksum verification unavailable (missing security.sh/checksums.yaml)"
             else
                 log_item "skip" "Atuin" "no self-update command, manual update recommended"
-                local curl_cmd="curl -fsSL"
+                local curl_cmd="curl --connect-timeout 30 --max-time 300 -fsSL"
                 if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
-                    curl_cmd="curl --proto '=https' --proto-redir '=https' -fsSL"
+                    curl_cmd="curl --proto '=https' --proto-redir '=https' --connect-timeout 30 --max-time 300 -fsSL"
                 fi
                 log_to_file "Atuin update (manual; review first):"
                 log_to_file "  ${curl_cmd} https://setup.atuin.sh -o /tmp/atuin.install.sh"
@@ -2030,9 +2244,9 @@ update_zoxide() {
         run_cmd "Zoxide (reinstall)" update_run_verified_installer zoxide
     else
         log_item "skip" "Zoxide" "checksum verification unavailable (missing security.sh/checksums.yaml)"
-        local curl_cmd="curl -fsSL"
+        local curl_cmd="curl --connect-timeout 30 --max-time 300 -fsSL"
         if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
-            curl_cmd="curl --proto '=https' --proto-redir '=https' -fsSL"
+            curl_cmd="curl --proto '=https' --proto-redir '=https' --connect-timeout 30 --max-time 300 -fsSL"
         fi
         log_to_file "Zoxide update (manual; review first):"
         log_to_file "  ${curl_cmd} https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh -o /tmp/zoxide.install.sh"
@@ -2151,6 +2365,7 @@ CATEGORY OPTIONS (select what to update):
   --cloud-only       Only update cloud CLIs (Wrangler, Supabase, Vercel, gh, gcloud)
   --shell-only       Only update shell tools (OMZ, P10K, plugins, Atuin, Zoxide)
   --runtime-only     Only update runtimes (Bun, Rust, uv, Go)
+  --stack-only       Only update Dicklesworthstone stack tools
   --stack            Include Dicklesworthstone stack tools (enabled by default)
 
 SKIP OPTIONS (exclude categories from update):
@@ -2184,6 +2399,9 @@ EXAMPLES:
 
   # Only update runtimes
   acfs-update --runtime-only
+
+  # Only update Dicklesworthstone stack tools
+  acfs-update --stack-only
 
   # Update everything except apt (faster)
   acfs-update --no-apt
@@ -2310,6 +2528,15 @@ main() {
                 UPDATE_SHELL=false
                 shift
                 ;;
+            --stack-only)
+                UPDATE_APT=false
+                UPDATE_AGENTS=false
+                UPDATE_CLOUD=false
+                UPDATE_RUNTIME=false
+                UPDATE_STACK=true
+                UPDATE_SHELL=false
+                shift
+                ;;
             --stack)
                 UPDATE_STACK=true
                 shift
@@ -2388,7 +2615,8 @@ main() {
         echo -e "${YELLOW}Warning: Running as root but HOME is $HOME.${NC}"
         echo "ACFS update should typically be run as the target user (e.g. ubuntu)."
         if [[ "$YES_MODE" != "true" ]]; then
-            read -r -p "Continue anyway? [y/N] " response
+            echo -n "Continue anyway? [y/N] "
+            read -r response < /dev/tty || true
             if [[ ! "$response" =~ ^[Yy] ]]; then
                 exit 1
             fi
@@ -2406,7 +2634,7 @@ main() {
     # Header
     if [[ "$QUIET" != "true" ]]; then
         echo ""
-        echo -e "${BOLD}ACFS Update v$ACFS_VERSION${NC}"
+        echo -e "${BOLD}ACFS Update $ACFS_VERSION_DISPLAY${NC}"
         echo -e "User: $(whoami)"
         echo -e "Date: $(date '+%Y-%m-%d %H:%M')"
 
@@ -2418,6 +2646,21 @@ main() {
     # Set non-interactive mode if --yes was passed
     if [[ "$YES_MODE" == "true" ]]; then
         export ACFS_INTERACTIVE=false
+    fi
+
+    # Ensure jq is available (issue #180): on minimal Ubuntu installs jq may
+    # not be present, but later update steps (DCG cleanup, state management)
+    # depend on it.  Install it early via apt before any other work.
+    if ! command -v jq &>/dev/null; then
+        echo -e "${YELLOW}Installing jq (required for update operations)...${NC}" >&2
+        if [[ $EUID -eq 0 ]]; then
+            apt-get update -qq 2>/dev/null && apt-get install -y -qq jq 2>/dev/null || true
+        elif command -v sudo &>/dev/null; then
+            sudo apt-get update -qq 2>/dev/null && sudo apt-get install -y -qq jq 2>/dev/null || true
+        fi
+        if ! command -v jq &>/dev/null; then
+            echo -e "${YELLOW}Warning: jq could not be installed; some operations may be limited${NC}" >&2
+        fi
     fi
 
     # Clean up legacy artifacts from previous versions

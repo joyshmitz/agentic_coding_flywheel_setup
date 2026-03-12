@@ -47,6 +47,22 @@ done
 log() { $QUIET || echo "[manifest-drift] $*" >&2; }
 log_error() { echo "[manifest-drift] ERROR: $*" >&2; }
 
+INTERNAL_CHECKSUM_PATHS=()
+INTERNAL_CHECKSUM_VALUES=()
+
+parse_internal_checksums_file() {
+    local file="$1"
+    INTERNAL_CHECKSUM_PATHS=()
+    INTERNAL_CHECKSUM_VALUES=()
+
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^[[:space:]]*\[([^]]+)\]=\"([0-9A-Fa-f]{64})\"[[:space:]]*$ ]]; then
+            INTERNAL_CHECKSUM_PATHS+=("${BASH_REMATCH[1]}")
+            INTERNAL_CHECKSUM_VALUES+=("${BASH_REMATCH[2],,}")
+        fi
+    done < "$file"
+}
+
 # Verify prerequisites
 MANIFEST="$REPO_ROOT/acfs.manifest.yaml"
 INDEX="$REPO_ROOT/scripts/generated/manifest_index.sh"
@@ -64,7 +80,7 @@ fi
 ACTUAL_SHA256=$(sha256sum "$MANIFEST" | awk '{print $1}')
 
 # Extract recorded hash from generated index
-RECORDED_SHA256=$(grep -oP 'ACFS_MANIFEST_SHA256="\K[a-f0-9]+' "$INDEX" | head -1)
+RECORDED_SHA256=$(grep -E '^ACFS_MANIFEST_SHA256=' "$INDEX" | head -n 1 | cut -d'=' -f2 | tr -d '"[:space:]\r')
 
 if [[ -z "$RECORDED_SHA256" ]]; then
     log_error "Could not extract ACFS_MANIFEST_SHA256 from $INDEX"
@@ -75,7 +91,7 @@ fi
 SHA_LINE_COUNT=$(grep -c 'ACFS_MANIFEST_SHA256=' "$INDEX" || true)
 
 # Count modules in manifest vs generated index
-MANIFEST_MODULE_COUNT=$(grep -c '^\s*- id:' "$MANIFEST" || true)
+MANIFEST_MODULE_COUNT=$(grep -c '^[[:space:]]*- id:' "$MANIFEST" || true)
 INDEX_MODULE_COUNT=$(awk '/^ACFS_MODULES_IN_ORDER=/,/^\)/' "$INDEX" | grep -c '"' || true)
 
 DRIFT_DETECTED=false
@@ -100,13 +116,12 @@ INTERNAL_DRIFT_FILES=()
 INTERNAL_CHECKED=0
 
 if [[ -f "$INTERNAL_CHECKSUMS_FILE" ]]; then
-    # Source the checksums file to get ACFS_INTERNAL_CHECKSUMS associative array
-    # shellcheck source=generated/internal_checksums.sh
-    source "$INTERNAL_CHECKSUMS_FILE"
+    parse_internal_checksums_file "$INTERNAL_CHECKSUMS_FILE"
 
-    if declare -p ACFS_INTERNAL_CHECKSUMS &>/dev/null; then
-        for rel_path in "${!ACFS_INTERNAL_CHECKSUMS[@]}"; do
-            expected="${ACFS_INTERNAL_CHECKSUMS[$rel_path]}"
+    if [[ ${#INTERNAL_CHECKSUM_PATHS[@]} -gt 0 ]]; then
+        for i in "${!INTERNAL_CHECKSUM_PATHS[@]}"; do
+            rel_path="${INTERNAL_CHECKSUM_PATHS[$i]}"
+            expected="${INTERNAL_CHECKSUM_VALUES[$i]}"
             abs_path="$REPO_ROOT/$rel_path"
             if [[ -f "$abs_path" ]]; then
                 actual=$(sha256sum "$abs_path" | awk '{print $1}')
@@ -126,7 +141,7 @@ if [[ -f "$INTERNAL_CHECKSUMS_FILE" ]]; then
         done
         log "Internal checksums: $INTERNAL_CHECKED checked, $INTERNAL_DRIFT_COUNT drifted"
     else
-        log "Warning: ACFS_INTERNAL_CHECKSUMS not defined in $INTERNAL_CHECKSUMS_FILE"
+        log "Warning: No internal checksum entries parsed from $INTERNAL_CHECKSUMS_FILE"
     fi
 else
     log "Internal checksums file not found (pre-migration), skipping"
@@ -204,13 +219,13 @@ fi
 
 # Regenerate
 cd "$REPO_ROOT/packages/manifest"
-if ! bun run generate 2>&1; then
+if ! bun run generate >&2; then
     log_error "bun run generate failed"
     exit 2
 fi
 
 # Verify manifest fix
-NEW_RECORDED=$(grep -oP 'ACFS_MANIFEST_SHA256="\K[a-f0-9]+' "$INDEX" | head -1)
+NEW_RECORDED=$(grep -E '^ACFS_MANIFEST_SHA256=' "$INDEX" | head -n 1 | cut -d'=' -f2 | tr -d '"[:space:]\r')
 ACTUAL_NOW=$(sha256sum "$MANIFEST" | awk '{print $1}')
 
 if [[ "$NEW_RECORDED" != "$ACTUAL_NOW" ]]; then
@@ -223,11 +238,11 @@ log "Manifest SHA256 now matches: $ACTUAL_NOW"
 # Verify internal checksums fix (if file was regenerated)
 if [[ -f "$INTERNAL_CHECKSUMS_FILE" ]] && [[ "$INTERNAL_DRIFT_COUNT" -gt 0 ]]; then
     log "Verifying internal script checksums after regeneration..."
-    unset ACFS_INTERNAL_CHECKSUMS
-    source "$INTERNAL_CHECKSUMS_FILE"
+    parse_internal_checksums_file "$INTERNAL_CHECKSUMS_FILE"
     post_fix_drift=0
-    for rel_path in "${!ACFS_INTERNAL_CHECKSUMS[@]}"; do
-        expected="${ACFS_INTERNAL_CHECKSUMS[$rel_path]}"
+    for i in "${!INTERNAL_CHECKSUM_PATHS[@]}"; do
+        rel_path="${INTERNAL_CHECKSUM_PATHS[$i]}"
+        expected="${INTERNAL_CHECKSUM_VALUES[$i]}"
         abs_path="$REPO_ROOT/$rel_path"
         if [[ -f "$abs_path" ]]; then
             actual=$(sha256sum "$abs_path" | awk '{print $1}')
@@ -247,29 +262,41 @@ fi
 # Commit and push
 cd "$REPO_ROOT"
 
-if git diff --quiet scripts/generated/; then
-    log "No changes in generated scripts after regeneration (already up to date)"
+git add scripts/generated/
+if [[ -d "$REPO_ROOT/apps/web/lib/generated" ]]; then
+    git add apps/web/lib/generated/
+fi
+
+if git diff --cached --quiet; then
+    log "No generated artifact changes after regeneration (already up to date)"
     exit 0
 fi
 
-git add scripts/generated/
 git commit -m "$(cat <<'COMMIT_MSG'
-fix(manifest): auto-fix SHA256 drift in generated scripts
+fix(manifest): auto-fix generated artifact checksum drift
 
-Detected by check-manifest-drift.sh (scheduled systemd timer).
-Regenerated all scripts via `bun run generate` to sync with current
-acfs.manifest.yaml hash.
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+Detected by check-manifest-drift.sh.
+Regenerated installer and web generated artifacts via `bun run generate`
+to sync ACFS_MANIFEST_SHA256 and internal checksums with source files.
 COMMIT_MSG
 )"
 
-# Push (main:master for compat)
-if git push origin main:master 2>&1; then
-    log "Fix committed and pushed successfully."
-else
-    log_error "Push failed - fix committed locally but not pushed"
+# Pull latest main first to avoid non-fast-forward push failures
+if ! git pull --rebase origin main; then
+    log_error "Pull --rebase failed; fix committed locally but not pushed"
     exit 2
 fi
+
+# Push to main first, then mirror to master for legacy compatibility
+if ! git push origin HEAD:main; then
+    log_error "Push to main failed; fix committed locally but not pushed"
+    exit 2
+fi
+if ! git push origin main:master; then
+    log_error "Push to master mirror failed after pushing main"
+    exit 2
+fi
+
+log "Fix committed and pushed successfully."
 
 exit 0

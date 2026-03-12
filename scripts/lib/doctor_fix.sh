@@ -146,7 +146,7 @@ fix_path_ordering() {
 
     doctor_fix_log INFO "Added PATH ordering to $target_file"
     FIXES_APPLIED+=("fix.path.ordering|Added PATH ordering to $target_file")
-    ((FIX_APPLIED++))
+    FIX_APPLIED=$((FIX_APPLIED + 1))
 
     return 0
 }
@@ -193,7 +193,7 @@ fix_config_copy() {
 
     doctor_fix_log INFO "Copied $(basename "$src") to $dest"
     FIXES_APPLIED+=("fix.config.copy|Copied $(basename "$src") to $dest")
-    ((FIX_APPLIED++))
+    FIX_APPLIED=$((FIX_APPLIED + 1))
 
     return 0
 }
@@ -233,11 +233,11 @@ fix_dcg_hook() {
 
         doctor_fix_log INFO "Installed DCG pre-tool-use hook"
         FIXES_APPLIED+=("fix.dcg.hook|Installed DCG pre-tool-use hook")
-        ((FIX_APPLIED++))
+        FIX_APPLIED=$((FIX_APPLIED + 1))
         return 0
     else
         doctor_fix_log ERROR "Failed to install DCG hook"
-        ((FIX_FAILED++))
+        FIX_FAILED=$((FIX_FAILED + 1))
         return 1
     fi
 }
@@ -284,7 +284,7 @@ fix_symlink_create() {
 
     doctor_fix_log INFO "Created symlink: $(basename "$symlink") -> $binary"
     FIXES_APPLIED+=("fix.symlink.create|Created symlink $(basename "$symlink")")
-    ((FIX_APPLIED++))
+    FIX_APPLIED=$((FIX_APPLIED + 1))
 
     return 0
 }
@@ -312,7 +312,7 @@ fix_plugin_clone() {
     if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
         doctor_fix_log WARN "Oh-my-zsh not installed, cannot install plugins"
         FIXES_MANUAL+=("fix.plugin.clone|Install Oh-my-zsh first|curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh | bash")
-        ((FIX_MANUAL++))
+        FIX_MANUAL=$((FIX_MANUAL + 1))
         return 1
     fi
 
@@ -334,11 +334,11 @@ fix_plugin_clone() {
 
         doctor_fix_log INFO "Cloned zsh plugin: $plugin_name"
         FIXES_APPLIED+=("fix.plugin.clone|Cloned zsh plugin: $plugin_name")
-        ((FIX_APPLIED++))
+        FIX_APPLIED=$((FIX_APPLIED + 1))
         return 0
     else
         doctor_fix_log ERROR "Failed to clone plugin: $plugin_name"
-        ((FIX_FAILED++))
+        FIX_FAILED=$((FIX_FAILED + 1))
         return 1
     fi
 }
@@ -393,7 +393,7 @@ fix_acfs_sourcing() {
 
     doctor_fix_log INFO "Added ACFS sourcing to .zshrc"
     FIXES_APPLIED+=("fix.acfs.sourcing|Added ACFS sourcing to .zshrc")
-    ((FIX_APPLIED++))
+    FIX_APPLIED=$((FIX_APPLIED + 1))
 
     return 0
 }
@@ -438,6 +438,16 @@ dispatch_fix() {
             fix_dcg_hook "$check_id"
             ;;
 
+        # Stack tools (fixes #160 - meta_skill and other stack tools)
+        stack.meta_skill*)
+            fix_stack_install "$check_id" "ms" \
+                "curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/meta_skill/main/scripts/install.sh | bash -s -- --easy-mode"
+            ;;
+        stack.mcp_agent_mail*)
+            fix_stack_install "$check_id" "am" \
+                "curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail/main/scripts/install.sh | bash -s -- --dir ~/mcp_agent_mail --yes"
+            ;;
+
         # Symlinks
         symlink.br)
             fix_symlink_create "$check_id" "$HOME/.cargo/bin/br" "$HOME/.local/bin/br"
@@ -461,21 +471,197 @@ dispatch_fix() {
             fix_acfs_sourcing "$check_id"
             ;;
 
+        # SSH server (fixes #161/#162)
+        network.ssh_server)
+            fix_ssh_server "$check_id"
+            ;;
+
+        # SSH keepalive
+        network.ssh_keepalive|network.ssh_keepalive.*)
+            fix_ssh_keepalive "$check_id"
+            ;;
+
+        # Agent CLI tools (fixes #213)
+        agent.claude)
+            fix_stack_install "$check_id" "claude" \
+                "curl -fsSL https://agent-flywheel.com/install | bash -s -- --yes --force-reinstall --only agents.claude"
+            ;;
+        agent.codex)
+            fix_stack_install "$check_id" "codex" \
+                "bun install -g --trust @openai/codex@latest"
+            ;;
+        agent.gemini)
+            fix_stack_install "$check_id" "gemini" \
+                "bun install -g --trust @google/gemini-cli@latest"
+            ;;
+
+        # Agent aliases/functions (fixes #163)
+        agent.alias.*)
+            fix_acfs_sourcing "$check_id"
+            ;;
+
         # Manual fixes (log suggestion only)
         shell.ohmyzsh|shell.p10k|*.apt_install|*.sudo_required)
             if [[ -n "$fix_hint" ]]; then
                 FIXES_MANUAL+=("$check_id|Requires manual action|$fix_hint")
             fi
-            ((FIX_MANUAL++))
+            FIX_MANUAL=$((FIX_MANUAL + 1))
             return 0
             ;;
 
         *)
             # Unknown check - skip silently
-            ((FIX_SKIPPED++))
+            FIX_SKIPPED=$((FIX_SKIPPED + 1))
             return 0
             ;;
     esac
+}
+
+# ============================================================
+# Fixer: Stack Install (fix.stack.install)
+# ============================================================
+
+# Install missing stack tools via their upstream installer
+fix_stack_install() {
+    local check_id="$1"
+    local binary_name="$2"
+    local install_cmd="$3"
+
+    # Guard: Check if already installed
+    if command -v "$binary_name" &>/dev/null; then
+        doctor_fix_log INFO "$binary_name already installed"
+        return 0
+    fi
+
+    # Dry-run mode
+    if [[ "$DOCTOR_FIX_DRY_RUN" == "true" ]]; then
+        FIXES_DRY_RUN+=("fix.stack.$binary_name|Install $binary_name|~/.local/bin/$binary_name|$install_cmd")
+        doctor_fix_log DRY "Install $binary_name"
+        return 0
+    fi
+
+    # Run installer
+    if eval "$install_cmd" 2>/dev/null; then
+        doctor_fix_log INFO "Installed $binary_name"
+        FIXES_APPLIED+=("fix.stack.$binary_name|Installed $binary_name")
+        FIX_APPLIED=$((FIX_APPLIED + 1))
+        return 0
+    else
+        doctor_fix_log ERROR "Failed to install $binary_name"
+        FIX_FAILED=$((FIX_FAILED + 1))
+        return 1
+    fi
+}
+
+# ============================================================
+# Fixer: SSH Server (fix.ssh.server)
+# ============================================================
+
+# Install and enable SSH server
+fix_ssh_server() {
+    local check_id="$1"
+
+    # Guard: Check if already installed
+    if command -v sshd &>/dev/null || [[ -f /etc/ssh/sshd_config ]]; then
+        # Check if running
+        if command -v systemctl &>/dev/null && [[ -d /run/systemd/system ]]; then
+            if systemctl is-active --quiet ssh 2>/dev/null || systemctl is-active --quiet sshd 2>/dev/null; then
+                doctor_fix_log INFO "SSH server already installed and running"
+                return 0
+            fi
+
+            # Installed but not running - enable and start
+            if [[ "$DOCTOR_FIX_DRY_RUN" == "true" ]]; then
+                FIXES_DRY_RUN+=("fix.ssh.server|Enable and start SSH server|/etc/ssh/sshd_config|sudo systemctl enable --now ssh")
+                doctor_fix_log DRY "Enable and start SSH server"
+                return 0
+            fi
+
+            if sudo systemctl enable --now ssh 2>/dev/null || sudo systemctl enable --now sshd 2>/dev/null; then
+                doctor_fix_log INFO "Enabled and started SSH server"
+                FIXES_APPLIED+=("fix.ssh.server|Enabled and started SSH server")
+                FIX_APPLIED=$((FIX_APPLIED + 1))
+                return 0
+            else
+                doctor_fix_log ERROR "Failed to start SSH server"
+                FIX_FAILED=$((FIX_FAILED + 1))
+                return 1
+            fi
+        fi
+        return 0
+    fi
+
+    # Not installed - install it
+    if [[ "$DOCTOR_FIX_DRY_RUN" == "true" ]]; then
+        FIXES_DRY_RUN+=("fix.ssh.server|Install openssh-server|/etc/ssh/sshd_config|sudo apt-get install -y openssh-server")
+        doctor_fix_log DRY "Install openssh-server"
+        return 0
+    fi
+
+    if sudo apt-get install -y openssh-server 2>/dev/null; then
+        sudo systemctl enable --now ssh 2>/dev/null || sudo systemctl enable --now sshd 2>/dev/null || true
+        doctor_fix_log INFO "Installed and enabled openssh-server"
+        FIXES_APPLIED+=("fix.ssh.server|Installed and enabled openssh-server")
+        FIX_APPLIED=$((FIX_APPLIED + 1))
+        return 0
+    else
+        doctor_fix_log ERROR "Failed to install openssh-server"
+        FIX_FAILED=$((FIX_FAILED + 1))
+        return 1
+    fi
+}
+
+# ============================================================
+# Fixer: SSH Keepalive (fix.ssh.keepalive)
+# ============================================================
+
+# Configure SSH keepalive settings
+fix_ssh_keepalive() {
+    local check_id="$1"
+    local sshd_config="/etc/ssh/sshd_config"
+
+    # Guard: sshd_config must exist
+    if [[ ! -f "$sshd_config" ]]; then
+        doctor_fix_log WARN "sshd_config not found, install openssh-server first"
+        FIXES_MANUAL+=("$check_id|Install openssh-server first|sudo apt-get install -y openssh-server")
+        FIX_MANUAL=$((FIX_MANUAL + 1))
+        return 1
+    fi
+
+    # Guard: Check if already configured
+    if grep -qE '^[[:space:]]*ClientAliveInterval[[:space:]]+[0-9]+' "$sshd_config" 2>/dev/null; then
+        doctor_fix_log INFO "SSH keepalive already configured"
+        return 0
+    fi
+
+    if [[ "$DOCTOR_FIX_DRY_RUN" == "true" ]]; then
+        FIXES_DRY_RUN+=("fix.ssh.keepalive|Configure SSH keepalive|$sshd_config|echo 'ClientAliveInterval 60' >> $sshd_config")
+        doctor_fix_log DRY "Configure SSH keepalive in $sshd_config"
+        return 0
+    fi
+
+    # Create backup
+    local backup_json=""
+    if [[ -f "$sshd_config" ]]; then
+        backup_json=$(create_backup "$sshd_config" "ssh-keepalive")
+    fi
+
+    # Apply settings
+    {
+        echo ""
+        echo "# ACFS: SSH keepalive settings (added by doctor --fix)"
+        echo "ClientAliveInterval 60"
+        echo "ClientAliveCountMax 3"
+    } | sudo tee -a "$sshd_config" > /dev/null
+
+    # Restart sshd to apply
+    sudo systemctl reload ssh 2>/dev/null || sudo systemctl reload sshd 2>/dev/null || true
+
+    doctor_fix_log INFO "Configured SSH keepalive (ClientAliveInterval 60, ClientAliveCountMax 3)"
+    FIXES_APPLIED+=("fix.ssh.keepalive|Configured SSH keepalive settings")
+    FIX_APPLIED=$((FIX_APPLIED + 1))
+
+    return 0
 }
 
 # ============================================================

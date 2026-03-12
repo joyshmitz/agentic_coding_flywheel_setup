@@ -118,6 +118,33 @@ _agent_create_bun_wrapper() {
     return 0
 }
 
+_agent_apply_verified_gemini_patch() {
+    local patch_tool="gemini_patch"
+    local patch_url="https://raw.githubusercontent.com/Dicklesworthstone/misc_coding_agent_tips_and_scripts/main/fix-gemini-cli-ebadf-crash.sh"
+    local patch_sha=""
+
+    if [[ -f "$AGENTS_SCRIPT_DIR/security.sh" ]]; then
+        # shellcheck source=security.sh
+        source "$AGENTS_SCRIPT_DIR/security.sh"
+        if load_checksums; then
+            patch_url="${KNOWN_INSTALLERS[$patch_tool]:-$patch_url}"
+            patch_sha="$(get_checksum "$patch_tool")"
+        fi
+    fi
+
+    if [[ -z "$patch_sha" ]]; then
+        log_warn "Gemini patch checksum unavailable; skipping patch for safety"
+        return 1
+    fi
+
+    if _agent_run_as_user "source '$AGENTS_SCRIPT_DIR/security.sh'; verify_checksum '$patch_url' '$patch_sha' '$patch_tool' | bash -s --"; then
+        return 0
+    fi
+
+    log_warn "Gemini patch verification failed; skipping patch"
+    return 1
+}
+
 # ============================================================
 # Claude Code Installation
 # ============================================================
@@ -285,9 +312,10 @@ _configure_gemini_settings() {
     # Create settings directory if needed
     _agent_run_as_user "mkdir -p '$settings_dir'" || return 1
 
-    # If settings file doesn't exist, create it with tmux-compatible defaults and OAuth auth
+    # If settings file doesn't exist, create it with tmux-compatible defaults, OAuth auth,
+    # and MCP Agent Mail server configuration (fixes #158)
     if [[ ! -f "$settings_file" ]]; then
-        log_detail "Creating Gemini settings for tmux compatibility and OAuth auth..."
+        log_detail "Creating Gemini settings for tmux compatibility, OAuth auth, and MCP Agent Mail..."
         # Write default settings - the JSON is simple enough to inline
         # Note: Using double quotes for variable expansion, escaping inner quotes
         _agent_run_as_user "cat > '$settings_file' << 'GEMINI_EOF'
@@ -296,6 +324,11 @@ _configure_gemini_settings() {
   \"tools\": {
     \"shell\": {
       \"enableInteractiveShell\": false
+    }
+  },
+  \"mcpServers\": {
+    \"mcp-agent-mail\": {
+      \"httpUrl\": \"http://127.0.0.1:8765/mcp/\"
     }
   }
 }
@@ -327,11 +360,18 @@ GEMINI_EOF"
             needs_update=true
         fi
 
+        # Check if MCP Agent Mail server is configured (fixes #158)
+        local mcp_value
+        mcp_value=$(_agent_run_as_user "jq -r '.mcpServers.\"mcp-agent-mail\".httpUrl // \"unset\"' '$settings_file'" 2>/dev/null || echo "error")
+        if [[ "$mcp_value" == "unset" || "$mcp_value" == "error" ]]; then
+            needs_update=true
+        fi
+
         if [[ "$needs_update" == "true" ]]; then
-            log_detail "Configuring Gemini settings for tmux compatibility and OAuth..."
-            # Update both shell settings and auth type
-            if _agent_run_as_user "jq '.selectedType = \"oauth-personal\" | .tools = (.tools // {}) | .tools.shell = (.tools.shell // {}) | .tools.shell.enableInteractiveShell = false' '$settings_file' > '$tmp_file' && mv '$tmp_file' '$settings_file'" 2>/dev/null; then
-                log_detail "Gemini settings configured (OAuth + tmux compatibility)"
+            log_detail "Configuring Gemini settings for tmux compatibility, OAuth, and MCP Agent Mail..."
+            # Update shell settings, auth type, and MCP server config
+            if _agent_run_as_user "jq '.selectedType = \"oauth-personal\" | .tools = (.tools // {}) | .tools.shell = (.tools.shell // {}) | .tools.shell.enableInteractiveShell = false | .mcpServers = (.mcpServers // {}) | .mcpServers.\"mcp-agent-mail\" = {\"httpUrl\": \"http://127.0.0.1:8765/mcp/\"}' '$settings_file' > '$tmp_file' && mv '$tmp_file' '$settings_file'" 2>/dev/null; then
+                log_detail "Gemini settings configured (OAuth + tmux + MCP Agent Mail)"
             else
                 _agent_run_as_user "rm -f '$tmp_file'" 2>/dev/null
                 log_warn "Could not update Gemini settings automatically"
@@ -386,7 +426,7 @@ install_gemini_cli() {
             _agent_create_bun_wrapper "$target_home" "gemini"
             # Apply patches (EBADF crash fix, rate-limit retry 3→1000, quota retry)
             log_detail "Applying Gemini CLI patches..."
-            _agent_run_as_user 'curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/misc_coding_agent_tips_and_scripts/main/fix-gemini-cli-ebadf-crash.sh | bash' || true
+            _agent_apply_verified_gemini_patch || true
             # Configure settings for tmux/agent compatibility
             _configure_gemini_settings "$target_home"
             log_success "Gemini CLI installed"
@@ -413,7 +453,7 @@ upgrade_gemini_cli() {
     if _agent_run_as_user "\"$bun_bin\" install -g --trust $GEMINI_PACKAGE"; then
         # Apply patches (EBADF crash fix, rate-limit retry 3→1000, quota retry)
         log_detail "Applying Gemini CLI patches..."
-        _agent_run_as_user 'curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/misc_coding_agent_tips_and_scripts/main/fix-gemini-cli-ebadf-crash.sh | bash' || true
+        _agent_apply_verified_gemini_patch || true
         log_success "Gemini CLI upgraded"
         return 0
     else
@@ -547,13 +587,13 @@ upgrade_all_agents() {
     local failed=0
 
     if ! upgrade_claude_code; then
-        ((failed++))
+        failed=$((failed + 1))
     fi
     if ! upgrade_codex_cli; then
-        ((failed++))
+        failed=$((failed + 1))
     fi
     if ! upgrade_gemini_cli; then
-        ((failed++))
+        failed=$((failed + 1))
     fi
 
     if ((failed == 0)); then

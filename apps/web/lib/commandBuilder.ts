@@ -8,9 +8,10 @@
  */
 
 import type { OperatingSystem, InstallMode } from "./userPreferences";
+import { normalizeGitRef } from "./userPreferences";
 
-const INSTALL_URL =
-  "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup/main/install.sh";
+const INSTALL_SCRIPT_BASE_URL =
+  "https://raw.githubusercontent.com/Dicklesworthstone/agentic_coding_flywheel_setup";
 
 export interface CommandBuilderInputs {
   ip: string;
@@ -46,6 +47,7 @@ export function buildCommands(inputs: CommandBuilderInputs): GeneratedCommand[] 
   const { ip, os, username, mode, ref } = inputs;
   const keyPath = sshKeyPath(os);
   const keyPathWin = sshKeyPathWindows();
+  const safeRef = normalizeGitRef(ref);
 
   const commands: GeneratedCommand[] = [];
 
@@ -59,14 +61,16 @@ export function buildCommands(inputs: CommandBuilderInputs): GeneratedCommand[] 
   });
 
   // 2. Installer
-  const refEnv = ref ? `ACFS_REF="${ref}" ` : "";
+  const refEnv = safeRef ? `ACFS_REF="${safeRef}" ` : "";
+  const installRef = safeRef ?? "main";
   const cacheBust = "$(date +%s)";
-  const installerBase = `curl -fsSL "${INSTALL_URL}?${cacheBust}" | bash -s -- --yes --mode ${mode}`;
+  const installerUrl = `${INSTALL_SCRIPT_BASE_URL}/${installRef}/install.sh`;
+  const installerBase = `curl -fsSL "${installerUrl}?${cacheBust}" | ${refEnv}bash -s -- --yes --mode ${mode}`;
   commands.push({
     id: "installer",
     label: "Run installer",
-    description: `Install ACFS in ${mode} mode${ref ? ` pinned to ${ref}` : ""}`,
-    command: `${refEnv}${installerBase}`,
+    description: `Install ACFS in ${mode} mode${safeRef ? ` pinned to ${safeRef}` : ""}`,
+    command: installerBase,
     runLocation: "vps",
   });
 
@@ -106,7 +110,7 @@ export function buildCommands(inputs: CommandBuilderInputs): GeneratedCommand[] 
  */
 export function buildShareURL(inputs: CommandBuilderInputs): string {
   if (typeof window === "undefined") return "";
-  const url = new URL(window.location.href);
+  const url = new URL(`${window.location.origin}${window.location.pathname}`);
   url.searchParams.set("ip", inputs.ip);
   url.searchParams.set("os", inputs.os);
   if (inputs.username !== "ubuntu") {
@@ -115,8 +119,9 @@ export function buildShareURL(inputs: CommandBuilderInputs): string {
     url.searchParams.delete("user");
   }
   url.searchParams.set("mode", inputs.mode);
-  if (inputs.ref) {
-    url.searchParams.set("ref", inputs.ref);
+  const safeRef = normalizeGitRef(inputs.ref);
+  if (safeRef) {
+    url.searchParams.set("ref", safeRef);
   } else {
     url.searchParams.delete("ref");
   }

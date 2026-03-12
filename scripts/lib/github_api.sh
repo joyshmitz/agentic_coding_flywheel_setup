@@ -173,6 +173,19 @@ github_fetch_with_backoff() {
     local delay="$GITHUB_BACKOFF_INITIAL"
     local attempt=0
     local max_attempts="$GITHUB_MAX_RETRIES"
+    local -a curl_base_args=()
+
+    # Build curl base args safely.
+    # Avoid "${array[@]:-}" here because it expands to a blank argument when the
+    # array is unset, which causes curl to fail before making a request.
+    if declare -p ACFS_CURL_BASE_ARGS &>/dev/null && (( ${#ACFS_CURL_BASE_ARGS[@]} > 0 )); then
+        curl_base_args=("${ACFS_CURL_BASE_ARGS[@]}")
+    else
+        curl_base_args=(--connect-timeout 30 --max-time 300 -fsSL)
+        if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
+            curl_base_args=(--proto '=https' --proto-redir '=https' --connect-timeout 30 --max-time 300 -fsSL)
+        fi
+    fi
 
     # Prepare auth header if token available
     local auth_header=()
@@ -196,7 +209,7 @@ github_fetch_with_backoff() {
         # Fetch with headers dumped to file
         local http_code
         http_code=$(curl -sS -w '%{http_code}' \
-            "${ACFS_CURL_BASE_ARGS[@]:-}" \
+            "${curl_base_args[@]}" \
             "${auth_header[@]}" \
             -D "$tmp_headers" \
             -o "$tmp_body" \
@@ -349,7 +362,7 @@ github_download_installer() {
         if declare -f acfs_download_to_file &>/dev/null; then
             acfs_download_to_file "$url" "$output" "$name"
         else
-            curl -fsSL "$url" -o "$output"
+            curl --connect-timeout 30 --max-time 300 -fsSL "$url" -o "$output"
         fi
     fi
 }

@@ -23,6 +23,8 @@ const VPS_IP_QUERY_KEY = "ip";
 const INSTALL_MODE_QUERY_KEY = "mode";
 const SSH_USERNAME_QUERY_KEY = "user";
 const ACFS_REF_QUERY_KEY = "ref";
+const MAX_GIT_REF_LENGTH = 120;
+const GIT_REF_SAFE_PATTERN = /^[A-Za-z0-9._/-]+$/;
 
 function getQueryParam(key: string): string | null {
   if (typeof window === "undefined") return null;
@@ -47,6 +49,28 @@ function setQueryParam(key: string, value: string | null): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * Normalize and validate a git ref used in generated shell commands.
+ * Returns null when invalid/empty.
+ */
+export function normalizeGitRef(ref: string | null | undefined): string | null {
+  const value = ref?.trim() ?? "";
+  if (!value) return null;
+  if (value.length > MAX_GIT_REF_LENGTH) return null;
+  if (!GIT_REF_SAFE_PATTERN.test(value)) return null;
+  if (value === "@" || value === "." || value === "..") return null;
+  if (value.startsWith("-")) return null;
+  if (value.startsWith(".")) return null;
+  if (value.endsWith(".")) return null;
+  if (value.startsWith("/") || value.endsWith("/")) return null;
+  if (value.includes("//")) return null;
+  if (value.includes("/.")) return null;
+  if (value.includes("..")) return null;
+  if (value.includes("@{")) return null;
+  if (value === ".lock" || value.endsWith(".lock")) return null;
+  return value;
 }
 
 // Query keys for TanStack Query
@@ -331,17 +355,16 @@ export function useSSHUsername(): [string, (username: string) => void, boolean] 
 // --- ACFS Ref (git ref pin) ---
 
 export function getACFSRef(): string | null {
-  const fromQuery = getQueryParam(ACFS_REF_QUERY_KEY);
+  const fromQuery = normalizeGitRef(getQueryParam(ACFS_REF_QUERY_KEY));
   if (fromQuery) return fromQuery;
-  const stored = safeGetItem(ACFS_REF_KEY);
-  return stored || null;
+  return normalizeGitRef(safeGetItem(ACFS_REF_KEY));
 }
 
 export function setACFSRef(ref: string | null): boolean {
-  const value = ref?.trim() || null;
+  const value = normalizeGitRef(ref);
   const storedOk = value
     ? safeSetItem(ACFS_REF_KEY, value)
-    : (safeSetItem(ACFS_REF_KEY, ""), true);
+    : safeSetItem(ACFS_REF_KEY, "");
   const urlOk = setQueryParam(ACFS_REF_QUERY_KEY, value);
   return storedOk || urlOk;
 }

@@ -93,7 +93,7 @@ acfs_security_init() {
 }
 
 # Category: agents
-# Modules: 3
+# Modules: 4
 
 # Claude Code
 install_agents_claude() {
@@ -287,12 +287,57 @@ INSTALL_AGENTS_GEMINI
     log_success "agents.gemini installed"
 }
 
+# OpenCode (multi-provider agent harness)
+install_agents_opencode() {
+    local module_id="agents.opencode"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing agents.opencode"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: install: curl -fsSL https://opencode.ai/install | bash (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_AGENTS_OPENCODE'
+curl -fsSL https://opencode.ai/install | bash
+INSTALL_AGENTS_OPENCODE
+        then
+            log_warn "agents.opencode: install command failed: curl -fsSL https://opencode.ai/install | bash"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "agents.opencode" "install command failed: curl -fsSL https://opencode.ai/install | bash"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "agents.opencode"
+            fi
+            return 0
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: opencode --version || opencode --help (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_AGENTS_OPENCODE'
+opencode --version || opencode --help
+INSTALL_AGENTS_OPENCODE
+        then
+            log_warn "agents.opencode: verify failed: opencode --version || opencode --help"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "agents.opencode" "verify failed: opencode --version || opencode --help"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "agents.opencode"
+            fi
+            return 0
+        fi
+    fi
+
+    log_success "agents.opencode installed"
+}
+
 # Install all agents modules
 install_agents() {
     log_section "Installing agents modules"
     install_agents_claude
     install_agents_codex
     install_agents_gemini
+    install_agents_opencode
 }
 
 # Run if executed directly

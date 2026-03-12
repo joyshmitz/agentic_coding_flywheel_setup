@@ -156,6 +156,25 @@ fail() {
     log_check "fail" "$1" "${2:-}"
 }
 
+emit_json_summary() {
+    echo "{"
+    echo "  \"errors\": $ERRORS,"
+    echo "  \"warnings\": $WARNINGS,"
+    echo "  \"checks\": ["
+    local first=true
+    for result in "${RESULTS[@]}"; do
+        if [[ "$first" == "true" ]]; then
+            first=false
+        else
+            echo ","
+        fi
+        echo -n "    $result"
+    done
+    echo ""
+    echo "  ]"
+    echo "}"
+}
+
 # ============================================================
 # System Checks
 # ============================================================
@@ -227,14 +246,8 @@ check_disk() {
     local free_kb
     # Use -P for POSIX output (header + one line per FS), awk column 4 is usually Available
     # Tail -n 1 to get the data line (more portable than tail -1)
-    if [[ "$(uname)" == "Darwin" ]]; then
-        # macOS df -k -P
-        free_kb=$(df -k -P / 2>/dev/null | tail -n 1 | awk '{print $4}')
-    else
-        # Linux df -P (often implies 1K blocks, but verify)
-        # Using -k ensures 1K blocks
-        free_kb=$(df -k -P / 2>/dev/null | tail -n 1 | awk '{print $4}')
-    fi
+    # Using -k ensures 1K blocks
+    free_kb=$(df -k -P / 2>/dev/null | tail -n 1 | awk '{print $4}')
 
     # Handle non-numeric or empty values
     if [[ -z "$free_kb" ]] || ! [[ "$free_kb" =~ ^[0-9]+$ ]]; then
@@ -446,15 +459,36 @@ check_apt_lock() {
 
     # Check for dpkg lock
     if [[ -f /var/lib/dpkg/lock-frontend ]]; then
-        if fuser /var/lib/dpkg/lock-frontend &>/dev/null 2>&1; then
+        local lock_held=false
+
+        if command -v fuser &>/dev/null; then
+            if fuser /var/lib/dpkg/lock-frontend &>/dev/null; then
+                lock_held=true
+            elif command -v sudo &>/dev/null && sudo -n fuser /var/lib/dpkg/lock-frontend &>/dev/null; then
+                lock_held=true
+            fi
+        fi
+
+        if [[ "$lock_held" != "true" ]] && command -v lsof &>/dev/null; then
+            if lsof /var/lib/dpkg/lock-frontend &>/dev/null; then
+                lock_held=true
+            elif command -v sudo &>/dev/null && sudo -n lsof /var/lib/dpkg/lock-frontend &>/dev/null; then
+                lock_held=true
+            fi
+        fi
+
+        if [[ "$lock_held" == "true" ]]; then
             fail "APT is locked by another process" "Wait for other apt operations or run: sudo killall apt apt-get"
             return
         fi
     fi
 
-    # Check for active apt processes
-    # Use -f to match against full command line for safer detection
-    if pgrep -f "(apt|apt-get|dpkg)" >/dev/null 2>&1; then
+    # Check for active package manager processes
+    # Use exact process names to avoid false positives from unrelated commands.
+    if pgrep -x apt >/dev/null 2>&1 || \
+       pgrep -x apt-get >/dev/null 2>&1 || \
+       pgrep -x dpkg >/dev/null 2>&1 || \
+       pgrep -x apt.systemd.daily >/dev/null 2>&1; then
         warn "APT process running" "Another package operation in progress"
         return
     fi
@@ -624,25 +658,6 @@ main() {
 
     # Summary
     if [[ "$MACHINE_OUTPUT" == "true" ]]; then
-        emit_json_summary() {
-            echo "{"
-            echo "  \"errors\": $ERRORS,"
-            echo "  \"warnings\": $WARNINGS,"
-            echo "  \"checks\": ["
-            local first=true
-            for result in "${RESULTS[@]}"; do
-                if [[ "$first" == "true" ]]; then
-                    first=false
-                else
-                    echo ","
-                fi
-                echo -n "    $result"
-            done
-            echo ""
-            echo "  ]"
-            echo "}"
-        }
-
         if [[ "$OUTPUT_FORMAT" == "toon" ]]; then
             if ! command -v tru >/dev/null 2>&1; then
                 echo "Warning: --format toon requested but 'tru' not found; using JSON" >&2

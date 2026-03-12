@@ -48,7 +48,7 @@ export DEBCONF_NONINTERACTIVE_SEEN=true
 # ============================================================
 # Configuration
 # ============================================================
-ACFS_VERSION="0.5.0"
+ACFS_VERSION="0.6.0"
 # Allow fork installations by overriding these via environment variables
 ACFS_REPO_OWNER="${ACFS_REPO_OWNER:-Dicklesworthstone}"
 ACFS_REPO_NAME="${ACFS_REPO_NAME:-agentic_coding_flywheel_setup}"
@@ -74,9 +74,9 @@ ACFS_COMMIT_SHA_FULL=""  # Full SHA for pinning resume scripts (40 chars)
 
 # Early curl defaults: enforce HTTPS (including redirects) when supported.
 # This is used before security.sh is available (bootstrap / early library sourcing).
-ACFS_EARLY_CURL_ARGS=(-fsSL)
+ACFS_EARLY_CURL_ARGS=(--connect-timeout 30 --max-time 300 -fsSL)
 if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
-    ACFS_EARLY_CURL_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+    ACFS_EARLY_CURL_ARGS=(--proto '=https' --proto-redir '=https' --connect-timeout 30 --max-time 300 -fsSL)
 fi
 # Note: ACFS_HOME is set after TARGET_HOME is determined
 ACFS_LOG_DIR="/var/log/acfs"
@@ -132,8 +132,14 @@ TARGET_UBUNTU_VERSION="25.10"
 # Default: detect the current user (or SUDO_USER if running under sudo).
 # Override with env var: TARGET_USER=myuser
 # Note: Previously defaulted to "ubuntu" which broke non-ubuntu VPS installs.
-_ACFS_DETECTED_USER="${SUDO_USER:-$(whoami)}"
-TARGET_USER="${TARGET_USER:-$_ACFS_DETECTED_USER}"
+if [[ -z "${TARGET_USER:-}" ]]; then
+    if [[ $EUID -eq 0 ]] && [[ -z "${SUDO_USER:-}" ]]; then
+        _ACFS_DETECTED_USER="ubuntu"
+    else
+        _ACFS_DETECTED_USER="${SUDO_USER:-$(whoami)}"
+    fi
+    TARGET_USER="$_ACFS_DETECTED_USER"
+fi
 unset _ACFS_DETECTED_USER
 # Leave TARGET_HOME unset by default; init_target_paths will derive it from:
 # - $HOME when running as TARGET_USER
@@ -1360,7 +1366,16 @@ detect_environment() {
                 local _ics_file="$_ics_base/$_ics_path"
                 if [[ -f "$_ics_file" ]]; then
                     local _ics_actual
-                    _ics_actual=$(sha256sum "$_ics_file" | awk '{print $1}')
+                    _ics_actual="$(acfs_calculate_file_sha256 "$_ics_file" 2>/dev/null || true)"
+                    if [[ -z "$_ics_actual" ]]; then
+                        _ics_fail=$((_ics_fail + 1))
+                        if declare -f log_error &>/dev/null; then
+                            log_error "INTEGRITY: failed to checksum $_ics_path"
+                        else
+                            echo "ERROR: INTEGRITY: failed to checksum $_ics_path" >&2
+                        fi
+                        continue
+                    fi
                     if [[ "$_ics_actual" != "$_ics_expected" ]]; then
                         _ics_fail=$((_ics_fail + 1))
                         if declare -f log_error &>/dev/null; then
@@ -1387,7 +1402,7 @@ detect_environment() {
                 fi
                 exit 1
             fi
-            if declare -f log_success &>/dev/null; then
+            if [[ "$_ics_fail" -eq 0 ]] && declare -f log_success &>/dev/null; then
                 log_success "Internal script integrity verified (${ACFS_INTERNAL_CHECKSUMS_COUNT:-?} scripts)"
             fi
         fi
@@ -1811,9 +1826,9 @@ run_preflight_checks() {
     echo ""
 }
 
-ACFS_CURL_BASE_ARGS=(-fsSL)
+ACFS_CURL_BASE_ARGS=(--connect-timeout 30 --max-time 300 -fsSL)
 if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
-    ACFS_CURL_BASE_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+    ACFS_CURL_BASE_ARGS=(--proto '=https' --proto-redir '=https' --connect-timeout 30 --max-time 300 -fsSL)
 fi
 
 acfs_curl() {
@@ -1998,7 +2013,7 @@ bootstrap_repo_archive() {
 
     local manifest_sha expected_sha
     manifest_sha="$(acfs_calculate_file_sha256 "$tmp_dir/acfs.manifest.yaml")" || return 1
-    expected_sha="$(grep -E '^ACFS_MANIFEST_SHA256=' "$tmp_dir/scripts/generated/manifest_index.sh" | head -n 1 | cut -d'=' -f2 | tr -d '\"' || true)"
+    expected_sha="$(grep -E '^ACFS_MANIFEST_SHA256=' "$tmp_dir/scripts/generated/manifest_index.sh" | head -n 1 | cut -d'=' -f2 | tr -d '"[:space:]\r' || true)"
 
     if [[ -z "$expected_sha" ]]; then
         log_error "Bootstrap manifest index missing ACFS_MANIFEST_SHA256"
@@ -2009,7 +2024,6 @@ bootstrap_repo_archive() {
         log_error "Bootstrap mismatch: generated scripts do not match manifest."
         log_detail "Expected: $expected_sha"
         log_detail "Actual:   $manifest_sha"
-        log_detail "Fix: retry or pin ACFS_REF to a tag/sha to avoid mixed refs."
         return 1
     fi
 
@@ -2223,7 +2237,20 @@ run_as_target() {
     # Environment variables to set for target user commands
     # UV_NO_CONFIG prevents uv from looking for config in /root when running via sudo
     # HOME is set explicitly to ensure consistent home directory
+    # XDG_RUNTIME_DIR / DBUS_SESSION_BUS_ADDRESS let user services work even when
+    # install.sh is running as root and switching to TARGET_USER non-interactively.
     local -a env_args=("UV_NO_CONFIG=1" "HOME=$user_home")
+    local target_uid=""
+    local target_runtime_dir=""
+    if target_uid="$(id -u "$user" 2>/dev/null)"; then
+        target_runtime_dir="/run/user/$target_uid"
+        if [[ -d "$target_runtime_dir" ]]; then
+            env_args+=("XDG_RUNTIME_DIR=$target_runtime_dir")
+            if [[ -S "$target_runtime_dir/bus" ]]; then
+                env_args+=("DBUS_SESSION_BUS_ADDRESS=unix:path=$target_runtime_dir/bus")
+            fi
+        fi
+    fi
 
     # Pass ACFS context variables to target user environment
     if [[ -n "${ACFS_BOOTSTRAP_DIR:-}" ]]; then env_args+=("ACFS_BOOTSTRAP_DIR=$ACFS_BOOTSTRAP_DIR"); fi
@@ -2351,7 +2378,7 @@ acfs_fetch_fresh_checksums_via_api() {
 
     # Use application/vnd.github.raw to get raw file content directly (no base64)
     local content
-    content="$(curl -fsSL \
+    content="$(curl --connect-timeout 30 --max-time 300 -fsSL \
         -H "Accept: application/vnd.github.raw" \
         -H "X-GitHub-Api-Version: 2022-11-28" \
         "$api_url" 2>/dev/null)" || {
@@ -2396,7 +2423,7 @@ acfs_parse_checksums_content() {
             continue
         fi
 
-        if [[ "$line" =~ ^[[:space:]]{2}([a-z_]+):[[:space:]]*$ ]]; then
+        if [[ "$line" =~ ^[[:space:]]{2}([[:alnum:]_-]+):[[:space:]]*$ ]]; then
             current_tool="${BASH_REMATCH[1]}"
             continue
         fi
@@ -2483,7 +2510,7 @@ acfs_load_upstream_checksums() {
     acfs_parse_checksums_content "$content"
 
     local required_tools=(
-        atuin bun bv caam cass claude cm dcg mcp_agent_mail ntm ohmyzsh rust slb ubs uv zoxide
+        atuin bun bv caam cass claude cm dcg gemini_patch mcp_agent_mail ntm ohmyzsh ru rust slb ubs uv zoxide
     )
     local missing_required_tools=false
     local tool
@@ -2743,6 +2770,11 @@ init_target_paths() {
         log_fatal "TARGET_HOME must be an absolute path (got: $TARGET_HOME)"
     fi
 
+    # Configurable binary install directory (fixes #211).
+    # Override via ACFS_BIN_DIR for shared/multi-user machines:
+    #   ACFS_BIN_DIR=/usr/local/bin ./install.sh
+    ACFS_BIN_DIR="${ACFS_BIN_DIR:-$TARGET_HOME/.local/bin}"
+
     # ACFS directories for target user
     ACFS_HOME="${ACFS_HOME:-$TARGET_HOME/.acfs}"
     ACFS_STATE_FILE="${ACFS_STATE_FILE:-$ACFS_HOME/state.json}"
@@ -2757,11 +2789,11 @@ init_target_paths() {
     log_detail "Target home: $TARGET_HOME"
 
     # Export for generated installers (run via subshells).
-    export TARGET_USER TARGET_HOME ACFS_HOME ACFS_STATE_FILE
+    export TARGET_USER TARGET_HOME ACFS_HOME ACFS_STATE_FILE ACFS_BIN_DIR
 
     # Add target user's bin directories to PATH early so that tools installed
     # later (like Claude Code) see the correct PATH and don't warn about it.
-    export PATH="$TARGET_HOME/.local/bin:$TARGET_HOME/.cargo/bin:$TARGET_HOME/.bun/bin:$PATH"
+    export PATH="$ACFS_BIN_DIR:$TARGET_HOME/.cargo/bin:$TARGET_HOME/.bun/bin:$PATH"
 }
 
 validate_target_user() {
@@ -2875,20 +2907,26 @@ run_ubuntu_upgrade_phase() {
 
     case "$upgrade_stage" in
         initializing|upgrading|awaiting_reboot|resumed|step_complete)
-            log_info "Detected Ubuntu upgrade in progress (stage: $upgrade_stage)"
-            log_info "The systemd resume service should handle this automatically"
+            log_error "Detected Ubuntu upgrade in progress (stage: $upgrade_stage)"
+            log_error "Refusing to continue normal installation during an active upgrade."
             log_info "Monitoring:"
             log_info "  - /var/lib/acfs/check_status.sh"
             log_info "  - journalctl -u acfs-upgrade-resume -f"
             log_info "  - tail -f /var/log/acfs/upgrade_resume.log"
-            return 0
+            return 1
             ;;
         pre_upgrade_reboot)
             # We just rebooted to clear pending package updates
             log_success "Pre-upgrade reboot complete. Continuing with upgrade..."
             # Clear the stage so we proceed normally
             if type -t state_update &>/dev/null; then
-                state_update ".ubuntu_upgrade.current_stage = \"not_started\" | .ubuntu_upgrade.enabled = false" || true
+                if ! state_update ".ubuntu_upgrade.current_stage = \"not_started\" | .ubuntu_upgrade.enabled = false"; then
+                    log_error "Failed to clear pre_upgrade_reboot stage; aborting to prevent stale state."
+                    return 1
+                fi
+            else
+                log_error "State tracking is unavailable; cannot continue upgrade safely."
+                return 1
             fi
             # Set flag to skip redundant warning (user already confirmed before reboot)
             local skip_upgrade_warning=true
@@ -3013,18 +3051,15 @@ run_ubuntu_upgrade_phase() {
                 acfs_source_dir="$ACFS_BOOTSTRAP_DIR"
             fi
 
-            if [[ -n "$acfs_source_dir" ]] && type -t upgrade_setup_infrastructure &>/dev/null; then
-                if ! upgrade_setup_infrastructure "$acfs_source_dir" "$@"; then
-                    log_error "Failed to set up resume infrastructure. Cannot safely reboot."
-                    log_info "Please reboot manually and re-run the installer."
-                    return 1
-                fi
-
-                # upgrade_setup_infrastructure generates the correct continue_install.sh for both:
-                # - pre-upgrade reboot (continue WITH upgrade)
-                # - post-upgrade continuation (skip upgrade)
-            else
-                log_warn "Resume infrastructure not available. After reboot, re-run installer manually."
+            if [[ -z "$acfs_source_dir" ]] || ! type -t upgrade_setup_infrastructure &>/dev/null; then
+                log_error "Resume infrastructure is unavailable. Cannot safely auto-reboot."
+                log_info "Please reboot manually and re-run the installer."
+                return 1
+            fi
+            if ! upgrade_setup_infrastructure "$acfs_source_dir" "$@"; then
+                log_error "Failed to set up resume infrastructure. Cannot safely reboot."
+                log_info "Please reboot manually and re-run the installer."
+                return 1
             fi
 
             # Update MOTD before reboot
@@ -3358,9 +3393,9 @@ setup_filesystem() {
     $SUDO chmod 755 "$ACFS_HOME/scripts/lib/"*.sh 2>/dev/null || true
     acfs_chown_tree "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/scripts" 2>/dev/null || true
 
-    # Create user's .local/bin and .bun directories early - many installers need them
+    # Create user's bin and .bun directories early - many installers need them
     # This prevents NTM, UBS, CASS, Bun, etc. from creating them as root via sudo
-    try_step "Creating .local/bin directory" run_as_target mkdir -p "$TARGET_HOME/.local/bin" || return 1
+    try_step "Creating bin directory ($ACFS_BIN_DIR)" run_as_target mkdir -p "$ACFS_BIN_DIR" || return 1
     try_step "Creating .bun directory" run_as_target mkdir -p "$TARGET_HOME/.bun" || return 1
 
     log_success "Filesystem setup complete"
@@ -3602,7 +3637,7 @@ install_cli_tools() {
     fi
 
     log_detail "Installing required apt packages"
-    try_step "Installing required apt packages" $SUDO apt-get install -y ripgrep tmux fzf direnv jq git-lfs lsof dnsutils netcat-openbsd strace rsync || return 1
+    try_step "Installing required apt packages" $SUDO apt-get install -y ripgrep tmux fzf direnv jq git-lfs lsof dnsutils netcat-openbsd strace rsync zstd || return 1
 
     # GitHub CLI (gh)
     if command_exists gh; then
@@ -3623,7 +3658,7 @@ install_cli_tools() {
 
     # Install optional apt packages - batch install for speed (14→1 apt-get calls)
     log_detail "Installing optional apt packages"
-    local optional_pkgs=(lsd eza bat fd-find btop dust neovim htop tree ncdu httpie entr mtr pv docker.io docker-compose-plugin)
+    local optional_pkgs=(lsd eza bat fd-find btop dust neovim htop tree ncdu httpie entr mtr pv docker.io docker-compose-plugin cosign)
     # First attempt: batch install all at once (fastest path)
     if ! $SUDO apt-get install -y "${optional_pkgs[@]}" >/dev/null 2>&1; then
         # Fallback: some packages failed, install individually to get what we can
@@ -3746,27 +3781,9 @@ install_languages_legacy_lang() {
         try_step "Installing Bun" acfs_run_verified_upstream_script_as_target "bun" "bash" || return 1
     fi
 
-    # Create node symlink to bun for Node.js compatibility
-    # Many tools (codex, gemini, etc.) have #!/usr/bin/env node shebangs
-    local node_link="$TARGET_HOME/.bun/bin/node"
-    if [[ -x "$bun_bin" ]]; then
-        # Idempotency: handle an existing broken symlink and avoid clobbering a real node binary.
-        if [[ -L "$node_link" ]]; then
-            local current_node_target=""
-            if command -v readlink &>/dev/null; then
-                current_node_target="$(readlink "$node_link" 2>/dev/null || true)"
-            fi
-            if [[ "$current_node_target" != "$bun_bin" ]]; then
-                log_detail "Updating node symlink for Bun compatibility"
-                try_step "Updating node symlink" run_as_target ln -sf "$bun_bin" "$node_link" || log_warn "Failed to update node symlink"
-            fi
-        elif [[ ! -e "$node_link" ]]; then
-            log_detail "Creating node symlink for Bun compatibility"
-            try_step "Creating node symlink" run_as_target ln -s "$bun_bin" "$node_link" || log_warn "Failed to create node symlink"
-        else
-            log_detail "node already exists in $TARGET_HOME/.bun/bin (leaving as-is)"
-        fi
-    fi
+    # NOTE: node→bun symlink REMOVED (bug #145). The symlink shadowed real Node.js
+    # from nvm and broke TypeScript builds. Bun already handles #!/usr/bin/env node
+    # shebangs natively when running .js files via bun, so the symlink was unnecessary.
 
     # Rust nightly (install as target user)
     # We use nightly for latest features and to install tools like dust/lsd
@@ -3783,7 +3800,7 @@ install_languages_legacy_lang() {
     fi
 
     # uv (install as target user)
-    if [[ -x "$TARGET_HOME/.local/bin/uv" ]] || [[ -x "$TARGET_HOME/.cargo/bin/uv" ]] || command -v uv &>/dev/null; then
+    if [[ -x "$ACFS_BIN_DIR/uv" ]] || [[ -x "$TARGET_HOME/.cargo/bin/uv" ]] || command -v uv &>/dev/null; then
         log_detail "uv already installed"
     else
         log_detail "Installing uv for $TARGET_USER"
@@ -3869,12 +3886,12 @@ install_languages_legacy_tools() {
         log_detail "Atuin already installed"
     else
         log_detail "Installing Atuin for $TARGET_USER"
-        try_step "Installing Atuin" acfs_run_verified_upstream_script_as_target "atuin" "sh" || return 1
+        try_step "Installing Atuin" acfs_run_verified_upstream_script_as_target "atuin" "sh" "--non-interactive" || return 1
     fi
 
     # Zoxide - prefer apt to avoid GitHub API rate limits in CI
     # Check multiple possible locations
-    if [[ -x "$TARGET_HOME/.local/bin/zoxide" ]] || [[ -x "/usr/local/bin/zoxide" ]] || command -v zoxide &>/dev/null; then
+    if [[ -x "$ACFS_BIN_DIR/zoxide" ]] || [[ -x "/usr/local/bin/zoxide" ]] || command -v zoxide &>/dev/null; then
         log_detail "Zoxide already installed"
     else
         log_detail "Installing Zoxide for $TARGET_USER"
@@ -3934,9 +3951,9 @@ install_agents_phase() {
 
         # CI/doctor expectations: ensure `claude` resolves to ~/.local/bin/claude.
         # The native installer can choose non-standard paths, and bun installs land in ~/.bun/bin.
-        local claude_bin_local="$TARGET_HOME/.local/bin/claude"
+        local claude_bin_local="$ACFS_BIN_DIR/claude"
         if [[ ! -x "$claude_bin_local" ]]; then
-            run_as_target mkdir -p "$TARGET_HOME/.local/bin" 2>/dev/null || true
+            run_as_target mkdir -p "$ACFS_BIN_DIR" 2>/dev/null || true
 
             local claude_candidate=""
             local candidates=(
@@ -3975,14 +3992,14 @@ install_agents_phase() {
     # Claude Code (install as target user)
     # NOTE: The native installer may choose a non-standard install path; CI smoke
     # checks require claude to exist at ~/.local/bin/claude or ~/.bun/bin/claude.
-    local claude_bin_local="$TARGET_HOME/.local/bin/claude"
+    local claude_bin_local="$ACFS_BIN_DIR/claude"
     local claude_bin_bun="$TARGET_HOME/.bun/bin/claude"
     if [[ -x "$claude_bin_local" ]]; then
         log_detail "Claude Code already installed ($claude_bin_local)"
     elif [[ -x "$claude_bin_bun" ]]; then
         log_detail "Claude Code already installed ($claude_bin_bun)"
     else
-        run_as_target mkdir -p "$TARGET_HOME/.local/bin" 2>/dev/null || true
+        run_as_target mkdir -p "$ACFS_BIN_DIR" 2>/dev/null || true
 
         log_detail "Installing Claude Code (native) for $TARGET_USER"
         try_step "Installing Claude Code (native)" acfs_run_verified_upstream_script_as_target "claude" "bash" latest || true
@@ -4025,7 +4042,7 @@ install_agents_phase() {
     # Prefer ~/.local/bin for Claude to avoid PATH conflict warnings in acfs doctor.
     # (If Claude was installed via bun, link it into ~/.local/bin which is earlier in PATH.)
     if [[ ! -x "$claude_bin_local" && -x "$claude_bin_bun" ]]; then
-        run_as_target mkdir -p "$TARGET_HOME/.local/bin" 2>/dev/null || true
+        run_as_target mkdir -p "$ACFS_BIN_DIR" 2>/dev/null || true
         try_step "Linking Claude Code into ~/.local/bin" run_as_target ln -sf "$claude_bin_bun" "$claude_bin_local" || true
     fi
 
@@ -4049,9 +4066,9 @@ install_agents_phase() {
     ' _ "$bun_bin" || true
 
     # Create wrapper script that uses bun as runtime (avoids node PATH issues)
-    local codex_bin_local="$TARGET_HOME/.local/bin/codex"
+    local codex_bin_local="$ACFS_BIN_DIR/codex"
     if [[ -x "$TARGET_HOME/.bun/bin/codex" ]] && [[ ! -x "$codex_bin_local" ]]; then
-        run_as_target mkdir -p "$TARGET_HOME/.local/bin" 2>/dev/null || true
+        run_as_target mkdir -p "$ACFS_BIN_DIR" 2>/dev/null || true
         # shellcheck disable=SC2016  # Variables expand inside the bash -c script, not here.
         try_step "Creating Codex bun wrapper" run_as_target bash -c '
             set -euo pipefail
@@ -4066,9 +4083,9 @@ install_agents_phase() {
     try_step "Installing Gemini CLI" run_as_target "$bun_bin" install -g --trust @google/gemini-cli@latest || true
 
     # Create wrapper script that uses bun as runtime (avoids node PATH issues)
-    local gemini_bin_local="$TARGET_HOME/.local/bin/gemini"
+    local gemini_bin_local="$ACFS_BIN_DIR/gemini"
     if [[ -x "$TARGET_HOME/.bun/bin/gemini" ]] && [[ ! -x "$gemini_bin_local" ]]; then
-        run_as_target mkdir -p "$TARGET_HOME/.local/bin" 2>/dev/null || true
+        run_as_target mkdir -p "$ACFS_BIN_DIR" 2>/dev/null || true
         # shellcheck disable=SC2016  # Variables expand inside the bash -c script, not here.
         try_step "Creating Gemini bun wrapper" run_as_target bash -c '
             set -euo pipefail
@@ -4081,8 +4098,8 @@ install_agents_phase() {
     # Apply Gemini CLI patches (EBADF crash fix, rate-limit retry, quota retry)
     if [[ -x "$TARGET_HOME/.bun/bin/gemini" ]]; then
         log_detail "Applying Gemini CLI patches (EBADF, retry, quota)"
-        try_step "Patching Gemini CLI" run_as_target bash -c \
-            'curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/misc_coding_agent_tips_and_scripts/main/fix-gemini-cli-ebadf-crash.sh | bash' || true
+        try_step "Patching Gemini CLI" acfs_run_verified_upstream_script_as_target "gemini_patch" "bash" || \
+            log_warn "Gemini CLI patch step failed (continuing)"
     fi
 
     log_success "Coding agents installed"
@@ -4268,12 +4285,12 @@ install_supabase_cli_release() {
     chmod 755 "$tmp_dir" 2>/dev/null || true
     chmod 755 "$extracted_bin" 2>/dev/null || true
 
-    run_as_target mkdir -p "$TARGET_HOME/.local/bin" 2>/dev/null || true
-    if ! run_as_target install -m 0755 "$extracted_bin" "$TARGET_HOME/.local/bin/supabase"; then
-        log_error "Supabase CLI: failed to install into ~/.local/bin"
+    run_as_target mkdir -p "$ACFS_BIN_DIR" 2>/dev/null || true
+    if ! run_as_target install -m 0755 "$extracted_bin" "$ACFS_BIN_DIR/supabase"; then
+        log_error "Supabase CLI: failed to install into $ACFS_BIN_DIR"
         return 1
     fi
-    if ! run_as_target "$TARGET_HOME/.local/bin/supabase" --version >/dev/null 2>&1; then
+    if ! run_as_target "$ACFS_BIN_DIR/supabase" --version >/dev/null 2>&1; then
         log_error "Supabase CLI: installed but failed to run"
         return 1
     fi
@@ -4297,7 +4314,7 @@ install_cloud_db_legacy_cloud() {
             local cli
             for cli in wrangler supabase vercel; do
                 if [[ "$cli" == "supabase" ]]; then
-                    if [[ -x "$TARGET_HOME/.local/bin/supabase" ]] || [[ -x "$TARGET_HOME/.bun/bin/supabase" ]]; then
+                    if [[ -x "$ACFS_BIN_DIR/supabase" ]] || [[ -x "$TARGET_HOME/.bun/bin/supabase" ]]; then
                         log_detail "supabase already installed"
                         continue
                     fi
@@ -4320,6 +4337,23 @@ install_cloud_db_legacy_cloud() {
                 if try_step "Installing $cli via bun" run_as_target "$bun_bin" install -g --trust "${cli}@latest"; then
                     if [[ -x "$TARGET_HOME/.bun/bin/$cli" ]]; then
                         log_success "$cli installed"
+                        # Create a bun-based shim in ACFS_BIN_DIR for wrangler (issue #152).
+                        # wrangler installed via bun may fail at runtime if node is missing.
+                        # The shim uses `bun x` to run wrangler, avoiding the node dependency.
+                        if [[ "$cli" == "wrangler" ]] && ! command -v node &>/dev/null; then
+                            local shim_dir="$ACFS_BIN_DIR"
+                            mkdir -p "$shim_dir" 2>/dev/null || true
+                            if [[ ! -f "$shim_dir/wrangler" ]] || grep -q 'bun x wrangler' "$shim_dir/wrangler" 2>/dev/null; then
+                                cat > "$shim_dir/wrangler" <<'WRANGLER_SHIM'
+#!/usr/bin/env bash
+# Wrangler shim: uses bun to run wrangler when node is not available.
+# Created by ACFS installer (issue #152).
+exec "${HOME}/.bun/bin/bun" x wrangler@latest "$@"
+WRANGLER_SHIM
+                                chmod +x "$shim_dir/wrangler"
+                                log_detail "Created bun-based wrangler shim at $shim_dir/wrangler (node not found)"
+                            fi
+                        fi
                     else
                         log_warn "$cli: install finished but binary not found"
                     fi
@@ -4343,7 +4377,7 @@ install_cloud_db_legacy() {
             local cli
             for cli in wrangler supabase vercel; do
                 if [[ "$cli" == "supabase" ]]; then
-                    if [[ -x "$TARGET_HOME/.local/bin/supabase" ]] || [[ -x "$TARGET_HOME/.bun/bin/supabase" ]]; then
+                    if [[ -x "$ACFS_BIN_DIR/supabase" ]] || [[ -x "$TARGET_HOME/.bun/bin/supabase" ]]; then
                         log_detail "supabase already installed"
                         continue
                     fi
@@ -4431,7 +4465,7 @@ install_cloud_db() {
 # Helper: check if a binary exists in common install locations
 binary_installed() {
     local name="$1"
-    [[ -x "$TARGET_HOME/.local/bin/$name" ]] || \
+    [[ -x "$ACFS_BIN_DIR/$name" ]] || \
     [[ -x "/usr/local/bin/$name" ]] || \
     [[ -x "$TARGET_HOME/.bun/bin/$name" ]] || \
     [[ -x "$TARGET_HOME/.cargo/bin/$name" ]]
@@ -4440,6 +4474,12 @@ binary_installed() {
 install_stack_phase() {
     set_phase "stack" "Dicklesworthstone Stack"
     log_step "8/9" "Installing Dicklesworthstone stack..."
+
+    # Install utils.* modules (category: tools, phase: 9) — bug #146 fix
+    if acfs_use_generated_category "tools"; then
+        log_detail "Using generated installers for tools (phase 9)"
+        acfs_run_generated_category_phase "tools" "9" || return 1
+    fi
 
     if acfs_use_generated_category "stack"; then
         log_detail "Using generated installers for stack (phase 9)"
@@ -4480,11 +4520,21 @@ install_stack_phase() {
 # NTM Configuration - created by ACFS
 # Updated model defaults for ChatGPT Pro and Gemini accounts
 
+# Base directory for projects (matches ACFS workspace_root)
+projects_base = "/data/projects"
+
 [models]
 # Default models when no specifier given
 default_claude = "claude-opus-4-5-20251101"
 default_codex = "gpt-5.2-codex"
 default_gemini = "gemini-3-pro-preview"
+
+[agents]
+# Override gemini command to set TERM=xterm-256color (issue #178).
+# When TERM=tmux-256color (the tmux default-terminal), a node-pty bug
+# in gemini-cli causes SIGHUP on all shell tool invocations.
+# Scoping the override here keeps tmux and other panes on tmux-256color.
+gemini = "TERM=xterm-256color gemini{{if .Model}} --model {{shellQuote .Model}}{{end}} --yolo"
 NTM_CONFIG_EOF
             then
                 log_success "NTM config created with current model defaults"
@@ -4517,52 +4567,56 @@ NTM_CONFIG_EOF
         fi
     fi
 
-    # MCP Agent Mail (check for mcp-agent-mail stub or mcp_agent_mail directory)
-    # NOTE: We run this in tmux because the installer starts the server which blocks
-    if binary_installed "mcp-agent-mail" || [[ -d "$TARGET_HOME/mcp_agent_mail" ]]; then
-        log_detail "MCP Agent Mail already installed"
+    # MCP Agent Mail
+    local am_cli_path="$TARGET_HOME/.local/bin/am"
+    if binary_installed "mcp-agent-mail" || [[ -x "$am_cli_path" ]] || [[ -d "$TARGET_HOME/mcp_agent_mail" ]]; then
+        log_detail "MCP Agent Mail already installed; ensuring managed service"
     else
-        log_detail "Installing MCP Agent Mail (in tmux session)"
-        # Create or use acfs-services tmux session, run installer in first pane.
-        # The installer will start the server, which runs persistently in tmux.
-        local tmux_session="acfs-services"
-        local tool="mcp_agent_mail"
-        local target_dir="$TARGET_HOME/mcp_agent_mail"
+        log_detail "Installing MCP Agent Mail"
+    fi
+    local tool="mcp_agent_mail"
+    local target_dir="$TARGET_HOME/mcp_agent_mail"
 
-        # Fetch + verify the installer script, then run it in tmux to avoid blocking.
-        if acfs_load_upstream_checksums; then
-            local url="${ACFS_UPSTREAM_URLS[$tool]:-}"
-            local expected_sha256="${ACFS_UPSTREAM_SHA256[$tool]:-}"
+    if acfs_load_upstream_checksums; then
+        local url="${ACFS_UPSTREAM_URLS[$tool]:-}"
+        local expected_sha256="${ACFS_UPSTREAM_SHA256[$tool]:-}"
 
-            if [[ -z "$url" ]] || [[ -z "$expected_sha256" ]]; then
-                log_warn "MCP Agent Mail: missing installer URL/checksum"
-            else
-                local tmp_install
-                tmp_install="$(mktemp "${TMPDIR:-/tmp}/acfs-install-${tool}.XXXXXX" 2>/dev/null)" || tmp_install=""
+        if [[ -z "$url" ]] || [[ -z "$expected_sha256" ]]; then
+            log_warn "MCP Agent Mail: missing installer URL/checksum"
+        else
+            local tmp_install
+            tmp_install="$(mktemp "${TMPDIR:-/tmp}/acfs-install-${tool}.XXXXXX" 2>/dev/null)" || tmp_install=""
 
-                if [[ -n "$tmp_install" ]] && verify_checksum "$url" "$expected_sha256" "$tool" > "$tmp_install"; then
-                    chmod 755 "$tmp_install" 2>/dev/null || true
+            if [[ -n "$tmp_install" ]] && verify_checksum "$url" "$expected_sha256" "$tool" > "$tmp_install"; then
+                chmod 755 "$tmp_install" 2>/dev/null || true
 
-                    # Kill existing session if any (clean slate)
-                    run_as_target tmux kill-session -t "$tmux_session" 2>/dev/null || true
-
-                    # Create new detached session and run the installer
-                    if try_step "Installing MCP Agent Mail in tmux" run_as_target tmux new-session -d -s "$tmux_session" "$tmp_install" --dir "$target_dir" --yes; then
-                        log_success "MCP Agent Mail installing in tmux session '$tmux_session'"
-                        log_info "Attach with: tmux attach -t $tmux_session"
-                        # Give it a moment to start
-                        sleep 5
+                if try_step "Installing MCP Agent Mail" run_as_target bash "$tmp_install" --dir "$target_dir" --yes --no-start; then
+                    if run_as_target bash -c 'set -euo pipefail
+                        command -v am >/dev/null 2>&1
+                        am service install >/dev/null
+                        systemctl --user daemon-reload >/dev/null 2>&1 || true
+                        if ! systemctl --user enable --now agent-mail.service >/dev/null 2>&1; then
+                            systemctl --user restart agent-mail.service >/dev/null 2>&1
+                        fi
+                    '; then
+                        if curl -fsS --max-time 10 http://127.0.0.1:8765/health/liveness >/dev/null 2>&1; then
+                            log_success "MCP Agent Mail service running on http://127.0.0.1:8765"
+                        else
+                            log_warn "MCP Agent Mail installed but service did not become healthy"
+                        fi
                     else
-                        log_warn "MCP Agent Mail tmux installation may have failed"
+                        log_warn "MCP Agent Mail installed but managed service setup failed"
                     fi
                 else
-                    rm -f "$tmp_install" 2>/dev/null || true
-                    log_warn "MCP Agent Mail: installer verification failed"
+                    log_warn "MCP Agent Mail installation may have failed"
                 fi
+            else
+                rm -f "$tmp_install" 2>/dev/null || true
+                log_warn "MCP Agent Mail: installer verification failed"
             fi
-        else
-            log_warn "MCP Agent Mail: unable to load upstream checksums; refusing to run unverified installer"
         fi
+    else
+        log_warn "MCP Agent Mail: unable to load upstream checksums; refusing to run unverified installer"
     fi
 
     # Ultimate Bug Scanner
@@ -4642,6 +4696,101 @@ NTM_CONFIG_EOF
         try_step "Installing RU" acfs_run_verified_upstream_script_as_target "ru" "bash" || log_warn "RU installation may have failed"
     fi
 
+    # RCH (Remote Compilation Helper)
+    if binary_installed "rch"; then
+        log_detail "RCH already installed"
+    else
+        log_detail "Installing RCH"
+        try_step "Installing RCH" acfs_run_verified_upstream_script_as_target "rch" "bash" || log_warn "RCH installation may have failed"
+    fi
+
+    # FrankenSearch (fsfs)
+    if binary_installed "fsfs"; then
+        log_detail "FrankenSearch already installed"
+    else
+        log_detail "Installing FrankenSearch"
+        try_step "Installing FrankenSearch" acfs_run_verified_upstream_script_as_target "fsfs" "bash" --easy-mode || log_warn "FrankenSearch installation may have failed"
+    fi
+
+    # Process Triage (pt)
+    if binary_installed "pt"; then
+        log_detail "Process Triage already installed"
+    else
+        log_detail "Installing Process Triage"
+        try_step "Installing Process Triage" acfs_run_verified_upstream_script_as_target "pt" "bash" || log_warn "Process Triage installation may have failed"
+    fi
+
+    # Storage Ballast Helper (sbh)
+    if binary_installed "sbh"; then
+        log_detail "Storage Ballast Helper already installed"
+    else
+        log_detail "Installing Storage Ballast Helper"
+        try_step "Installing SBH" acfs_run_verified_upstream_script_as_target "sbh" "bash" || log_warn "SBH installation may have failed"
+    fi
+
+    # Cross-Agent Session Resumer (casr)
+    if binary_installed "casr"; then
+        log_detail "CASR already installed"
+    else
+        log_detail "Installing CASR"
+        try_step "Installing CASR" acfs_run_verified_upstream_script_as_target "casr" "bash" || log_warn "CASR installation may have failed"
+    fi
+
+    # Doodlestein Self-Releaser (dsr) — standalone bash script, no upstream installer
+    if binary_installed "dsr"; then
+        log_detail "DSR already installed"
+    else
+        log_detail "Installing DSR"
+        local dsr_tmp
+        dsr_tmp="$(mktemp -d "${TMPDIR:-/tmp}/acfs-dsr.XXXXXX" 2>/dev/null)" || dsr_tmp=""
+        if [[ -n "$dsr_tmp" ]] && [[ -d "$dsr_tmp" ]]; then
+            if run_as_target git clone --depth 1 https://github.com/Dicklesworthstone/doodlestein_self_releaser.git "$dsr_tmp/dsr" 2>/dev/null; then
+                if [[ -x "$dsr_tmp/dsr/dsr" ]]; then
+                    run_as_target cp "$dsr_tmp/dsr/dsr" "$ACFS_BIN_DIR/dsr" 2>/dev/null || \
+                        run_as_target cp "$dsr_tmp/dsr/dsr" "$TARGET_HOME/.local/bin/dsr" 2>/dev/null
+                    run_as_target chmod 755 "$ACFS_BIN_DIR/dsr" 2>/dev/null || \
+                        run_as_target chmod 755 "$TARGET_HOME/.local/bin/dsr" 2>/dev/null
+                    log_success "DSR installed"
+                else
+                    log_warn "DSR: binary not found in cloned repo"
+                fi
+            else
+                log_warn "DSR: git clone failed"
+            fi
+            rm -rf "$dsr_tmp"
+        else
+            log_warn "DSR: failed to create temp directory"
+        fi
+    fi
+
+    # Agent Settings Backup (asb)
+    if binary_installed "asb"; then
+        log_detail "ASB already installed"
+    else
+        log_detail "Installing ASB"
+        try_step "Installing ASB" acfs_run_verified_upstream_script_as_target "asb" "bash" || log_warn "ASB installation may have failed"
+    fi
+
+    # Post-Compact Reminder (pcr hook)
+    local pcr_installed=false
+    local pcr_hook_script="$TARGET_HOME/.local/bin/claude-post-compact-reminder"
+    local settings_file="$TARGET_HOME/.claude/settings.json"
+    local alt_settings_file="$TARGET_HOME/.config/claude/settings.json"
+    if [[ -x "$pcr_hook_script" ]]; then
+        if [[ -f "$settings_file" ]] && grep -q "claude-post-compact-reminder" "$settings_file" 2>/dev/null; then
+            pcr_installed=true
+        elif [[ -f "$alt_settings_file" ]] && grep -q "claude-post-compact-reminder" "$alt_settings_file" 2>/dev/null; then
+            pcr_installed=true
+        fi
+    fi
+
+    if [[ "$pcr_installed" == "true" ]]; then
+        log_detail "Post-Compact Reminder already installed"
+    else
+        log_detail "Installing Post-Compact Reminder"
+        try_step "Installing PCR" acfs_run_verified_upstream_script_as_target "pcr" "bash" --yes || log_warn "PCR installation may have failed"
+    fi
+
     # DCG (Destructive Command Guard)
     if binary_installed "dcg"; then
         log_detail "DCG already installed"
@@ -4658,8 +4807,8 @@ NTM_CONFIG_EOF
 
     # Best-effort hook registration (Claude Code)
     local dcg_bin=""
-    if [[ -x "$TARGET_HOME/.local/bin/dcg" ]]; then
-        dcg_bin="$TARGET_HOME/.local/bin/dcg"
+    if [[ -x "$ACFS_BIN_DIR/dcg" ]]; then
+        dcg_bin="$ACFS_BIN_DIR/dcg"
     elif [[ -x "$TARGET_HOME/.cargo/bin/dcg" ]]; then
         dcg_bin="$TARGET_HOME/.cargo/bin/dcg"
     elif [[ -x "/usr/local/bin/dcg" ]]; then
@@ -4736,8 +4885,8 @@ finalize() {
     try_step "Setting onboard permissions" $SUDO chmod 755 "$ACFS_HOME/onboard/onboard.sh" || return 1
     try_step "Setting onboard ownership" acfs_chown_tree "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/onboard" || return 1
 
-    try_step "Creating .local/bin directory" run_as_target mkdir -p "$TARGET_HOME/.local/bin" || return 1
-    try_step "Linking onboard command" run_as_target ln -sf "$ACFS_HOME/onboard/onboard.sh" "$TARGET_HOME/.local/bin/onboard" || return 1
+    try_step "Creating bin directory ($ACFS_BIN_DIR)" run_as_target mkdir -p "$ACFS_BIN_DIR" || return 1
+    try_step "Linking onboard command" run_as_target ln -sf "$ACFS_HOME/onboard/onboard.sh" "$ACFS_BIN_DIR/onboard" || return 1
 
     # Install acfs scripts (for acfs CLI subcommands)
     log_detail "Installing acfs scripts"
@@ -4745,8 +4894,11 @@ finalize() {
     
     # Install script libraries
     try_step "Installing logging.sh" install_asset "scripts/lib/logging.sh" "$ACFS_HOME/scripts/lib/logging.sh" || return 1
+    try_step "Installing output.sh" install_asset "scripts/lib/output.sh" "$ACFS_HOME/scripts/lib/output.sh" || return 1
     try_step "Installing gum_ui.sh" install_asset "scripts/lib/gum_ui.sh" "$ACFS_HOME/scripts/lib/gum_ui.sh" || return 1
     try_step "Installing security.sh" install_asset "scripts/lib/security.sh" "$ACFS_HOME/scripts/lib/security.sh" || return 1
+    try_step "Installing autofix.sh" install_asset "scripts/lib/autofix.sh" "$ACFS_HOME/scripts/lib/autofix.sh" || return 1
+    try_step "Installing doctor_fix.sh" install_asset "scripts/lib/doctor_fix.sh" "$ACFS_HOME/scripts/lib/doctor_fix.sh" || return 1
     try_step "Installing doctor.sh" install_asset "scripts/lib/doctor.sh" "$ACFS_HOME/scripts/lib/doctor.sh" || return 1
     try_step "Installing update.sh" install_asset "scripts/lib/update.sh" "$ACFS_HOME/scripts/lib/update.sh" || return 1
     try_step "Installing session.sh" install_asset "scripts/lib/session.sh" "$ACFS_HOME/scripts/lib/session.sh" || return 1
@@ -4762,11 +4914,10 @@ finalize() {
     try_step "Installing acfs-update" install_asset "scripts/acfs-update" "$ACFS_HOME/bin/acfs-update" || return 1
     try_step "Setting acfs-update permissions" $SUDO chmod 755 "$ACFS_HOME/bin/acfs-update" || return 1
     try_step "Setting acfs-update ownership" $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/bin/acfs-update" || return 1
-    try_step "Linking acfs-update command" run_as_target ln -sf "$ACFS_HOME/bin/acfs-update" "$TARGET_HOME/.local/bin/acfs-update" || return 1
+    try_step "Linking acfs-update command" run_as_target ln -sf "$ACFS_HOME/bin/acfs-update" "$ACFS_BIN_DIR/acfs-update" || return 1
 
     # Install root AGENTS.md generator (if available) and generate /AGENTS.md once
-    if [[ -n "${SCRIPT_DIR:-}" ]] && [[ -f "$SCRIPT_DIR/scripts/generate-root-agents-md.sh" ]]; then
-        try_step "Installing flywheel-update-agents-md" install_asset "scripts/generate-root-agents-md.sh" "$ACFS_HOME/bin/flywheel-update-agents-md" || return 1
+    if try_step "Installing flywheel-update-agents-md" install_asset "scripts/generate-root-agents-md.sh" "$ACFS_HOME/bin/flywheel-update-agents-md"; then
         try_step "Setting flywheel-update-agents-md permissions" $SUDO chmod 755 "$ACFS_HOME/bin/flywheel-update-agents-md" || return 1
         try_step "Setting flywheel-update-agents-md ownership" $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/bin/flywheel-update-agents-md" || return 1
         try_step "Linking flywheel-update-agents-md command" $SUDO ln -sf "$ACFS_HOME/bin/flywheel-update-agents-md" "/usr/local/bin/flywheel-update-agents-md" || return 1
@@ -4819,7 +4970,7 @@ finalize() {
     try_step "Installing acfs CLI" install_asset "scripts/lib/doctor.sh" "$ACFS_HOME/bin/acfs" || return 1
     try_step "Setting acfs permissions" $SUDO chmod 755 "$ACFS_HOME/bin/acfs" || return 1
     try_step "Setting acfs ownership" $SUDO chown "$TARGET_USER:$TARGET_USER" "$ACFS_HOME/bin/acfs" || return 1
-    try_step "Linking acfs command" run_as_target ln -sf "$ACFS_HOME/bin/acfs" "$TARGET_HOME/.local/bin/acfs" || return 1
+    try_step "Linking acfs command" run_as_target ln -sf "$ACFS_HOME/bin/acfs" "$ACFS_BIN_DIR/acfs" || return 1
 
     # Install global acfs wrapper (works for root and all users)
     # This wrapper finds the target user from state and runs acfs as that user
@@ -4834,6 +4985,104 @@ finalize() {
     try_step_eval "Installing DCG hook" \
         "TARGET_USER='$TARGET_USER' TARGET_HOME='$TARGET_HOME' '$ACFS_HOME/scripts/services-setup.sh' --install-claude-guard --yes" || \
         log_warn "DCG hook installation failed (optional)"
+
+    # Configure workspace trust for coding agents (fixes #159)
+    # In vibe/yolo mode, Claude Code requires explicit workspace trust to avoid
+    # interactive prompts. Set skipDangerousModePermissionPrompt and trust /data/projects + $HOME.
+    if [[ "$MODE" == "vibe" ]]; then
+        log_detail "Configuring workspace trust for coding agents..."
+        local claude_settings_file="$TARGET_HOME/.claude/settings.json"
+        if [[ -f "$claude_settings_file" ]] && command -v jq &>/dev/null; then
+            # Use run_as_target for the entire jq+mv pipeline so the temp file
+            # is created with target user ownership (not root). Previously the
+            # shell redirect "> $tmp_settings" ran as root, leaving a root-owned
+            # settings file that the target user couldn't modify later.
+            local tmp_settings="${claude_settings_file}.tmp.$$"
+            if run_as_target bash -c "jq '.skipDangerousModePermissionPrompt = true' \"\$1\" > \"\$2\" && mv \"\$2\" \"\$1\"" \
+                    _ "$claude_settings_file" "$tmp_settings" 2>/dev/null; then
+                log_detail "Claude workspace trust configured"
+            else
+                run_as_target rm -f "$tmp_settings" 2>/dev/null || true
+            fi
+        elif [[ ! -f "$claude_settings_file" ]]; then
+            # Create minimal settings with trust enabled
+            run_as_target mkdir -p "$TARGET_HOME/.claude" 2>/dev/null || true
+            run_as_target tee "$claude_settings_file" > /dev/null << 'CLAUDE_TRUST_EOF'
+{
+  "skipDangerousModePermissionPrompt": true
+}
+CLAUDE_TRUST_EOF
+            log_detail "Claude settings created with workspace trust"
+        fi
+
+        # Gemini CLI trust pre-configuration (fixes #159 follow-up)
+        # Gemini CLI prompts for folder trust on first run. Pre-configure trusted
+        # folders so agents can start without interactive approval.
+        local gemini_settings_file="$TARGET_HOME/.gemini/settings.json"
+        if [[ -f "$gemini_settings_file" ]] && command -v jq &>/dev/null; then
+            local tmp_gemini="${gemini_settings_file}.tmp.$$"
+            # Enable folder trust and set yolo-equivalent sandbox bypass
+            if run_as_target bash -c "jq '
+                .security = (.security // {})
+                | .security.folderTrust = (.security.folderTrust // {})
+                | .security.folderTrust.enabled = true
+            ' \"\$1\" > \"\$2\" && mv \"\$2\" \"\$1\"" \
+                    _ "$gemini_settings_file" "$tmp_gemini" 2>/dev/null; then
+                log_detail "Gemini workspace trust configured"
+            else
+                run_as_target rm -f "$tmp_gemini" 2>/dev/null || true
+            fi
+        elif [[ ! -f "$gemini_settings_file" ]]; then
+            run_as_target mkdir -p "$TARGET_HOME/.gemini" 2>/dev/null || true
+            run_as_target tee "$gemini_settings_file" > /dev/null << 'GEMINI_TRUST_EOF'
+{
+  "security": {
+    "folderTrust": {
+      "enabled": true
+    }
+  }
+}
+GEMINI_TRUST_EOF
+            log_detail "Gemini settings created with workspace trust"
+        fi
+
+        # Pre-populate Gemini trusted folders list so agents skip the
+        # interactive "Trust this folder?" prompt entirely.
+        # Gemini CLI 0.33.0+ expects trustedFolders.json as a JSON object
+        # mapping folder paths to "TRUST_FOLDER", not a JSON array.
+        local gemini_trusted_folders="$TARGET_HOME/.gemini/trustedFolders.json"
+        if [[ ! -f "$gemini_trusted_folders" ]]; then
+            run_as_target tee "$gemini_trusted_folders" > /dev/null << GEMINI_FOLDERS_EOF
+{"/data/projects": "TRUST_FOLDER", "$TARGET_HOME": "TRUST_FOLDER"}
+GEMINI_FOLDERS_EOF
+            log_detail "Gemini trusted folders pre-configured"
+        elif command -v jq &>/dev/null; then
+            # Merge paths into existing file, handling both legacy array format
+            # and current object format (fixes #213).
+            local tmp_folders="${gemini_trusted_folders}.tmp.$$"
+            if run_as_target bash -c '
+                content=$(cat "$1" 2>/dev/null) || content="{}"
+                is_array=$(echo "$content" | jq -e "type == \"array\"" 2>/dev/null) || is_array="false"
+                if [ "$is_array" = "true" ]; then
+                    # Migrate legacy array format to object format
+                    migrated=$(echo "$content" | jq "reduce .[] as \$p ({}; . + {(\$p): \"TRUST_FOLDER\"})")
+                    content="$migrated"
+                fi
+                # Merge required paths into object
+                updated=$(echo "$content" | jq \
+                    --arg p1 "/data/projects" \
+                    --arg p2 "$2" \
+                    ". + {(\$p1): \"TRUST_FOLDER\", (\$p2): \"TRUST_FOLDER\"}")
+                if [ "$updated" != "$content" ]; then
+                    echo "$updated" > "$3" && mv "$3" "$1"
+                fi
+            ' _ "$gemini_trusted_folders" "$TARGET_HOME" "$tmp_folders" 2>/dev/null; then
+                log_detail "Gemini trusted folders updated"
+            else
+                run_as_target rm -f "$tmp_folders" 2>/dev/null || true
+            fi
+        fi
+    fi
 
     # Legacy state file (only if state.sh is unavailable)
     if type -t state_load &>/dev/null; then
@@ -4941,7 +5190,7 @@ run_smoke_test() {
     # 5) bun, uv, cargo, go available
     local missing_lang=()
     [[ -x "$TARGET_HOME/.bun/bin/bun" ]] || missing_lang+=("bun")
-    [[ -x "$TARGET_HOME/.local/bin/uv" || -x "$TARGET_HOME/.cargo/bin/uv" ]] || missing_lang+=("uv")
+    [[ -x "$ACFS_BIN_DIR/uv" || -x "$TARGET_HOME/.cargo/bin/uv" ]] || missing_lang+=("uv")
     [[ -x "$TARGET_HOME/.cargo/bin/cargo" ]] || missing_lang+=("cargo")
     command_exists go || missing_lang+=("go")
     if [[ ${#missing_lang[@]} -eq 0 ]]; then
@@ -4955,9 +5204,9 @@ run_smoke_test() {
 
     # 6) claude, codex, gemini commands exist
     local missing_agents=()
-    [[ -x "$TARGET_HOME/.local/bin/claude" || -x "$TARGET_HOME/.bun/bin/claude" ]] || missing_agents+=("claude")
-    [[ -x "$TARGET_HOME/.bun/bin/codex" || -x "$TARGET_HOME/.local/bin/codex" ]] || missing_agents+=("codex")
-    [[ -x "$TARGET_HOME/.bun/bin/gemini" || -x "$TARGET_HOME/.local/bin/gemini" ]] || missing_agents+=("gemini")
+    [[ -x "$ACFS_BIN_DIR/claude" || -x "$TARGET_HOME/.bun/bin/claude" ]] || missing_agents+=("claude")
+    [[ -x "$TARGET_HOME/.bun/bin/codex" || -x "$ACFS_BIN_DIR/codex" ]] || missing_agents+=("codex")
+    [[ -x "$TARGET_HOME/.bun/bin/gemini" || -x "$ACFS_BIN_DIR/gemini" ]] || missing_agents+=("gemini")
     if [[ ${#missing_agents[@]} -eq 0 ]]; then
         echo "✅ Agents: claude, codex, gemini" >&2
         ((critical_passed += 1))
@@ -4978,7 +5227,7 @@ run_smoke_test() {
     fi
 
     # 8) onboard command exists
-    if [[ -x "$TARGET_HOME/.local/bin/onboard" ]]; then
+    if [[ -x "$ACFS_BIN_DIR/onboard" ]]; then
         echo "✅ Onboard: installed" >&2
         ((critical_passed += 1))
     else
@@ -4987,9 +5236,13 @@ run_smoke_test() {
         ((critical_failed += 1))
     fi
 
-    # Non-critical: Agent Mail server can start
-    if [[ -x "$TARGET_HOME/mcp_agent_mail/scripts/run_server_with_token.sh" ]]; then
-        echo "✅ Agent Mail: installed (run 'am' to start)" >&2
+    # Non-critical: Agent Mail service status
+    if curl -fsS --max-time 5 http://127.0.0.1:8765/health/liveness &>/dev/null; then
+        echo "✅ Agent Mail: running on http://127.0.0.1:8765" >&2
+    elif [[ -x "$TARGET_HOME/.local/bin/am" ]] || [[ -x "$TARGET_HOME/mcp_agent_mail/scripts/run_server_with_token.sh" ]]; then
+        echo "⚠️ Agent Mail: installed but service is not running" >&2
+        echo "    Fix: am service install && systemctl --user enable --now agent-mail.service" >&2
+        ((warnings += 1))
     else
         echo "⚠️ Agent Mail: not installed (re-run: curl -fsSL https://acfsw.oblik.io/install | bash -s -- --yes --only-phase 8)" >&2
         ((warnings += 1))
@@ -5444,6 +5697,25 @@ main() {
     fi
 
     ensure_root
+
+    # Early dependency bootstrap (issue #152, #180): on a truly fresh Ubuntu,
+    # jq and curl may be missing. Install them before anything else so that
+    # later phases (state management, JSON parsing, gum install) don't fail.
+    # Also covers the case where sudo is available but $SUDO isn't set yet.
+    if [[ $EUID -eq 0 ]] || [[ -n "${SUDO:-}" ]] || command -v sudo &>/dev/null; then
+        local _need_early_apt=false
+        command -v curl &>/dev/null || _need_early_apt=true
+        command -v jq &>/dev/null   || _need_early_apt=true
+        command -v git &>/dev/null   || _need_early_apt=true
+        if [[ "$_need_early_apt" == "true" ]]; then
+            echo -e "${YELLOW}Installing minimal bootstrap dependencies (curl, jq, git)...${NC}" >&2
+            local _sudo_cmd="${SUDO:-}"
+            [[ -z "$_sudo_cmd" ]] && [[ $EUID -ne 0 ]] && command -v sudo &>/dev/null && _sudo_cmd="sudo"
+            ${_sudo_cmd} apt-get update -qq 2>/dev/null || true
+            ${_sudo_cmd} apt-get install -y -qq curl jq git 2>/dev/null || true
+        fi
+    fi
+
     disable_needrestart_apt_hook  # Prevent apt hangs on Ubuntu 22.04+ (issue #70)
     validate_target_user
     init_target_paths

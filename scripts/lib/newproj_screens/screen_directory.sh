@@ -23,15 +23,20 @@ SCREEN_DIRECTORY_PREV="project_name"
 
 # Get the default projects directory
 get_default_projects_dir() {
-    # Check common locations
-    if [[ -d "/data/projects" ]]; then
+    # Configurable default: ACFS_PROJECTS_DIR env var, then check common locations
+    # Priority: env var > /data/projects > ~/projects > ~/Projects > $HOME
+    if [[ -n "${ACFS_PROJECTS_DIR:-}" ]] && [[ -d "$ACFS_PROJECTS_DIR" ]]; then
+        echo "$ACFS_PROJECTS_DIR"
+    elif [[ -d "/data/projects" ]]; then
         echo "/data/projects"
     elif [[ -d "$HOME/projects" ]]; then
         echo "$HOME/projects"
     elif [[ -d "$HOME/Projects" ]]; then
         echo "$HOME/Projects"
     else
-        echo "$HOME"
+        # Fall back to /data/projects (ACFS canonical default) even if it doesn't
+        # exist yet -- the installer creates it. This unifies NTM, newproj, and docs.
+        echo "/data/projects"
     fi
 }
 
@@ -196,7 +201,9 @@ handle_directory_input() {
             }
         else
             echo -n "Directory [$current_dir]: "
-            read -r dir
+            # Read from /dev/tty explicitly to avoid stdin conflicts
+            # from signal handlers or subshell capture (issue #153)
+            read -r dir < /dev/tty || true
             [[ -z "$dir" ]] && dir="$current_dir"
         fi
 

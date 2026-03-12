@@ -45,21 +45,31 @@ fi
 # Source gum_ui library if available
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+_acfs_doctor_source_first() {
+    local rel_path="$1"
+    local candidate
+    for candidate in \
+        "$SCRIPT_DIR/$rel_path" \
+        "$SCRIPT_DIR/../scripts/lib/$rel_path" \
+        "$HOME/.acfs/scripts/lib/$rel_path"; do
+        if [[ -f "$candidate" ]]; then
+            # shellcheck source=/dev/null
+            source "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
 # Source output formatting library (for TOON support)
-if [[ -f "$SCRIPT_DIR/output.sh" ]]; then
-    # shellcheck source=output.sh
-    source "$SCRIPT_DIR/output.sh"
-fi
+_acfs_doctor_source_first "output.sh" || true
 
 # Global format options (set by argument parsing)
 _DOCTOR_OUTPUT_FORMAT=""
 _DOCTOR_SHOW_STATS=false
 
 # Source doctor_fix library for --fix functionality
-if [[ -f "$SCRIPT_DIR/doctor_fix.sh" ]]; then
-    # shellcheck source=doctor_fix.sh
-    source "$SCRIPT_DIR/doctor_fix.sh"
-fi
+_acfs_doctor_source_first "doctor_fix.sh" || true
 
 # Prefer the installed VERSION file when available.
 if [[ -f "$HOME/.acfs/VERSION" ]]; then
@@ -82,14 +92,36 @@ if [[ -z "${ACFS_MODE:-}" ]] && [[ -f "$HOME/.acfs/state.json" ]]; then
 fi
 
 # Prefer the installed state file for target user (for installs where the target user is not ubuntu).
+_acfs_doctor_state_files=()
+if [[ -n "${ACFS_STATE_FILE:-}" ]]; then
+    _acfs_doctor_state_files+=("$ACFS_STATE_FILE")
+fi
+if [[ -n "${ACFS_HOME:-}" ]]; then
+    _acfs_doctor_state_files+=("$ACFS_HOME/state.json")
+fi
+_acfs_doctor_state_files+=("$HOME/.acfs/state.json")
+
 TARGET_USER="${TARGET_USER:-}"
-if [[ -z "${TARGET_USER:-}" ]] && [[ -f "$HOME/.acfs/state.json" ]]; then
-    if command -v jq &>/dev/null; then
-        TARGET_USER="$(jq -r '.target_user // empty' "$HOME/.acfs/state.json" 2>/dev/null || true)"
+if [[ -z "${TARGET_USER:-}" ]]; then
+    for _acfs_doctor_state_file in "${_acfs_doctor_state_files[@]}"; do
+        [[ -f "$_acfs_doctor_state_file" ]] || continue
+        if command -v jq &>/dev/null; then
+            TARGET_USER="$(jq -r '.target_user // empty' "$_acfs_doctor_state_file" 2>/dev/null || true)"
+        fi
+        if [[ -z "${TARGET_USER:-}" ]]; then
+            TARGET_USER="$(sed -n 's/.*"target_user"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$_acfs_doctor_state_file" | head -n 1)"
+        fi
+        [[ -n "${TARGET_USER:-}" ]] && break
+    done
+fi
+unset _acfs_doctor_state_files
+unset _acfs_doctor_state_file
+if [[ -z "${TARGET_USER:-}" ]]; then
+    _acfs_current_user="$(id -un 2>/dev/null || whoami 2>/dev/null || true)"
+    if [[ -n "$_acfs_current_user" ]] && [[ "$_acfs_current_user" != "root" ]]; then
+        TARGET_USER="$_acfs_current_user"
     fi
-    if [[ -z "${TARGET_USER:-}" ]]; then
-        TARGET_USER="$(sed -n 's/.*"target_user"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$HOME/.acfs/state.json" | head -n 1)"
-    fi
+    unset _acfs_current_user
 fi
 TARGET_USER="${TARGET_USER:-ubuntu}"
 if [[ ! "$TARGET_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
@@ -135,7 +167,7 @@ build_fix_suggestion() {
     local base_url="https://agent-flywheel.com/install"
 
     # Build flags based on current state
-    local flags="--yes"
+    local flags="--yes --force-reinstall"
 
     # Add mode flag (vibe is default, but explicit is clearer)
     local mode="${ACFS_MODE:-vibe}"
@@ -300,12 +332,14 @@ print_session_help() {
     echo "  export <session_path> [--format json|markdown] [--no-sanitize] [--output FILE]"
     echo "  recent [--workspace PATH] [--format json|markdown]"
     echo "  import <file.json> [--dry-run]"
+    echo "  convert <native_session_file> --from <claude-code|codex|gemini> --to <claude-code|codex|gemini> [--workspace PATH] [--session-id ID] [--dry-run]"
     echo "  show <id> [--format json|markdown|summary]"
     echo "  list-imported"
     echo ""
     echo "Examples:"
     echo "  acfs session list --days 7"
     echo "  acfs session export ~/.codex/sessions/.../abc.jsonl --output session.json"
+    echo "  acfs session convert ~/.codex/sessions/.../abc.jsonl --from codex --to claude-code --workspace /data/projects/foo"
     echo "  acfs session recent --workspace /data/projects/foo"
     echo "  acfs session import session.json --dry-run"
 }
@@ -365,6 +399,10 @@ acfs_session_main() {
         import)
             shift
             import_session "$@"
+            ;;
+        convert)
+            shift
+            convert_session_native "$@"
             ;;
         show)
             shift
@@ -821,6 +859,8 @@ check_core_tools() {
     check_command "tool.rsync" "rsync" "rsync" "sudo apt-get install -y rsync"
     check_command "tool.strace" "strace" "strace" "sudo apt-get install -y strace"
     check_command "tool.lsof" "lsof" "lsof" "sudo apt-get install -y lsof"
+    check_command "tool.zstd" "zstd" "zstd" "sudo apt-get install -y zstd"
+    check_optional_command "tool.cosign" "cosign" "cosign" "sudo apt-get install -y cosign"
     check_command "tool.dig" "dig (dnsutils)" "dig" "sudo apt-get install -y dnsutils"
     check_command "tool.nc" "nc (netcat-openbsd)" "nc" "sudo apt-get install -y netcat-openbsd"
     check_command "tool.sg" "ast-grep" "sg" "cargo install ast-grep --locked"
@@ -851,10 +891,11 @@ check_agents() {
         check "agent.alias.cod" "cod alias" "warn" "not in zshrc" "$alias_fix"
     fi
 
-    if grep -q "^alias gmi=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
-        check "agent.alias.gmi" "gmi alias" "pass"
+    # gmi is defined as a shell function (not an alias) in acfs.zshrc
+    if grep -q "^gmi()" ~/.acfs/zsh/acfs.zshrc 2>/dev/null || grep -q "^alias gmi=" ~/.acfs/zsh/acfs.zshrc 2>/dev/null; then
+        check "agent.alias.gmi" "gmi function" "pass"
     else
-        check "agent.alias.gmi" "gmi alias" "warn" "not in zshrc" "$alias_fix"
+        check "agent.alias.gmi" "gmi function" "warn" "not in zshrc" "$alias_fix"
     fi
 
     # Check for PATH conflicts (bead hi7)
@@ -980,6 +1021,28 @@ check_cloud() {
         fi
     fi
 
+    # SSH server installed and running (fixes #161)
+    # Fresh installs (WSL, VM, containers) may not have openssh-server
+    if command -v sshd &>/dev/null || [[ -f /etc/ssh/sshd_config ]]; then
+        if command -v systemctl &>/dev/null && [[ -d /run/systemd/system ]]; then
+            if systemctl is-active --quiet ssh 2>/dev/null || systemctl is-active --quiet sshd 2>/dev/null; then
+                check "network.ssh_server" "SSH server" "pass" "installed and running"
+            else
+                check "network.ssh_server" "SSH server" "warn" "installed but not running" \
+                    "sudo systemctl enable --now ssh"
+            fi
+        else
+            check "network.ssh_server" "SSH server" "pass" "installed (no systemd)"
+        fi
+    else
+        if [[ "$doctor_ci" == "true" ]]; then
+            check "network.ssh_server" "SSH server (not installed)" "pass" "ok in CI"
+        else
+            check "network.ssh_server" "SSH server" "warn" "not installed" \
+                "sudo apt-get install -y openssh-server && sudo systemctl enable --now ssh"
+        fi
+    fi
+
     # SSH keepalive configuration (prevents VPN/NAT disconnects)
     # Check both main config and sshd_config.d includes for ClientAliveInterval
     local keepalive_interval=""
@@ -1035,7 +1098,7 @@ check_stack() {
         check "stack.ubs" "UBS ($version)" "pass" "installed"
     else
         check "stack.ubs" "UBS" "fail" "not found" \
-            "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh | bash"
+            "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/main/install.sh | bash"
     fi
 
     # Beads Viewer - custom check to detect gcloud 'bv' shadowing
@@ -1119,12 +1182,13 @@ check_stack() {
         _ms_fix="Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/meta_skill/main/scripts/install.sh | bash"
 
         # Pre-built binaries exist for: x86_64-linux, aarch64-darwin, x86_64-darwin
-        # ARM64 Linux (aarch64-Linux) does NOT have a pre-built binary yet (GH#1)
+        # ARM64 Linux (aarch64-Linux) does NOT have a pre-built binary yet:
+        # https://github.com/Dicklesworthstone/meta_skill/issues/1
         case "${_ms_arch}-${_ms_os}" in
             aarch64-Linux|arm64-Linux)
                 # ARM64 Linux binary is not yet published; the install script will 404
                 check "stack.meta_skill" "meta_skill (ms)" "warn" \
-                    "ARM64 Linux binary not yet available (see meta_skill GH#1)" \
+                    "ARM64 Linux binary not yet available (see https://github.com/Dicklesworthstone/meta_skill/issues/1)" \
                     "Build from source: cargo install --git https://github.com/Dicklesworthstone/meta_skill"
                 ;;
             x86_64-Linux|x86_64-Darwin|arm64-Darwin|aarch64-Darwin)
@@ -1162,10 +1226,10 @@ check_stack() {
         # Also check if RCH config exists (indicates partial/previous install)
         if [[ -f "$HOME/.config/rch/config.toml" ]] || [[ -d "$HOME/remote_compilation_helper" ]]; then
             check "stack.rch" "rch (Remote Compilation Helper)" "warn" "config exists but binary not in PATH" \
-                "Add rch to PATH or re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/remote_compilation_helper/master/install.sh | bash"
+                "Add rch to PATH or re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/remote_compilation_helper/main/install.sh | bash"
         else
             check "stack.rch" "rch (Remote Compilation Helper)" "warn" "not installed" \
-                "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/remote_compilation_helper/master/install.sh | bash"
+                "Re-run: curl -fsSL https://raw.githubusercontent.com/Dicklesworthstone/remote_compilation_helper/main/install.sh | bash"
         fi
     fi
 

@@ -143,6 +143,7 @@ install_all() {
     install_agents_claude
     install_agents_codex
     install_agents_gemini
+    install_agents_opencode
     log_section "Category: tools"
     install_tools_vault
     log_section "Category: db"
@@ -171,6 +172,12 @@ install_all() {
     install_stack_rch
     install_stack_wezterm_automata
     install_stack_srps
+    install_stack_frankensearch
+    install_stack_storage_ballast_helper
+    install_stack_cross_agent_session_resumer
+    install_stack_doodlestein_self_releaser
+    install_stack_agent_settings_backup
+    install_stack_pcr
     log_section "Category: tools"
     install_utils_giil
     install_utils_csctf

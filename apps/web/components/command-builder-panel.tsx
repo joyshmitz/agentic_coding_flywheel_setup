@@ -20,6 +20,7 @@ import {
   useSSHUsername,
   useACFSRef,
   isValidIP,
+  normalizeGitRef,
   type InstallMode,
 } from "@/lib/userPreferences";
 import { buildCommands, buildShareURL } from "@/lib/commandBuilder";
@@ -58,8 +59,10 @@ function CommandRow({
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(async () => {
+    let copiedOk = false;
     try {
       await navigator.clipboard.writeText(command);
+      copiedOk = true;
     } catch {
       const ta = document.createElement("textarea");
       ta.value = command;
@@ -67,8 +70,11 @@ function CommandRow({
       ta.style.opacity = "0";
       document.body.appendChild(ta);
       ta.select();
-      document.execCommand("copy");
+      copiedOk = document.execCommand("copy");
       document.body.removeChild(ta);
+    }
+    if (!copiedOk) {
+      return;
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -151,7 +157,7 @@ export function CommandBuilderPanel() {
   const [localIP, setLocalIP] = useState("");
   const [ipError, setIpError] = useState<string | null>(null);
 
-  const effectiveIP = vpsIP || localIP;
+  const effectiveIP = vpsIP || (isValidIP(localIP) ? localIP : "");
   const effectiveOS = os || "mac";
 
   const commands = useMemo(() => {
@@ -164,6 +170,12 @@ export function CommandBuilderPanel() {
       ref,
     });
   }, [effectiveIP, effectiveOS, username, mode, ref]);
+  const refError = useMemo(() => {
+    const value = (ref ?? "").trim();
+    if (!value) return null;
+    if (normalizeGitRef(value)) return null;
+    return "Invalid git ref format. Command generation falls back to main.";
+  }, [ref]);
 
   const handleShare = useCallback(async () => {
     if (!effectiveIP) return;
@@ -174,10 +186,26 @@ export function CommandBuilderPanel() {
       mode,
       ref,
     });
+    let copied = false;
     try {
       await navigator.clipboard.writeText(url);
+      copied = true;
     } catch {
-      // silent fail
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        copied = document.execCommand("copy");
+      } catch {
+        copied = false;
+      }
+      document.body.removeChild(ta);
+    }
+    if (!copied) {
+      return;
     }
     setShareCopied(true);
     setTimeout(() => setShareCopied(false), 2000);
@@ -297,11 +325,14 @@ export function CommandBuilderPanel() {
             <input
               id="cb-ref"
               type="text"
-              value={ref || ""}
+              value={ref ?? ""}
               onChange={(e) => setRef(e.target.value || null)}
               placeholder="main"
               className="mt-1 w-full rounded-md border border-border/50 bg-muted/40 px-3 py-1.5 font-mono text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
+            {refError && (
+              <p className="mt-1 text-xs text-[oklch(0.72_0.19_145)]">{refError}</p>
+            )}
           </div>
         </div>
       )}

@@ -57,9 +57,9 @@ _acfs_is_interactive() {
 }
 
 # curl defaults: enforce HTTPS (including redirects) when supported
-ACFS_CURL_BASE_ARGS=(-fsSL)
+ACFS_CURL_BASE_ARGS=(--connect-timeout 30 --max-time 300 -fsSL)
 if command -v curl &>/dev/null && curl --help all 2>/dev/null | grep -q -- '--proto'; then
-    ACFS_CURL_BASE_ARGS=(--proto '=https' --proto-redir '=https' -fsSL)
+    ACFS_CURL_BASE_ARGS=(--proto '=https' --proto-redir '=https' --connect-timeout 30 --max-time 300 -fsSL)
 fi
 
 acfs_curl() {
@@ -189,7 +189,7 @@ declare -gA KNOWN_INSTALLERS=(
     [atuin]="https://setup.atuin.sh"
     [ntm]="https://raw.githubusercontent.com/Dicklesworthstone/ntm/main/install.sh"
     [mcp_agent_mail]="https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail/main/scripts/install.sh"
-    [ubs]="https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/master/install.sh"
+    [ubs]="https://raw.githubusercontent.com/Dicklesworthstone/ultimate_bug_scanner/main/install.sh"
     [bv]="https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh"
     [cass]="https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_session_search/main/install.sh"
     [cm]="https://raw.githubusercontent.com/Dicklesworthstone/cass_memory_system/main/install.sh"
@@ -199,7 +199,7 @@ declare -gA KNOWN_INSTALLERS=(
     [ru]="https://raw.githubusercontent.com/Dicklesworthstone/repo_updater/main/install.sh"
     [apr]="https://raw.githubusercontent.com/Dicklesworthstone/automated_plan_reviser_pro/main/install.sh"
     [ms]="https://raw.githubusercontent.com/Dicklesworthstone/meta_skill/main/scripts/install.sh"
-    [pt]="https://raw.githubusercontent.com/Dicklesworthstone/process_triage/master/install.sh"
+    [pt]="https://raw.githubusercontent.com/Dicklesworthstone/process_triage/main/install.sh"
     [srps]="https://raw.githubusercontent.com/Dicklesworthstone/system_resource_protection_script/main/install.sh"
     [xf]="https://raw.githubusercontent.com/Dicklesworthstone/xf/main/install.sh"
     [giil]="https://raw.githubusercontent.com/Dicklesworthstone/giil/main/install.sh"
@@ -207,11 +207,17 @@ declare -gA KNOWN_INSTALLERS=(
     [jfp]="https://jeffreysprompts.com/install-cli.sh"
     [br]="https://raw.githubusercontent.com/Dicklesworthstone/beads_rust/main/install.sh"
     [brenner_bot]="https://raw.githubusercontent.com/Dicklesworthstone/brenner_bot/main/install.sh"
-    [rch]="https://raw.githubusercontent.com/Dicklesworthstone/remote_compilation_helper/master/install.sh"
-    [tru]="https://raw.githubusercontent.com/Dicklesworthstone/toon_rust/master/install.sh"
+    [rch]="https://raw.githubusercontent.com/Dicklesworthstone/remote_compilation_helper/main/install.sh"
+    [tru]="https://raw.githubusercontent.com/Dicklesworthstone/toon_rust/main/install.sh"
     [rano]="https://raw.githubusercontent.com/Dicklesworthstone/rano/main/install.sh"
     [mdwb]="https://raw.githubusercontent.com/Dicklesworthstone/markdown_web_browser/main/install.sh"
     [s2p]="https://raw.githubusercontent.com/Dicklesworthstone/source_to_prompt_tui/main/install.sh"
+    [gemini_patch]="https://raw.githubusercontent.com/Dicklesworthstone/misc_coding_agent_tips_and_scripts/main/fix-gemini-cli-ebadf-crash.sh"
+    [fsfs]="https://raw.githubusercontent.com/Dicklesworthstone/frankensearch/main/install.sh"
+    [sbh]="https://raw.githubusercontent.com/Dicklesworthstone/storage_ballast_helper/main/scripts/install.sh"
+    [casr]="https://raw.githubusercontent.com/Dicklesworthstone/cross_agent_session_resumer/main/install.sh"
+    [asb]="https://raw.githubusercontent.com/Dicklesworthstone/agent_settings_backup_script/main/install.sh"
+    [pcr]="https://raw.githubusercontent.com/Dicklesworthstone/post_compact_reminder/main/install-post-compact-reminder.sh"
 )
 
 # ============================================================
@@ -296,20 +302,22 @@ fetch_checksum() {
         log_error "Failed to create temp file"
         return 1
     }
-    
-    # Ensure cleanup
-    # shellcheck disable=SC2064
-    trap "rm -f '$tmp_file'" RETURN
 
     if ! acfs_download_to_file "$url" "$tmp_file" "$url"; then
         log_error "Failed to fetch $url"
+        rm -f "$tmp_file" 2>/dev/null || true
         return 1
     fi
 
-    if ! calculate_file_sha256 "$tmp_file"; then
+    local file_sha256
+    if ! file_sha256=$(calculate_file_sha256 "$tmp_file"); then
         log_error "Failed to checksum $url"
+        rm -f "$tmp_file" 2>/dev/null || true
         return 1
     fi
+
+    rm -f "$tmp_file" 2>/dev/null || true
+    printf '%s\n' "$file_sha256"
 }
 
 # Verify URL content against expected checksum
@@ -338,18 +346,16 @@ verify_checksum() {
         return 1
     }
 
-    # Ensure cleanup
-    # shellcheck disable=SC2064
-    trap "rm -f '$tmp_file'" RETURN
-
     if ! acfs_download_to_file "$url" "$tmp_file" "$name"; then
         log_error "Security Error: Failed to fetch $name"
+        rm -f "$tmp_file" 2>/dev/null || true
         return 1
     fi
 
     local actual_sha256
     actual_sha256=$(calculate_file_sha256 "$tmp_file") || {
         log_error "Security Error: Failed to checksum $name"
+        rm -f "$tmp_file" 2>/dev/null || true
         return 1
     }
 
@@ -363,12 +369,16 @@ verify_checksum() {
         echo -e "    - End users: update ACFS to refresh checksums.yaml (re-run install.sh / update scripts)" >&2
         echo -e "    - Maintainers: regenerate checksums.yaml with:" >&2
         echo -e "        ./scripts/lib/security.sh --update-checksums > checksums.yaml" >&2
+        rm -f "$tmp_file" 2>/dev/null || true
         return 1
     fi
 
     log_success "Verified: $name"
     # Return the verified content (verbatim bytes) on stdout.
     cat "$tmp_file"
+    local cat_rc=$?
+    rm -f "$tmp_file" 2>/dev/null || true
+    return $cat_rc
 }
 
 # Fetch and run with optional verification
@@ -452,13 +462,10 @@ fetch_and_run_with_recovery() {
         return 1
     }
 
-    # Ensure cleanup
-    # shellcheck disable=SC2064
-    trap "rm -f '$tmp_file'" RETURN
-
     # Fetch content to file with retries
     if ! acfs_download_to_file "$url" "$tmp_file" "$name"; then
         log_error "Error: Failed to fetch $name"
+        rm -f "$tmp_file" 2>/dev/null || true
         return 1
     fi
 
@@ -466,6 +473,7 @@ fetch_and_run_with_recovery() {
     local actual_sha256
     actual_sha256=$(calculate_file_sha256 "$tmp_file") || {
         log_error "Error: Failed to calculate checksum for $name"
+        rm -f "$tmp_file" 2>/dev/null || true
         return 1
     }
 
@@ -479,15 +487,18 @@ fetch_and_run_with_recovery() {
             0)
                 # Skip - tool was skipped, continue installation
                 log_info "Skipped: $name (checksum mismatch)"
+                rm -f "$tmp_file" 2>/dev/null || true
                 return 0
                 ;;
             1)
                 # Abort - user or policy chose to abort
+                rm -f "$tmp_file" 2>/dev/null || true
                 return 1
                 ;;
             *)
                 # Unknown result, abort for safety
                 log_error "Unexpected handler result"
+                rm -f "$tmp_file" 2>/dev/null || true
                 return 1
                 ;;
         esac
@@ -497,6 +508,9 @@ fetch_and_run_with_recovery() {
 
     # Run the installer from verified file
     bash "$tmp_file" "${args[@]}"
+    local run_rc=$?
+    rm -f "$tmp_file" 2>/dev/null || true
+    return $run_rc
 }
 
 # ============================================================
@@ -524,33 +538,74 @@ print_upstream_urls() {
 
 # Print URLs with current checksums (for updating checksums.yaml)
 print_current_checksums() {
+    local had_failure=false
+    local tmp_output=""
+
+    if command -v mktemp &>/dev/null; then
+        tmp_output=$(mktemp "${TMPDIR:-/tmp}/acfs-checksums-out.XXXXXX" 2>/dev/null) || tmp_output=""
+    fi
+
+    if [[ -z "$tmp_output" ]]; then
+        echo "ERROR: unable to create temp file for checksums output" >&2
+        return 1
+    fi
+
     # Progress info to stderr (not part of YAML output)
     echo "" >&2
     echo -e "${CYAN}Generating checksums.yaml...${NC}" >&2
     echo "" >&2
 
-    # YAML output to stdout
-    echo "# checksums.yaml - Auto-generated $(date -Iseconds)"
-    echo "# Run: ./scripts/lib/security.sh --update-checksums"
-    echo ""
-    echo "installers:"
+    {
+        # YAML output to stdout
+        echo "# checksums.yaml - Auto-generated $(date -Iseconds)"
+        echo "# Run: ./scripts/lib/security.sh --update-checksums"
+        echo ""
+        echo "installers:"
+    } >"$tmp_output"
 
+    local -a installer_names=()
+    local name=""
     for name in "${!KNOWN_INSTALLERS[@]}"; do
+        installer_names+=("$name")
+    done
+    if [[ ${#installer_names[@]} -gt 0 ]]; then
+        mapfile -t installer_names < <(printf '%s\n' "${installer_names[@]}" | sort)
+    fi
+
+    for name in "${installer_names[@]}"; do
         local url="${KNOWN_INSTALLERS[$name]}"
         local sha256
 
         printf "  Fetching %s... " "$name" >&2
         sha256=$(fetch_checksum "$url" 2>/dev/null) || {
             echo "FAILED" >&2
-            sha256="FETCH_FAILED"
+            had_failure=true
+            continue
         }
+
+        if [[ ! "$sha256" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "FAILED (invalid hash format)" >&2
+            had_failure=true
+            continue
+        fi
         echo "done" >&2
 
-        echo "  $name:"
-        echo "    url: \"$url\""
-        echo "    sha256: \"$sha256\""
-        echo ""
+        {
+            echo "  $name:"
+            echo "    url: \"$url\""
+            echo "    sha256: \"$sha256\""
+            echo ""
+        } >>"$tmp_output"
     done
+
+    if [[ "$had_failure" == "true" ]]; then
+        rm -f "$tmp_output" 2>/dev/null || true
+        echo "ERROR: one or more installer checksums failed to fetch; refusing to emit incomplete checksums.yaml" >&2
+        return 1
+    fi
+
+    cat "$tmp_output"
+    rm -f "$tmp_output" 2>/dev/null || true
 }
 
 # ============================================================
@@ -565,12 +620,11 @@ load_checksums() {
     local in_installers=false
     local installers_indent=0
     local tool_indent=""
+    # Use ACFS colors if available, preserving empty-string NO_COLOR behavior.
+    local warn_color="${ACFS_YELLOW-\033[0;33m}"
+    local nc_color="${ACFS_NC-\033[0m}"
 
     if [[ ! -r "$file" ]]; then
-        # Use ACFS_YELLOW if available (logging.sh), else literal or plain.
-        # Use ${var-default} to preserve empty strings for NO_COLOR. Related: bd-39ye
-        local warn_color="${ACFS_YELLOW-\033[0;33m}"
-        local nc_color="${ACFS_NC-\033[0m}"
         echo -e "${warn_color}Warning:${nc_color} Checksums file not found: $file" >&2
         return 1
     fi
@@ -634,6 +688,13 @@ load_checksums() {
             LOADED_CHECKSUMS["$current_tool"]="${BASH_REMATCH[1],,}"
         fi
     done < "$file"
+
+    if [[ ${#LOADED_CHECKSUMS[@]} -eq 0 ]]; then
+        echo -e "${warn_color}Warning:${nc_color} No valid installer checksums found in: $file" >&2
+        return 1
+    fi
+
+    return 0
 }
 
 # Get checksum for a tool

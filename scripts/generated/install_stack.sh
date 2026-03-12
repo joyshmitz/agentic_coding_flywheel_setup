@@ -93,7 +93,7 @@ acfs_security_init() {
 }
 
 # Category: stack
-# Modules: 19
+# Modules: 25
 
 # Named tmux manager (agent cockpit)
 install_stack_ntm() {
@@ -183,20 +183,37 @@ install_stack_mcp_agent_mail() {
         log_info "dry-run: verified installer: stack.mcp_agent_mail"
     else
         if ! {
-            # Run installer in detached tmux session (run_in_tmux: true)
-            # This prevents blocking when the installer starts a long-running service
-            local tmux_session="acfs-services"
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
 
-            # Resolve verified installer URL + checksum (fail closed)
-            local tool="mcp_agent_mail"
-            local url=""
-            local expected_sha256=""
             if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
                 if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="mcp_agent_mail"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
                     url="${KNOWN_INSTALLERS[$tool]:-}"
                     if ! expected_sha256="$(get_checksum "$tool")"; then
                         log_error "stack.mcp_agent_mail: get_checksum failed for tool '$tool'"
                         expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s' '--' '--dir' "${TARGET_HOME:-/home/ubuntu}"'/mcp_agent_mail' '--yes' '--no-start'; then
+                            install_success=true
+                        else
+                            log_error "stack.mcp_agent_mail: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "stack.mcp_agent_mail: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "stack.mcp_agent_mail: checksum for '$tool' not found"
+                        fi
                     fi
                 else
                     log_error "stack.mcp_agent_mail: KNOWN_INSTALLERS array not available"
@@ -205,51 +222,75 @@ install_stack_mcp_agent_mail() {
                 log_error "stack.mcp_agent_mail: acfs_security_init failed - check security.sh and checksums.yaml"
             fi
 
-            if [[ -z "$url" ]]; then
-                log_error "stack.mcp_agent_mail: KNOWN_INSTALLERS[$tool] not found"
+            # Verified install is required - no fallback
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for stack.mcp_agent_mail"
                 false
             fi
-            if [[ -z "$expected_sha256" ]]; then
-                log_error "stack.mcp_agent_mail: checksum for '$tool' not found"
-                false
-            fi
-
-            # Download verified installer to a temp file (so tmux can exec it without pipes)
-            local tmp_install
-            tmp_install="$(mktemp "${TMPDIR:-/tmp}/acfs-install-${tool}.XXXXXX" 2>/dev/null)" || tmp_install=""
-            if [[ -z "$tmp_install" ]]; then
-                log_error "Failed to create temp installer for stack.mcp_agent_mail"
-                false
-            fi
-
-            if ! verify_checksum "$url" "$expected_sha256" "$tool" > "$tmp_install"; then
-                rm -f "$tmp_install" 2>/dev/null || true
-                log_error "stack.mcp_agent_mail: installer verification failed"
-                false
-            fi
-            chmod 755 "$tmp_install" 2>/dev/null || true
-
-            # Kill existing session if any (clean slate)
-            run_as_target tmux kill-session -t "$tmux_session" 2>/dev/null || true
-
-            # Create new detached tmux session and run the installer
-            if run_as_target tmux new-session -d -s "$tmux_session" 'bash' "$tmp_install" '--dir' '${TARGET_HOME:-/home/ubuntu}/mcp_agent_mail' '--yes'; then
-                    log_success "stack.mcp_agent_mail installing in tmux session '$tmux_session'"
-                    log_info "Attach with: tmux attach -t $tmux_session"
-                    # Give it a moment to start
-                    sleep 3
-                else
-                    log_warn "stack.mcp_agent_mail tmux installation may have failed"
-                fi
         }; then
             log_error "stack.mcp_agent_mail: verified installer failed"
             return 1
         fi
     fi
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: install: if ! command -v am >/dev/null 2>&1; then (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_MCP_AGENT_MAIL'
+if ! command -v am >/dev/null 2>&1; then
+  echo "Agent Mail CLI missing after install" >&2
+  exit 1
+fi
+am service install >/dev/null
+systemctl --user daemon-reload >/dev/null 2>&1 || true
+if ! systemctl --user enable --now agent-mail.service >/dev/null 2>&1; then
+  systemctl --user restart agent-mail.service >/dev/null 2>&1
+fi
+INSTALL_STACK_MCP_AGENT_MAIL
+        then
+            log_error "stack.mcp_agent_mail: install command failed: if ! command -v am >/dev/null 2>&1; then"
+            return 1
+        fi
+    fi
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: install: if ! curl -fsS --max-time 10 http://127.0.0.1:8765/health/liveness >/dev/null 2>&1; then (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_MCP_AGENT_MAIL'
+if ! curl -fsS --max-time 10 http://127.0.0.1:8765/health/liveness >/dev/null 2>&1; then
+  echo "Agent Mail service did not become healthy on 127.0.0.1:8765" >&2
+  exit 1
+fi
+INSTALL_STACK_MCP_AGENT_MAIL
+        then
+            log_error "stack.mcp_agent_mail: install command failed: if ! curl -fsS --max-time 10 http://127.0.0.1:8765/health/liveness >/dev/null 2>&1; then"
+            return 1
+        fi
+    fi
 
-    # Verify skipped: run_in_tmux installs async in detached tmux session
-    log_info "stack.mcp_agent_mail: installation running in background tmux session"
-    log_info "Attach with: tmux attach -t acfs-services"
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: command -v am (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_MCP_AGENT_MAIL'
+command -v am
+INSTALL_STACK_MCP_AGENT_MAIL
+        then
+            log_error "stack.mcp_agent_mail: verify failed: command -v am"
+            return 1
+        fi
+    fi
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: curl -fsS --max-time 10 http://127.0.0.1:8765/health/liveness >/dev/null (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_MCP_AGENT_MAIL'
+curl -fsS --max-time 10 http://127.0.0.1:8765/health/liveness >/dev/null
+INSTALL_STACK_MCP_AGENT_MAIL
+        then
+            log_error "stack.mcp_agent_mail: verify failed: curl -fsS --max-time 10 http://127.0.0.1:8765/health/liveness >/dev/null"
+            return 1
+        fi
+    fi
 
     log_success "stack.mcp_agent_mail installed"
 }
@@ -1316,7 +1357,7 @@ install_stack_ru() {
                     fi
 
                     if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
-                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s' '--' '--easy-mode'; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s'; then
                             install_success=true
                         else
                             log_error "stack.ru: verify_checksum or installer execution failed"
@@ -1394,7 +1435,7 @@ install_stack_brenner_bot() {
                     fi
 
                     if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
-                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s'; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s' '--' '--skip-cass'; then
                             install_success=true
                         else
                             log_error "stack.brenner_bot: verify_checksum or installer execution failed"
@@ -1694,6 +1735,509 @@ INSTALL_STACK_SRPS
     log_success "stack.srps installed"
 }
 
+# Two-tier hybrid local search — lexical (BM25) + semantic retrieval with progressive delivery (fsfs)
+install_stack_frankensearch() {
+    local module_id="stack.frankensearch"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing stack.frankensearch"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verified installer: stack.frankensearch"
+    else
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
+                if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="fsfs"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "stack.frankensearch: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s' '--' '--easy-mode'; then
+                            install_success=true
+                        else
+                            log_error "stack.frankensearch: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "stack.frankensearch: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "stack.frankensearch: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "stack.frankensearch: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "stack.frankensearch: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # Verified install is required - no fallback
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for stack.frankensearch"
+                false
+            fi
+        }; then
+            log_warn "stack.frankensearch: verified installer failed"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.frankensearch" "verified installer failed"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.frankensearch"
+            fi
+            return 0
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: fsfs version || fsfs --help (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_FRANKENSEARCH'
+fsfs version || fsfs --help
+INSTALL_STACK_FRANKENSEARCH
+        then
+            log_warn "stack.frankensearch: verify failed: fsfs version || fsfs --help"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.frankensearch" "verify failed: fsfs version || fsfs --help"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.frankensearch"
+            fi
+            return 0
+        fi
+    fi
+
+    log_success "stack.frankensearch installed"
+}
+
+# Cross-platform disk-pressure defense for AI coding workloads (sbh)
+install_stack_storage_ballast_helper() {
+    local module_id="stack.storage_ballast_helper"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing stack.storage_ballast_helper"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verified installer: stack.storage_ballast_helper"
+    else
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
+                if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="sbh"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "stack.storage_ballast_helper: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s'; then
+                            install_success=true
+                        else
+                            log_error "stack.storage_ballast_helper: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "stack.storage_ballast_helper: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "stack.storage_ballast_helper: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "stack.storage_ballast_helper: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "stack.storage_ballast_helper: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # Verified install is required - no fallback
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for stack.storage_ballast_helper"
+                false
+            fi
+        }; then
+            log_warn "stack.storage_ballast_helper: verified installer failed"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.storage_ballast_helper" "verified installer failed"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.storage_ballast_helper"
+            fi
+            return 0
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: sbh status || sbh --help (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_STORAGE_BALLAST_HELPER'
+sbh status || sbh --help
+INSTALL_STACK_STORAGE_BALLAST_HELPER
+        then
+            log_warn "stack.storage_ballast_helper: verify failed: sbh status || sbh --help"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.storage_ballast_helper" "verify failed: sbh status || sbh --help"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.storage_ballast_helper"
+            fi
+            return 0
+        fi
+    fi
+
+    log_success "stack.storage_ballast_helper installed"
+}
+
+# Cross-provider AI coding session resumption — convert and resume sessions across providers (casr)
+install_stack_cross_agent_session_resumer() {
+    local module_id="stack.cross_agent_session_resumer"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing stack.cross_agent_session_resumer"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verified installer: stack.cross_agent_session_resumer"
+    else
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
+                if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="casr"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "stack.cross_agent_session_resumer: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s'; then
+                            install_success=true
+                        else
+                            log_error "stack.cross_agent_session_resumer: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "stack.cross_agent_session_resumer: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "stack.cross_agent_session_resumer: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "stack.cross_agent_session_resumer: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "stack.cross_agent_session_resumer: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # Verified install is required - no fallback
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for stack.cross_agent_session_resumer"
+                false
+            fi
+        }; then
+            log_warn "stack.cross_agent_session_resumer: verified installer failed"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.cross_agent_session_resumer" "verified installer failed"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.cross_agent_session_resumer"
+            fi
+            return 0
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: casr providers || casr --help (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_CROSS_AGENT_SESSION_RESUMER'
+casr providers || casr --help
+INSTALL_STACK_CROSS_AGENT_SESSION_RESUMER
+        then
+            log_warn "stack.cross_agent_session_resumer: verify failed: casr providers || casr --help"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.cross_agent_session_resumer" "verify failed: casr providers || casr --help"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.cross_agent_session_resumer"
+            fi
+            return 0
+        fi
+    fi
+
+    log_success "stack.cross_agent_session_resumer installed"
+}
+
+# Fallback release infrastructure — local builds via act when GitHub Actions is throttled (dsr)
+install_stack_doodlestein_self_releaser() {
+    local module_id="stack.doodlestein_self_releaser"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing stack.doodlestein_self_releaser"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: install: DSR_TMP=\"\$(mktemp -d \"\${TMPDIR:-/tmp}/dsr_install.XXXXXX\")\" (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_DOODLESTEIN_SELF_RELEASER'
+DSR_TMP="$(mktemp -d "${TMPDIR:-/tmp}/dsr_install.XXXXXX")"
+cd "$DSR_TMP"
+git clone --depth 1 https://github.com/Dicklesworthstone/doodlestein_self_releaser.git .
+cp dsr ~/.local/bin/dsr
+chmod 755 ~/.local/bin/dsr
+cd ..
+rm -rf "$DSR_TMP"
+INSTALL_STACK_DOODLESTEIN_SELF_RELEASER
+        then
+            log_warn "stack.doodlestein_self_releaser: install command failed: DSR_TMP=\"\$(mktemp -d \"\${TMPDIR:-/tmp}/dsr_install.XXXXXX\")\""
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.doodlestein_self_releaser" "install command failed: DSR_TMP=\"\$(mktemp -d \"\${TMPDIR:-/tmp}/dsr_install.XXXXXX\")\""
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.doodlestein_self_releaser"
+            fi
+            return 0
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: dsr doctor || dsr --help (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_DOODLESTEIN_SELF_RELEASER'
+dsr doctor || dsr --help
+INSTALL_STACK_DOODLESTEIN_SELF_RELEASER
+        then
+            log_warn "stack.doodlestein_self_releaser: verify failed: dsr doctor || dsr --help"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.doodlestein_self_releaser" "verify failed: dsr doctor || dsr --help"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.doodlestein_self_releaser"
+            fi
+            return 0
+        fi
+    fi
+
+    log_success "stack.doodlestein_self_releaser installed"
+}
+
+# Smart backup tool for AI coding agent configuration folders (asb)
+install_stack_agent_settings_backup() {
+    local module_id="stack.agent_settings_backup"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing stack.agent_settings_backup"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verified installer: stack.agent_settings_backup"
+    else
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
+                if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="asb"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "stack.agent_settings_backup: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s'; then
+                            install_success=true
+                        else
+                            log_error "stack.agent_settings_backup: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "stack.agent_settings_backup: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "stack.agent_settings_backup: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "stack.agent_settings_backup: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "stack.agent_settings_backup: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # Verified install is required - no fallback
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for stack.agent_settings_backup"
+                false
+            fi
+        }; then
+            log_warn "stack.agent_settings_backup: verified installer failed"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.agent_settings_backup" "verified installer failed"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.agent_settings_backup"
+            fi
+            return 0
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: asb version || asb help (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_AGENT_SETTINGS_BACKUP'
+asb version || asb help
+INSTALL_STACK_AGENT_SETTINGS_BACKUP
+        then
+            log_warn "stack.agent_settings_backup: verify failed: asb version || asb help"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.agent_settings_backup" "verify failed: asb version || asb help"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.agent_settings_backup"
+            fi
+            return 0
+        fi
+    fi
+
+    log_success "stack.agent_settings_backup installed"
+}
+
+# Post-compaction reminder hook for Claude Code that forces an AGENTS.md re-read
+install_stack_pcr() {
+    local module_id="stack.pcr"
+    acfs_require_contract "module:${module_id}" || return 1
+    log_step "Installing stack.pcr"
+
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verified installer: stack.pcr"
+    else
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                # The grep ensures we specifically have an associative array, not just any variable
+                if declare -p KNOWN_INSTALLERS 2>/dev/null | grep -q 'declare -A'; then
+                    local tool="pcr"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "stack.pcr: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s' '--' '--yes'; then
+                            install_success=true
+                        else
+                            log_error "stack.pcr: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "stack.pcr: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "stack.pcr: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "stack.pcr: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "stack.pcr: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # Verified install is required - no fallback
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for stack.pcr"
+                false
+            fi
+        }; then
+            log_warn "stack.pcr: verified installer failed"
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.pcr" "verified installer failed"
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.pcr"
+            fi
+            return 0
+        fi
+    fi
+
+    # Verify
+    if [[ "${DRY_RUN:-false}" = "true" ]]; then
+        log_info "dry-run: verify: target_home=\"\${TARGET_HOME:-\$HOME}\" (target_user)"
+    else
+        if ! run_as_target_shell <<'INSTALL_STACK_PCR'
+target_home="${TARGET_HOME:-$HOME}"
+hook_script="$target_home/.local/bin/claude-post-compact-reminder"
+settings="$target_home/.claude/settings.json"
+alt_settings="$target_home/.config/claude/settings.json"
+
+test -x "$hook_script" || exit 1
+
+if [[ -f "$settings" ]]; then
+  grep -q "claude-post-compact-reminder" "$settings"
+elif [[ -f "$alt_settings" ]]; then
+  grep -q "claude-post-compact-reminder" "$alt_settings"
+else
+  exit 1
+fi
+INSTALL_STACK_PCR
+        then
+            log_warn "stack.pcr: verify failed: target_home=\"\${TARGET_HOME:-\$HOME}\""
+            if type -t record_skipped_tool >/dev/null 2>&1; then
+              record_skipped_tool "stack.pcr" "verify failed: target_home=\"\${TARGET_HOME:-\$HOME}\""
+            elif type -t state_tool_skip >/dev/null 2>&1; then
+              state_tool_skip "stack.pcr"
+            fi
+            return 0
+        fi
+    fi
+
+    log_success "stack.pcr installed"
+}
+
 # Install all stack modules
 install_stack() {
     log_section "Installing stack modules"
@@ -1716,6 +2260,12 @@ install_stack() {
     install_stack_rch
     install_stack_wezterm_automata
     install_stack_srps
+    install_stack_frankensearch
+    install_stack_storage_ballast_helper
+    install_stack_cross_agent_session_resumer
+    install_stack_doodlestein_self_releaser
+    install_stack_agent_settings_backup
+    install_stack_pcr
 }
 
 # Run if executed directly

@@ -636,7 +636,7 @@ acfs-update --yes --quiet    # Automated/CI mode with minimal output
 --cloud-only     Only update cloud CLIs
 --shell-only     Only update shell tools (OMZ, P10K, plugins, Atuin, Zoxide)
 --runtime-only   Only update runtimes (bun, rust, uv, go)
---stack          Include Dicklesworthstone stack (disabled by default)
+--stack          Include Dicklesworthstone stack (enabled by default)
 ```
 
 **Skip Categories:**
@@ -675,7 +675,7 @@ The installer transforms a fresh VPS. The update command maintains an existing i
 - **Focused updates**: Update just agents without touching system packages
 - **Dry-run previews**: See what would change before committing
 - **Skip flags**: Temporarily exclude categories that are working fine
-- **Stack control**: The full stack reinstallation is opt-in (it's slow)
+- **Stack control**: Stack updates are included by default; skip with `--no-stack`
 - **Automated updates**: Run via cron with `--yes --quiet`
 
 ---
@@ -1268,7 +1268,7 @@ The complete suite of tools for professional agentic workflows:
 | # | Tool | Command | Description |
 |---|------|---------|-------------|
 | 1 | **Named Tmux Manager** | `ntm` | Agent cockpit—spawn, orchestrate, monitor tmux sessions |
-| 2 | **MCP Agent Mail** | - | Agent coordination via mail-like messaging |
+| 2 | **MCP Agent Mail** | `am` | Agent coordination via mail-like messaging (Rust binary) |
 | 3 | **Ultimate Bug Scanner** | `ubs` | Bug scanning with guardrails |
 | 4 | **Beads Viewer** | `bv` | Task management TUI with graph analysis |
 | 5 | **Coding Agent Session Search** | `cass` | Unified agent history search |
@@ -2332,9 +2332,9 @@ jobs:
     - Deploy to Vercel (production)
 ```
 
-### Automated Checksum Updates (`checksum-monitor.yml`)
+### Automated Checksum + Drift Repair (`checksum-monitor.yml`)
 
-ACFS automatically monitors upstream installers for changes and updates checksums:
+ACFS automatically monitors upstream installers for changes, and also repairs generated artifact checksum drift:
 
 ```yaml
 # Runs every 2 hours + on upstream changes
@@ -2342,16 +2342,22 @@ schedule: "0 */2 * * *"
 triggers:
   - Schedule (every 2 hours)
   - Webhook from upstream repos (repository_dispatch)
-  - Changes to security.sh
+  - Pushes touching installer/checksum/generator files
 ```
 
 **How It Works:**
 
-1. **Verify Current Checksums**: Downloads all upstream installers, calculates SHA256
-2. **Detect Changes**: Compares against `checksums.yaml`
-3. **Categorize Tools**: Separates "trusted" tools (can auto-update) from others
-4. **Auto-Update**: For trusted tools, commits updated checksums automatically
-5. **Alert**: For non-trusted tools, creates GitHub issue for manual review
+1. **Verify Generated Artifact Drift**: Runs `scripts/check-manifest-drift.sh --json` to detect:
+   - `ACFS_MANIFEST_SHA256` mismatches
+   - internal script checksum drift (`scripts/generated/internal_checksums.sh`)
+2. **Auto-Repair Drift**: If drift is detected, runs `--fix` (regenerate + commit + push)
+3. **Verify Current Upstream Checksums**: Downloads all upstream installers, calculates SHA256
+4. **Detect Upstream Changes**: Compares against `checksums.yaml`
+5. **Categorize Tools**: Separates "trusted" tools (can auto-update) from others
+6. **Auto-Update Upstream Checksums**: Commits updated `checksums.yaml` when safe
+7. **Alert**: For non-trusted tool changes, creates GitHub issue for manual review
+
+The monitor **fails closed** when verification returns fetch errors or skipped entries; it will not emit partial/placeholder checksum updates.
 
 **Trusted Tools (Auto-Update Enabled):**
 - Dicklesworthstone stack tools (ntm, cass, cm, ubs, slb, dcg, caam, bv, agent-mail, ru)

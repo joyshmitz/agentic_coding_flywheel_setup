@@ -1,12 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { JetBrains_Mono, Instrument_Sans } from "next/font/google";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import { QueryProvider } from "@/components/query-provider";
 import { AnalyticsProvider } from "@/components/analytics-provider";
 import { ThirdPartyScripts } from "@/components/third-party-scripts";
 import { MotionProvider } from "@/components/motion/motion-provider";
-import { LocaleProvider } from "@/lib/i18n";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -26,24 +24,24 @@ const siteUrl = "https://agent-flywheel.com";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Agent Flywheel - AI Агенти Кодують За Вас",
+    default: "Agent Flywheel - AI Agents Coding For You",
     template: "%s | Agent Flywheel",
   },
   description:
-    "Перетворіть свіжий хмарний сервер у повністю налаштоване середовище для агентного кодування за ~30 хвилин. Claude Code, OpenAI Codex, Google Gemini: всі попередньо налаштовані з 30+ сучасними інструментами розробника. Безкоштовно та з відкритим кодом.",
+    "Transform a fresh cloud server into a fully-configured agentic coding environment in ~30 minutes. Claude Code, OpenAI Codex, Google Gemini: all pre-configured with 30+ modern developer tools. Free & open-source.",
   keywords: [
-    "налаштування VPS",
-    "AI кодування", 
+    "VPS setup",
+    "AI coding",
     "Claude Code",
     "Codex CLI",
     "Gemini CLI",
-    "інструменти розробника",
-    "агентне кодування",
+    "developer tools",
+    "agentic coding",
     "Agent Flywheel",
-    "AI агенти",
-    "автоматизація кодування",
+    "AI agents",
+    "coding automation",
     "Ubuntu VPS",
-    "середовище розробки",
+    "dev environment",
   ],
   authors: [{ name: "Jeffrey Emanuel", url: "https://jeffreyemanuel.com/" }],
   creator: "Jeffrey Emanuel",
@@ -53,25 +51,6 @@ export const metadata: Metadata = {
   },
   // Icons are auto-generated from icon.tsx and apple-icon.tsx
   // favicon.ico is also available as a fallback
-  openGraph: {
-    title: "Agent Flywheel - AI Агенти Кодують За Вас",
-    description:
-      "Перетворіть свіжий VPS у повністю налаштоване середовище для агентного кодування за ~30 хвилин. Claude Code, Codex CLI, Gemini CLI + 30 інструментів розробки. Безкоштовно та з відкритим кодом.",
-    type: "website",
-    url: siteUrl,
-    siteName: "Agent Flywheel", 
-    locale: "uk_UA",
-    // Images are auto-generated from opengraph-image.tsx
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Agent Flywheel - AI Agents Coding For You",
-    description:
-      "Transform a fresh VPS into a fully-configured agentic coding environment in ~30 minutes. Claude, Codex, Gemini + 30 dev tools. Free & open-source.",
-    creator: "@jeffreyemanuel",
-    site: "@jeffreyemanuel",
-    // Images are auto-generated from twitter-image.tsx
-  },
   robots: {
     index: true,
     follow: true,
@@ -97,18 +76,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="uk" className="dark" suppressHydrationWarning>
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         {/* Flash-prevention: apply stored theme before first paint */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var s=localStorage.getItem("acfs-theme")||"dark";var r=s==="system"?matchMedia("(prefers-color-scheme:light)").matches?"light":"dark":s;var d=document.documentElement;d.classList.remove("dark","light");d.classList.add(r==="light"?"light":"dark")}catch(e){}})()`,
-          }}
-        />
-        {/* Sync html lang attribute with stored locale */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var l=localStorage.getItem("acfs-locale");if(l==="en"||l==="uk")document.documentElement.lang=l}catch(e){}})()`,
           }}
         />
       </head>
@@ -120,14 +93,11 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <ThirdPartyScripts />
           <QueryProvider>
-            <LocaleProvider>
-              <MotionProvider>
-                <AnalyticsProvider>{children}</AnalyticsProvider>
-              </MotionProvider>
-            </LocaleProvider>
+            <MotionProvider>
+              <AnalyticsProvider>{children}</AnalyticsProvider>
+            </MotionProvider>
           </QueryProvider>
         </Suspense>
-        <SpeedInsights />
       </body>
     </html>
   );

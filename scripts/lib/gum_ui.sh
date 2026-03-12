@@ -254,15 +254,21 @@ gum_choose() {
         if [[ -t 0 ]]; then
             echo "$prompt"
             select opt in "${options[@]}"; do
-                echo "$opt"
-                break
+                if [[ -n "$opt" ]]; then
+                    echo "$opt"
+                    break
+                fi
+                echo "Invalid choice. Enter a number between 1 and ${#options[@]}." >&2
             done
         elif [[ -r /dev/tty ]]; then
             echo "$prompt" >&2
             (
                 select opt in "${options[@]}"; do
-                    echo "$opt"
-                    break
+                    if [[ -n "$opt" ]]; then
+                        echo "$opt"
+                        break
+                    fi
+                    echo "Invalid choice. Enter a number between 1 and ${#options[@]}." >&2
                 done
             ) < /dev/tty
         else

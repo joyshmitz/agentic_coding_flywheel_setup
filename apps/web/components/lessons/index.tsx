@@ -33,6 +33,12 @@ import { WaLesson } from "./wa-lesson";
 import { BrennerLesson } from "./brenner-lesson";
 import { GiilLesson } from "./giil-lesson";
 import { S2pLesson } from "./s2p-lesson";
+import { FsfsLesson } from "./fsfs-lesson";
+import { SbhLesson } from "./sbh-lesson";
+import { CasrLesson } from "./casr-lesson";
+import { DsrLesson } from "./dsr-lesson";
+import { AsbLesson } from "./asb-lesson";
+import { PcrLesson } from "./pcr-lesson";
 
 // Ukrainian lesson components
 import { AprLessonUk } from "./apr-lesson.uk";
@@ -111,6 +117,18 @@ export function renderLessonComponent(slug: string, locale?: string): React.Reac
       return <GiilLesson />;
     case "s2p":
       return <S2pLesson />;
+    case "fsfs":
+      return <FsfsLesson />;
+    case "sbh":
+      return <SbhLesson />;
+    case "casr":
+      return <CasrLesson />;
+    case "dsr":
+      return <DsrLesson />;
+    case "asb":
+      return <AsbLesson />;
+    case "pcr":
+      return <PcrLesson />;
     default:
       return null;
   }
@@ -151,4 +169,10 @@ export {
   BrennerLesson,
   GiilLesson,
   S2pLesson,
+  FsfsLesson,
+  SbhLesson,
+  CasrLesson,
+  DsrLesson,
+  AsbLesson,
+  PcrLesson,
 };

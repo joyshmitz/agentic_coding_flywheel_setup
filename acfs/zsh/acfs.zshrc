@@ -145,7 +145,7 @@ alias dex='docker exec -it'
 
 # --- Directory shortcuts ---
 alias dev='cd ~/Development'
-alias proj='cd ~/Projects'
+alias proj='cd /data/projects'
 alias dots='cd ~/dotfiles'
 alias p='cd /data/projects'
 
@@ -494,8 +494,28 @@ if whence -p br &>/dev/null; then
   alias bd='br'
 fi
 
-# MCP Agent Mail helper (installer usually adds `am`, but keep a fallback)
-alias am='cd ~/mcp_agent_mail 2>/dev/null && scripts/run_server_with_token.sh || echo "mcp_agent_mail not found in ~/mcp_agent_mail"'
+# MCP Agent Mail helper (leave the real `am` CLI available for service/macros)
+alias amserve='cd ~/mcp_agent_mail 2>/dev/null && scripts/run_server_with_token.sh || echo "mcp_agent_mail not found in ~/mcp_agent_mail"'
+
+# --- ACFS tool aliases (new tools) ---
+# RCH: offload cargo/gcc builds to remote workers
+command -v rch &>/dev/null && alias rb='rch exec -- cargo build --release'
+command -v rch &>/dev/null && alias rt='rch exec -- cargo test'
+# FrankenSearch
+command -v fsfs &>/dev/null && alias fs='fsfs search'
+# Process Triage
+command -v pt &>/dev/null && alias ptop='pt top'
+# Storage Ballast Helper
+command -v sbh &>/dev/null && alias sbs='sbh status'
+# Cross-Agent Session Resumer
+command -v casr &>/dev/null && alias resume='casr resume'
+# Doodlestein Self-Releaser
+command -v dsr &>/dev/null && alias dsrc='dsr check --all'
+# Agent Settings Backup
+command -v asb &>/dev/null && alias asbk='asb backup --all'
+# Post-Compact Reminder (no alias needed, runs as a hook)
+# Repo Updater
+command -v ru &>/dev/null && alias rusync='ru sync'
 
 # --- Keybindings (quality of life) ---
 # Ctrl+Arrow for word movement

@@ -425,12 +425,15 @@ read_text_input() {
                 --prompt.foreground "#89b4fa" \
                 --cursor.foreground "#cba6f7" 2>/dev/null) || true
         else
-            # Fallback to read
+            # Fallback to read from /dev/tty to avoid stdin conflicts
+            # from signal handlers or subshell capture (issue #153)
             if [[ -n "$default" ]]; then
-                read -r -p "$prompt [$default]: " input
+                echo -n "$prompt [$default]: "
+                read -r input < /dev/tty || true
                 [[ -z "$input" ]] && input="$default"
             else
-                read -r -p "$prompt: " input
+                echo -n "$prompt: "
+                read -r input < /dev/tty || true
             fi
         fi
 
@@ -475,7 +478,8 @@ read_yes_no() {
             hint="[y/N]"
         fi
 
-        read -r -p "$prompt $hint " response
+        echo -n "$prompt $hint "
+        read -r response < /dev/tty || true
         response="${response:-$default}"
 
         if [[ "$response" =~ ^[Yy]$ ]]; then
@@ -512,7 +516,8 @@ read_selection() {
             ((i++))
         done
 
-        read -r -p "Enter number [1-${#options[@]}]: " num
+        echo -n "Enter number [1-${#options[@]}]: "
+        read -r num < /dev/tty || true
         if [[ "$num" =~ ^[0-9]+$ ]] && [[ "$num" -ge 1 ]] && [[ "$num" -le ${#options[@]} ]]; then
             selected="${options[$((num - 1))]}"
         fi
@@ -544,7 +549,8 @@ read_checkbox() {
             ((i++))
         done
 
-        read -r -p "Select: " input
+        echo -n "Select: "
+        read -r input < /dev/tty || true
 
         if [[ "$input" == "all" ]]; then
             selected="${options[*]}"

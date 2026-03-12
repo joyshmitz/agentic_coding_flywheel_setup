@@ -113,10 +113,17 @@ write_atomic() {
     local target_dir
     target_dir=$(dirname "$target_file")
     local temp_file
-    temp_file=$(mktemp -p "$target_dir" ".tmp.XXXXXX")
+    temp_file=$(mktemp -p "$target_dir" ".tmp.XXXXXX" 2>/dev/null) || {
+        log_error "Failed to create temp file for atomic write: $target_file"
+        return 1
+    }
 
     # Write content to temp file
-    printf '%s\n' "$content" > "$temp_file"
+    if ! printf '%s\n' "$content" > "$temp_file"; then
+        log_error "Failed to write temp file: $temp_file"
+        rm -f "$temp_file"
+        return 1
+    fi
 
     # Sync temp file content to disk
     if ! fsync_file "$temp_file"; then
@@ -124,7 +131,11 @@ write_atomic() {
     fi
 
     # Atomic rename
-    mv "$temp_file" "$target_file"
+    if ! mv "$temp_file" "$target_file"; then
+        log_error "Failed to move temp file into place: $target_file"
+        rm -f "$temp_file"
+        return 1
+    fi
 
     # Sync directory to ensure rename is durable
     if ! fsync_directory "$target_dir"; then
@@ -260,13 +271,23 @@ repair_state_files() {
 
     local repaired=0
 
-    # Repair changes file - keep only valid JSON lines
+    # Repair changes file - keep only valid JSON lines with valid record checksums
     if [[ -f "$ACFS_CHANGES_FILE" ]]; then
         local temp_file
         temp_file=$(mktemp)
         while IFS= read -r line; do
             [[ -z "$line" ]] && continue
             if echo "$line" | jq -e . >/dev/null 2>&1; then
+                local stored_checksum computed_checksum
+                stored_checksum=$(echo "$line" | jq -r '.record_checksum // empty' 2>/dev/null)
+                if [[ -n "$stored_checksum" ]]; then
+                    computed_checksum=$(compute_record_checksum "$line")
+                    if [[ "$stored_checksum" != "$computed_checksum" ]]; then
+                        log_warn "[REPAIR] Discarding checksum-corrupt line: ${line:0:50}..."
+                        ((++repaired))
+                        continue
+                    fi
+                fi
                 echo "$line" >> "$temp_file"
             else
                 log_warn "[REPAIR] Discarding invalid line: ${line:0:50}..."
@@ -394,7 +415,8 @@ start_autofix_session() {
             return 1
         fi
     else
-        log_warn "Could not acquire autofix lock (continuing anyway)"
+        log_error "Could not acquire autofix lock; aborting to avoid concurrent state corruption"
+        return 1
     fi
 
     # Write session start marker
@@ -428,6 +450,38 @@ end_autofix_session() {
 # Backup Functions
 # =============================================================================
 
+# Calculate a deterministic checksum for a file or directory path
+calculate_backup_checksum() {
+    local target_path="$1"
+
+    if [[ -f "$target_path" ]]; then
+        if command -v sha256sum &>/dev/null; then
+            sha256sum "$target_path" | cut -d' ' -f1
+            return $?
+        fi
+        if command -v shasum &>/dev/null; then
+            shasum -a 256 "$target_path" | cut -d' ' -f1
+            return $?
+        fi
+        return 1
+    fi
+
+    if [[ -d "$target_path" ]]; then
+        if command -v sha256sum &>/dev/null; then
+            tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner \
+                -cf - -C "$target_path" . 2>/dev/null | sha256sum | cut -d' ' -f1
+            return $?
+        fi
+        if command -v shasum &>/dev/null; then
+            tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner \
+                -cf - -C "$target_path" . 2>/dev/null | shasum -a 256 | cut -d' ' -f1
+            return $?
+        fi
+    fi
+
+    return 1
+}
+
 # Create a verified backup of a file with fsync
 create_backup() {
     local original_path="$1"
@@ -444,27 +498,51 @@ create_backup() {
     local backup_path="${ACFS_BACKUPS_DIR}/${backup_name}"
 
     # Copy with metadata preservation
-    cp -p "$original_path" "$backup_path"
+    if [[ -d "$original_path" ]]; then
+        cp -a "$original_path" "$backup_path" || {
+            log_error "Failed to create directory backup: $original_path"
+            return 1
+        }
+    else
+        cp -p "$original_path" "$backup_path" || {
+            log_error "Failed to create file backup: $original_path"
+            return 1
+        }
+    fi
 
     # Explicit fsync to ensure backup is durable
-    if ! fsync_file "$backup_path"; then
-        log_error "Failed to fsync backup file: $backup_path"
-        rm -f "$backup_path"
-        return 1
+    if [[ -f "$backup_path" ]]; then
+        if ! fsync_file "$backup_path"; then
+            log_error "Failed to fsync backup file: $backup_path"
+            rm -f "$backup_path"
+            return 1
+        fi
+    elif [[ -d "$backup_path" ]]; then
+        if ! fsync_directory "$backup_path"; then
+            log_warn "Failed to fsync backup directory metadata: $backup_path"
+        fi
     fi
 
     # Compute checksum for verification
     local checksum
-    checksum=$(sha256sum "$backup_path" | cut -d' ' -f1)
+    checksum=$(calculate_backup_checksum "$backup_path") || {
+        log_error "Failed to compute checksum for backup: $backup_path"
+        return 1
+    }
 
     # Verify backup by comparing checksums
     local original_checksum
-    original_checksum=$(sha256sum "$original_path" | cut -d' ' -f1)
+    original_checksum=$(calculate_backup_checksum "$original_path") || {
+        log_error "Failed to compute checksum for original path: $original_path"
+        return 1
+    }
     if [[ "$checksum" != "$original_checksum" ]]; then
         log_error "Backup verification failed: checksum mismatch"
         log_error "  Original: $original_checksum"
         log_error "  Backup:   $checksum"
-        rm -f "$backup_path"
+        if [[ -f "$backup_path" ]]; then
+            rm -f "$backup_path"
+        fi
         return 1
     fi
 
@@ -488,13 +566,21 @@ verify_backup_integrity() {
     local expected_checksum
     expected_checksum=$(echo "$backup_json" | jq -r '.checksum')
 
-    if [[ ! -f "$backup_path" ]]; then
+    if [[ ! -e "$backup_path" ]]; then
         log_error "Backup file missing: $backup_path"
         return 1
     fi
 
+    if [[ -z "$expected_checksum" ]] || [[ "$expected_checksum" == "null" ]]; then
+        log_warn "Backup checksum missing for: $backup_path"
+        return 0
+    fi
+
     local actual_checksum
-    actual_checksum=$(sha256sum "$backup_path" | cut -d' ' -f1)
+    actual_checksum=$(calculate_backup_checksum "$backup_path") || {
+        log_error "Failed to checksum backup path: $backup_path"
+        return 1
+    }
     if [[ "$actual_checksum" != "$expected_checksum" ]]; then
         log_error "Backup corrupted: $backup_path"
         log_error "  Expected: $expected_checksum"
@@ -587,11 +673,23 @@ record_change() {
 # Undo Functions
 # =============================================================================
 
+# Check whether a change has already been undone
+is_change_undone() {
+    local change_id="$1"
+    [[ -f "$ACFS_UNDOS_FILE" ]] || return 1
+    jq -e --arg id "$change_id" 'select(.undone == $id)' "$ACFS_UNDOS_FILE" >/dev/null 2>&1
+}
+
 # Undo a specific change
 undo_change() {
     local change_id="$1"
     local force="${2:-false}"
     local skip_deps="${3:-false}"
+
+    if [[ -z "${ACFS_AUTOFIX_LOCK_FD:-}" ]]; then
+        log_error "Undo requested without active auto-fix lock"
+        return 1
+    fi
 
     # Load from file if not in memory
     if [[ -z "${ACFS_CHANGE_RECORDS["$change_id"]:-}" ]]; then
@@ -622,7 +720,7 @@ undo_change() {
     fi
 
     # Check if already undone
-    if [[ $(echo "$record" | jq -r '.undone') == "true" ]]; then
+    if is_change_undone "$change_id"; then
         log_warn "Change $change_id has already been undone"
         return 0
     fi
@@ -632,9 +730,7 @@ undo_change() {
         local dependents
         dependents=$(grep -e "\"depends_on\".*$change_id" "$ACFS_CHANGES_FILE" 2>/dev/null | jq -r '.id' 2>/dev/null || true)
         for dep in $dependents; do
-            local dep_undone
-            dep_undone=$(grep "\"id\":\"$dep\"" "$ACFS_CHANGES_FILE" | tail -1 | jq -r '.undone')
-            if [[ "$dep_undone" != "true" ]]; then
+            if ! is_change_undone "$dep"; then
                 log_error "Cannot undo $change_id: $dep depends on it and hasn't been undone"
                 log_error "Undo $dep first, or use --force"
                 if [[ "$force" != "true" ]]; then
@@ -688,6 +784,7 @@ undo_change() {
         '{undone: $id, timestamp: $ts, exit_code: $code}')
 
     append_atomic "$ACFS_UNDOS_FILE" "$undo_record"
+    ACFS_CHANGE_RECORDS["$change_id"]="$(echo "$record" | jq -c '.undone = true')"
 
     log_info "[UNDO] Successfully reverted: $change_id"
     return 0
@@ -849,12 +946,9 @@ acfs_undo_command() {
             undone_ids=$(jq -r '.undone // empty' "$ACFS_UNDOS_FILE" 2>/dev/null | sort -u | tr '\n' '|' | sed 's/|$//')
         fi
         # Display changes with correct undo status by cross-referencing with undos file
-        while IFS= read -r line; do
-            [[ -z "$line" ]] && continue
-            local change_id category desc status
-            change_id=$(echo "$line" | jq -r '.id')
-            category=$(echo "$line" | jq -r '.category')
-            desc=$(echo "$line" | jq -r '.description')
+        jq -r '[.id, .category, .description] | join("\u001f")' "$ACFS_CHANGES_FILE" | while IFS=$'\x1f' read -r change_id category desc; do
+            [[ -z "$change_id" ]] && continue
+            local status
             # Check if this change_id is in the undone list
             if [[ -n "$undone_ids" ]] && echo "$change_id" | grep -qE "^($undone_ids)$"; then
                 status="undone"
@@ -862,7 +956,7 @@ acfs_undo_command() {
                 status="active"
             fi
             printf "%s\t%s\t%s\t%s\n" "$change_id" "$category" "$desc" "$status"
-        done < "$ACFS_CHANGES_FILE" | column -t -s $'\t'
+        done | column -t -s $'\t'
         return 0
     fi
 
@@ -895,12 +989,19 @@ acfs_undo_command() {
     fi
 
     # Actually undo
+    if ! start_autofix_session; then
+        log_error "Failed to start undo session"
+        return 1
+    fi
+
     local failed=0
     for change_id in "${change_ids[@]}"; do
         if ! undo_change "$change_id" "$force"; then
             ((failed++))
         fi
     done
+
+    end_autofix_session
 
     if [[ $failed -gt 0 ]]; then
         log_warn "$failed undo operations failed"
