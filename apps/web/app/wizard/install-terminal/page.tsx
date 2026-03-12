@@ -23,7 +23,7 @@ import {
   DirectDownloadButton,
 } from "@/components/simpler-guide";
 import { useLocale, getInstallTerminalMessages } from "@/lib/i18n";
-import { Jargon } from "@/components/jargon";
+import { Jargon, JargonText } from "@/components/jargon";
 
 // Type for messages
 type Messages = ReturnType<typeof getInstallTerminalMessages>;
@@ -67,9 +67,9 @@ function MacContent({ messages }: { messages: Messages }) {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <p className="text-muted-foreground" dangerouslySetInnerHTML={{
-          __html: m.intro.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>')
-        }} />
+        <p className="text-muted-foreground">
+          <JargonText page="install-terminal">{m.intro}</JargonText>
+        </p>
 
         <div className="grid gap-3 sm:grid-cols-2">
           <TerminalCard
@@ -101,9 +101,9 @@ function MacContent({ messages }: { messages: Messages }) {
           </GuideExplain>
 
           <GuideSection title={g.quickDownload.title}>
-            <p className="mb-4" dangerouslySetInnerHTML={{
-              __html: g.quickDownload.intro.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            }} />
+            <p className="mb-4">
+              <JargonText page="install-terminal">{g.quickDownload.intro}</JargonText>
+            </p>
             <div className="flex flex-col gap-3 sm:flex-row">
               <DirectDownloadButton
                 href={GHOSTTY_MAC_DMG}
@@ -183,7 +183,7 @@ function TerminalBasicsSection({ os, messages }: { os: "mac" | "windows" | "linu
           {tb.title}
         </h2>
         <p className="text-muted-foreground">
-          {tb.intro}
+          <JargonText>{tb.intro}</JargonText>
         </p>
       </div>
 
@@ -207,9 +207,9 @@ function TerminalBasicsSection({ os, messages }: { os: "mac" | "windows" | "linu
 
       {/* Copy/Paste in Terminal */}
       <div className="space-y-3">
-        <h3 className="font-semibold">Copy/Paste in <Jargon term="terminal">Terminal</Jargon></h3>
+        <h3 className="font-semibold">{tb.copyPaste.title}</h3>
         <p className="text-sm text-muted-foreground">
-          {tb.copyPaste.intro}
+          <JargonText>{tb.copyPaste.intro}</JargonText>
         </p>
         {os === "mac" ? (
           <AlertCard variant="info" title={tb.copyPaste.mac.title}>
@@ -273,9 +273,9 @@ function WindowsContent({ messages }: { messages: Messages }) {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <p className="text-muted-foreground" dangerouslySetInnerHTML={{
-          __html: m.intro.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground">$1</strong>')
-        }} />
+        <p className="text-muted-foreground">
+          <JargonText page="install-terminal">{m.intro}</JargonText>
+        </p>
 
         <TerminalCard
           name={m.terminal.name}
@@ -285,9 +285,9 @@ function WindowsContent({ messages }: { messages: Messages }) {
       </div>
 
       <div className="space-y-3">
-        <h3 className="font-medium">Verify <Jargon term="ssh">SSH</Jargon> is available</h3>
+        <h3 className="font-medium">{m.verifySsh.title}</h3>
         <p className="text-sm text-muted-foreground">
-          Open Windows <Jargon term="terminal">Terminal</Jargon> and run this command. You should see a version number.
+          <JargonText>{m.verifySsh.content}</JargonText>
         </p>
         <CommandCard
           command="ssh -V"
@@ -457,7 +457,7 @@ export default function InstallTerminalPage() {
           </div>
         </div>
         <p className="text-muted-foreground">
-          {messages.description}
+          <JargonText>{messages.description}</JargonText>
         </p>
       </div>
 

@@ -14,4 +14,18 @@ export const agentHeroCardMessagesUk = {
     commands: "команд",
     tips: "порад",
   },
+  tabs: {
+    commands: "Команди",
+    tips: "Поради",
+    aliases: "Псевдоніми",
+  },
+  aliases: {
+    description: "Усі ці команди запускають {agentName}. Скопіюйте та вставте у термінал.",
+    copied: "Скопійовано!",
+    copy: "Копіювати",
+  },
+  quickAccess: {
+    copied: "Скопійовано!",
+    hint: "Натисніть, щоб скопіювати команду",
+  },
 };

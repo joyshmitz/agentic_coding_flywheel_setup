@@ -18,7 +18,7 @@ import {
   GuideTip,
 } from "@/components/simpler-guide";
 import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
-import { Jargon } from "@/components/jargon";
+import { Jargon, JargonText } from "@/components/jargon";
 import { useLocale, getReconnectUbuntuMessages, getCommonMessages } from "@/lib/i18n";
 
 export default function ReconnectUbuntuPage() {
@@ -99,7 +99,7 @@ export default function ReconnectUbuntuPage() {
           <div>
             <p className="font-medium text-foreground">{messages.alreadyUbuntu.title}</p>
             <p className="text-sm text-muted-foreground">
-              {messages.alreadyUbuntu.content}
+              <JargonText page="reconnect-ubuntu">{messages.alreadyUbuntu.content}</JargonText>
             </p>
             <Button
               variant="outline"
@@ -132,7 +132,7 @@ export default function ReconnectUbuntuPage() {
           <div className="space-y-3">
             <h3 className="font-semibold">{messages.ifRoot.noticeDifferent}</h3>
             <p className="text-sm text-muted-foreground">
-              {messages.ifRoot.keyExplanation}
+              <JargonText page="reconnect-ubuntu">{messages.ifRoot.keyExplanation}</JargonText>
             </p>
             <AlertCard variant="success" title={messages.ifRoot.noPassword.title}>
               {messages.ifRoot.noPassword.content}

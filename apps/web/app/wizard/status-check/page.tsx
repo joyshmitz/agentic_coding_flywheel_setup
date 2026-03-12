@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import React, { useCallback, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
@@ -34,28 +34,62 @@ import {
   GuideCaution,
 } from "@/components/simpler-guide";
 import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
-import { Jargon } from "@/components/jargon";
+import { Jargon, JargonText } from "@/components/jargon";
 import { withCurrentSearch } from "@/lib/utils";
 import { useLocale, getStatusCheckMessages, getCommonMessages } from "@/lib/i18n";
 
-const QUICK_CHECKS = [
-  {
-    command: "cc --version",
-    description: "Check Claude Code is installed",
-  },
-  {
-    command: "bun --version",
-    description: "Check bun is installed",
-  },
-  {
-    command: "ms --version",
-    description: "Check Meta Skill is installed",
-  },
-  {
-    command: "which tmux",
-    description: "Check tmux is installed",
-  },
-];
+// Helper to render template with bold markers and injected node
+// Handles multiple placeholders, bold sections, and missing placeholders with fallback
+function renderTemplate(template: string, placeholder: string, node: ReactNode): ReactNode {
+  // Escape special regex characters in placeholder
+  const escapedPlaceholder = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Split by placeholder, keeping placeholder as separator for position tracking
+  const parts = template.split(new RegExp(`(${escapedPlaceholder})`));
+
+  // Check if placeholder was actually found in template
+  const foundPlaceholder = parts.some((p) => p === placeholder);
+  if (!foundPlaceholder) {
+    console.warn(
+      `[renderTemplate] Placeholder "${placeholder}" not found in template. ` +
+      `Node will be appended at end as fallback. This may indicate a translation error.`,
+      { template, placeholder }
+    );
+  }
+
+  const parseBold = (text: string, segIdx: number) => {
+    const boldParts = text.split(/\*\*(.*?)\*\*/g);
+    return boldParts.map((boldPart, boldIdx) =>
+      boldIdx % 2 === 1 ? (
+        <strong key={`b-${segIdx}-${boldIdx}`}>{boldPart}</strong>
+      ) : (
+        boldPart
+      )
+    );
+  };
+
+  return (
+    <>
+      {parts.map((part, partIdx) => {
+        // If this part is the placeholder itself, render the node
+        if (part === placeholder) {
+          return <React.Fragment key={`ph-${partIdx}`}>{node}</React.Fragment>;
+        }
+
+        // Skip empty parts
+        if (!part) return null;
+
+        // Parse **bold** markers in this text segment
+        return (
+          <React.Fragment key={`seg-${partIdx}`}>
+            {parseBold(part, partIdx)}
+          </React.Fragment>
+        );
+      })}
+      {/* Fallback: if placeholder not found, append node at end */}
+      {!foundPlaceholder && <React.Fragment key="fallback">{node}</React.Fragment>}
+    </>
+  );
+}
 
 // Category icons for auth section
 const AUTH_CATEGORY_ICONS: Record<ServiceCategory, React.ReactNode> = {
@@ -138,7 +172,7 @@ export default function StatusCheckPage() {
           </p>
           <CommandCard command="ssh -i ~/.ssh/acfs_ed25519 ubuntu@YOUR_VPS_IP" runLocation="local" className="mt-1" />
           <p className="text-sm text-muted-foreground">
-            {messages.reconnectionReminder.readyWhen}
+            <JargonText>{messages.reconnectionReminder.readyWhen}</JargonText>
           </p>
         </div>
       </AlertCard>
@@ -170,7 +204,7 @@ export default function StatusCheckPage() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold text-foreground">{messages.doctorCommand.title}</h2>
         <p className="text-sm text-muted-foreground">
-          {messages.doctorCommand.description}
+          <JargonText>{messages.doctorCommand.description}</JargonText>
         </p>
         <CommandCard
           command="acfs doctor"
@@ -198,10 +232,10 @@ export default function StatusCheckPage() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">{messages.quickChecks.title}</h2>
         <p className="text-sm text-muted-foreground">
-          {messages.quickChecks.intro}
+          <JargonText>{messages.quickChecks.intro}</JargonText>
         </p>
         <div className="space-y-3">
-          {QUICK_CHECKS.map((check, i) => (
+          {messages.quickChecks.checks.map((check, i) => (
             <CommandCard
               key={i}
               command={check.command}
@@ -221,7 +255,7 @@ export default function StatusCheckPage() {
           <div>
             <h2 className="text-xl font-semibold">{messages.authenticateServices.title}</h2>
             <p className="text-sm text-muted-foreground">
-              {messages.authenticateServices.subtitle}
+              <JargonText>{messages.authenticateServices.subtitle}</JargonText>
             </p>
           </div>
         </div>
@@ -244,67 +278,113 @@ export default function StatusCheckPage() {
         </AlertCard>
 
         {/* Codex-specific auth note */}
-        <AlertCard variant="warning" icon={AlertCircle} title="Codex CLI: Special Headless Setup">
+        <AlertCard variant="warning" icon={AlertCircle} title={messages.headlessAuth.codex.title}>
           <div className="space-y-2">
             <p>
-              <strong>Codex requires extra steps</strong> because its OAuth callback expects{" "}
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">localhost:1455</code>,
-              which doesn&apos;t work on a remote VPS.
+              {renderTemplate(
+                messages.headlessAuth.codex.introTemplate,
+                "{callback}",
+                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">localhost:1455</code>
+              )}
             </p>
-            <p className="text-sm font-medium">Option 1: Device Auth (Recommended)</p>
+            <p className="text-sm font-medium">{messages.headlessAuth.codex.option1Title}</p>
             <ol className="list-decimal list-inside space-y-1 text-sm pl-2">
-              <li>Go to <a href="https://chatgpt.com/settings/security" target="_blank" rel="noopener noreferrer" className="text-primary underline">ChatGPT Settings → Security</a></li>
-              <li>Enable &quot;Device code login&quot; (may be in beta)</li>
-              <li>Then run: <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">codex login --device-auth</code></li>
+              <li>
+                {messages.headlessAuth.codex.option1Steps[0]}{" "}
+                <a href="https://chatgpt.com/settings/security" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                  {messages.headlessAuth.codex.securityLinkLabel}
+                </a>
+              </li>
+              <li>{messages.headlessAuth.codex.option1Steps[1]}</li>
+              <li>
+                {messages.headlessAuth.codex.option1Steps[2]}{" "}
+                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">codex login --device-auth</code>
+              </li>
             </ol>
-            <p className="text-sm font-medium mt-2">Option 2: SSH Tunnel</p>
+            <p className="text-sm font-medium mt-2">{messages.headlessAuth.codex.option2Title}</p>
             <ol className="list-decimal list-inside space-y-1 text-sm pl-2">
-              <li>On your laptop: <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">ssh -L 1455:localhost:1455 ubuntu@YOUR_VPS_IP</code></li>
-              <li>In that SSH session (on VPS): <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">codex login</code></li>
-              <li>The OAuth redirect will reach your VPS through the tunnel</li>
+              <li>
+                {messages.headlessAuth.codex.option2Steps[0]}{" "}
+                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">ssh -L 1455:localhost:1455 ubuntu@YOUR_VPS_IP</code>
+              </li>
+              <li>
+                {messages.headlessAuth.codex.option2Steps[1]}{" "}
+                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">codex login</code>
+              </li>
+              <li>{messages.headlessAuth.codex.option2Steps[2]}</li>
             </ol>
           </div>
         </AlertCard>
 
         {/* Wrangler (Cloudflare) headless auth note */}
-        <AlertCard variant="warning" icon={AlertCircle} title="Wrangler: Headless VPS Setup">
+        <AlertCard variant="warning" icon={AlertCircle} title={messages.headlessAuth.wrangler.title}>
           <div className="space-y-2">
             <p>
-              <strong>Wrangler requires a browser</strong> for{" "}
-              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">wrangler login</code>,
-              which doesn&apos;t work on a headless VPS.
+              {renderTemplate(
+                messages.headlessAuth.wrangler.introTemplate,
+                "{command}",
+                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">wrangler login</code>
+              )}
             </p>
-            <p className="text-sm font-medium">Solution: Use API Token</p>
+            <p className="text-sm font-medium">{messages.headlessAuth.wrangler.solutionTitle}</p>
             <ol className="list-decimal list-inside space-y-1 text-sm pl-2">
-              <li>Go to <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">Cloudflare → API Tokens</a></li>
-              <li>Create a token with the permissions you need (e.g., Workers, Pages)</li>
-              <li>Add to your <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~/.zshrc</code>:</li>
+              <li>
+                {messages.headlessAuth.wrangler.steps[0]}{" "}
+                <a href="https://dash.cloudflare.com/profile/api-tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                  {messages.headlessAuth.wrangler.linkLabel}
+                </a>
+              </li>
+              <li>{messages.headlessAuth.wrangler.steps[1]}</li>
+              <li>
+                {messages.headlessAuth.wrangler.steps[2]}{" "}
+                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~/.zshrc</code>:
+              </li>
             </ol>
             <CodeBlock code={`export CLOUDFLARE_API_TOKEN="your-token-here"\nexport CLOUDFLARE_ACCOUNT_ID="your-account-id"`} language="bash" className="mt-1" />
             <p className="text-xs text-muted-foreground mt-1">
-              Then run <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">source ~/.zshrc</code> or start a new shell.
+              {renderTemplate(
+                messages.headlessAuth.wrangler.afterTemplate,
+                "{command}",
+                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">source ~/.zshrc</code>
+              )}
             </p>
           </div>
         </AlertCard>
 
         {/* Other cloud tools headless auth */}
-        <AlertCard variant="warning" icon={AlertCircle} title="Supabase & Vercel: Headless VPS Setup">
+        <AlertCard variant="warning" icon={AlertCircle} title={messages.headlessAuth.cloud.title}>
           <div className="space-y-2">
             <p>
-              These CLIs also use browser-based OAuth. For headless VPS, use access tokens instead.
+              {messages.headlessAuth.cloud.intro}
             </p>
             <div className="text-sm space-y-2">
-              <p className="font-medium">Supabase:</p>
+              <p className="font-medium">{messages.headlessAuth.cloud.supabaseTitle}</p>
               <ol className="list-decimal list-inside space-y-1 pl-2 text-sm">
-                <li>Go to <a href="https://supabase.com/dashboard/account/tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">Supabase → Access Tokens</a></li>
-                <li>Create a token, then add to <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~/.zshrc</code>:</li>
+                <li>
+                  {messages.headlessAuth.cloud.supabaseSteps[0]}{" "}
+                  <a href="https://supabase.com/dashboard/account/tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                    {messages.headlessAuth.cloud.supabaseLinkLabel}
+                  </a>
+                </li>
+                <li>
+                  {messages.headlessAuth.cloud.supabaseSteps[1]}{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">~/.zshrc</code>:
+                </li>
               </ol>
               <CodeBlock code={`export SUPABASE_ACCESS_TOKEN="your-token-here"`} language="bash" />
 
-              <p className="font-medium mt-2">Vercel:</p>
+              <p className="font-medium mt-2">{messages.headlessAuth.cloud.vercelTitle}</p>
               <ol className="list-decimal list-inside space-y-1 pl-2 text-sm">
-                <li>Go to <a href="https://vercel.com/account/tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">Vercel → Tokens</a></li>
-                <li>Create a token, then use with commands: <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">vercel --token YOUR_TOKEN</code></li>
+                <li>
+                  {messages.headlessAuth.cloud.vercelSteps[0]}{" "}
+                  <a href="https://vercel.com/account/tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                    {messages.headlessAuth.cloud.vercelLinkLabel}
+                  </a>
+                </li>
+                <li>
+                  {messages.headlessAuth.cloud.vercelSteps[1]}{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">vercel --token YOUR_TOKEN</code>
+                </li>
               </ol>
             </div>
           </div>
@@ -346,7 +426,7 @@ export default function StatusCheckPage() {
                   <CommandCard
                     key={service.id}
                     command={service.postInstallCommand!}
-                    description={`Log in to ${service.name}`}
+                    description={messages.authenticateServices.loginDescription.replace("{name}", service.name)}
                     runLocation="vps"
                     showCheckbox
                     persistKey={`auth-${service.id}`}

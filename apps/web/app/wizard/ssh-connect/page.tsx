@@ -21,7 +21,7 @@ import {
   GuideTip,
   GuideCaution,
 } from "@/components/simpler-guide";
-import { Jargon } from "@/components/jargon";
+import { Jargon, JargonText } from "@/components/jargon";
 import { useLocale, getSshConnectMessages, getCommonMessages } from "@/lib/i18n";
 
 interface TroubleshootingItem {
@@ -237,7 +237,7 @@ export default function SSHConnectPage() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">{messages.firstConnection.title}</h2>
         <p className="text-sm text-muted-foreground">
-          {messages.firstConnection.intro}
+          <JargonText>{messages.firstConnection.intro}</JargonText>
         </p>
         <OutputPreview title={messages.firstConnection.youllSee}>
           <div className="space-y-1">
@@ -258,7 +258,7 @@ export default function SSHConnectPage() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">{messages.passwordPrompt.title}</h2>
         <p className="text-sm text-muted-foreground">
-          {messages.passwordPrompt.intro}
+          <JargonText>{messages.passwordPrompt.intro}</JargonText>
         </p>
         <OutputPreview title={messages.passwordPrompt.youllSee}>
           <p className="text-muted-foreground">root@{vpsIP}&apos;s password: <span className="animate-pulse">_</span></p>
@@ -274,7 +274,7 @@ export default function SSHConnectPage() {
           {messages.fallback.title}
         </h3>
         <p className="text-sm text-muted-foreground">
-          {messages.fallback.intro}
+          <JargonText>{messages.fallback.intro}</JargonText>
         </p>
         <CommandCard
           command={sshCommandUbuntu}
@@ -298,7 +298,7 @@ export default function SSHConnectPage() {
       <div className="space-y-3">
         <h3 className="font-semibold">{messages.verification.title}</h3>
         <p className="text-muted-foreground">
-          {messages.verification.intro}
+          <JargonText>{messages.verification.intro}</JargonText>
         </p>
         <CommandCard
           command="hostname"

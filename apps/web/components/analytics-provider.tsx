@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback, useRef, type ReactNode, Suspense } from 'react';
+import React, { useEffect, useCallback, useRef, type ReactNode, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import {
@@ -14,6 +14,7 @@ import {
   sendEvent,
 } from '@/lib/analytics';
 import { safeGetItem, safeSetItem } from '@/lib/utils';
+import { JargonTelemetry } from '@/lib/jargon-telemetry';
 
 interface AnalyticsProviderProps {
   children: ReactNode;
@@ -219,12 +220,19 @@ function AnalyticsTracker() {
 /**
  * Analytics Provider Component
  * Handles GA4 initialization, pageview tracking, and engagement metrics
+ * Also initializes JargonTelemetry independently of GA configuration
  *
  * IMPORTANT: useSearchParams is isolated in AnalyticsTracker with its own Suspense
  * to prevent SSR bailout for the entire app tree.
  */
 export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
   const gaId = GA_MEASUREMENT_ID?.trim();
+
+  // Initialize JargonTelemetry regardless of GA configuration
+  // Must be called on every render to ensure initialization happens
+  React.useEffect(() => {
+    JargonTelemetry.initialize();
+  }, []);
 
   if (!gaId) {
     return <>{children}</>;

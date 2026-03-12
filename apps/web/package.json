@@ -12,7 +12,8 @@
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "bench:jargon": "bun ../../scripts/benchmark-jargon.js"
   },
   "dependencies": {
     "@google-analytics/admin": "^9.0.1",

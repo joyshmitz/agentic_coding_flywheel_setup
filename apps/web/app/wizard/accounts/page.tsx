@@ -38,38 +38,30 @@ import {
 } from "@/lib/services";
 import { TrackedLink } from "@/components/tracked-link";
 import { useLocale, getAccountsMessages, getCommonMessages } from "@/lib/i18n";
-import { Jargon } from "@/components/jargon";
+import { Jargon, JargonText } from "@/components/jargon";
 
 // Type for messages
 type Messages = ReturnType<typeof getAccountsMessages>;
 
-const TIER_META: Record<
+const TIER_UI_META: Record<
   ServiceTier,
   {
-    title: string;
-    description: string;
     icon: React.ReactNode;
     accentClass: string;
     defaultOpen: boolean;
   }
 > = {
   essential: {
-    title: "Essential (Do these now)",
-    description: "Two accounts you need to start your first project.",
     icon: <Shield className="h-5 w-5" />,
     accentClass: "bg-[oklch(0.72_0.19_145/0.2)] text-[oklch(0.72_0.19_145)]",
     defaultOpen: true,
   },
   recommended: {
-    title: "Recommended (After your first project)",
-    description: "Add more AI agents when you want extra coverage.",
     icon: <Bot className="h-5 w-5" />,
     accentClass: "bg-[oklch(0.75_0.18_195/0.18)] text-[oklch(0.75_0.18_195)]",
     defaultOpen: false,
   },
   optional: {
-    title: "Optional (When you need them)",
-    description: "Deployment, databases, and infrastructure extras.",
     icon: <Cloud className="h-5 w-5" />,
     accentClass: "bg-muted text-muted-foreground",
     defaultOpen: false,
@@ -207,11 +199,11 @@ function TierSection({
   onToggleService,
   messages,
 }: TierSectionProps) {
-  const [isOpen, setIsOpen] = useState(TIER_META[tier].defaultOpen);
+  const [isOpen, setIsOpen] = useState(TIER_UI_META[tier].defaultOpen);
   const checkedCount = services.filter((service) =>
     checkedServices.has(service.id)
   ).length;
-  const meta = TIER_META[tier];
+  const meta = TIER_UI_META[tier];
   const tierMessages = messages.tierMeta[tier];
 
   if (services.length === 0) return null;
@@ -419,13 +411,13 @@ export default function AccountsPage() {
             {messages.guide.whyAccounts.content}
             <br />
             <br />
-            <span dangerouslySetInnerHTML={{ __html: messages.guide.whyAccounts.essential.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
+            <JargonText page="accounts">{messages.guide.whyAccounts.essential}</JargonText>
             <br />
             <br />
-            <span dangerouslySetInnerHTML={{ __html: messages.guide.whyAccounts.recommended.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
+            <JargonText page="accounts">{messages.guide.whyAccounts.recommended}</JargonText>
             <br />
             <br />
-            <span dangerouslySetInnerHTML={{ __html: messages.guide.whyAccounts.optional.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
+            <JargonText page="accounts">{messages.guide.whyAccounts.optional}</JargonText>
           </GuideExplain>
 
           <GuideSection title={messages.guide.howToSignUp.title}>
@@ -449,7 +441,7 @@ export default function AccountsPage() {
           </GuideSection>
 
           <GuideTip>
-            <span dangerouslySetInnerHTML={{ __html: messages.guide.tip.replace(/^([^:]+:)/, '<strong>$1</strong>') }} />
+            <JargonText page="accounts">{messages.guide.tip}</JargonText>
           </GuideTip>
 
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">

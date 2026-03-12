@@ -20,7 +20,7 @@ import {
   GuideTip,
   GuideCaution,
 } from "@/components/simpler-guide";
-import { Jargon } from "@/components/jargon";
+import { Jargon, JargonText } from "@/components/jargon";
 import { useLocale, getCreateVpsMessages } from "@/lib/i18n";
 
 type ScreenshotSpec = {
@@ -77,6 +77,7 @@ function getChecklistItems(messages: ReturnType<typeof getCreateVpsMessages>) {
 
 interface ProviderGuideProps {
   name: string;
+  specificStepsTemplate: string;
   steps: string[];
   screenshots?: ScreenshotSpec[];
   isExpanded: boolean;
@@ -85,6 +86,7 @@ interface ProviderGuideProps {
 
 function ProviderGuide({
   name,
+  specificStepsTemplate,
   steps,
   screenshots,
   isExpanded,
@@ -103,7 +105,9 @@ function ProviderGuide({
         aria-expanded={isExpanded}
         className="flex w-full items-center justify-between p-3 text-left"
       >
-        <span className="font-medium text-foreground">{name} specific steps</span>
+        <span className="font-medium text-foreground">
+          {specificStepsTemplate.replace("{name}", name)}
+        </span>
         <ChevronDown
           className={cn(
             "h-4 w-4 text-muted-foreground transition-transform duration-200",
@@ -136,45 +140,32 @@ function ProviderGuide({
   );
 }
 
-const PROVIDER_GUIDES = [
-  {
-    name: "Contabo",
-    steps: [
-      "Go to contabo.com/en-us/vps and select Cloud VPS 50 (64GB RAM, ~$56/month) or Cloud VPS 40 (48GB, ~$36/month)",
-      'Click "Configure" and select your preferred region (US recommended for best latency)',
-      'Under "Image", select Ubuntu 25.10 (or newest available; 24.04 LTS is fine too)',
-      'Set a root password when prompted (save it - you\'ll need it once)',
-      "Complete checkout (servers activate within minutes, occasionally up to 1 hour)",
-      'Go to "Your services" > "VPS control" to find your IP address',
-    ],
-    screenshots: [
-      {
-        file: "contabo_us_03_order_page.png",
-        alt: "Contabo order/configure page with region and Ubuntu image selections",
-        caption: "Contabo order page — select region + Ubuntu image here.",
-      },
-    ],
-  },
-  {
-    name: "OVH",
-    steps: [
-      'Click "Order" on VPS-5 (64GB RAM, ~$40/month) or VPS-4 (48GB, ~$26/month)',
-      'Under "Image", select Ubuntu 25.10 (or latest available)',
-      "Pick the data center/region closest to you (US-East, US-West, or EU)",
-      'Choose "Password" authentication (skip SSH key section for now)',
-      "Set a strong root password and save it somewhere safe",
-      "Complete the order (activation is usually instant)",
-      "Copy the IP address from your control panel",
-    ],
-    screenshots: [
-      {
-        file: "ovh_us_03_order.png",
-        alt: "OVH order/configuration flow showing OS and region selections",
-        caption: "OVH order flow — select Ubuntu + region during configuration.",
-      },
-    ],
-  },
-];
+function getProviderGuides(messages: ReturnType<typeof getCreateVpsMessages>) {
+  return [
+    {
+      name: "Contabo",
+      steps: messages.providerHelp.contabo.steps,
+      screenshots: [
+        {
+          file: "contabo_us_03_order_page.png",
+          alt: messages.providerHelp.contabo.screenshotAlt,
+          caption: messages.providerHelp.contabo.screenshotCaption,
+        },
+      ],
+    },
+    {
+      name: "OVH",
+      steps: messages.providerHelp.ovh.steps,
+      screenshots: [
+        {
+          file: "ovh_us_03_order.png",
+          alt: messages.providerHelp.ovh.screenshotAlt,
+          caption: messages.providerHelp.ovh.screenshotCaption,
+        },
+      ],
+    },
+  ];
+}
 
 export default function CreateVPSPage() {
   const router = useRouter();
@@ -184,6 +175,7 @@ export default function CreateVPSPage() {
   const { locale } = useLocale();
   const messages = getCreateVpsMessages(locale);
   const checklistItems = getChecklistItems(messages);
+  const providerGuides = getProviderGuides(messages);
 
   // Track checklist state locally for simpler form handling
   const [checkedItems, setCheckedItems] = useState<Set<ChecklistItemId>>(new Set());
@@ -238,6 +230,7 @@ export default function CreateVPSPage() {
   };
 
   const allChecked = checklistItems.every((item) => checkedItems.has(item.id));
+  const ipExampleSegments = messages.guide.detailedSteps.step8.exampleTemplate.split("{ip}");
 
   return (
     <div className="space-y-8">
@@ -257,7 +250,7 @@ export default function CreateVPSPage() {
           </div>
         </div>
         <p className="text-muted-foreground">
-          {messages.description}
+          <JargonText>{messages.description}</JargonText>
         </p>
       </div>
 
@@ -325,7 +318,7 @@ export default function CreateVPSPage() {
           {allChecked && (
             <div className="mt-4 flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2 text-sm font-medium text-primary">
               <Check className="h-4 w-4" />
-              <span>Great! Now enter your VPS IP address below to continue</span>
+              <span>{messages.checklist.readyPrompt}</span>
             </div>
           )}
         </div>
@@ -432,7 +425,7 @@ export default function CreateVPSPage() {
                   {isValid && !allChecked && (
                     <p className="flex items-center gap-1 text-sm text-muted-foreground">
                       <AlertCircle className="h-4 w-4" />
-                      Complete the checklist above to continue
+                      {messages.ipInput.checklistHint}
                     </p>
                   )}
 
@@ -440,15 +433,15 @@ export default function CreateVPSPage() {
                   {allChecked && !field.state.value && (
                     <p className="flex items-center gap-1 text-sm text-muted-foreground">
                       <AlertCircle className="h-4 w-4" />
-                      Enter your VPS IP address above to continue
+                      {messages.ipInput.validation.required}
                     </p>
                   )}
 
                   {/* Hint when checklist is complete but IP is invalid */}
-                  {allChecked && field.state.value && !isValid && !hasErrors && (
+                  {allChecked && field.state.value && hasErrors && (
                     <p className="flex items-center gap-1 text-sm text-muted-foreground">
                       <AlertCircle className="h-4 w-4" />
-                      Please enter a valid IP address to continue
+                      {messages.ipInput.validation.invalid}
                     </p>
                   )}
 
@@ -459,7 +452,7 @@ export default function CreateVPSPage() {
                       disabled={!canSubmit}
                       size="lg"
                     >
-                      {isNavigating ? "Loading..." : "Continue to SSH"}
+                      {isNavigating ? messages.buttons.loading : messages.buttons.continue}
                     </Button>
                   </div>
                 </div>
@@ -472,35 +465,26 @@ export default function CreateVPSPage() {
         <div className="rounded-xl border border-[oklch(0.75_0.18_195/0.3)] bg-[oklch(0.75_0.18_195/0.05)] p-4">
           <h3 className="font-medium text-foreground mb-2">{messages.regionTip.title}</h3>
           <p className="text-sm text-muted-foreground">
-            {messages.regionTip.content}
+            <JargonText>{messages.regionTip.content}</JargonText>
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 text-sm">
-            <div className="rounded-lg bg-background/50 px-3 py-2">
-              <span className="font-medium text-foreground">{messages.regionTip.regions.usa.label}</span>{" "}
-              <span className="text-muted-foreground">{messages.regionTip.regions.usa.hint}</span>
-            </div>
-            <div className="rounded-lg bg-background/50 px-3 py-2">
-              <span className="font-medium text-foreground">{messages.regionTip.regions.europe.label}</span>{" "}
-              <span className="text-muted-foreground">{messages.regionTip.regions.europe.hint}</span>
-            </div>
-            <div className="rounded-lg bg-background/50 px-3 py-2">
-              <span className="font-medium text-foreground">{messages.regionTip.regions.asiaPacific.label}</span>{" "}
-              <span className="text-muted-foreground">{messages.regionTip.regions.asiaPacific.hint}</span>
-            </div>
-            <div className="rounded-lg bg-background/50 px-3 py-2">
-              <span className="font-medium text-foreground">{messages.regionTip.regions.unsure.label}</span>{" "}
-              <span className="text-muted-foreground">{messages.regionTip.regions.unsure.hint}</span>
-            </div>
+            {messages.regionTip.regions.map((region, idx) => (
+              <div key={idx} className="rounded-lg bg-background/50 px-3 py-2">
+                <span className="font-medium text-foreground">{region.label}</span>{" "}
+                <span className="text-muted-foreground">{region.hint}</span>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Provider-specific guides */}
         <div className="space-y-3">
           <h2 className="font-semibold">{messages.providerHelp.title}</h2>
-          {PROVIDER_GUIDES.map((provider) => (
+          {providerGuides.map((provider) => (
             <ProviderGuide
               key={provider.name}
               name={provider.name}
+              specificStepsTemplate={messages.providerHelp.specificSteps}
               steps={provider.steps}
               screenshots={provider.screenshots}
               isExpanded={expandedProvider === provider.name}
@@ -533,21 +517,19 @@ export default function CreateVPSPage() {
                 </GuideStep>
 
                 <GuideStep number={2} title={messages.guide.detailedSteps.step2.title}>
-                  {locale === "uk" ? "Шукайте кнопку:" : "Look for a button that says something like:"}
+                  {messages.guide.detailedSteps.step2.lookFor}
                   <ul className="mt-2 list-disc space-y-1 pl-5">
-                    <li><span dangerouslySetInnerHTML={{ __html: messages.guide.detailedSteps.step2.ovh.replace(/^([^:]+:)/, '<strong>$1</strong>') }} /></li>
-                    <li><span dangerouslySetInnerHTML={{ __html: messages.guide.detailedSteps.step2.contabo.replace(/^([^:]+:)/, '<strong>$1</strong>') }} /></li>
+                    <li><JargonText page="create-vps">{messages.guide.detailedSteps.step2.ovh}</JargonText></li>
+                    <li><JargonText page="create-vps">{messages.guide.detailedSteps.step2.contabo}</JargonText></li>
                   </ul>
                 </GuideStep>
 
                 <GuideStep number={3} title={messages.guide.detailedSteps.step3.title}>
                   {messages.guide.detailedSteps.step3.content}
                   <ul className="mt-2 list-disc space-y-1 pl-5">
-                    <li><strong>{locale === "uk" ? "США Західне узбережжя:" : "USA West Coast:"}</strong> {locale === "uk" ? "Оберіть US-West, Лос-Анджелес або Сієтл" : "Pick US-West, Los Angeles, or Seattle"}</li>
-                    <li><strong>{locale === "uk" ? "США Східне узбережжя:" : "USA East Coast:"}</strong> {locale === "uk" ? "Оберіть US-East, Вірджинія або Нью-Йорк" : "Pick US-East, Virginia, or New York"}</li>
-                    <li><strong>{locale === "uk" ? "Європа:" : "Europe:"}</strong> {locale === "uk" ? "Оберіть Німеччину, Францію або Фінляндію" : "Pick Germany (Nuremberg/Frankfurt), France, or Finland"}</li>
-                    <li><strong>{locale === "uk" ? "Азія-Тихий океан:" : "Asia-Pacific:"}</strong> {locale === "uk" ? "Оберіть Сінгапур, Сідней або Токіо" : "Pick Singapore, Sydney, or Tokyo"}</li>
-                    <li><strong>{locale === "uk" ? "Не впевнені:" : "If unsure:"}</strong> {locale === "uk" ? "Просто оберіть один! Будь-який регіон працює, різниця невелика." : "Just pick one! Any region works, and the difference is small."}</li>
+                    {messages.regionTip.regions.map((region, idx) => (
+                      <li key={idx}>{region.label} {region.hint}</li>
+                    ))}
                   </ul>
                 </GuideStep>
 
@@ -562,7 +544,7 @@ export default function CreateVPSPage() {
                 </GuideStep>
 
                 <GuideStep number={5} title={messages.guide.detailedSteps.step5.title}>
-                  {locale === "uk" ? "Шукайте секцію \"Authentication\" або \"Password\"." : "Look for a section called \"Authentication\" or \"Password\"."}
+                  {messages.guide.detailedSteps.step5.lookFor}
                   <ul className="mt-2 list-disc space-y-1 pl-5">
                     <li>{messages.guide.detailedSteps.step5.skipSsh}</li>
                     <li>{messages.guide.detailedSteps.step5.choosePassword}</li>
@@ -575,12 +557,11 @@ export default function CreateVPSPage() {
                 </GuideStep>
 
                 <GuideStep number={6} title={messages.guide.detailedSteps.step6.title}>
-                  {locale === "uk" ? "Шукайте план з:" : "Look for a plan with:"}
+                  {messages.guide.detailedSteps.step6.lookFor}
                   <ul className="mt-2 list-disc space-y-1 pl-5">
-                    <li>12-16 vCPU {locale === "uk" ? "(віртуальні CPU)" : "(virtual CPUs)"}</li>
-                    <li>48-64 GB RAM {locale === "uk" ? "(кожен AI-агент використовує ~2GB, ви хочете запускати 10+)" : "(each AI agent uses ~2GB, you want to run 10+)"}</li>
-                    <li>250GB+ NVMe storage</li>
-                    <li>{locale === "uk" ? "Ціна: ~$40-56/міс за 64GB (варто!)" : "Cost: ~$40-56/month for 64GB (worth it!)"}</li>
+                    {messages.guide.detailedSteps.step6.items.map((item, idx) => (
+                      <li key={idx}>{item}</li>
+                    ))}
                   </ul>
                   <p className="mt-2 text-xs text-muted-foreground">
                     {messages.guide.detailedSteps.step6.recommendation}
@@ -596,26 +577,27 @@ export default function CreateVPSPage() {
                 <GuideStep number={8} title={messages.guide.detailedSteps.step8.title}>
                   {messages.guide.detailedSteps.step8.content}
                   <ul className="mt-2 list-disc space-y-1 pl-5">
-                    <li>On the main server overview page</li>
-                    <li>In a &quot;Network&quot; or &quot;IP Addresses&quot; section</li>
-                    <li>It looks like: <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">203.0.113.42</code></li>
+                    {messages.guide.detailedSteps.step8.locations.map((location, idx) => (
+                      <li key={idx}>{location}</li>
+                    ))}
+                    <li>
+                      {ipExampleSegments[0]}
+                      <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">203.0.113.42</code>
+                      {ipExampleSegments[1] ?? ""}
+                    </li>
                   </ul>
                   <br />
-                  <strong>Copy this number</strong> and paste it in the &quot;Your VPS IP address&quot; box above!
+                  <strong>{messages.guide.detailedSteps.step8.action}</strong>
                 </GuideStep>
               </div>
             </GuideSection>
 
             <GuideTip>
-              The IP address should be 4 groups of numbers separated by periods,
-              like <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">203.0.113.42</code>.
-              Don&apos;t include any letters or extra characters!
+              {messages.guide.ipTip}
             </GuideTip>
 
             <GuideCaution>
-              <span dangerouslySetInnerHTML={{
-                __html: messages.guide.passwordCaution.replace(/^([^!]+!)/, '<strong>$1</strong>')
-              }} />
+              <JargonText page="create-vps">{messages.guide.passwordCaution}</JargonText>
             </GuideCaution>
           </div>
         </SimplerGuide>

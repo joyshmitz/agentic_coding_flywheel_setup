@@ -25,7 +25,14 @@ import {
 } from "@/components/simpler-guide";
 import { useWizardAnalytics } from "@/lib/hooks/useWizardAnalytics";
 import { useLocale, getWindowsTerminalSetupMessages } from "@/lib/i18n";
-import { Jargon } from "@/components/jargon";
+import { JargonText, defaultJargonMappings } from "@/components/jargon";
+
+// Filter out bare "terminal" to avoid matching it inside "Windows Terminal",
+// then add compound "Windows Terminal" mapping that takes priority by length
+const wtMappings = [
+  { pattern: "Windows Terminal", term: "terminal" },
+  ...defaultJargonMappings.filter(m => m.pattern !== "terminal"),
+];
 
 export default function WindowsTerminalSetupPage() {
   const router = useRouter();
@@ -56,6 +63,7 @@ export default function WindowsTerminalSetupPage() {
 
   const displayIP = vpsIP || "YOUR_VPS_IP";
   const sshCommandLine = `ssh -i %USERPROFILE%\\.ssh\\acfs_ed25519 ubuntu@${displayIP}`;
+  const saveSegments = messages.steps.step4.save.split("{save}");
 
   const handleCopy = useCallback(async () => {
     try {
@@ -103,7 +111,7 @@ export default function WindowsTerminalSetupPage() {
           </div>
         </div>
         <p className="text-muted-foreground">
-          {messages.description}
+          <JargonText mappings={wtMappings}>{messages.description}</JargonText>
         </p>
       </div>
 
@@ -111,12 +119,14 @@ export default function WindowsTerminalSetupPage() {
       <AlertCard variant="success" icon={Terminal} title={messages.whySetup.title}>
         <div className="space-y-2">
           <p>
-            Instead of opening PowerShell and typing your <Jargon term="ssh">SSH</Jargon> command every time, you can:
+            <JargonText mappings={wtMappings}>{messages.whySetup.intro}</JargonText>
           </p>
           <ul className="list-disc list-inside space-y-1 text-sm">
-            <li>Click a tab in Windows <Jargon term="terminal">Terminal</Jargon> to instantly connect to your <Jargon term="vps">VPS</Jargon></li>
-            <li>Give it a custom name like &quot;My VPS&quot; or &quot;ACFS Server&quot;</li>
-            <li>Optionally set it as your default profile</li>
+            {messages.whySetup.benefits.map((benefit, i) => (
+              <li key={i}>
+                <JargonText mappings={wtMappings}>{benefit}</JargonText>
+              </li>
+            ))}
           </ul>
         </div>
       </AlertCard>
@@ -201,7 +211,9 @@ export default function WindowsTerminalSetupPage() {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                This is your personalized <Jargon term="ssh">SSH</Jargon> command with your <Jargon term="vps">VPS</Jargon> IP ({displayIP}).
+                <JargonText mappings={wtMappings}>
+                  {messages.steps.step3.commandLine.hint.replace("{ip}", displayIP)}
+                </JargonText>
               </p>
             </div>
             <div>
@@ -228,11 +240,11 @@ export default function WindowsTerminalSetupPage() {
             <h3 className="font-semibold">{messages.steps.step4.title}</h3>
           </div>
           <p className="text-sm text-muted-foreground pl-11">
-            {messages.steps.step4.save.split("Save")[0]}
+            {saveSegments[0]}
             <span className="inline-flex items-center gap-1 rounded bg-primary/20 px-1.5 py-0.5 font-medium text-primary">
               <Save className="h-3 w-3" /> {messages.buttons.save}
             </span>
-            {messages.steps.step4.save.split("Save")[1]}
+            {saveSegments[1] ?? ""}
           </p>
           <p className="text-sm text-muted-foreground pl-11">
             {messages.steps.step4.test}
@@ -288,21 +300,23 @@ export default function WindowsTerminalSetupPage() {
           <GuideSection title={messages.guide.troubleshooting.title}>
             <div className="space-y-4">
               <div>
-                <p className="font-medium">&quot;Permission denied&quot; error</p>
+                <p className="font-medium">{messages.guide.troubleshooting.permissionDenied.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  Make sure your <Jargon term="ssh">SSH</Jargon> key file exists at %USERPROFILE%\.ssh\acfs_ed25519. If you used a different key name, update the command line accordingly.
+                  <JargonText mappings={wtMappings}>{messages.guide.troubleshooting.permissionDenied.content}</JargonText>
                 </p>
               </div>
               <div>
-                <p className="font-medium">&quot;Connection refused&quot; error</p>
+                <p className="font-medium">{messages.guide.troubleshooting.connectionRefused.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  Double-check that your <Jargon term="vps">VPS</Jargon> IP ({displayIP}) is correct and the server is running.
+                  <JargonText mappings={wtMappings}>
+                    {messages.guide.troubleshooting.connectionRefused.content.replace("{ip}", displayIP)}
+                  </JargonText>
                 </p>
               </div>
               <div>
-                <p className="font-medium">&quot;Host key verification failed&quot;</p>
+                <p className="font-medium">{messages.guide.troubleshooting.hostKeyFailed.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  This can happen if you rebuilt your <Jargon term="vps">VPS</Jargon>. You may need to remove the old key from %USERPROFILE%\.ssh\known_hosts.
+                  <JargonText mappings={wtMappings}>{messages.guide.troubleshooting.hostKeyFailed.content}</JargonText>
                 </p>
               </div>
             </div>

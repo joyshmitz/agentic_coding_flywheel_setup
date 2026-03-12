@@ -5,6 +5,7 @@ import { Copy, Check, Terminal, Sparkles, Code2 } from "lucide-react";
 import { motion, AnimatePresence, springs, useReducedMotion } from "@/components/motion";
 import { CommandCard } from "@/components/command-card";
 import { cn } from "@/lib/utils";
+import { useLocale, getAgentHeroCardMessages } from "@/lib/i18n";
 import type { AgentInfo } from "./AgentHeroCard";
 import { agentPersonalities } from "./AgentHeroCard";
 
@@ -15,12 +16,6 @@ interface Tab {
   label: string;
   icon: React.ReactNode;
 }
-
-const tabs: Tab[] = [
-  { id: "examples", label: "Commands", icon: <Code2 className="h-4 w-4" /> },
-  { id: "tips", label: "Tips", icon: <Sparkles className="h-4 w-4" /> },
-  { id: "aliases", label: "Aliases", icon: <Terminal className="h-4 w-4" /> },
-];
 
 interface AgentCardContentProps {
   agent: AgentInfo;
@@ -33,6 +28,14 @@ export function AgentCardContent({ agent, isExpanded }: AgentCardContentProps) {
   const personality = agentPersonalities[agent.id];
   const prefersReducedMotion = useReducedMotion();
   const reducedMotion = prefersReducedMotion ?? false;
+  const { locale } = useLocale();
+  const messages = getAgentHeroCardMessages(locale);
+
+  const tabs: Tab[] = [
+    { id: "examples", label: messages.tabs.commands, icon: <Code2 className="h-4 w-4" /> },
+    { id: "tips", label: messages.tabs.tips, icon: <Sparkles className="h-4 w-4" /> },
+    { id: "aliases", label: messages.tabs.aliases, icon: <Terminal className="h-4 w-4" /> },
+  ];
 
   const handleCopy = async (text: string) => {
     try {
@@ -161,8 +164,7 @@ export function AgentCardContent({ agent, isExpanded }: AgentCardContentProps) {
                     transition={reducedMotion ? { duration: 0 } : springs.snappy}
                   >
                     <p className="mb-4 text-sm text-white/50">
-                      All these commands launch {agent.name}. Copy and paste into
-                      your terminal.
+                      {messages.aliases.description.replace("{agentName}", agent.name)}
                     </p>
                     <div className="grid gap-3 sm:grid-cols-2">
                       {[agent.command, ...agent.aliases].map((alias, i) => (
@@ -198,7 +200,7 @@ export function AgentCardContent({ agent, isExpanded }: AgentCardContentProps) {
                               >
                                 <Check className="h-4 w-4" />
                                 <span className="text-xs font-medium">
-                                  Copied!
+                                  {messages.aliases.copied}
                                 </span>
                               </motion.div>
                             ) : (
@@ -211,7 +213,7 @@ export function AgentCardContent({ agent, isExpanded }: AgentCardContentProps) {
                               >
                                 <Copy className="h-4 w-4" />
                                 <span className="hidden text-xs sm:inline">
-                                  Copy
+                                  {messages.aliases.copy}
                                 </span>
                               </motion.div>
                             )}
