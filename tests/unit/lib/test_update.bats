@@ -12206,6 +12206,112 @@ EOF
     assert_success
 }
 
+@test "update verified installer accepts FrankenTerm's current-version cleanup exit" {
+    mkdir -p "$HOME/.local/bin"
+    cat > "$HOME/.local/bin/ft" <<'EOF'
+#!/usr/bin/env bash
+printf 'ft 0.13.0\n'
+EOF
+    chmod +x "$HOME/.local/bin/ft"
+
+    QUIET=true
+    VERBOSE=false
+    DRY_RUN=false
+    ABORT_ON_FAILURE=false
+    ACFS_UPDATE_RETRY_MAX_ATTEMPTS=1
+    UPDATE_LOG_FILE="$HOME/update.log"
+    SUCCESS_COUNT=0
+    FAIL_COUNT=0
+    SKIP_COUNT=0
+
+    update_run_verified_installer() {
+        printf 'ft v0.13.0 is already installed at %s/.local/bin/ft\n' "$HOME"
+        printf 'Use --force to reinstall\n'
+        return 1
+    }
+
+    update_run_verified_installer_or_existing_on_transient \
+        "FrankenTerm" frankenterm ft ft --easy-mode --verify
+
+    [[ "$SUCCESS_COUNT" -eq 1 ]]
+    [[ "$SKIP_COUNT" -eq 0 ]]
+    [[ "$FAIL_COUNT" -eq 0 ]]
+    run grep -F "Success: FrankenTerm - verified installer reports ft is already current" "$UPDATE_LOG_FILE"
+    assert_success
+}
+
+@test "update verified installer rejects a mismatched FrankenTerm current-version claim" {
+    mkdir -p "$HOME/.local/bin"
+    cat > "$HOME/.local/bin/ft" <<'EOF'
+#!/usr/bin/env bash
+printf 'ft 0.13.0\n'
+EOF
+    chmod +x "$HOME/.local/bin/ft"
+
+    QUIET=true
+    VERBOSE=false
+    DRY_RUN=false
+    ABORT_ON_FAILURE=false
+    ACFS_UPDATE_RETRY_MAX_ATTEMPTS=1
+    UPDATE_LOG_FILE="$HOME/update.log"
+    SUCCESS_COUNT=0
+    FAIL_COUNT=0
+    SKIP_COUNT=0
+
+    update_run_verified_installer() {
+        printf 'ft v0.14.0 is already installed at %s/.local/bin/ft\n' "$HOME"
+        printf 'Use --force to reinstall\n'
+        return 1
+    }
+
+    local exit_code=0
+    update_run_verified_installer_or_existing_on_transient \
+        "FrankenTerm" frankenterm ft ft --easy-mode --verify || exit_code=$?
+
+    [[ "$exit_code" -eq 1 ]]
+    [[ "$SUCCESS_COUNT" -eq 0 ]]
+    [[ "$SKIP_COUNT" -eq 0 ]]
+    [[ "$FAIL_COUNT" -eq 1 ]]
+    run grep -F "Failed: FrankenTerm - installer exited 1" "$UPDATE_LOG_FILE"
+    assert_success
+}
+
+@test "update verified installer rejects FrankenTerm's current-version text after exit 137" {
+    mkdir -p "$HOME/.local/bin"
+    cat > "$HOME/.local/bin/ft" <<'EOF'
+#!/usr/bin/env bash
+printf 'ft 0.13.0\n'
+EOF
+    chmod +x "$HOME/.local/bin/ft"
+
+    QUIET=true
+    VERBOSE=false
+    DRY_RUN=false
+    ABORT_ON_FAILURE=false
+    ACFS_UPDATE_RETRY_MAX_ATTEMPTS=1
+    UPDATE_LOG_FILE="$HOME/update.log"
+    SUCCESS_COUNT=0
+    FAIL_COUNT=0
+    SKIP_COUNT=0
+
+    update_run_verified_installer() {
+        printf 'ft v0.13.0 is already installed at %s/.local/bin/ft\n' "$HOME"
+        printf 'Use --force to reinstall\n'
+        return 137
+    }
+
+    local exit_code=0
+    update_run_verified_installer_or_existing_on_transient \
+        "FrankenTerm" frankenterm ft ft --easy-mode --verify || exit_code=$?
+
+    [[ "$exit_code" -eq 1 ]]
+    [[ "$SUCCESS_COUNT" -eq 0 ]]
+    [[ "$SKIP_COUNT" -eq 0 ]]
+    [[ "$FAIL_COUNT" -eq 1 ]]
+    run grep -F "Failed: FrankenTerm - installer exited 137" "$UPDATE_LOG_FILE"
+    assert_success
+}
+
 @test "update PCR installer uses install repair path and verifies doctor state" {
     local hook_script="$HOME/.local/bin/claude-post-compact-reminder"
     local call_log="$HOME/pcr-calls.log"

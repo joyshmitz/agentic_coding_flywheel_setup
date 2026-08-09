@@ -4254,6 +4254,32 @@ update_run_verified_installer_with_target_tmpdir_or_existing_on_transient() {
     return 1
 }
 
+update_verified_installer_current_exit_is_success() {
+    local installer_key="${1:-}"
+    local output="${2:-}"
+    local exit_code="${3:-}"
+    local existing_path="${4:-}"
+    local existing_version="${5:-unknown}"
+    local reported_version=""
+    shift 5 || return 1
+
+    # FrankenTerm v0.13.0's EXIT cleanup currently returns 1 when the binary is
+    # already current, after the installer has explicitly reported success.
+    # Keep this exception narrow so no other installer failure is normalized.
+    [[ "$installer_key" == "frankenterm" ]] || return 1
+    [[ "$exit_code" == "1" ]] || return 1
+    [[ $# -eq 2 && "$1" == "--easy-mode" && "$2" == "--verify" ]] || return 1
+    if [[ "$output" =~ ft[[:space:]]+v([0-9]+\.[0-9]+\.[0-9]+)[[:space:]]+is[[:space:]]+already[[:space:]]+installed[[:space:]]+at[[:space:]] ]]; then
+        reported_version="${BASH_REMATCH[1]}"
+    else
+        return 1
+    fi
+    [[ "$output" == *"Use --force to reinstall"* ]] || return 1
+    [[ -n "$existing_path" ]] || return 1
+    [[ "$output" == *"ft v${reported_version} is already installed at ${existing_path}"* ]] || return 1
+    [[ "$existing_version" == "ft $reported_version" || "$existing_version" == "ft $reported_version "* ]]
+}
+
 update_run_verified_installer_or_existing_on_transient() {
     if [[ $# -lt 4 ]]; then
         echo "update_run_verified_installer_or_existing_on_transient requires desc, installer key, binary name, and version tool" >&2
@@ -4288,6 +4314,12 @@ update_run_verified_installer_or_existing_on_transient() {
 
         update_finish_cmd_fail "$desc" "installer completed but ${binary_name} verification failed"
         return 1
+    fi
+
+    if update_verified_installer_current_exit_is_success "$installer_key" "$UPDATE_LAST_COMMAND_OUTPUT" "$exit_code" "$existing_path" "$existing_version" "$@" && \
+       [[ -n "$existing_path" && -x "$existing_path" && -n "$existing_version" && "$existing_version" != "unknown" ]]; then
+        update_finish_cmd_ok "$desc" "verified installer reports ${binary_name} is already current"
+        return 0
     fi
 
     if update_is_transient_failure_output "$UPDATE_LAST_COMMAND_OUTPUT" && [[ -n "$existing_path" && -x "$existing_path" && -n "$existing_version" && "$existing_version" != "unknown" ]]; then
