@@ -32,8 +32,8 @@ export interface ManifestProvenanceMetadata {
 
 export const manifestProvenance = {
   acfsVersion: "0.7.0",
-  manifestSha256: "df47b126a6991f38cb039634e23db9e1344fa9d9e9211df67936d97d0320f1a2",
-  checksumsYamlSha256: "6124de2bf778c059f177338c80034ae4129569ce5b913909bb8d1681eb34c126",
+  manifestSha256: "7d3ca6593e4737ae48dc791e1920f93465e8f6ffbdcb3b5c7fa6c2fafb4ebcd3",
+  checksumsYamlSha256: "c5ebd0d0d7155a68c5b1ff6d13c960b6839e6382c6da971d37ad53806f14d126",
 } as const satisfies ManifestProvenanceMetadata;
 
 export const manifestModules: ManifestModuleMetadata[] = [
@@ -709,8 +709,8 @@ export const manifestModules: ManifestModuleMetadata[] = [
     optional: true,
   },
   {
-    id: "stack.wezterm_automata",
-    description: "WezTerm Automata (wa) - terminal automation and orchestration for AI agents",
+    id: "stack.frankenterm",
+    description: "FrankenTerm (ft) - terminal hypervisor and orchestration plane for AI agent swarms",
     category: "stack",
     phase: 9,
     dependencies: [
@@ -875,7 +875,7 @@ export const manifestModules: ManifestModuleMetadata[] = [
   },
   {
     id: "utils.toon_rust",
-    description: "toon_rust (tru) - Token-optimized notation format for LLM context efficiency",
+    description: "toon_rust (toon) - Token-optimized object notation for LLM context efficiency",
     category: "tools",
     phase: 9,
     dependencies: [

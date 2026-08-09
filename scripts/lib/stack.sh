@@ -1075,6 +1075,66 @@ _stack_run_installer() {
     _stack_run_verified_installer "$tool" "$@"
 }
 
+# Restart an already-running managed user service after its CLI binary is
+# replaced, then prove the process is executing the current on-disk binary.
+# Inactive services remain inactive; updates must not silently change operator
+# intent by enabling optional daemons.
+_stack_refresh_user_service_if_running() {
+    local unit="${1:-}"
+    local command_name="${2:-}"
+    local unit_q=""
+    local command_name_q=""
+    local service_cmd=""
+
+    [[ "$unit" =~ ^[A-Za-z0-9_.@-]+\.service$ ]] || return 1
+    [[ "$command_name" =~ ^[A-Za-z0-9._+-]+$ ]] || return 1
+    printf -v unit_q '%q' "$unit"
+    printf -v command_name_q '%q' "$command_name"
+
+    service_cmd="$(cat <<EOF
+set -euo pipefail
+export PATH="\${ACFS_BIN_DIR:-\$HOME/.local/bin}:\$HOME/.local/bin:\$HOME/.acfs/bin:\$HOME/.cargo/bin:\$HOME/.bun/bin:\$HOME/.atuin/bin:\$HOME/go/bin:/usr/local/bin:/usr/bin:/bin:/snap/bin"
+
+unit=$unit_q
+command_name=$command_name_q
+runtime_dir="/run/user/\$(id -u)"
+if [[ -d "\$runtime_dir" ]]; then
+    export XDG_RUNTIME_DIR="\$runtime_dir"
+    if [[ -S "\$runtime_dir/bus" ]]; then
+        export DBUS_SESSION_BUS_ADDRESS="unix:path=\$runtime_dir/bus"
+    fi
+fi
+
+command -v systemctl >/dev/null 2>&1 || exit 0
+systemctl --user show-environment >/dev/null 2>&1 || exit 0
+systemctl --user is-active --quiet "\$unit" >/dev/null 2>&1 || exit 0
+
+expected_bin="\$(command -v -- "\$command_name" 2>/dev/null || true)"
+[[ -n "\$expected_bin" && -x "\$expected_bin" ]] || exit 1
+expected_real="\$(readlink -f "\$expected_bin" 2>/dev/null || true)"
+[[ -n "\$expected_real" ]] || exit 1
+
+systemctl --user restart "\$unit"
+for _ in {1..60}; do
+    if systemctl --user is-active --quiet "\$unit" >/dev/null 2>&1; then
+        main_pid="\$(systemctl --user show "\$unit" --property MainPID --value 2>/dev/null || true)"
+        if [[ "\$main_pid" =~ ^[1-9][0-9]*$ ]]; then
+            process_real="\$(readlink -f "/proc/\$main_pid/exe" 2>/dev/null || true)"
+            if [[ "\$process_real" == "\$expected_real" ]]; then
+                exit 0
+            fi
+        fi
+    fi
+    sleep 1
+done
+
+exit 1
+EOF
+)"
+
+    _stack_run_as_user "$service_cmd"
+}
+
 # Check whether the local Agent Mail HTTP service is healthy.
 _stack_agent_mail_healthy() {
     _stack_agent_mail_liveness
@@ -1632,9 +1692,8 @@ agent_mail_readiness_ready() {
 if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; then
     stop_agent_mail_fallback
     systemctl --user daemon-reload >/dev/null 2>&1 || true
-    if ! systemctl --user enable --now agent-mail.service >/dev/null 2>&1; then
-        systemctl --user restart agent-mail.service >/dev/null 2>&1
-    fi
+    systemctl --user enable agent-mail.service >/dev/null 2>&1
+    systemctl --user restart agent-mail.service >/dev/null 2>&1
     active_waited=0
     active_max_wait=30
     until systemctl --user is-active --quiet agent-mail.service >/dev/null 2>&1; do
@@ -1644,7 +1703,14 @@ if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/d
         sleep 1
         active_waited=$((active_waited + 1))
     done
-    systemctl --user is-active --quiet agent-mail.service >/dev/null 2>&1
+    systemctl --user is-active --quiet agent-mail.service >/dev/null 2>&1 || exit 1
+    main_pid="$(systemctl --user show agent-mail.service --property MainPID --value 2>/dev/null || true)"
+    expected_real="$(readlink -f "$am_bin" 2>/dev/null || true)"
+    process_real=""
+    if [[ "$main_pid" =~ ^[1-9][0-9]*$ ]]; then
+        process_real="$(readlink -f "/proc/$main_pid/exe" 2>/dev/null || true)"
+    fi
+    [[ -n "$expected_real" && "$process_real" == "$expected_real" ]]
 else
     echo "Agent Mail: systemctl --user unavailable, using background fallback" >&2
     launch_agent_mail_fallback

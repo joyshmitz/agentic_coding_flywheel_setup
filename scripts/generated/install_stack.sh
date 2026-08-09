@@ -707,9 +707,8 @@ launch_agent_mail_fallback() {
 if [[ "$_systemctl_user_ok" = "true" ]]; then
   stop_agent_mail_fallback
   systemctl --user daemon-reload >/dev/null 2>&1 || true
-  if ! systemctl --user enable --now agent-mail.service >/dev/null 2>&1; then
-    systemctl --user restart agent-mail.service >/dev/null 2>&1
-  fi
+  systemctl --user enable agent-mail.service >/dev/null 2>&1
+  systemctl --user restart agent-mail.service >/dev/null 2>&1
   active_waited=0
   active_max_wait=30
   until systemctl --user is-active --quiet agent-mail.service >/dev/null 2>&1; do
@@ -719,7 +718,14 @@ if [[ "$_systemctl_user_ok" = "true" ]]; then
     sleep 1
     active_waited=$((active_waited + 1))
   done
-  systemctl --user is-active --quiet agent-mail.service >/dev/null 2>&1
+  systemctl --user is-active --quiet agent-mail.service >/dev/null 2>&1 || exit 1
+  main_pid="$(systemctl --user show agent-mail.service --property MainPID --value 2>/dev/null || true)"
+  expected_real="$(readlink -f "$am_bin" 2>/dev/null || true)"
+  process_real=""
+  if [[ "$main_pid" =~ ^[1-9][0-9]*$ ]]; then
+    process_real="$(readlink -f "/proc/$main_pid/exe" 2>/dev/null || true)"
+  fi
+  [[ -n "$expected_real" && "$process_real" == "$expected_real" ]]
 else
   echo "Agent Mail: systemctl --user unavailable, using background fallback" >&2
   launch_agent_mail_fallback
@@ -2319,35 +2325,74 @@ INSTALL_STACK_RCH
     log_success "stack.rch installed"
 }
 
-# WezTerm Automata (wa) - terminal automation and orchestration for AI agents
-install_stack_wezterm_automata() {
-    local module_id="stack.wezterm_automata"
+# FrankenTerm (ft) - terminal hypervisor and orchestration plane for AI agent swarms
+install_stack_frankenterm() {
+    local module_id="stack.frankenterm"
     acfs_require_contract "module:${module_id}" || return 1
     acfs_generated_ensure_selection || return 1
     if ! should_run_module "${module_id}"; then
-        log_info "Skipping stack.wezterm_automata (not selected)"
+        log_info "Skipping stack.frankenterm (not selected)"
         return 0
     fi
-    log_step "Installing stack.wezterm_automata"
+    log_step "Installing stack.frankenterm"
 
     if [[ "${DRY_RUN:-false}" = "true" ]]; then
-        log_info "dry-run: install: trap 'rm -rf \"\$WA_TMP\"' EXIT (target_user)"
+        log_info "dry-run: verified installer: stack.frankenterm"
     else
-        if ! run_as_target_shell <<'INSTALL_STACK_WEZTERM_AUTOMATA'
-WA_TMP="$(mktemp -d "${TMPDIR:-/tmp}/wa_build.XXXXXX")"
-trap 'rm -rf "$WA_TMP"' EXIT
-cd "$WA_TMP"
-git clone --depth 1 https://github.com/Dicklesworthstone/wezterm_automata.git .
-cargo build --release -p wa
-cp target/release/wa ~/.cargo/bin/
-rm -rf "$WA_TMP"
-INSTALL_STACK_WEZTERM_AUTOMATA
-        then
-            log_warn "stack.wezterm_automata: install command failed: trap 'rm -rf \"\$WA_TMP\"' EXIT"
+        if ! {
+            # Try security-verified install (no unverified fallback; fail closed)
+            local install_success=false
+
+            if acfs_security_init; then
+                local known_installers_decl=""
+                # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
+                known_installers_decl="$(declare -p KNOWN_INSTALLERS 2>/dev/null || true)"
+                if [[ "$known_installers_decl" == declare\ -A* ]]; then
+                    local tool="frankenterm"
+                    local url=""
+                    local expected_sha256=""
+
+                    # Safe access with explicit empty default
+                    url="${KNOWN_INSTALLERS[$tool]:-}"
+                    if ! expected_sha256="$(get_checksum "$tool")"; then
+                        log_error "stack.frankenterm: get_checksum failed for tool '$tool'"
+                        expected_sha256=""
+                    fi
+
+                    if [[ -n "$url" ]] && [[ -n "$expected_sha256" ]]; then
+                        if verify_checksum "$url" "$expected_sha256" "$tool" | run_as_target_runner 'bash' '-s' '--' '--easy-mode' '--verify'; then
+                            install_success=true
+                        else
+                            log_error "stack.frankenterm: verify_checksum or installer execution failed"
+                        fi
+                    else
+                        if [[ -z "$url" ]]; then
+                            log_error "stack.frankenterm: KNOWN_INSTALLERS[$tool] not found"
+                        fi
+                        if [[ -z "$expected_sha256" ]]; then
+                            log_error "stack.frankenterm: checksum for '$tool' not found"
+                        fi
+                    fi
+                else
+                    log_error "stack.frankenterm: KNOWN_INSTALLERS array not available"
+                fi
+            else
+                log_error "stack.frankenterm: acfs_security_init failed - check security.sh and checksums.yaml"
+            fi
+
+            # Verified install is required - no fallback
+            if [[ "$install_success" = "true" ]]; then
+                true
+            else
+                log_error "Verified install failed for stack.frankenterm"
+                false
+            fi
+        }; then
+            log_warn "stack.frankenterm: verified installer failed"
             if type -t record_skipped_tool >/dev/null 2>&1; then
-              record_skipped_tool "stack.wezterm_automata" "install command failed: trap 'rm -rf \"\$WA_TMP\"' EXIT"
+              record_skipped_tool "stack.frankenterm" "verified installer failed"
             elif type -t state_tool_skip >/dev/null 2>&1; then
-              state_tool_skip "stack.wezterm_automata"
+              state_tool_skip "stack.frankenterm"
             fi
             return 0
         fi
@@ -2355,23 +2400,23 @@ INSTALL_STACK_WEZTERM_AUTOMATA
 
     # Verify
     if [[ "${DRY_RUN:-false}" = "true" ]]; then
-        log_info "dry-run: verify: wa --version || wa --help (target_user)"
+        log_info "dry-run: verify: ft --version (target_user)"
     else
-        if ! run_as_target_shell <<'INSTALL_STACK_WEZTERM_AUTOMATA'
-wa --version || wa --help
-INSTALL_STACK_WEZTERM_AUTOMATA
+        if ! run_as_target_shell <<'INSTALL_STACK_FRANKENTERM'
+ft --version
+INSTALL_STACK_FRANKENTERM
         then
-            log_warn "stack.wezterm_automata: verify failed: wa --version || wa --help"
+            log_warn "stack.frankenterm: verify failed: ft --version"
             if type -t record_skipped_tool >/dev/null 2>&1; then
-              record_skipped_tool "stack.wezterm_automata" "verify failed: wa --version || wa --help"
+              record_skipped_tool "stack.frankenterm" "verify failed: ft --version"
             elif type -t state_tool_skip >/dev/null 2>&1; then
-              state_tool_skip "stack.wezterm_automata"
+              state_tool_skip "stack.frankenterm"
             fi
             return 0
         fi
     fi
 
-    log_success "stack.wezterm_automata installed"
+    log_success "stack.frankenterm installed"
 }
 
 # System Resource Protection Script - ananicy-cpp rules + TUI monitor for responsive dev workstations
@@ -3254,7 +3299,7 @@ install_stack() {
     install_stack_ru
     install_stack_brenner_bot
     install_stack_rch
-    install_stack_wezterm_automata
+    install_stack_frankenterm
     install_stack_srps
     install_stack_frankensearch
     install_stack_storage_ballast_helper

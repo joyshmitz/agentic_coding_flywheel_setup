@@ -308,7 +308,8 @@ describe('Generated verified installer args', () => {
     expect(stackContent).not.toContain('Environment=STORAGE_ROOT=$storage_root');
     expect(stackContent).not.toContain('ExecStartPre=${am_bin_exec} migrate');
     expect(stackContent).not.toContain('ExecStart=$am_bin serve-http');
-    expect(stackContent).toContain('systemctl --user enable --now agent-mail.service');
+    expect(stackContent).toContain('systemctl --user enable agent-mail.service');
+    expect(stackContent).toContain('systemctl --user restart agent-mail.service');
     expect(stackContent).toContain('curl -fsS --max-time 10 http://127.0.0.1:8765/health/liveness >/dev/null');
     expect(stackContent).toContain('http://127.0.0.1:8765/health/readiness');
     expect(stackContent).toContain('max_wait=240');

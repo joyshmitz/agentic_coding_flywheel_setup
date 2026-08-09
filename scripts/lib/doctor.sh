@@ -2578,15 +2578,15 @@ check_stack() {
         fi
     fi
 
-    # Check wa (WezTerm Automata) - optional
-    local wa_bin=""
-    wa_bin="$(doctor_binary_path wa 2>/dev/null || true)"
-    if [[ -n "$wa_bin" ]]; then
+    # Check ft (FrankenTerm) - optional
+    local ft_bin=""
+    ft_bin="$(doctor_binary_path ft 2>/dev/null || true)"
+    if [[ -n "$ft_bin" ]]; then
         local version
-        version=$(get_version_line "$wa_bin")
-        check "stack.wezterm_automata" "wezterm_automata ($version)" "pass" "installed"
+        version=$(get_version_line "$ft_bin")
+        check "stack.frankenterm" "FrankenTerm ($version)" "pass" "installed"
     else
-        check "stack.wezterm_automata" "wezterm_automata (wa)" "skip" "not installed (optional)"
+        check "stack.frankenterm" "FrankenTerm (ft)" "skip" "not installed (optional)"
     fi
 
     # Check brenner (Brenner Bot) - optional
@@ -2660,14 +2660,14 @@ check_utilities() {
 
     section "Utility tools"
 
-    # tru (Token-Optimized Notation)
-    util_bin="$(doctor_binary_path tru 2>/dev/null || true)"
+    # toon (Token-Optimized Object Notation)
+    util_bin="$(doctor_binary_path toon 2>/dev/null || true)"
     if [[ -n "$util_bin" ]]; then
         local version
         version=$(get_version_line "$util_bin")
-        check "util.tru" "tru ($version)" "pass" "installed"
+        check "utils.toon_rust" "toon ($version)" "pass" "installed"
     else
-        check "util.tru" "tru (token notation)" "skip" "not installed (optional)"
+        check "utils.toon_rust" "toon (token notation)" "skip" "not installed (optional)"
     fi
 
     # rust_proxy (Transparent Proxy Routing)
@@ -2800,7 +2800,7 @@ _is_bespoke_covered() {
         stack.ultimate_bug_scanner|stack.ultimate_bug_scanner.*|stack.beads_viewer) return 0 ;;
         stack.beads_rust|stack.beads_rust.*|stack.cass|stack.cm|stack.cm.*|stack.caam) return 0 ;;
         stack.dcg|stack.dcg.*|stack.ru|stack.meta_skill|stack.meta_skill.*) return 0 ;;
-        stack.brenner_bot|stack.rch|stack.wezterm_automata) return 0 ;;
+        stack.brenner_bot|stack.rch|stack.frankenterm) return 0 ;;
         # check_stack  (acfs nightly timer — bespoke handles D-Bus gracefully)
         acfs.nightly) return 0 ;;
         # check_utilities (bd-2gog)

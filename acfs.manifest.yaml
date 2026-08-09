@@ -135,7 +135,7 @@ modules:
           fi
           mkdir -p "$target_home/.acfs/docs"
           curl "${CURL_ARGS[@]}" -o "$target_home/.acfs/docs/AGENTS.workspace.md" "${ACFS_RAW}/acfs/AGENTS.md" || true
-          chown -R "${TARGET_USER:-ubuntu}:${TARGET_USER:-ubuntu}" "$target_home/.acfs/docs" 2>/dev/null || true
+          chown -hR "${TARGET_USER:-ubuntu}:${TARGET_USER:-ubuntu}" "$target_home/.acfs/docs" 2>/dev/null || true
 
           # Seed /data/projects/AGENTS.md ONLY when absent. An existing file
           # may contain user-authored rules and is never overwritten; use
@@ -1717,9 +1717,8 @@ modules:
           if [[ "$_systemctl_user_ok" = "true" ]]; then
             stop_agent_mail_fallback
             systemctl --user daemon-reload >/dev/null 2>&1 || true
-            if ! systemctl --user enable --now agent-mail.service >/dev/null 2>&1; then
-              systemctl --user restart agent-mail.service >/dev/null 2>&1
-            fi
+            systemctl --user enable agent-mail.service >/dev/null 2>&1
+            systemctl --user restart agent-mail.service >/dev/null 2>&1
             active_waited=0
             active_max_wait=30
             until systemctl --user is-active --quiet agent-mail.service >/dev/null 2>&1; do
@@ -1729,7 +1728,14 @@ modules:
               sleep 1
               active_waited=$((active_waited + 1))
             done
-            systemctl --user is-active --quiet agent-mail.service >/dev/null 2>&1
+            systemctl --user is-active --quiet agent-mail.service >/dev/null 2>&1 || exit 1
+            main_pid="$(systemctl --user show agent-mail.service --property MainPID --value 2>/dev/null || true)"
+            expected_real="$(readlink -f "$am_bin" 2>/dev/null || true)"
+            process_real=""
+            if [[ "$main_pid" =~ ^[1-9][0-9]*$ ]]; then
+              process_real="$(readlink -f "/proc/$main_pid/exe" 2>/dev/null || true)"
+            fi
+            [[ -n "$expected_real" && "$process_real" == "$expected_real" ]]
           else
             echo "Agent Mail: systemctl --user unavailable, using background fallback" >&2
             launch_agent_mail_fallback
@@ -2543,8 +2549,8 @@ modules:
     verify:
       - rch --version || rch --help
 
-  - id: stack.wezterm_automata
-    description: WezTerm Automata (wa) - terminal automation and orchestration for AI agents
+  - id: stack.frankenterm
+    description: FrankenTerm (ft) - terminal hypervisor and orchestration plane for AI agent swarms
     category: stack
     phase: 9
     run_as: target_user
@@ -2552,42 +2558,39 @@ modules:
     enabled_by_default: true
     tags: [recommended, automation]
     web:
-      display_name: "WezTerm Automata"
-      short_name: "WA"
+      display_name: "FrankenTerm"
+      short_name: "FT"
       tagline: "Terminal hypervisor for multi-agent automation"
       icon: "monitor"
       color: "#06B6D4"
-      href: "https://github.com/Dicklesworthstone/wezterm_automata"
+      href: "https://github.com/Dicklesworthstone/frankenterm"
       features:
         - "Real-time terminal observation"
         - "Intelligent pattern detection"
         - "Robot Mode JSON API"
         - "Event-driven automation"
-      tech_stack: ["Rust", "WezTerm API", "SQLite FTS5"]
+      tech_stack: ["Rust", "WezTerm API", "SQLite", "FrankenSearch"]
       use_cases:
         - "Detecting agent rate limits and errors"
         - "Coordinating multi-agent workflows"
         - "Searching across captured terminal sessions"
       language: "Rust"
-      stars: 42
-      cli_name: "wa"
+      stars: 101
+      cli_name: "ft"
+      command_example: "ft robot state"
     dependencies:
       - lang.rust
     installed_check:
       run_as: target_user
-      command: "command -v wa"
-    install:
-      # No install.sh yet - build from source via cargo
-      - |
-        WA_TMP="$(mktemp -d "${TMPDIR:-/tmp}/wa_build.XXXXXX")"
-        trap 'rm -rf "$WA_TMP"' EXIT
-        cd "$WA_TMP"
-        git clone --depth 1 https://github.com/Dicklesworthstone/wezterm_automata.git .
-        cargo build --release -p wa
-        cp target/release/wa ~/.cargo/bin/
-        rm -rf "$WA_TMP"
+      command: "command -v ft"
+    verified_installer:
+      tool: frankenterm
+      runner: bash
+      url: "https://raw.githubusercontent.com/Dicklesworthstone/frankenterm/main/install.sh"
+      args: ["--easy-mode", "--verify"]
+    install: []
     verify:
-      - wa --version || wa --help
+      - ft --version
 
   - id: stack.srps
     description: System Resource Protection Script - ananicy-cpp rules + TUI monitor for responsive dev workstations
@@ -3156,7 +3159,7 @@ modules:
       - xf --help || xf --version
 
   - id: utils.toon_rust
-    description: toon_rust (tru) - Token-optimized notation format for LLM context efficiency
+    description: toon_rust (toon) - Token-optimized object notation for LLM context efficiency
     category: tools
     phase: 9
     run_as: target_user
@@ -3165,36 +3168,37 @@ modules:
     tags: [utility, llm]
     web:
       display_name: "Token-Optimized Notation"
-      short_name: "TRU"
-      tagline: "Compress source code for maximum LLM context efficiency"
+      short_name: "TOON"
+      tagline: "Encode JSON as token-efficient object notation"
       icon: "minimize-2"
       color: "#06B6D4"
       href: "https://github.com/Dicklesworthstone/toon_rust"
       features:
         - "40-70% token count reduction"
-        - "Multi-language support"
-        - "Token count statistics"
-        - "Reversible compression"
+        - "Strict JSON to TOON encoding"
+        - "Streaming decode support"
+        - "Deterministic reversible conversion"
       tech_stack: ["Rust"]
       use_cases:
-        - "Fitting more code context into LLM requests"
-        - "Reducing API costs for large codebases"
-        - "Preparing code for context-limited models"
+        - "Fitting more structured data into LLM requests"
+        - "Reducing token costs for JSON payloads"
+        - "Round-tripping TOON and JSON"
       language: "Rust"
       stars: 156
-      cli_name: "tru"
+      cli_name: "toon"
+      command_example: "toon --encode < data.json"
     dependencies:
       - lang.rust
     installed_check:
       run_as: target_user
-      command: "command -v tru"
+      command: "command -v toon"
     verified_installer:
-      tool: tru
+      tool: toon
       runner: bash
       url: "https://raw.githubusercontent.com/Dicklesworthstone/toon_rust/main/install.sh"
     install: []
     verify:
-      - tru --help || tru --version
+      - toon --version
 
   - id: utils.rano
     description: rano - Network observer for AI CLIs with request/response logging

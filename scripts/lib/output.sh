@@ -3,7 +3,7 @@
 # ACFS Output Formatting Library
 #
 # Provides TOON and JSON output formatting support.
-# Uses tru binary (toon_rust) for TOON encoding.
+# Uses the toon binary (toon_rust) for TOON encoding.
 #
 # Usage:
 #   source "${SCRIPT_DIR}/output.sh"
@@ -32,9 +32,9 @@ _ACFS_OUTPUT_SH_LOADED=1
 # TOON Availability Check
 # ============================================================
 
-# Check if tru binary is available
-_acfs_tru_available() {
-    command -v tru &>/dev/null
+# Check if the toon binary is available
+_acfs_toon_available() {
+    command -v toon &>/dev/null
 }
 
 # ============================================================
@@ -93,13 +93,13 @@ acfs_format_output() {
 
     case "$format" in
         toon|TOON)
-            if _acfs_tru_available; then
+            if _acfs_toon_available; then
                 local toon_data
-                toon_data=$(printf '%s' "$json_data" | tru --encode 2>/dev/null)
+                toon_data=$(printf '%s' "$json_data" | toon --encode 2>/dev/null)
 
                 # If encoding failed (empty output), fall back to JSON
                 if [[ -z "$toon_data" ]]; then
-                    echo "[acfs] Warning: tru encoding failed, falling back to JSON" >&2
+                    echo "[acfs] Warning: toon encoding failed, falling back to JSON" >&2
                     printf '%s\n' "$json_data"
                     return 0
                 fi
@@ -119,7 +119,7 @@ acfs_format_output() {
 
                 printf '%s\n' "$toon_data"
             else
-                echo "[acfs] Warning: tru not found, falling back to JSON" >&2
+                echo "[acfs] Warning: toon not found, falling back to JSON" >&2
                 if [[ "$show_stats" == "true" ]]; then
                     local json_bytes
                     json_bytes=$(printf '%s' "$json_data" | wc -c)
@@ -134,9 +134,9 @@ acfs_format_output() {
                 local json_bytes
                 json_bytes=$(printf '%s' "$json_data" | wc -c)
 
-                if _acfs_tru_available; then
+                if _acfs_toon_available; then
                     local toon_data toon_bytes savings
-                    toon_data=$(printf '%s' "$json_data" | tru --encode 2>/dev/null)
+                    toon_data=$(printf '%s' "$json_data" | toon --encode 2>/dev/null)
                     if [[ -n "$toon_data" ]]; then
                         toon_bytes=$(printf '%s' "$toon_data" | wc -c)
                         if [[ $json_bytes -gt 0 ]]; then
@@ -169,14 +169,14 @@ acfs_format_output() {
 acfs_verify_roundtrip() {
     local original="$1"
 
-    if ! _acfs_tru_available; then
-        echo "[acfs] Error: tru not available for round-trip verification" >&2
+    if ! _acfs_toon_available; then
+        echo "[acfs] Error: toon not available for round-trip verification" >&2
         return 1
     fi
 
     local encoded decoded
-    encoded=$(printf '%s' "$original" | tru --encode 2>/dev/null) || return 1
-    decoded=$(printf '%s' "$encoded" | tru --decode 2>/dev/null) || return 1
+    encoded=$(printf '%s' "$original" | toon --encode 2>/dev/null) || return 1
+    decoded=$(printf '%s' "$encoded" | toon --decode 2>/dev/null) || return 1
 
     # Normalize JSON for comparison (if jq is available)
     if command -v jq &>/dev/null; then

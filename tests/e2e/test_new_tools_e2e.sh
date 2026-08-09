@@ -2,9 +2,9 @@
 # E2E Test: Verify expanded new-tool install surface and doctor integration
 #
 # Tests:
-#   - 7 First-class flywheel tools: br, ms, rch, wa, brenner, dcg, ru
+#   - 7 First-class flywheel tools: br, ms, rch, ft, brenner, dcg, ru
 #   - 6 Newly integrated stack tools: fsfs, sbh, casr, dsr, asb, pcr
-#   - 9 Utility tools: tru, rust_proxy, rano, xf, mdwb, pt, aadc, s2p, caut
+#   - 9 Utility tools: toon, rust_proxy, rano, xf, mdwb, pt, aadc, s2p, caut
 #   - Integration: acfs doctor, flywheel.ts, br primary command
 #
 # Related: bd-g5d5s, bd-c4qox, bd-edpee, bd-xmvz0, bd-iy874, bd-q9auy, bd-abul4
@@ -249,9 +249,9 @@ test_flywheel_tools() {
             "rch --help"
     fi
 
-    # wezterm_automata (wa)
-    log "INFO" "wa" "Testing wezterm_automata (wa)..."
-    test_tool_basic "wezterm_automata" "wa" "false"
+    # FrankenTerm (ft)
+    log "INFO" "ft" "Testing FrankenTerm (ft)..."
+    test_tool_basic "frankenterm" "ft" "true"
 
     # brenner_bot
     log "INFO" "brenner" "Testing brenner_bot..."
@@ -528,9 +528,9 @@ test_utility_tools() {
     log "INFO" "SECTION" "UTILITY TOOLS (9)"
     log "INFO" "SECTION" "========================================"
 
-    # toon_rust (tru)
-    log "INFO" "tru" "Testing toon_rust (tru)..."
-    test_tool_basic "toon_rust" "tru" "false"
+    # toon_rust (toon)
+    log "INFO" "toon" "Testing toon_rust (toon)..."
+    test_tool_basic "toon_rust" "toon" "true"
 
     # rust_proxy
     log "INFO" "rust_proxy" "Testing rust_proxy..."
@@ -642,6 +642,8 @@ test_integration() {
 
     if [[ -f "$flywheel_file" ]]; then
         local missing_tools=()
+        # wa/tru remain stable presentation aliases; manifest-adapter maps them
+        # to stack.frankenterm and utils.toon_rust respectively.
         for tool in br ms rch wa brenner dcg ru tru rust_proxy rano xf mdwb pt aadc s2p caut; do
             if ! command grep -qE "id:\s*[\"']${tool}[\"']" "$flywheel_file"; then
                 missing_tools+=("$tool")
@@ -652,6 +654,21 @@ test_integration() {
             pass "flywheel_ts_tools" "All expected core flywheel.ts tool entries are present"
         else
             fail "flywheel_ts_tools" "Missing tools in flywheel.ts: ${missing_tools[*]}"
+        fi
+
+        local web_lib_dir="${flywheel_file%/flywheel.ts}"
+        local manifest_adapter="$web_lib_dir/manifest-adapter.ts"
+        local generated_tools="$web_lib_dir/generated/manifest-tools.ts"
+        if [[ -f "$manifest_adapter" ]] && [[ -f "$generated_tools" ]] && \
+            grep -qF "wa: 'stack.frankenterm'" "$manifest_adapter" && \
+            grep -qF "tru: 'utils.toon_rust'" "$manifest_adapter" && \
+            grep -qF 'moduleId: "stack.frankenterm"' "$generated_tools" && \
+            grep -qF 'cliName: "ft"' "$generated_tools" && \
+            grep -qF 'moduleId: "utils.toon_rust"' "$generated_tools" && \
+            grep -qF 'cliName: "toon"' "$generated_tools"; then
+            pass "flywheel_manifest_aliases" "Web aliases resolve to canonical ft and toon manifest entries"
+        else
+            fail "flywheel_manifest_aliases" "Web aliases or canonical ft/toon generated entries are stale"
         fi
     else
         skip "flywheel_ts_tools" "flywheel.ts not found at expected locations"

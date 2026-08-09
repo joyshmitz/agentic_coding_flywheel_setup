@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-08-07T18:47:13+00:00
+# checksums.yaml - Auto-generated 2026-08-09T10:25:05+03:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -65,6 +65,10 @@ installers:
   dsr:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/doodlestein_self_releaser/main/install.sh"
     sha256: "aaf8cad08ff3f67b15871293be5718b1217080d1cc8ea2c7eea8d083b0147939"
+
+  frankenterm:
+    url: "https://raw.githubusercontent.com/Dicklesworthstone/frankenterm/main/install.sh"
+    sha256: "a9e0cecebb0a92f69038eecf3de578a24a7d68ee7c6663d6dac36dfd4292e3ac"
 
   fsfs:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/frankensearch/refs/heads/main/install.sh"
@@ -150,7 +154,7 @@ installers:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/system_resource_protection_script/main/install.sh"
     sha256: "1726676cd9fd30632d34378febe7b5faf36c77b9565443fe3bbd0ffc6bf437fa"
 
-  tru:
+  toon:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/toon_rust/main/install.sh"
     sha256: "8cf88d66be8be01228dde13aae85a639156df66e477543571743a015f1253609"
 

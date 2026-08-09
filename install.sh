@@ -7099,6 +7099,14 @@ UNIT_EOF
         try_step "Installing RCH" acfs_run_verified_upstream_script_as_target "rch" "bash" || log_warn "RCH installation may have failed"
     fi
 
+    # FrankenTerm (ft)
+    if binary_installed "ft"; then
+        log_detail "FrankenTerm already installed"
+    else
+        log_detail "Installing FrankenTerm"
+        try_step "Installing FrankenTerm" acfs_run_verified_upstream_script_as_target "frankenterm" "bash" --easy-mode --verify || log_warn "FrankenTerm installation may have failed"
+    fi
+
     # FrankenSearch (fsfs)
     if binary_installed "fsfs"; then
         log_detail "FrankenSearch already installed"
@@ -7205,12 +7213,12 @@ UNIT_EOF
         log_detail "Install DCG first, then run: dcg install"
     fi
 
-    # Token-Optimized Notation (tru)
-    if binary_installed "tru"; then
-        log_detail "TRU already installed"
+    # Token-Optimized Object Notation (toon)
+    if binary_installed "toon"; then
+        log_detail "TOON already installed"
     else
-        log_detail "Installing TRU"
-        try_step "Installing TRU" acfs_run_verified_upstream_script_as_target "tru" "bash" || log_warn "TRU installation may have failed"
+        log_detail "Installing TOON"
+        try_step "Installing TOON" acfs_run_verified_upstream_script_as_target "toon" "bash" || log_warn "TOON installation may have failed"
     fi
 
     # Automated Plan Reviser (apr)

@@ -185,10 +185,51 @@ unset _UPDATE_EARLY_HOME
 # Without this, self-update can't pull new code and deployed scripts go stale.
 _acfs_discover_repo_root() {
     local script_root
+    local script_root_real=""
+    local explicit_root="${ACFS_REPO_ROOT:-}"
+    local explicit_root_real=""
+    local runtime_root=""
+    local runtime_root_real=""
+    local script_is_runtime=false
+    local explicit_is_runtime=false
     script_root="$(cd "$SCRIPT_DIR/../.." && pwd)"
+    script_root_real="$(cd "$script_root" 2>/dev/null && pwd -P)"
+    if [[ -n "$explicit_root" && -d "$explicit_root" ]]; then
+        explicit_root_real="$(cd "$explicit_root" 2>/dev/null && pwd -P)"
+    fi
 
-    # If the script already lives inside a git repo, use it directly
-    if [[ -d "$script_root/.git" ]]; then
+    # A legacy ACFS deployment may itself contain .git even though it is only
+    # the mutable runtime tree. Do not let that shadow the canonical checkout:
+    # its unrelated/dirty history otherwise blocks self-update indefinitely.
+    for runtime_root in \
+        "${ACFS_HOME:-}" \
+        "${ACFS_INITIAL_ENV_HOME:+${ACFS_INITIAL_ENV_HOME%/}/.acfs}" \
+        "${HOME:+${HOME%/}/.acfs}"
+    do
+        [[ -n "$runtime_root" && -d "$runtime_root" ]] || continue
+        runtime_root_real="$(cd "$runtime_root" 2>/dev/null && pwd -P)"
+        if [[ -n "$runtime_root_real" && "$script_root_real" == "$runtime_root_real" ]]; then
+            script_is_runtime=true
+        fi
+        if [[ -n "$runtime_root_real" && "$explicit_root_real" == "$runtime_root_real" ]]; then
+            explicit_is_runtime=true
+        fi
+    done
+
+    # An explicit non-runtime source checkout is authoritative. Reject an
+    # inherited ACFS_REPO_ROOT=~/.acfs: that is the same legacy shadowing
+    # failure this discovery path is designed to repair.
+    if [[ -n "$explicit_root" ]] && \
+       [[ "$explicit_is_runtime" != "true" ]] && \
+       [[ -e "$explicit_root/.git" ]] && \
+       [[ -f "$explicit_root/scripts/lib/update.sh" ]]; then
+        printf '%s\n' "$explicit_root"
+        return 0
+    fi
+
+    # A developer/source checkout remains authoritative when it is not the
+    # deployed runtime tree.
+    if [[ "$script_is_runtime" != "true" ]] && [[ -e "$script_root/.git" ]]; then
         printf '%s\n' "$script_root"
         return 0
     fi
@@ -202,11 +243,19 @@ _acfs_discover_repo_root() {
         candidates+=("$HOME/agentic_coding_flywheel_setup")
     fi
     for candidate in "${candidates[@]}"; do
-        if [[ -d "$candidate/.git" ]] && [[ -f "$candidate/scripts/lib/update.sh" ]]; then
+        if [[ -e "$candidate/.git" ]] && [[ -f "$candidate/scripts/lib/update.sh" ]]; then
             printf '%s\n' "$candidate"
             return 0
         fi
     done
+
+    # If no canonical checkout exists, retain the legacy script-relative
+    # behavior. update_acfs_self will then report that this runtime checkout
+    # cannot be safely advanced instead of inventing a source tree.
+    if [[ -e "$script_root/.git" ]]; then
+        printf '%s\n' "$script_root"
+        return 0
+    fi
 
     # Fallback: use script-relative root. If this is not a git checkout,
     # self-update is skipped unless the caller explicitly opts into bootstrap.
@@ -267,6 +316,9 @@ UPDATE_RUNTIME=true
 UPDATE_STACK=true
 UPDATE_SHELL=true
 UPDATE_SELF=true
+UPDATE_AGENT_GUIDE=true
+UPDATE_MAINTENANCE=true
+ACFS_SELF_UPDATE_FAILED=false
 BOOTSTRAP_SELF_UPDATE=false
 FORCE_MODE=false
 DRY_RUN=false
@@ -398,14 +450,16 @@ update_stack_agent_mail_helpers_loaded() {
     declare -f _stack_agent_mail_cli_path >/dev/null 2>&1 \
         && declare -f _stack_repair_agent_mail_cli_symlink >/dev/null 2>&1 \
         && declare -f _stack_configure_agent_mail_service >/dev/null 2>&1 \
-        && declare -f _stack_wait_for_agent_mail_health >/dev/null 2>&1
+        && declare -f _stack_wait_for_agent_mail_health >/dev/null 2>&1 \
+        && declare -f _stack_refresh_user_service_if_running >/dev/null 2>&1
 }
 
 update_clear_stack_agent_mail_helpers() {
     unset -f _stack_agent_mail_cli_path \
         _stack_repair_agent_mail_cli_symlink \
         _stack_configure_agent_mail_service \
-        _stack_wait_for_agent_mail_health 2>/dev/null || true
+        _stack_wait_for_agent_mail_health \
+        _stack_refresh_user_service_if_running 2>/dev/null || true
 }
 
 update_source_stack_lib() {
@@ -444,6 +498,24 @@ update_source_stack_lib() {
     update_clear_stack_agent_mail_helpers
     echo "Stack library not found in deployed or repo paths" >&2
     return 1
+}
+
+update_refresh_stack_user_service() {
+    local unit="${1:-}"
+    local command_name="${2:-}"
+    local target_user=""
+    local target_home=""
+
+    target_user="$(update_target_user 2>/dev/null || true)"
+    [[ -n "$target_user" ]] || return 1
+    target_home="$(update_target_home "$target_user" 2>/dev/null || true)"
+    [[ -n "$target_home" && "$target_home" == /* && "$target_home" != "/" ]] || return 1
+    update_source_stack_lib || return 1
+
+    ACFS_STACK_TRUST_TARGET_HOME=true \
+        TARGET_USER="$target_user" \
+        TARGET_HOME="$target_home" \
+        _stack_refresh_user_service_if_running "$unit" "$command_name"
 }
 
 update_preferred_user_bin_dir() {
@@ -920,7 +992,7 @@ get_version() {
                 version="unknown"
             fi
             ;;
-        ubs|bv|cass|cm|caam|slb|ru|dcg|apr|pt|xf|jfp|ms|br|rch|giil|csctf|srps|tru|rano|mdwb|s2p|brenner|fsfs|sbh|casr|dsr|asb|aadc|rust_proxy)
+        ubs|bv|cass|cm|caam|slb|ru|dcg|apr|pt|xf|jfp|ms|br|rch|giil|csctf|srps|toon|ft|rano|mdwb|s2p|brenner|fsfs|sbh|casr|dsr|asb|aadc|rust_proxy)
             tool_bin="$(update_binary_path "$tool" 2>/dev/null || true)"
             if [[ -n "$tool_bin" ]]; then
                 version=$("$tool_bin" --version 2>/dev/null | head -1 || echo "unknown")
@@ -3445,8 +3517,8 @@ update_sync_known_installer_urls_from_checksums() {
 update_required_checksum_tools() {
     printf '%s\n' \
         antigravity apr asb atuin br brenner_bot bun bv caam casr cass claude cm csctf dcg dsr \
-        fsfs gemini_patch giil jfp mcp_agent_mail mdwb ms ntm nvm ohmyzsh opencode \
-        pcr pt rano rch ru rust s2p sbh slb srps tru ubs uv xf zoxide
+        frankenterm fsfs gemini_patch giil jfp mcp_agent_mail mdwb ms ntm nvm ohmyzsh opencode \
+        pcr pt rano rch ru rust s2p sbh slb srps toon ubs uv xf zoxide
 }
 
 update_checksums_file_has_required_metadata() {
@@ -4709,10 +4781,17 @@ update_acfs_self() {
                 | awk '{print $2}' | paste -sd, - 2>/dev/null)"
             log_item "warn" "ACFS self-update" \
                 "BLOCKED: ${_behind_count} commits behind and not updating. Locally modified: ${_dirty_files:-unknown}"
-            log_item "warn" "ACFS self-update" \
-                "fix: cd $ACFS_REPO_ROOT && git stash push -m acfs-local && git pull --ff-only origin $remote_branch"
+            if git -C "$ACFS_REPO_ROOT" merge-base "$local_head" "$remote_head" >/dev/null 2>&1; then
+                log_item "warn" "ACFS self-update" \
+                    "fix canonical checkout: preserve/commit or stash its tracked work, then run git pull --ff-only origin $remote_branch"
+            else
+                log_item "warn" "ACFS self-update" \
+                    "this checkout has no shared history with origin/$remote_branch; do not stash/pull it as an ACFS source checkout"
+            fi
             log_to_file "Self-update skipped: ${_behind_count} commits behind; tracked modifications: ${_dirty_files:-unknown}"
             _acfs_refresh_security_from_fetched_remote "$remote_branch" true
+            ACFS_SELF_UPDATE_FAILED=true
+            log_item "fail" "ACFS self-update" "canonical checkout did not advance"
             return 0
         fi
     fi
@@ -4724,6 +4803,8 @@ update_acfs_self() {
             log_item "warn" "ACFS self-update" "ff-only pull failed (branch divergence?); refreshing fetched runtime files"
             log_to_file "Self-update skipped: git pull --ff-only failed — refreshing fetched runtime files"
             _acfs_refresh_security_from_fetched_remote "$remote_branch" true
+            ACFS_SELF_UPDATE_FAILED=true
+            log_item "fail" "ACFS self-update" "canonical checkout did not advance"
             return 0
         fi
     fi
@@ -4974,26 +5055,31 @@ fix_apt_issues() {
 
     # Fix interrupted dpkg (check if there are pending updates)
     if ls /var/lib/dpkg/updates/* &>/dev/null; then
-        local -a sudo_cmd=()
-        if ! update_sudo_prefix sudo_cmd; then
-            update_finish_cmd_fail "dpkg repair" "sudo unavailable for non-root dpkg repair"
-            return 1
-        fi
-        log_item "run" "dpkg repair"
-        log_to_file "Running: $(update_sudo_display sudo_cmd)dpkg --configure -a"
-        local dpkg_output
-        local dpkg_exit=0
-        if dpkg_output=$("${sudo_cmd[@]}" env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a NEEDRESTART_SUSPEND=1 dpkg --configure -a 2>&1); then
-            :
+        if update_is_read_only_mode; then
+            log_item "skip" "dpkg repair" "dry-run: would run dpkg --configure -a"
+            log_to_file "Dry-run: skipped dpkg --configure -a"
         else
-            dpkg_exit=$?
+            local -a sudo_cmd=()
+            if ! update_sudo_prefix sudo_cmd; then
+                update_finish_cmd_fail "dpkg repair" "sudo unavailable for non-root dpkg repair"
+                return 1
+            fi
+            log_item "run" "dpkg repair"
+            log_to_file "Running: $(update_sudo_display sudo_cmd)dpkg --configure -a"
+            local dpkg_output
+            local dpkg_exit=0
+            if dpkg_output=$("${sudo_cmd[@]}" env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a NEEDRESTART_SUSPEND=1 dpkg --configure -a 2>&1); then
+                :
+            else
+                dpkg_exit=$?
+            fi
+            [[ -n "$dpkg_output" ]] && log_to_file "dpkg output: $dpkg_output"
+            if [[ $dpkg_exit -ne 0 ]]; then
+                update_finish_cmd_fail "dpkg repair" "dpkg --configure -a failed (exit $dpkg_exit)"
+                return 1
+            fi
+            update_finish_cmd_ok "dpkg repair" "configured interrupted packages"
         fi
-        [[ -n "$dpkg_output" ]] && log_to_file "dpkg output: $dpkg_output"
-        if [[ $dpkg_exit -ne 0 ]]; then
-            update_finish_cmd_fail "dpkg repair" "dpkg --configure -a failed (exit $dpkg_exit)"
-            return 1
-        fi
-        update_finish_cmd_ok "dpkg repair" "configured interrupted packages"
     fi
 
     # Check for broken dependencies or packages needing reinstall
@@ -5013,6 +5099,12 @@ fix_apt_issues() {
     fi
 
     if [[ "$needs_fix" == "true" ]]; then
+        if update_is_read_only_mode; then
+            log_item "skip" "apt repair" "dry-run: would run apt-get -f install -y"
+            log_to_file "Dry-run: skipped apt-get -f install -y"
+            return 0
+        fi
+
         log_item "run" "apt repair"
         local -a sudo_cmd=()
         if ! update_sudo_prefix sudo_cmd; then
@@ -6012,10 +6104,12 @@ update_stack() {
     # TMPDIR; give it an ACFS-owned target-user temp root so stale shared
     # /tmp or /data/tmp locks cannot make only CASS fail during `acfs update`.
     update_run_verified_installer_with_target_tmpdir_or_existing_on_transient "CASS" cass cass cass --easy-mode --verify || true
+    run_cmd "CASS service refresh" update_refresh_stack_user_service cass-index-watch.service cass
 
     # CASS Memory - always install/update, but do not trust installer exit 0
     # unless the CLI is still present and versionable afterward.
     update_run_verified_installer_or_existing_on_transient "CASS Memory" cm cm cm --easy-mode --verify || true
+    run_cmd "CASS Memory service refresh" update_refresh_stack_user_service cm-serve.service cm
 
     # CAAM - always install/update
     run_cmd "CAAM" update_run_verified_installer caam
@@ -6042,6 +6136,10 @@ update_stack() {
     # RCH (Remote Compilation Helper) - always install/update and keep daemon/fleet setup active
     run_cmd "RCH" update_run_verified_installer rch --easy-mode
 
+    # FrankenTerm - install/update the current ft binary. The legacy wa module
+    # was renamed upstream and its source-build recipe no longer exists.
+    update_run_verified_installer_or_existing_on_transient "FrankenTerm" frankenterm ft ft --easy-mode --verify || true
+
     # GIIL (Google Image Inline Linker) - always install/update
     run_cmd "GIIL" update_run_verified_installer giil
 
@@ -6051,8 +6149,8 @@ update_stack() {
     # SRPS (System Resource Protection Script) - always install/update
     run_cmd "SRPS" update_run_verified_installer srps
 
-    # TRU (Toon Rust) - always install/update
-    run_cmd "TRU" update_run_verified_installer tru
+    # TOON Rust - installer and CLI are both named toon.
+    update_run_verified_installer_or_existing_on_transient "TOON" toon toon toon || true
 
     # RANO - always install/update
     run_cmd "RANO" update_run_verified_installer rano
@@ -6584,6 +6682,7 @@ USAGE:
   acfs update [options]    (if acfs wrapper is installed)
 
 CATEGORY OPTIONS (select what to update):
+  --self-only        Only update and redeploy ACFS itself
   --apt-only         Only update system packages (apt)
   --agents-only      Only update coding agents (Claude, Codex, Antigravity)
   --cloud-only       Only update cloud CLIs (Wrangler, Supabase, Vercel, gh, gcloud)
@@ -6629,6 +6728,9 @@ EXAMPLES:
   # Only update Dicklesworthstone stack tools
   acfs-update --stack-only
 
+  # Repair/redeploy ACFS without updating tools or the root agent guide
+  acfs-update --self-only
+
   # Update everything except apt (faster)
   acfs-update --no-apt
 
@@ -6662,7 +6764,8 @@ WHAT EACH CATEGORY UPDATES:
   stack:    Dicklesworthstone stack tools (verified upstream installers)
             Installs missing tools and updates existing ones automatically:
             NTM, Agent Mail, Meta Skill, APR, pt, xf, UBS, BV, BR, CASS, CM,
-            CAAM, SLB, RU, DCG, RCH, GIIL, CSCTF, SRPS, TRU, RANO, MDWB, S2P, Brenner Bot
+            CAAM, SLB, RU, DCG, RCH, FrankenTerm, GIIL, CSCTF, SRPS, TOON,
+            RANO, MDWB, S2P, Brenner Bot
             Exception: JFP requires subscription, only updated if already installed
 
 LOGS:
@@ -6713,58 +6816,88 @@ main() {
     # Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
+            --self-only)
+                UPDATE_SELF=true
+                UPDATE_APT=false
+                UPDATE_AGENTS=false
+                UPDATE_CLOUD=false
+                UPDATE_RUNTIME=false
+                UPDATE_STACK=false
+                UPDATE_SHELL=false
+                UPDATE_AGENT_GUIDE=false
+                UPDATE_MAINTENANCE=false
+                shift
+                ;;
             --apt-only)
+                UPDATE_SELF=false
                 UPDATE_APT=true
                 UPDATE_AGENTS=false
                 UPDATE_CLOUD=false
                 UPDATE_RUNTIME=false
                 UPDATE_STACK=false
                 UPDATE_SHELL=false
+                UPDATE_AGENT_GUIDE=false
+                UPDATE_MAINTENANCE=false
                 shift
                 ;;
             --agents-only)
+                UPDATE_SELF=false
                 UPDATE_APT=false
                 UPDATE_AGENTS=true
                 UPDATE_CLOUD=false
                 UPDATE_RUNTIME=false
                 UPDATE_STACK=false
                 UPDATE_SHELL=false
+                UPDATE_AGENT_GUIDE=false
+                UPDATE_MAINTENANCE=false
                 shift
                 ;;
             --cloud-only)
+                UPDATE_SELF=false
                 UPDATE_APT=false
                 UPDATE_AGENTS=false
                 UPDATE_CLOUD=true
                 UPDATE_RUNTIME=false
                 UPDATE_STACK=false
                 UPDATE_SHELL=false
+                UPDATE_AGENT_GUIDE=false
+                UPDATE_MAINTENANCE=false
                 shift
                 ;;
             --shell-only)
+                UPDATE_SELF=false
                 UPDATE_APT=false
                 UPDATE_AGENTS=false
                 UPDATE_CLOUD=false
                 UPDATE_RUNTIME=false
                 UPDATE_STACK=false
                 UPDATE_SHELL=true
+                UPDATE_AGENT_GUIDE=false
+                UPDATE_MAINTENANCE=false
                 shift
                 ;;
             --runtime-only)
+                UPDATE_SELF=false
                 UPDATE_APT=false
                 UPDATE_AGENTS=false
                 UPDATE_CLOUD=false
                 UPDATE_RUNTIME=true
                 UPDATE_STACK=false
                 UPDATE_SHELL=false
+                UPDATE_AGENT_GUIDE=false
+                UPDATE_MAINTENANCE=false
                 shift
                 ;;
             --stack-only)
+                UPDATE_SELF=false
                 UPDATE_APT=false
                 UPDATE_AGENTS=false
                 UPDATE_CLOUD=false
                 UPDATE_RUNTIME=false
                 UPDATE_STACK=true
                 UPDATE_SHELL=false
+                UPDATE_AGENT_GUIDE=false
+                UPDATE_MAINTENANCE=false
                 shift
                 ;;
             --stack)
@@ -6860,7 +6993,9 @@ main() {
     # Self-update ACFS before touching any other components.
     # This runs BEFORE init_logging so we get the latest update logic ASAP.
     # Pass original args so re-exec (if update.sh changed) uses the same arguments.
-    update_acfs_self "${ACFS_UPDATE_ARGS[@]}"
+    if [[ "$UPDATE_SELF" == "true" ]]; then
+        update_acfs_self "${ACFS_UPDATE_ARGS[@]}"
+    fi
 
     # Initialize logging
     init_logging
@@ -6885,12 +7020,14 @@ main() {
     # Ensure jq is available (issue #180): on minimal Ubuntu installs jq may
     # not be present, but later update steps (DCG cleanup, state management)
     # depend on it. Keep dry-run truly read-only by skipping the install there.
-    update_ensure_jq_available
+    if [[ "$UPDATE_MAINTENANCE" == "true" ]]; then
+        update_ensure_jq_available
 
-    # Clean up legacy artifacts from previous versions
-    cleanup_legacy_git_safety_guard
-    cleanup_legacy_br_alias
-    cleanup_legacy_bv_alias
+        # Clean up legacy artifacts from previous versions
+        cleanup_legacy_git_safety_guard
+        cleanup_legacy_br_alias
+        cleanup_legacy_bv_alias
+    fi
 
     # Run updates
     update_apt
@@ -6903,13 +7040,15 @@ main() {
     update_go
     update_shell
     update_stack
-    update_root_agents_md
+    if [[ "$UPDATE_AGENT_GUIDE" == "true" ]]; then
+        update_root_agents_md
+    fi
 
     # Summary
     print_summary
 
     # Exit code
-    if [[ $FAIL_COUNT -gt 0 ]]; then
+    if [[ "$ACFS_SELF_UPDATE_FAILED" == "true" ]] || [[ $FAIL_COUNT -gt 0 ]]; then
         exit 1
     fi
     exit 0

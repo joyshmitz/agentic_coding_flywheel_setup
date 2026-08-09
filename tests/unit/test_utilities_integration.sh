@@ -3,7 +3,7 @@
 # Tests that all utility binaries exist and basic operations succeed
 #
 # Utilities tested:
-#   tru (toon_rust), rust_proxy, rano, xf, mdwb, pt, aadc, s2p, caut
+#   toon (toon_rust), rust_proxy, rano, xf, mdwb, pt, aadc, s2p, caut
 #
 # Related: bead bd-1ega.6.10
 
@@ -85,7 +85,8 @@ test_utility() {
     local version_output
     if version_output=$("$binary" --version 2>&1); then
         pass "${binary}_version" "$binary version: ${version_output:0:80}"
-    elif version_output=$("$binary" --help 2>&1 | head -1); then
+    elif version_output=$("$binary" --help 2>&1); then
+        version_output="${version_output%%$'\n'*}"
         pass "${binary}_version" "$binary help works: ${version_output:0:80}"
     else
         fail "${binary}_version" "$binary --version and --help both failed"
@@ -96,12 +97,12 @@ test_utility() {
 # Utility-specific tests
 # ============================================================
 
-test_tru() {
+test_toon() {
     log ""
     log "========================================"
-    log "Testing: toon_rust (tru)"
+    log "Testing: toon_rust (toon)"
     log "========================================"
-    test_utility "toon_rust" "tru" "1" "Token-optimized notation format"
+    test_utility "toon_rust" "toon" "1" "Token-optimized notation format"
 }
 
 test_rust_proxy() {
@@ -233,7 +234,7 @@ main() {
     log "========================================"
 
     # Run all utility tests
-    test_tru
+    test_toon
     test_rust_proxy
     test_rano
     test_xf

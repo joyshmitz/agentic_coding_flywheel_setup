@@ -1112,7 +1112,7 @@ INSTALL_UTILS_XF
     log_success "utils.xf installed"
 }
 
-# toon_rust (tru) - Token-optimized notation format for LLM context efficiency
+# toon_rust (toon) - Token-optimized object notation for LLM context efficiency
 install_utils_toon_rust() {
     local module_id="utils.toon_rust"
     acfs_require_contract "module:${module_id}" || return 1
@@ -1135,7 +1135,7 @@ install_utils_toon_rust() {
                 # Check if KNOWN_INSTALLERS is available as an associative array (declare -A)
                 known_installers_decl="$(declare -p KNOWN_INSTALLERS 2>/dev/null || true)"
                 if [[ "$known_installers_decl" == declare\ -A* ]]; then
-                    local tool="tru"
+                    local tool="toon"
                     local url=""
                     local expected_sha256=""
 
@@ -1187,15 +1187,15 @@ install_utils_toon_rust() {
 
     # Verify
     if [[ "${DRY_RUN:-false}" = "true" ]]; then
-        log_info "dry-run: verify: tru --help || tru --version (target_user)"
+        log_info "dry-run: verify: toon --version (target_user)"
     else
         if ! run_as_target_shell <<'INSTALL_UTILS_TOON_RUST'
-tru --help || tru --version
+toon --version
 INSTALL_UTILS_TOON_RUST
         then
-            log_warn "utils.toon_rust: verify failed: tru --help || tru --version"
+            log_warn "utils.toon_rust: verify failed: toon --version"
             if type -t record_skipped_tool >/dev/null 2>&1; then
-              record_skipped_tool "utils.toon_rust" "verify failed: tru --help || tru --version"
+              record_skipped_tool "utils.toon_rust" "verify failed: toon --version"
             elif type -t state_tool_skip >/dev/null 2>&1; then
               state_tool_skip "utils.toon_rust"
             fi

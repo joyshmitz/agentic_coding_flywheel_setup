@@ -84,7 +84,7 @@ result=$(acfs_format_output "$test_json" "json" "false")
 # Test 7: acfs_format_output TOON
 echo ""
 echo "Test 7: acfs_format_output TOON"
-if command -v tru &>/dev/null; then
+if command -v toon &>/dev/null; then
     result=$(acfs_format_output "$test_json" "toon" "false")
     if [[ "${result:0:1}" != "{" ]]; then
         pass "TOON encoding"
@@ -92,13 +92,13 @@ if command -v tru &>/dev/null; then
         fail "TOON looks like JSON"
     fi
 else
-    skip "tru not available"
+    skip "toon not available"
 fi
 
 # Test 8: Round-trip verification
 echo ""
 echo "Test 8: Round-trip verification"
-if command -v tru &>/dev/null; then
+if command -v toon &>/dev/null; then
     test_config='{"flywheel":{"agents":["cc","cod"],"session":"main"}}'
     if acfs_verify_roundtrip "$test_config"; then
         pass "Round-trip preserves data"
@@ -106,13 +106,13 @@ if command -v tru &>/dev/null; then
         fail "Round-trip mismatch"
     fi
 else
-    skip "tru not available"
+    skip "toon not available"
 fi
 
 # Test 9: Stats output to stderr (TOON mode)
 echo ""
 echo "Test 9: Stats output (TOON mode)"
-if command -v tru &>/dev/null; then
+if command -v toon &>/dev/null; then
     stderr=$(acfs_format_output "$test_json" "toon" "true" 2>&1 >/dev/null)
     if echo "$stderr" | command grep -q "bytes"; then
         pass "Stats to stderr (TOON)"
@@ -120,13 +120,13 @@ if command -v tru &>/dev/null; then
         fail "Stats missing (TOON)"
     fi
 else
-    skip "tru not available"
+    skip "toon not available"
 fi
 
 # Test 10: Stats output to stderr (JSON mode with potential savings)
 echo ""
 echo "Test 10: Stats output (JSON mode)"
-if command -v tru &>/dev/null; then
+if command -v toon &>/dev/null; then
     stderr=$(acfs_format_output "$test_json" "json" "true" 2>&1 >/dev/null)
     if echo "$stderr" | command grep -q "potential savings"; then
         pass "Stats to stderr (JSON)"
@@ -134,23 +134,23 @@ if command -v tru &>/dev/null; then
         fail "Stats missing (JSON)"
     fi
 else
-    skip "tru not available"
+    skip "toon not available"
 fi
 
-# Test 11: tru availability check
+# Test 11: toon availability check
 echo ""
-echo "Test 11: _acfs_tru_available check"
-if command -v tru &>/dev/null; then
-    if _acfs_tru_available; then
-        pass "_acfs_tru_available returns true when tru exists"
+echo "Test 11: _acfs_toon_available check"
+if command -v toon &>/dev/null; then
+    if _acfs_toon_available; then
+        pass "_acfs_toon_available returns true when toon exists"
     else
-        fail "_acfs_tru_available returned false when tru exists"
+        fail "_acfs_toon_available returned false when toon exists"
     fi
 else
-    if ! _acfs_tru_available; then
-        pass "_acfs_tru_available returns false when tru missing"
+    if ! _acfs_toon_available; then
+        pass "_acfs_toon_available returns false when toon missing"
     else
-        fail "_acfs_tru_available returned true when tru missing"
+        fail "_acfs_toon_available returned true when toon missing"
     fi
 fi
 

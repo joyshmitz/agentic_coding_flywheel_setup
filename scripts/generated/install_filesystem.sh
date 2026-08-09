@@ -570,7 +570,7 @@ if curl --help all 2>/dev/null | grep -q -- '--proto'; then
 fi
 mkdir -p "$target_home/.acfs/docs"
 curl "${CURL_ARGS[@]}" -o "$target_home/.acfs/docs/AGENTS.workspace.md" "${ACFS_RAW}/acfs/AGENTS.md" || true
-chown -R "${TARGET_USER:-ubuntu}:${TARGET_USER:-ubuntu}" "$target_home/.acfs/docs" 2>/dev/null || true
+chown -hR "${TARGET_USER:-ubuntu}:${TARGET_USER:-ubuntu}" "$target_home/.acfs/docs" 2>/dev/null || true
 
 # Seed /data/projects/AGENTS.md ONLY when absent. An existing file
 # may contain user-authored rules and is never overwritten; use

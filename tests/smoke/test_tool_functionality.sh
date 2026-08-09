@@ -141,31 +141,22 @@ test_ms_functionality() {
     fi
 }
 
-# wezterm_automata (wa) - check daemon status
-test_wa_functionality() {
-    log "Testing wa (wezterm_automata) functionality..."
-    if ! command -v wa >/dev/null 2>&1; then
-        skip "wa not installed, skipping functionality test"
+# FrankenTerm (ft) - check the non-mutating version path
+test_ft_functionality() {
+    log "Testing ft (FrankenTerm) functionality..."
+    if ! command -v ft >/dev/null 2>&1; then
+        skip "ft not installed, skipping functionality test"
         return
     fi
 
-    # Check daemon status (should work even if daemon not running)
     local output
-    output=$(wa daemon status 2>&1)
+    output=$(ft version 2>&1)
     local exit_code=$?
 
-    # Daemon status should report something meaningful
-    if [[ "$output" =~ (running|stopped|not.*running|status) ]]; then
-        pass "wa daemon status reports: $(echo "$output" | head -1)"
-    elif [[ $exit_code -eq 0 ]]; then
-        pass "wa daemon status completed"
+    if [[ $exit_code -eq 0 ]] && [[ "$output" =~ (FrankenTerm|ft|version|Version) ]]; then
+        pass "ft version reports: $(echo "$output" | head -1)"
     else
-        # Even error is acceptable if it mentions daemon
-        if [[ "$output" =~ daemon ]]; then
-            pass "wa daemon status responded (daemon may not be running)"
-        else
-            fail "wa daemon status failed unexpectedly: $output"
-        fi
+        fail "ft version failed unexpectedly: $output"
     fi
 }
 
@@ -462,7 +453,7 @@ main() {
     log "--- Core Tools ---"
     test_br_functionality
     test_ms_functionality
-    test_wa_functionality
+    test_ft_functionality
     test_rch_functionality
     test_brenner_functionality
     test_bv_functionality

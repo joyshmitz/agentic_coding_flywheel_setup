@@ -223,6 +223,27 @@ EOF
     assert_output "0.11.6"
 }
 
+@test "get_version: detects toon and FrankenTerm from target local bin" {
+    mkdir -p "$HOME/.local/bin"
+    cat > "$HOME/.local/bin/toon" <<'EOF'
+#!/usr/bin/env bash
+echo "toon 0.2.3"
+EOF
+    cat > "$HOME/.local/bin/ft" <<'EOF'
+#!/usr/bin/env bash
+echo "ft 0.13.0"
+EOF
+    chmod +x "$HOME/.local/bin/toon" "$HOME/.local/bin/ft"
+
+    run get_version "toon"
+    assert_success
+    assert_output "toon 0.2.3"
+
+    run get_version "ft"
+    assert_success
+    assert_output "ft 0.13.0"
+}
+
 @test "get_version: handles unknown" {
     run get_version "nonexistent"
     assert_output "unknown"
@@ -1405,6 +1426,15 @@ EOF
     run grep -F 'update_run_verified_installer_or_existing_on_transient "Meta Skill" ms ms ms --easy-mode' "$update"
     assert_success
 
+    run grep -F 'update_run_verified_installer_or_existing_on_transient "FrankenTerm" frankenterm ft ft --easy-mode --verify || true' "$update"
+    assert_success
+
+    run grep -F 'update_run_verified_installer_or_existing_on_transient "TOON" toon toon toon || true' "$update"
+    assert_success
+
+    run grep -F 'run_cmd "TRU" update_run_verified_installer tru' "$update"
+    assert_failure
+
     run grep -F '"$target_home/.atuin/bin/atuin"' "$update"
     assert_success
 
@@ -1473,6 +1503,8 @@ EOF
         esac
     }
     update_run_verified_installer_with_env() { return 0; }
+    update_run_verified_installer_or_existing_on_transient() { return 0; }
+    update_refresh_stack_user_service() { return 0; }
     update_run_slb_source_install() { return 0; }
     update_run_fsfs_installer() { return 0; }
 
@@ -1521,6 +1553,7 @@ EOF
         return 0
     }
     update_run_verified_installer_or_existing_on_transient() { return 0; }
+    update_refresh_stack_user_service() { return 0; }
     update_run_verified_installer_with_env() { return 0; }
     update_run_slb_source_install() { return 0; }
     update_run_fsfs_installer() { return 0; }
@@ -1569,6 +1602,8 @@ EOF
     capture_version_after() { return 1; }
     update_binary_exists() { return 1; }
     update_run_verified_installer() { return 0; }
+    update_run_verified_installer_or_existing_on_transient() { return 0; }
+    update_refresh_stack_user_service() { return 0; }
     update_run_verified_installer_with_env() { return 0; }
     update_run_slb_source_install() { return 0; }
     update_run_fsfs_installer() { return 0; }
@@ -1632,6 +1667,7 @@ EOF
         printf 'existing:%s\n' "$*" >> "$calls_file"
         return 1
     }
+    update_refresh_stack_user_service() { return 0; }
     update_run_slb_source_install() { return 0; }
     update_run_fsfs_installer() { return 0; }
 
@@ -2042,6 +2078,150 @@ EOF
     assert_output --partial "apt-get -f install failed (exit 42)"
     run grep -F "apt-get -f output: fix install failed" "$UPDATE_LOG_FILE"
     assert_success
+}
+
+@test "fix_apt_issues: dry-run reports repairs without invoking mutating commands" {
+    init_stub_dir
+    export PATH="$STUB_DIR:$PATH"
+    QUIET=true
+    VERBOSE=false
+    DRY_RUN=true
+    ABORT_ON_FAILURE=false
+    UPDATE_LOG_FILE="$HOME/update.log"
+    SUCCESS_COUNT=0
+    FAIL_COUNT=0
+    local mutation_log="$HOME/mutations.log"
+
+    cat > "$STUB_DIR/ls" <<'EOF'
+#!/usr/bin/env bash
+case "$*" in
+  /var/lib/dpkg/updates/*) exit 0 ;;
+  *) exit 1 ;;
+esac
+EOF
+    chmod +x "$STUB_DIR/ls"
+
+    cat > "$STUB_DIR/dpkg" <<EOF
+#!/usr/bin/env bash
+case "\${1:-}" in
+  --configure) printf 'dpkg-configure\n' >> "$mutation_log" ;;
+  -l) printf 'ii  healthy-package  1.0  amd64  fixture\n' ;;
+esac
+exit 0
+EOF
+    chmod +x "$STUB_DIR/dpkg"
+
+    cat > "$STUB_DIR/apt-get" <<EOF
+#!/usr/bin/env bash
+case "\${1:-}" in
+  check) exit 1 ;;
+  -f) printf 'apt-fix\n' >> "$mutation_log" ;;
+esac
+exit 0
+EOF
+    chmod +x "$STUB_DIR/apt-get"
+
+    update_sudo_prefix() {
+        printf 'sudo-prefix\n' >> "$mutation_log"
+        return 1
+    }
+
+    run fix_apt_issues
+
+    assert_success
+    assert_output --partial "dry-run: would run dpkg --configure -a"
+    assert_output --partial "dry-run: would run apt-get -f install -y"
+    [[ ! -s "$mutation_log" ]] || fail "dry-run invoked a mutating apt/dpkg path"
+}
+
+@test "main: self-only redeploys ACFS without running tool categories or agent guide" {
+    local calls="$HOME/self-only.calls"
+    : > "$calls"
+
+    ensure_path() { :; }
+    update_acfs_self() { printf 'self\n' >> "$calls"; }
+    init_logging() { :; }
+    update_ensure_jq_available() { printf 'maintenance-jq\n' >> "$calls"; }
+    cleanup_legacy_git_safety_guard() { printf 'maintenance-git\n' >> "$calls"; }
+    cleanup_legacy_br_alias() { printf 'maintenance-br\n' >> "$calls"; }
+    cleanup_legacy_bv_alias() { printf 'maintenance-bv\n' >> "$calls"; }
+    update_apt() { [[ "$UPDATE_APT" != "true" ]] || printf 'apt\n' >> "$calls"; }
+    update_bun() { [[ "$UPDATE_RUNTIME" != "true" ]] || printf 'bun\n' >> "$calls"; }
+    update_agents() { [[ "$UPDATE_AGENTS" != "true" ]] || printf 'agents\n' >> "$calls"; }
+    update_cloud() { [[ "$UPDATE_CLOUD" != "true" ]] || printf 'cloud\n' >> "$calls"; }
+    update_rust() { [[ "$UPDATE_RUNTIME" != "true" ]] || printf 'rust\n' >> "$calls"; }
+    update_cargo_tools() { [[ "$UPDATE_RUNTIME" != "true" ]] || printf 'cargo\n' >> "$calls"; }
+    update_uv() { [[ "$UPDATE_RUNTIME" != "true" ]] || printf 'uv\n' >> "$calls"; }
+    update_go() { [[ "$UPDATE_RUNTIME" != "true" ]] || printf 'go\n' >> "$calls"; }
+    update_shell() { [[ "$UPDATE_SHELL" != "true" ]] || printf 'shell\n' >> "$calls"; }
+    update_stack() { [[ "$UPDATE_STACK" != "true" ]] || printf 'stack\n' >> "$calls"; }
+    update_root_agents_md() { printf 'agent-guide\n' >> "$calls"; }
+    print_summary() { :; }
+
+    run main --self-only --yes --quiet
+
+    assert_success
+    run cat "$calls"
+    assert_success
+    assert_output "self"
+}
+
+@test "main: stack-only runs only the stack category" {
+    local calls="$HOME/stack-only.calls"
+    : > "$calls"
+
+    ensure_path() { :; }
+    update_acfs_self() { printf 'self\n' >> "$calls"; }
+    init_logging() { :; }
+    update_ensure_jq_available() { printf 'maintenance-jq\n' >> "$calls"; }
+    cleanup_legacy_git_safety_guard() { printf 'maintenance-git\n' >> "$calls"; }
+    cleanup_legacy_br_alias() { printf 'maintenance-br\n' >> "$calls"; }
+    cleanup_legacy_bv_alias() { printf 'maintenance-bv\n' >> "$calls"; }
+    update_apt() { [[ "$UPDATE_APT" != "true" ]] || printf 'apt\n' >> "$calls"; }
+    update_bun() { [[ "$UPDATE_RUNTIME" != "true" ]] || printf 'bun\n' >> "$calls"; }
+    update_agents() { [[ "$UPDATE_AGENTS" != "true" ]] || printf 'agents\n' >> "$calls"; }
+    update_cloud() { [[ "$UPDATE_CLOUD" != "true" ]] || printf 'cloud\n' >> "$calls"; }
+    update_rust() { [[ "$UPDATE_RUNTIME" != "true" ]] || printf 'rust\n' >> "$calls"; }
+    update_cargo_tools() { [[ "$UPDATE_RUNTIME" != "true" ]] || printf 'cargo\n' >> "$calls"; }
+    update_uv() { [[ "$UPDATE_RUNTIME" != "true" ]] || printf 'uv\n' >> "$calls"; }
+    update_go() { [[ "$UPDATE_RUNTIME" != "true" ]] || printf 'go\n' >> "$calls"; }
+    update_shell() { [[ "$UPDATE_SHELL" != "true" ]] || printf 'shell\n' >> "$calls"; }
+    update_stack() { [[ "$UPDATE_STACK" != "true" ]] || printf 'stack\n' >> "$calls"; }
+    update_root_agents_md() { printf 'agent-guide\n' >> "$calls"; }
+    print_summary() { :; }
+
+    run main --stack-only --yes --quiet
+
+    assert_success
+    run cat "$calls"
+    assert_success
+    assert_output "stack"
+}
+
+@test "main: blocked self-update forces a failing final status" {
+    ensure_path() { :; }
+    update_acfs_self() { ACFS_SELF_UPDATE_FAILED=true; }
+    init_logging() { :; }
+    update_ensure_jq_available() { :; }
+    cleanup_legacy_git_safety_guard() { :; }
+    cleanup_legacy_br_alias() { :; }
+    cleanup_legacy_bv_alias() { :; }
+    update_apt() { :; }
+    update_bun() { :; }
+    update_agents() { :; }
+    update_cloud() { :; }
+    update_rust() { :; }
+    update_cargo_tools() { :; }
+    update_uv() { :; }
+    update_go() { :; }
+    update_shell() { :; }
+    update_stack() { :; }
+    update_root_agents_md() { :; }
+    print_summary() { :; }
+
+    run main --yes --quiet
+
+    assert_failure
 }
 
 @test "update_apt: skips apt update and upgrade when repair fails" {
@@ -6965,6 +7145,46 @@ EOF
     [[ -f "$target_home/.waited-agent-mail-health" ]]
 }
 
+@test "stack service refresh restarts active services and proves current executable" {
+    source_lib "stack"
+    local service_cmd_file="$BATS_TEST_TMPDIR/service-refresh.cmd"
+
+    _stack_run_as_user() {
+        printf '%s\n' "$1" > "$service_cmd_file"
+    }
+
+    run _stack_refresh_user_service_if_running "cass-index-watch.service" "cass"
+    assert_success
+    run grep -F 'systemctl --user is-active --quiet "$unit"' "$service_cmd_file"
+    assert_success
+    run grep -F 'systemctl --user restart "$unit"' "$service_cmd_file"
+    assert_success
+    run grep -F 'readlink -f "/proc/$main_pid/exe"' "$service_cmd_file"
+    assert_success
+    run grep -F '[[ "$process_real" == "$expected_real" ]]' "$service_cmd_file"
+    assert_success
+}
+
+@test "Agent Mail service configuration always restarts and proves current executable" {
+    source_lib "stack"
+    local service_cmd_file="$BATS_TEST_TMPDIR/agent-mail-service.cmd"
+
+    _stack_run_as_user() {
+        printf '%s\n' "$1" > "$service_cmd_file"
+    }
+
+    run _stack_configure_agent_mail_service
+    assert_success
+    run grep -F 'systemctl --user enable agent-mail.service' "$service_cmd_file"
+    assert_success
+    run grep -F 'systemctl --user restart agent-mail.service' "$service_cmd_file"
+    assert_success
+    run grep -F 'readlink -f "/proc/$main_pid/exe"' "$service_cmd_file"
+    assert_success
+    run grep -F '[[ -n "$expected_real" && "$process_real" == "$expected_real" ]]' "$service_cmd_file"
+    assert_success
+}
+
 @test "stack SLB installer checks active Go PATH lines only" {
     local stack="$PROJECT_ROOT/scripts/lib/stack.sh"
 
@@ -9093,6 +9313,7 @@ EOF
     local log_file
     local local_head
     local global_wrapper_args
+    local self_update_output
 
     temp_root="$(create_temp_dir)"
     seed_repo="$temp_root/seed"
@@ -9101,6 +9322,7 @@ EOF
     deployed_home="$temp_root/deployed-acfs"
     log_file="$temp_root/update.log"
     global_wrapper_args="$temp_root/global-wrapper-args"
+    self_update_output="$temp_root/self-update.output"
 
     mkdir -p "$seed_repo/scripts/lib" "$seed_repo/scripts/generated" "$deployed_home/bin" "$deployed_home/scripts/lib" "$deployed_home/scripts/generated"
     git -C "$seed_repo" init -b main >/dev/null
@@ -9150,14 +9372,16 @@ EOF
     sync_acfs_global_wrapper() { printf '%s\n' "$*" > "$global_wrapper_args"; }
     log_item() { printf "%s|%s|%s\n" "$1" "$2" "${3:-}"; }
 
-    run update_acfs_self
+    update_acfs_self > "$self_update_output" 2>&1
+    [[ "$ACFS_SELF_UPDATE_FAILED" == "true" ]]
+    run cat "$self_update_output"
     assert_success
-    # The dirty-skip warning now quantifies the staleness and names the fix
-    # command, so assert on the parts that carry the meaning rather than the
-    # exact sentence: it must warn, say it is BLOCKED, and list what is dirty.
+    # A blocked canonical checkout must be reflected in the final failure
+    # count; it must not be reported as a successful self-update.
     assert_output --partial "warn|ACFS self-update|BLOCKED:"
     assert_output --partial "Locally modified:"
-    assert_output --partial "git stash push -m acfs-local"
+    assert_output --partial "fix canonical checkout: preserve/commit or stash its tracked work"
+    assert_output --partial "fail|ACFS self-update|canonical checkout did not advance"
     [[ "$(git -C "$work_repo" rev-parse HEAD)" == "$local_head" ]]
     [[ "$(bash "$work_repo/scripts/lib/doctor.sh")" == "base-acfs-doctor" ]]
     [[ "$(cat "$work_repo/scripts/lib/stack.sh")" == "base-stack-lib" ]]
@@ -9183,6 +9407,30 @@ EOF
     assert_output "remote-generated"
     run grep -F "Synced origin/main:scripts/generated/install_stack.sh -> $deployed_home/scripts/generated/install_stack.sh" "$log_file"
     assert_success
+}
+
+@test "repo discovery bypasses a legacy git checkout inside deployed ACFS runtime" {
+    local runtime_root="$HOME/.acfs"
+
+    mkdir -p "$runtime_root/scripts/lib"
+    git -C "$runtime_root" init -b main >/dev/null
+    printf '#!/usr/bin/env bash\n' > "$runtime_root/scripts/lib/update.sh"
+
+    SCRIPT_DIR="$runtime_root/scripts/lib"
+    ACFS_HOME="$runtime_root"
+    ACFS_INITIAL_ENV_HOME="$HOME"
+    ACFS_REPO_ROOT=""
+
+    run _acfs_discover_repo_root
+
+    assert_success
+    assert_output "$PROJECT_ROOT"
+
+    ACFS_REPO_ROOT="$runtime_root"
+    run _acfs_discover_repo_root
+
+    assert_success
+    assert_output "$PROJECT_ROOT"
 }
 
 @test "sync_acfs_global_wrapper installs global wrapper from fetched remote" {

@@ -40,7 +40,7 @@ export const shortIdToModuleId: Record<string, string> = {
   jfp: 'stack.jeffreysprompts',
   brenner: 'stack.brenner_bot',
   rch: 'stack.rch',
-  wa: 'stack.wezterm_automata',
+  wa: 'stack.frankenterm',
   srps: 'stack.srps',
   caam: 'stack.caam',
   xf: 'utils.xf',

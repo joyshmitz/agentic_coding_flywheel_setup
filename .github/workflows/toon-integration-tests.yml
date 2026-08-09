@@ -4,13 +4,26 @@ on:
   push:
     branches: [main]
     paths:
+      - 'acfs.manifest.yaml'
+      - 'checksums.yaml'
+      - 'scripts/generated/**'
+      - 'scripts/lib/output.sh'
+      - 'scripts/lib/security.sh'
       - 'scripts/test_*.sh'
       - 'scripts/verify_*.sh'
+      - 'tests/unit/test_output.sh'
       - '.github/workflows/toon-integration-tests.yml'
   pull_request:
     paths:
+      - 'acfs.manifest.yaml'
+      - 'checksums.yaml'
+      - 'scripts/generated/**'
+      - 'scripts/lib/output.sh'
+      - 'scripts/lib/security.sh'
       - 'scripts/test_*.sh'
       - 'scripts/verify_*.sh'
+      - 'tests/unit/test_output.sh'
+      - '.github/workflows/toon-integration-tests.yml'
   workflow_dispatch:
   schedule:
     - cron: "0 6 * * 1" # Weekly on Monday 6 AM UTC
@@ -26,7 +39,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # Core TOON encode/decode tests (tru only - fast, no dependencies)
+  # Core TOON encode/decode tests (toon only - fast, no dependencies)
   toon-core:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -39,29 +52,29 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
 
-      - name: Install tru (toon_rust CLI)
+      - name: Install toon (toon_rust CLI)
         run: cargo install --git https://github.com/Dicklesworthstone/toon_rust --locked
 
       - name: Install jq
         run: sudo apt-get install -y jq
 
-      - name: Test tru encode/decode round-trip
+      - name: Test toon encode/decode round-trip
         run: |
           echo '{"a": 1, "b": [true, false], "c": {"nested": "value"}}' > test.json
-          tru --encode test.json > test.toon
-          tru --decode test.toon > decoded.json
+          toon --encode test.json > test.toon
+          toon --decode test.toon > decoded.json
 
           # Verify round-trip
           if ! diff <(jq -S . test.json) <(jq -S . decoded.json); then
             echo "FAIL: Round-trip mismatch"
             exit 1
           fi
-          echo "PASS: tru encode/decode round-trip"
+          echo "PASS: toon encode/decode round-trip"
 
       - name: Test TOON_DEFAULT_FORMAT env var
         run: |
           export TOON_DEFAULT_FORMAT=toon
-          echo '{"test": 123}' | tru > output.txt
+          echo '{"test": 123}' | toon > output.txt
           # Should be TOON format (not JSON)
           if head -1 output.txt | grep -q '^{'; then
             echo "FAIL: TOON_DEFAULT_FORMAT not respected"
@@ -71,13 +84,13 @@ jobs:
 
       - name: Test key folding
         run: |
-          echo '{"config": {"db": {"host": "localhost", "port": 5432}}}' | tru --encode --key-folding safe > folded.toon
+          echo '{"config": {"db": {"host": "localhost", "port": 5432}}}' | toon --encode --key-folding safe > folded.toon
           grep -q "config.db" folded.toon && echo "PASS: Key folding works"
 
       - name: Test tabular arrays
         run: |
-          echo '[{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]' | tru --encode > tabular.toon
-          tru --decode tabular.toon | jq -e '.[0].id == 1' >/dev/null
+          echo '[{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]' | toon --encode > tabular.toon
+          toon --decode tabular.toon | jq -e '.[0].id == 1' >/dev/null
           echo "PASS: Tabular arrays work"
 
   # Script syntax validation (shellcheck)
@@ -119,7 +132,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y jq
 
-      - name: Install tru
+      - name: Install toon
         run: cargo install --git https://github.com/Dicklesworthstone/toon_rust --locked
 
       - name: Install br (beads_rust)
@@ -146,4 +159,4 @@ jobs:
           echo "  test_error_consistency.sh    - Exit codes"
           echo "  verify_token_savings.sh      - Token reduction"
           echo ""
-          echo "Core tru tests passed in toon-core job."
+          echo "Core toon tests passed in toon-core job."

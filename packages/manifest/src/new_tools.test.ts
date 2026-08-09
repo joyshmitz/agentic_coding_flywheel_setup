@@ -1,5 +1,5 @@
 /**
- * Tests: Verify all 9 new Dicklesworthstone tools have complete manifest entries
+ * Tests: Verify current Dicklesworthstone tools have complete manifest entries
  * Related: bead bd-bd536
  *
  * Parses the real acfs.manifest.yaml and checks each tool has:
@@ -32,11 +32,11 @@ interface ToolExpectation {
   shortName: string;
   installerTool: string;
   href: string;
-  installedCheckToken?: string;
-  verifyToken?: string;
+  installedCheckNeedle?: string;
+  verifyNeedle?: string;
 }
 
-// The 9 new tools and their expected module IDs
+// Current stack tools and their expected module IDs
 const NEW_TOOLS: ToolExpectation[] = [
   {
     moduleId: 'stack.rch',
@@ -45,6 +45,14 @@ const NEW_TOOLS: ToolExpectation[] = [
     shortName: 'RCH',
     installerTool: 'rch',
     href: 'https://github.com/Dicklesworthstone/remote_compilation_helper',
+  },
+  {
+    moduleId: 'stack.frankenterm',
+    cli: 'ft',
+    name: 'FrankenTerm',
+    shortName: 'FT',
+    installerTool: 'frankenterm',
+    href: 'https://github.com/Dicklesworthstone/frankenterm',
   },
   {
     moduleId: 'stack.process_triage',
@@ -109,8 +117,8 @@ const NEW_TOOLS: ToolExpectation[] = [
     shortName: 'PCR',
     installerTool: 'pcr',
     href: 'https://github.com/Dicklesworthstone/post_compact_reminder',
-    installedCheckToken: 'claude-post-compact-reminder',
-    verifyToken: 'claude-post-compact-reminder',
+    installedCheckNeedle: 'claude-post-compact-reminder',
+    verifyNeedle: 'claude-post-compact-reminder',
   },
 ] as const;
 
@@ -164,7 +172,7 @@ describe('New tool manifest entries', () => {
     checksums = parseYaml(readFileSync(CHECKSUMS_PATH, 'utf-8')) as ChecksumsFile;
   });
 
-  test('all 9 new tools exist in manifest', () => {
+  test('all listed tools exist in manifest', () => {
     for (const tool of NEW_TOOLS) {
       expect(moduleIds.has(tool.moduleId)).toBe(true);
     }
@@ -190,8 +198,8 @@ describe('New tool manifest entries', () => {
         expect(mod.installed_check?.run_as).toBeTruthy();
         expect(mod.installed_check?.command.trim().length).toBeGreaterThan(0);
 
-        const expectedToken = tool.installedCheckToken ?? tool.cli;
-        expect(mod.installed_check?.command).toContain(expectedToken);
+        const expectedNeedle = tool.installedCheckNeedle ?? tool.cli;
+        expect(mod.installed_check?.command).toContain(expectedNeedle);
         syntaxCheckBash(mod.installed_check?.command ?? '');
       });
 
@@ -199,9 +207,9 @@ describe('New tool manifest entries', () => {
         const mod = getModuleOrThrow(manifest, tool.moduleId);
         expect(mod.verify).toBeInstanceOf(Array);
         expect(mod.verify.length).toBeGreaterThan(0);
-        const expectedToken = tool.verifyToken ?? tool.cli;
+        const expectedNeedle = tool.verifyNeedle ?? tool.cli;
         for (const command of mod.verify) {
-          expect(command).toContain(expectedToken);
+          expect(command).toContain(expectedNeedle);
           syntaxCheckBash(command);
         }
       });
@@ -246,4 +254,46 @@ describe('New tool manifest entries', () => {
       });
     });
   }
+});
+
+describe('Current TOON and FrankenTerm contracts', () => {
+  let manifest: Manifest;
+  let checksums: ChecksumsFile;
+
+  beforeAll(() => {
+    const result = parseManifestFile(MANIFEST_PATH);
+    expect(result.success).toBe(true);
+    if (!result.success || !result.data) {
+      throw new Error(`Failed to parse manifest: ${result.error?.message}`);
+    }
+    manifest = result.data;
+    checksums = parseYaml(readFileSync(CHECKSUMS_PATH, 'utf-8')) as ChecksumsFile;
+  });
+
+  test('FrankenTerm uses ft via the verified frankenterm installer', () => {
+    const mod = getModuleOrThrow(manifest, 'stack.frankenterm');
+    const installer = getVerifiedInstallerOrThrow(mod, mod.id);
+
+    expect(mod.installed_check?.command).toContain('command -v ft');
+    expect(mod.verify).toEqual(['ft --version']);
+    expect(mod.web?.cli_name).toBe('ft');
+    expect(installer.tool).toBe('frankenterm');
+    expect(installer.url).toBe('https://raw.githubusercontent.com/Dicklesworthstone/frankenterm/main/install.sh');
+    expect(checksums.installers?.frankenterm?.url).toBe(installer.url);
+    expect(checksums.installers?.frankenterm?.sha256).toMatch(/^[a-f0-9]{64}$/i);
+    expect(manifest.modules.some((entry) => entry.id === 'stack.wezterm_automata')).toBe(false);
+  });
+
+  test('toon_rust uses the toon binary and installer key', () => {
+    const mod = getModuleOrThrow(manifest, 'utils.toon_rust');
+    const installer = getVerifiedInstallerOrThrow(mod, mod.id);
+
+    expect(mod.installed_check?.command).toContain('command -v toon');
+    expect(mod.verify).toEqual(['toon --version']);
+    expect(mod.web?.cli_name).toBe('toon');
+    expect(installer.tool).toBe('toon');
+    expect(checksums.installers?.toon?.url).toBe(installer.url);
+    expect(checksums.installers?.toon?.sha256).toMatch(/^[a-f0-9]{64}$/i);
+    expect(checksums.installers?.tru).toBeUndefined();
+  });
 });

@@ -428,7 +428,7 @@ install_all() {
     install_stack_ru
     install_stack_brenner_bot
     install_stack_rch
-    install_stack_wezterm_automata
+    install_stack_frankenterm
     install_stack_srps
     install_stack_frankensearch
     install_stack_storage_ballast_helper
