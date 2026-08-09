@@ -5,7 +5,7 @@ load '../test_helper'
 setup() {
     common_setup
     
-    unset TARGET_USER TARGET_HOME ACFS_BIN_DIR ACFS_STATE_FILE ACFS_HOME
+    unset TARGET_USER TARGET_HOME ACFS_BIN_DIR ACFS_STATE_FILE ACFS_HOME RCH_CONFIG_DIR RCH_INSTALL_DIR
 
     # update.sh logic relies on being sourced or executed
     # We source it.
@@ -1503,6 +1503,7 @@ EOF
         esac
     }
     update_run_verified_installer_with_env() { return 0; }
+    update_run_verified_rch_installer_current() { return 0; }
     update_run_verified_installer_or_existing_on_transient() { return 0; }
     update_refresh_stack_user_service() { return 0; }
     update_run_slb_source_install() { return 0; }
@@ -1555,6 +1556,7 @@ EOF
     update_run_verified_installer_or_existing_on_transient() { return 0; }
     update_refresh_stack_user_service() { return 0; }
     update_run_verified_installer_with_env() { return 0; }
+    update_run_verified_rch_installer_current() { return 0; }
     update_run_slb_source_install() { return 0; }
     update_run_fsfs_installer() { return 0; }
 
@@ -1605,6 +1607,7 @@ EOF
     update_run_verified_installer_or_existing_on_transient() { return 0; }
     update_refresh_stack_user_service() { return 0; }
     update_run_verified_installer_with_env() { return 0; }
+    update_run_verified_rch_installer_current() { return 0; }
     update_run_slb_source_install() { return 0; }
     update_run_fsfs_installer() { return 0; }
 
@@ -1659,6 +1662,7 @@ EOF
         printf 'env:%s\n' "$*" >> "$calls_file"
         return 0
     }
+    update_run_verified_rch_installer_current() { return 0; }
     update_run_verified_installer_with_target_tmpdir_or_existing_on_transient() {
         printf 'tmp-existing:%s\n' "$*" >> "$calls_file"
         return 1
@@ -1723,6 +1727,7 @@ EOF
     }
     update_run_verified_installer_or_existing_on_transient() { return 0; }
     update_run_verified_installer_with_env() { return 0; }
+    update_run_verified_rch_installer_current() { return 0; }
     update_run_slb_source_install() { return 0; }
     update_run_fsfs_installer() { return 0; }
 
@@ -1773,6 +1778,7 @@ EOF
         return 0
     }
     update_run_verified_installer_with_env() { return 0; }
+    update_run_verified_rch_installer_current() { return 0; }
     update_run_slb_source_install() { return 0; }
     update_run_fsfs_installer() { return 0; }
 
@@ -7307,6 +7313,515 @@ EOF
     assert_failure
     [[ "$(<"$ACFS_TEST_READLINK_COUNT_FILE")" -eq 30 ]]
     [[ "$(wc -l < "$ACFS_TEST_SLEEP_LOG")" -eq 30 ]]
+}
+
+@test "RCH latest resolver falls back to the GitHub release redirect" {
+    update_curl() {
+        if [[ "$*" == *"api.github.com/"* ]]; then
+            return 22
+        fi
+        printf 'https://github.com/Dicklesworthstone/remote_compilation_helper/releases/tag/v1.0.56'
+    }
+
+    run update_resolve_rch_latest_version
+    assert_success
+    assert_output "1.0.56"
+}
+
+@test "RCH latest resolver parses the API tag without PATH helper commands" {
+    update_curl() {
+        [[ "$*" == *"api.github.com/"* ]] || fail "redirect fallback must not run"
+        printf '{"name":"RCH","tag_name":"v1.0.56"}\n'
+    }
+
+    run update_resolve_rch_latest_version
+    assert_success
+    assert_output "1.0.56"
+}
+
+@test "RCH release tag lookup is bounded and isolated from inherited git config" {
+    local args_file="$HOME/rch-tag-fetch-args"
+    local env_file="$HOME/rch-tag-fetch-env"
+
+    update_system_binary_path() { printf '/bin/true\n'; }
+    update_run_in_target_context() {
+        printf '%s\n' "$1" > "$env_file"
+        shift
+        printf '%s\n' "$*" > "$args_file"
+        return 124
+    }
+
+    run update_fetch_rch_release_tag_refs
+    [[ "$status" -eq 124 ]]
+    grep -Fqx 'GIT_CONFIG_NOSYSTEM=1' "$env_file"
+    grep -Fqx 'GIT_CONFIG_GLOBAL=/dev/null' "$env_file"
+    grep -Fqx 'GIT_CONFIG_PARAMETERS=' "$env_file"
+    grep -Fqx 'GIT_DIR=' "$env_file"
+    grep -Fqx 'GIT_EXEC_PATH=' "$env_file"
+    [[ "$(<"$args_file")" == *"--signal=TERM --kill-after=5s 30s"* ]]
+    [[ "$(<"$args_file")" == *" -C / "* ]]
+}
+
+@test "RCH updater pins latest and verifies every local component" {
+    local calls_file="$HOME/rch-installer-calls"
+    local component_file="$HOME/rch-component-calls"
+    local precheck_file="$HOME/rch-precheck-calls"
+    local refresh_file="$HOME/rch-service-refresh-calls"
+    local runtime_file="$HOME/rch-service-runtime-calls"
+    local fleet_file="$HOME/rch-fleet-calls"
+
+    update_resolve_rch_latest_version() { printf '1.0.56\n'; }
+    update_rch_local_components_allow_version() {
+        printf '%s\n' "$*" > "$precheck_file"
+        return 0
+    }
+    update_rch_preflight_fleet_allows_version() { [[ "$1" == "1.0.56" ]]; }
+    update_rch_component_version() {
+        printf '%s\n' "$1" >> "$component_file"
+        printf '1.0.56\n'
+    }
+    update_run_verified_installer_with_env() {
+        printf '%s\n' "$*" > "$calls_file"
+        return 0
+    }
+    update_refresh_stack_user_service() {
+        printf '%s\n' "$*" > "$refresh_file"
+        return 0
+    }
+    update_verify_rchd_user_service_current() {
+        printf 'checked\n' > "$runtime_file"
+        return 0
+    }
+    update_verify_rch_configured_workers() {
+        printf '%s\n' "$*" > "$fleet_file"
+        return 0
+    }
+
+    run update_run_verified_rch_installer_current
+    assert_success
+    [[ "$(<"$calls_file")" == "rch VERSION=1.0.56 --easy-mode" ]]
+    [[ "$(<"$precheck_file")" == "1.0.56" ]]
+    [[ "$(<"$refresh_file")" == "rchd.service rchd" ]]
+    [[ "$(<"$runtime_file")" == "checked" ]]
+    [[ "$(<"$fleet_file")" == "1.0.56" ]]
+    [[ "$(<"$component_file")" == $'rch\nrchd\nrch-wkr' ]]
+}
+
+@test "RCH updater refuses an inherited custom install directory before resolution" {
+    export RCH_INSTALL_DIR="$HOME/custom-rch-bin"
+    update_resolve_rch_latest_version() {
+        fail "release resolution must not run with a custom install directory"
+    }
+
+    run update_run_verified_rch_installer_current
+    assert_failure
+    assert_output --partial "Custom RCH_INSTALL_DIR is not supported"
+}
+
+@test "RCH updater fails closed when a component remains stale" {
+    update_resolve_rch_latest_version() { printf '1.0.56\n'; }
+    update_rch_local_components_allow_version() { return 0; }
+    update_rch_preflight_fleet_allows_version() { return 0; }
+    update_run_verified_installer_with_env() { return 0; }
+    update_refresh_stack_user_service() { return 0; }
+    update_verify_rchd_user_service_current() { return 0; }
+    update_verify_rch_configured_workers() {
+        fail "fleet verification must not run after a local version mismatch"
+    }
+    update_rch_component_version() {
+        case "$1" in
+            rch-wkr) printf '1.0.52\n' ;;
+            *) printf '1.0.56\n' ;;
+        esac
+    }
+
+    run update_run_verified_rch_installer_current
+    assert_failure
+    assert_output --partial "rch-wkr is 1.0.52, expected 1.0.56"
+}
+
+@test "RCH updater refuses a resolved release older than any installed component" {
+    update_resolve_rch_latest_version() { printf '1.0.52\n'; }
+    update_binary_path() { printf '/fixture/%s\n' "$1"; }
+    update_rch_component_version() {
+        case "$1" in
+            rch) printf '1.0.50\n' ;;
+            rchd|rch-wkr) printf '1.0.56\n' ;;
+        esac
+    }
+    update_run_verified_installer_with_env() {
+        fail "installer must not run for a downgrade"
+    }
+
+    run update_run_verified_rch_installer_current
+    assert_failure
+    assert_output --partial "Refusing to downgrade rchd from 1.0.56 to 1.0.52"
+}
+
+@test "RCH updater refuses an installed component with an unparseable version" {
+    update_resolve_rch_latest_version() { printf '1.0.56\n'; }
+    update_binary_path() { printf '/fixture/%s\n' "$1"; }
+    update_rch_component_version() {
+        case "$1" in
+            rchd) printf 'development-build\n' ;;
+            *) printf '1.0.56\n' ;;
+        esac
+    }
+    update_run_verified_installer_with_env() {
+        fail "installer must not run with an unparseable installed version"
+    }
+
+    run update_run_verified_rch_installer_current
+    assert_failure
+    assert_output --partial "installed rchd has an unparseable version"
+}
+
+@test "RCH local precheck independently protects all three components" {
+    local newer_component=""
+
+    update_binary_path() { printf '/fixture/%s\n' "$1"; }
+    update_rch_component_version() {
+        if [[ "$1" == "$newer_component" ]]; then
+            printf '1.0.56\n'
+        else
+            printf '1.0.50\n'
+        fi
+    }
+
+    for newer_component in rch rchd rch-wkr; do
+        run update_rch_local_components_allow_version 1.0.52
+        assert_failure
+        assert_output --partial "Refusing to downgrade $newer_component from 1.0.56 to 1.0.52"
+    done
+}
+
+@test "RCH version comparison fails closed when trusted sort execution fails" {
+    update_system_binary_path() { printf '/bin/false\n'; }
+
+    run update_rch_version_is_greater_than 1.0.56 1.0.52
+    [[ "$status" -eq 2 ]]
+}
+
+@test "RCH updater refuses to mutate a fleet that cannot safely advance" {
+    update_resolve_rch_latest_version() { printf '1.0.52\n'; }
+    update_rch_local_components_allow_version() { return 0; }
+    update_rch_preflight_fleet_allows_version() { return 1; }
+    update_run_verified_installer_with_env() {
+        fail "installer must not run before fleet alignment is proved"
+    }
+
+    run update_run_verified_rch_installer_current
+    assert_failure
+    assert_output --partial "RCH fleet cannot be safely advanced to release 1.0.52"
+}
+
+@test "RCH fleet preflight permits a fresh client only when no workers are configured" {
+    update_binary_path() { return 1; }
+
+    run update_rch_preflight_fleet_allows_version 1.0.56
+    assert_success
+
+    mkdir -p "$HOME/.config/rch"
+    printf '[["workers"]]\nid = "gtt"\n' > "$HOME/.config/rch/workers.toml"
+    run update_rch_preflight_fleet_allows_version 1.0.56
+    assert_failure
+}
+
+@test "RCH fleet preflight blocks a custom config directory without a local client" {
+    update_binary_path() { return 1; }
+    export RCH_CONFIG_DIR="$HOME/custom-rch-config"
+
+    run update_rch_preflight_fleet_allows_version 1.0.56
+    assert_failure
+}
+
+@test "RCH release tag mapping resolves lightweight and annotated commit tags" {
+    local tag_refs=""
+
+    tag_refs=$'65294dcda0e0c9db39973893cbcd5158c470d428\trefs/tags/v1.0.52\n25cf32f5f8afb95b0c553dff8e256f846945af5e\trefs/tags/v1.0.56\n4b3ce8fa274b9c270e17da9bfc6bc8ac72c1ee78\trefs/tags/v1.0.56^{}'
+    run update_rch_release_version_for_commit 65294dcda0e0 "$tag_refs"
+    assert_success
+    assert_output "1.0.52"
+    run update_rch_release_version_for_commit 4b3ce8fa274b "$tag_refs"
+    assert_success
+    assert_output "1.0.56"
+}
+
+@test "RCH fleet preflight allows stale workers to converge on retry" {
+    local jq_real=""
+    local tag_refs=""
+
+    jq_real="$(command -v jq 2>/dev/null || true)"
+    [[ -n "$jq_real" ]] || skip "jq required for RCH fleet JSON verification"
+    tag_refs=$'65294dcda0e0c9db39973893cbcd5158c470d428\trefs/tags/v1.0.52\n4b3ce8fa274b9c270e17da9bfc6bc8ac72c1ee78\trefs/tags/v1.0.56^{}'
+    update_binary_path() { printf '/bin/true\n'; }
+    update_system_binary_path() { printf '%s\n' "$jq_real"; }
+    update_fetch_rch_release_tag_refs() { printf '%s\n' "$tag_refs"; }
+    update_run_in_target_context() {
+        if [[ "$*" == *"workers list --json"* ]]; then
+            printf '{"success":true,"data":{"workers":[{"id":"gtt"}],"count":1}}\n'
+        else
+            printf '{"success":true,"data":[{"ssh_ok":true,"disk_ok":true,"rsync_ok":true,"zstd_ok":true,"rustup_ok":true,"current_version":"65294dcda0e0)","issues":[]}]}\n'
+        fi
+    }
+
+    run update_rch_preflight_fleet_allows_version 1.0.56
+    assert_success
+}
+
+@test "RCH fleet preflight blocks a worker newer than the resolved target" {
+    local jq_real=""
+
+    jq_real="$(command -v jq 2>/dev/null || true)"
+    [[ -n "$jq_real" ]] || skip "jq required for RCH fleet JSON verification"
+    update_binary_path() { printf '/bin/true\n'; }
+    update_system_binary_path() { printf '%s\n' "$jq_real"; }
+    update_fetch_rch_release_tag_refs() {
+        fail "semantic worker versions must not require tag resolution"
+    }
+    update_run_in_target_context() {
+        if [[ "$*" == *"workers list --json"* ]]; then
+            printf '{"success":true,"data":{"workers":[{"id":"gtt"}],"count":1}}\n'
+        else
+            printf '{"success":true,"data":[{"ssh_ok":true,"disk_ok":true,"rsync_ok":true,"zstd_ok":true,"rustup_ok":true,"current_version":"1.0.57","issues":[]}]}\n'
+        fi
+    }
+
+    run update_rch_preflight_fleet_allows_version 1.0.56
+    assert_failure
+    assert_output --partial "Refusing to downgrade RCH worker from 1.0.57 to 1.0.56"
+}
+
+@test "RCH updater fails when the refreshed daemon runtime cannot be proved" {
+    update_resolve_rch_latest_version() { printf '1.0.56\n'; }
+    update_rch_local_components_allow_version() { return 0; }
+    update_rch_preflight_fleet_allows_version() { return 0; }
+    update_run_verified_installer_with_env() { return 0; }
+    update_refresh_stack_user_service() { return 0; }
+    update_verify_rchd_user_service_current() { return 1; }
+    update_rch_component_version() {
+        fail "component postchecks must not run after daemon runtime failure"
+    }
+
+    run update_run_verified_rch_installer_current
+    assert_failure
+    assert_output --partial "RCH daemon runtime is not the active installed rchd binary"
+}
+
+@test "RCH updater fails when configured workers do not match the release" {
+    update_resolve_rch_latest_version() { printf '1.0.56\n'; }
+    update_rch_local_components_allow_version() { return 0; }
+    update_rch_preflight_fleet_allows_version() { return 0; }
+    update_run_verified_installer_with_env() { return 0; }
+    update_refresh_stack_user_service() { return 0; }
+    update_verify_rchd_user_service_current() { return 0; }
+    update_rch_component_version() { printf '1.0.56\n'; }
+    update_verify_rch_configured_workers() { return 1; }
+
+    run update_run_verified_rch_installer_current
+    assert_failure
+    assert_output --partial "RCH worker fleet did not verify at release 1.0.56"
+}
+
+@test "RCH version and build probes execute only in the target-user context" {
+    local calls_file="$HOME/rch-target-context-calls"
+    local direct_file="$HOME/rch-direct-execution"
+    local probe_bin="$HOME/rch-wkr"
+
+    cat > "$probe_bin" <<'EOF'
+#!/usr/bin/env bash
+printf 'executed\n' > "$HOME/rch-direct-execution"
+printf 'rch-wkr 1.0.56 (commit 4b3ce8fa274b)\n'
+EOF
+    chmod +x "$probe_bin"
+    update_binary_path() { printf '%s\n' "$probe_bin"; }
+    update_run_in_target_context() {
+        printf '%s\n' "$*" >> "$calls_file"
+        printf 'rch-wkr 1.0.56 (commit 4b3ce8fa274b)\n'
+    }
+
+    run update_rch_component_version rch-wkr
+    assert_success
+    assert_output "1.0.56"
+    run update_rch_component_build_commit rch-wkr
+    assert_success
+    assert_output "4b3ce8fa274b"
+    [[ ! -e "$direct_file" ]]
+    [[ "$(wc -l < "$calls_file")" -eq 2 ]]
+}
+
+@test "RCH version probe rejects custom suffixes and valid-looking nonzero output" {
+    local probe_mode="custom"
+
+    update_binary_path() { printf '/bin/true\n'; }
+    update_run_in_target_context() {
+        case "$probe_mode" in
+            custom)
+                printf 'rchd 1.0.56-custom\n'
+                return 0
+                ;;
+            nonzero)
+                printf 'rchd 1.0.56 (commit 4b3ce8fa274b)\n'
+                return 17
+                ;;
+        esac
+    }
+
+    run update_rch_component_version rchd
+    assert_failure
+    probe_mode="nonzero"
+    run update_rch_component_version rchd
+    assert_failure
+}
+
+write_rchd_runtime_stubs() {
+    init_stub_dir
+
+    cat > "$STUB_DIR/systemctl" <<'EOF'
+#!/usr/bin/env bash
+case "$*" in
+    "--user show-environment"|"--user is-active --quiet rchd.service")
+        exit 0
+        ;;
+    "--user show rchd.service --property MainPID --value")
+        printf '4242\n'
+        exit 0
+        ;;
+esac
+exit 1
+EOF
+
+    cat > "$STUB_DIR/readlink" <<'EOF'
+#!/usr/bin/env bash
+if [[ "${1:-}" == "-f" && "${2:-}" == "$ACFS_TEST_RCHD_BIN" ]]; then
+    printf '%s\n' "$ACFS_TEST_RCHD_BIN"
+    exit 0
+fi
+if [[ "${1:-}" == "-f" && "${2:-}" == "/proc/4242/exe" ]]; then
+    printf '%s\n' "$ACFS_TEST_RCHD_PROCESS_BIN"
+    exit 0
+fi
+exec /usr/bin/readlink "$@"
+EOF
+
+    chmod +x "$STUB_DIR/systemctl" "$STUB_DIR/readlink"
+}
+
+@test "RCH daemon verifier rejects a stale process executable and accepts the exact binary" {
+    export ACFS_TEST_RCHD_BIN="$HOME/rchd"
+    export ACFS_TEST_RCHD_PROCESS_BIN="$HOME/rchd-stale"
+
+    printf '#!/usr/bin/env bash\n' > "$ACFS_TEST_RCHD_BIN"
+    chmod +x "$ACFS_TEST_RCHD_BIN"
+    write_rchd_runtime_stubs
+    update_binary_path() { printf '%s\n' "$ACFS_TEST_RCHD_BIN"; }
+    update_run_in_target_context() {
+        shift
+        PATH="$STUB_DIR:/usr/bin:/bin" "$@"
+    }
+
+    run update_verify_rchd_user_service_current
+    assert_failure
+    export ACFS_TEST_RCHD_PROCESS_BIN="$ACFS_TEST_RCHD_BIN"
+    run update_verify_rchd_user_service_current
+    assert_success
+}
+
+@test "RCH fleet verifier skips verification only when no workers are configured" {
+    local fleet_called="$HOME/rch-fleet-called"
+    local jq_real=""
+
+    jq_real="$(command -v jq 2>/dev/null || true)"
+    [[ -n "$jq_real" ]] || skip "jq required for RCH fleet JSON verification"
+    update_binary_path() { printf '/bin/true\n'; }
+    update_system_binary_path() { printf '%s\n' "$jq_real"; }
+    update_rch_component_build_commit() {
+        fail "zero-worker verification must not require a local build commit"
+    }
+    update_run_in_target_context() {
+        if [[ "$*" == *"workers list --json"* ]]; then
+            printf '{"success":true,"data":{"workers":[],"count":0}}\n'
+            return 0
+        fi
+        printf 'called\n' > "$fleet_called"
+        return 1
+    }
+
+    run update_verify_rch_configured_workers 1.0.56
+    assert_success
+    [[ ! -e "$fleet_called" ]]
+}
+
+@test "RCH fleet verifier rejects a stale configured worker" {
+    local jq_real=""
+
+    jq_real="$(command -v jq 2>/dev/null || true)"
+    [[ -n "$jq_real" ]] || skip "jq required for RCH fleet JSON verification"
+    update_binary_path() { printf '/bin/true\n'; }
+    update_system_binary_path() { printf '%s\n' "$jq_real"; }
+    update_rch_component_build_commit() { printf '4b3ce8fa274b\n'; }
+    update_run_in_target_context() {
+        if [[ "$*" == *"workers list --json"* ]]; then
+            printf '{"success":true,"data":{"workers":[{"id":"gtt"}],"count":1}}\n'
+        else
+            printf '{"success":true,"data":[{"ssh_ok":true,"disk_ok":true,"rsync_ok":true,"zstd_ok":true,"rustup_ok":true,"current_version":"65294dcda0e0)","issues":[]}]}\n'
+        fi
+    }
+
+    run update_verify_rch_configured_workers 1.0.56
+    assert_failure
+}
+
+@test "RCH fleet verifier accepts the exact local worker build commit" {
+    local jq_real=""
+
+    jq_real="$(command -v jq 2>/dev/null || true)"
+    [[ -n "$jq_real" ]] || skip "jq required for RCH fleet JSON verification"
+    update_binary_path() { printf '/bin/true\n'; }
+    update_system_binary_path() { printf '%s\n' "$jq_real"; }
+    update_rch_component_build_commit() { printf '4b3ce8fa274b\n'; }
+    update_run_in_target_context() {
+        if [[ "$*" == *"workers list --json"* ]]; then
+            printf '{"success":true,"data":{"workers":[{"id":"gtt"}],"count":1}}\n'
+        else
+            printf '{"success":true,"data":[{"ssh_ok":true,"disk_ok":true,"rsync_ok":true,"zstd_ok":true,"rustup_ok":true,"current_version":"4b3ce8fa274b)","issues":[]}]}\n'
+        fi
+    }
+
+    run update_verify_rch_configured_workers 1.0.56
+    assert_success
+}
+
+@test "RCH fleet verifier rejects each unhealthy worker predicate at the exact version" {
+    local jq_real=""
+    local fleet_payload=""
+    local -a unhealthy_payloads=()
+
+    jq_real="$(command -v jq 2>/dev/null || true)"
+    [[ -n "$jq_real" ]] || skip "jq required for RCH fleet JSON verification"
+    unhealthy_payloads=(
+        '{"success":true,"data":[{"ssh_ok":false,"disk_ok":true,"rsync_ok":true,"zstd_ok":true,"rustup_ok":true,"current_version":"4b3ce8fa274b)","issues":[]}]}'
+        '{"success":true,"data":[{"ssh_ok":true,"disk_ok":false,"rsync_ok":true,"zstd_ok":true,"rustup_ok":true,"current_version":"4b3ce8fa274b)","issues":[]}]}'
+        '{"success":true,"data":[{"ssh_ok":true,"disk_ok":true,"rsync_ok":false,"zstd_ok":true,"rustup_ok":true,"current_version":"4b3ce8fa274b)","issues":[]}]}'
+        '{"success":true,"data":[{"ssh_ok":true,"disk_ok":true,"rsync_ok":true,"zstd_ok":false,"rustup_ok":true,"current_version":"4b3ce8fa274b)","issues":[]}]}'
+        '{"success":true,"data":[{"ssh_ok":true,"disk_ok":true,"rsync_ok":true,"zstd_ok":true,"rustup_ok":false,"current_version":"4b3ce8fa274b)","issues":[]}]}'
+        '{"success":true,"data":[{"ssh_ok":true,"disk_ok":true,"rsync_ok":true,"zstd_ok":true,"rustup_ok":true,"current_version":"4b3ce8fa274b)","issues":["stale"]}]}'
+    )
+    update_binary_path() { printf '/bin/true\n'; }
+    update_system_binary_path() { printf '%s\n' "$jq_real"; }
+    update_rch_component_build_commit() { printf '4b3ce8fa274b\n'; }
+    update_run_in_target_context() {
+        if [[ "$*" == *"workers list --json"* ]]; then
+            printf '{"success":true,"data":{"workers":[{"id":"gtt"}],"count":1}}\n'
+        else
+            printf '%s\n' "$fleet_payload"
+        fi
+    }
+
+    for fleet_payload in "${unhealthy_payloads[@]}"; do
+        run update_verify_rch_configured_workers 1.0.56
+        assert_failure
+    done
 }
 
 @test "stack SLB installer checks active Go PATH lines only" {

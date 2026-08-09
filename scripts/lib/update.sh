@@ -3861,6 +3861,453 @@ update_resolve_fsfs_latest_version() {
     printf '%s\n' "$tag"
 }
 
+update_is_valid_rch_version() {
+    local version="${1:-}"
+    [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+}
+
+update_resolve_rch_latest_version() {
+    local version="${ACFS_RCH_VERSION:-}"
+    local latest_url="https://api.github.com/repos/Dicklesworthstone/remote_compilation_helper/releases/latest"
+    local redirect_url="https://github.com/Dicklesworthstone/remote_compilation_helper/releases/latest"
+    local effective_url=""
+    local response=""
+    local tag_pattern='"tag_name"[[:space:]]*:[[:space:]]*"v?([^"[:space:]]+)"'
+
+    if [[ -n "$version" ]]; then
+        version="${version#v}"
+        update_is_valid_rch_version "$version" || return 1
+        printf '%s\n' "$version"
+        return 0
+    fi
+
+    response="$(update_curl -H "Accept: application/vnd.github.v3+json" "$latest_url" 2>/dev/null || true)"
+    if [[ "$response" =~ $tag_pattern ]]; then
+        version="${BASH_REMATCH[1]}"
+    fi
+    if update_is_valid_rch_version "$version"; then
+        printf '%s\n' "$version"
+        return 0
+    fi
+
+    effective_url="$(update_curl -o /dev/null -w '%{url_effective}' "$redirect_url" 2>/dev/null || true)"
+    version="${effective_url##*/tag/}"
+    version="${version#v}"
+    version="${version%%[/?#]*}"
+    update_is_valid_rch_version "$version" || return 1
+    printf '%s\n' "$version"
+}
+
+update_rch_component_version() {
+    local component="${1:-}"
+    local component_bin=""
+    local output=""
+    local probe_exit=0
+    local version_pattern=""
+
+    case "$component" in
+        rch|rchd|rch-wkr) ;;
+        *) return 1 ;;
+    esac
+
+    component_bin="$(update_binary_path "$component" 2>/dev/null || true)"
+    [[ -n "$component_bin" && -x "$component_bin" ]] || return 1
+    probe_exit=0
+    output="$(update_run_in_target_context "" "$component_bin" --version 2>/dev/null)" || probe_exit=$?
+    [[ "$probe_exit" -eq 0 && "$output" != *$'\n'* ]] || return 1
+    version_pattern="^${component}[[:space:]]+([0-9]+[.][0-9]+[.][0-9]+)([[:space:]]+[(]commit[[:space:]]+[A-Za-z0-9._+-]+[)])?$"
+    [[ "$output" =~ $version_pattern ]] || return 1
+    printf '%s\n' "${BASH_REMATCH[1]}"
+}
+
+update_rch_version_is_greater_than() {
+    local candidate="${1:-}"
+    local reference="${2:-}"
+    local sort_bin=""
+    local tail_bin=""
+    local highest=""
+
+    update_is_valid_rch_version "$candidate" || return 2
+    update_is_valid_rch_version "$reference" || return 2
+    [[ "$candidate" != "$reference" ]] || return 1
+    sort_bin="$(update_system_binary_path sort 2>/dev/null || true)"
+    tail_bin="$(update_system_binary_path tail 2>/dev/null || true)"
+    [[ -n "$sort_bin" && -n "$tail_bin" ]] || return 2
+    highest="$(printf '%s\n%s\n' "$candidate" "$reference" | "$sort_bin" -V | "$tail_bin" -n 1)" || return 2
+    [[ "$highest" == "$candidate" ]]
+}
+
+update_rch_local_components_allow_version() {
+    local latest_version="${1:-}"
+    local component=""
+    local component_bin=""
+    local component_version=""
+    local compare_exit=0
+
+    update_is_valid_rch_version "$latest_version" || return 1
+
+    for component in rch rchd rch-wkr; do
+        component_bin="$(update_binary_path "$component" 2>/dev/null || true)"
+        [[ -n "$component_bin" ]] || continue
+        component_version="$(update_rch_component_version "$component" 2>/dev/null || true)"
+        if ! update_is_valid_rch_version "$component_version"; then
+            echo "Cannot safely update RCH: installed $component has an unparseable version" >&2
+            return 1
+        fi
+
+        compare_exit=0
+        update_rch_version_is_greater_than "$component_version" "$latest_version" || compare_exit=$?
+        case "$compare_exit" in
+            0)
+                echo "Refusing to downgrade $component from $component_version to $latest_version" >&2
+                return 1
+                ;;
+            1) ;;
+            *)
+                echo "Unable to compare $component version $component_version with RCH release $latest_version" >&2
+                return 1
+                ;;
+        esac
+    done
+
+    return 0
+}
+
+update_rch_component_build_commit() {
+    local component="${1:-}"
+    local component_bin=""
+    local commit_pattern="^${component}[[:space:]]+[0-9]+[.][0-9]+[.][0-9]+[[:space:]]+[(]commit[[:space:]]+([A-Za-z0-9._+-]+)[)]$"
+    local output=""
+    local probe_exit=0
+
+    case "$component" in
+        rch|rchd|rch-wkr) ;;
+        *) return 1 ;;
+    esac
+
+    component_bin="$(update_binary_path "$component" 2>/dev/null || true)"
+    [[ -n "$component_bin" && -x "$component_bin" ]] || return 1
+    probe_exit=0
+    output="$(update_run_in_target_context "" "$component_bin" --version 2>/dev/null)" || probe_exit=$?
+    [[ "$probe_exit" -eq 0 && "$output" != *$'\n'* ]] || return 1
+    [[ "$output" =~ $commit_pattern ]] || return 1
+    printf '%s\n' "${BASH_REMATCH[1]}"
+}
+
+update_verify_rchd_user_service_current() {
+    local rchd_bin=""
+    local rchd_bin_q=""
+    local service_cmd=""
+
+    rchd_bin="$(update_binary_path rchd 2>/dev/null || true)"
+    [[ -n "$rchd_bin" && -x "$rchd_bin" ]] || return 1
+    printf -v rchd_bin_q '%q' "$rchd_bin"
+
+    service_cmd="$(cat <<EOF
+set -euo pipefail
+expected_bin=$rchd_bin_q
+runtime_dir="/run/user/\$(id -u)"
+if [[ -d "\$runtime_dir" ]]; then
+    export XDG_RUNTIME_DIR="\$runtime_dir"
+    if [[ -S "\$runtime_dir/bus" ]]; then
+        export DBUS_SESSION_BUS_ADDRESS="unix:path=\$runtime_dir/bus"
+    fi
+fi
+command -v systemctl >/dev/null 2>&1
+systemctl --user show-environment >/dev/null 2>&1
+systemctl --user is-active --quiet rchd.service >/dev/null 2>&1
+main_pid="\$(systemctl --user show rchd.service --property MainPID --value 2>/dev/null || true)"
+[[ "\$main_pid" =~ ^[1-9][0-9]*$ ]]
+expected_real="\$(readlink -f "\$expected_bin" 2>/dev/null || true)"
+process_real="\$(readlink -f "/proc/\$main_pid/exe" 2>/dev/null || true)"
+[[ -n "\$expected_real" && "\$process_real" == "\$expected_real" ]]
+EOF
+)"
+
+    update_run_in_target_context "" bash -c "$service_cmd"
+}
+
+update_verify_rch_configured_workers() {
+    local latest_version="${1:-}"
+    local commit_component="${2:-rch-wkr}"
+    local rch_bin=""
+    local jq_bin=""
+    local local_commit=""
+    local workers_json=""
+    local verification_json=""
+    local configured_count=""
+
+    update_is_valid_rch_version "$latest_version" || return 1
+    case "$commit_component" in
+        rch|rchd|rch-wkr) ;;
+        *) return 1 ;;
+    esac
+    rch_bin="$(update_binary_path rch 2>/dev/null || true)"
+    jq_bin="$(update_system_binary_path jq 2>/dev/null || true)"
+    [[ -n "$rch_bin" && -x "$rch_bin" && -n "$jq_bin" && -x "$jq_bin" ]] || return 1
+
+    workers_json="$(update_run_in_target_context "" "$rch_bin" workers list --json 2>/dev/null)" || return 1
+    configured_count="$("$jq_bin" -er '
+        if .success == true and
+            (.data.workers | type) == "array" and
+            (.data.count | type) == "number" and
+            .data.count == (.data.workers | length)
+        then .data.count
+        else error("invalid workers list")
+        end
+    ' <<< "$workers_json" 2>/dev/null)" || return 1
+    [[ "$configured_count" =~ ^[0-9]+$ ]] || return 1
+    if [[ "$configured_count" -eq 0 ]]; then
+        log_to_file "RCH fleet postcheck: no workers configured"
+        return 0
+    fi
+
+    local_commit="$(update_rch_component_build_commit "$commit_component" 2>/dev/null || true)"
+    verification_json="$(update_run_in_target_context "" "$rch_bin" fleet verify --json 2>/dev/null)" || return 1
+    "$jq_bin" -e \
+        --arg latest_version "$latest_version" \
+        --arg local_commit "$local_commit" \
+        --argjson configured_count "$configured_count" '
+        .success == true and
+        (.data | type) == "array" and
+        (.data | length) == $configured_count and
+        all(.data[];
+            .ssh_ok == true and
+            .disk_ok == true and
+            .rsync_ok == true and
+            .zstd_ok == true and
+            .rustup_ok == true and
+            (.issues | type) == "array" and
+            (.issues | length) == 0 and
+            (((.current_version // "") | rtrimstr(")")) as $worker_version |
+                ($worker_version == $latest_version or
+                    ($local_commit != "" and $worker_version == $local_commit)))
+        )
+    ' <<< "$verification_json" >/dev/null
+}
+
+update_rch_has_unprobeable_worker_config() {
+    local target_user=""
+    local target_home=""
+    local workers_config=""
+
+    # The upstream installer honors an inherited custom config directory. With
+    # no local client, ACFS cannot safely interrogate any fleet it may contain.
+    [[ -z "${RCH_CONFIG_DIR:-}" ]] || return 0
+
+    target_user="$(update_target_user 2>/dev/null || true)"
+    target_home="$(update_target_home "$target_user" 2>/dev/null || true)"
+    [[ -n "$target_home" && "$target_home" == /* && "$target_home" != "/" ]] || return 1
+    workers_config="$target_home/.config/rch/workers.toml"
+    [[ -s "$workers_config" ]]
+}
+
+update_fetch_rch_release_tag_refs() {
+    local git_bin=""
+    local timeout_bin=""
+    local repo_url="https://github.com/Dicklesworthstone/remote_compilation_helper.git"
+
+    git_bin="$(update_system_binary_path git 2>/dev/null || true)"
+    timeout_bin="$(update_system_binary_path timeout 2>/dev/null || true)"
+    [[ -n "$git_bin" && -x "$git_bin" && -n "$timeout_bin" && -x "$timeout_bin" ]] || return 1
+    update_run_in_target_context $'GIT_TERMINAL_PROMPT=0\nGIT_CONFIG_NOSYSTEM=1\nGIT_CONFIG_GLOBAL=/dev/null\nGIT_CONFIG_PARAMETERS=\nGIT_CONFIG_COUNT=0\nGIT_DIR=\nGIT_WORK_TREE=\nGIT_COMMON_DIR=\nGIT_EXEC_PATH=\nGIT_SSL_NO_VERIFY=0' \
+        "$timeout_bin" --signal=TERM --kill-after=5s 30s \
+        "$git_bin" -C / \
+        -c credential.helper= \
+        -c http.sslVerify=true \
+        -c protocol.file.allow=never \
+        -c protocol.ext.allow=never \
+        ls-remote --tags "$repo_url" 'refs/tags/v*'
+}
+
+update_rch_release_version_for_commit() {
+    local commit="${1:-}"
+    local tag_refs="${2:-}"
+    local sha=""
+    local ref=""
+    local tag=""
+    local highest=""
+    local compare_exit=0
+
+    [[ "$commit" =~ ^[0-9A-Fa-f]{7,40}$ && -n "$tag_refs" ]] || return 1
+    commit="${commit,,}"
+
+    while read -r sha ref; do
+        [[ -n "$sha" && -n "$ref" ]] || continue
+        sha="${sha,,}"
+        [[ "$sha" == "$commit"* ]] || continue
+        if [[ "$ref" == *'^{}' ]]; then
+            ref="${ref%'^{}'}"
+        fi
+        [[ "$ref" == refs/tags/v* ]] || continue
+        tag="${ref#refs/tags/v}"
+        update_is_valid_rch_version "$tag" || continue
+        if [[ -z "$highest" ]]; then
+            highest="$tag"
+            continue
+        fi
+        compare_exit=0
+        update_rch_version_is_greater_than "$tag" "$highest" || compare_exit=$?
+        case "$compare_exit" in
+            0) highest="$tag" ;;
+            1) ;;
+            *) return 1 ;;
+        esac
+    done <<< "$tag_refs"
+
+    [[ -n "$highest" ]] || return 1
+    printf '%s\n' "$highest"
+}
+
+update_rch_preflight_fleet_allows_version() {
+    local latest_version="${1:-}"
+    local rch_bin=""
+    local jq_bin=""
+    local workers_json=""
+    local verification_json=""
+    local configured_count=""
+    local worker_tokens_output=""
+    local worker_token=""
+    local worker_version=""
+    local tag_refs=""
+    local compare_exit=0
+    local -a worker_tokens=()
+
+    update_is_valid_rch_version "$latest_version" || return 1
+
+    rch_bin="$(update_binary_path rch 2>/dev/null || true)"
+    if [[ -z "$rch_bin" ]]; then
+        # A fresh local install without workers is safe to bootstrap. A
+        # configured fleet cannot be version-probed without the local client,
+        # so fail before giving the upstream installer a chance to mutate it.
+        if update_rch_has_unprobeable_worker_config; then
+            return 1
+        fi
+        return 0
+    fi
+
+    jq_bin="$(update_system_binary_path jq 2>/dev/null || true)"
+    [[ -x "$rch_bin" && -n "$jq_bin" && -x "$jq_bin" ]] || return 1
+
+    workers_json="$(update_run_in_target_context "" "$rch_bin" workers list --json 2>/dev/null)" || return 1
+    configured_count="$("$jq_bin" -er '
+        if .success == true and
+            (.data.workers | type) == "array" and
+            (.data.count | type) == "number" and
+            .data.count == (.data.workers | length)
+        then .data.count
+        else error("invalid workers list")
+        end
+    ' <<< "$workers_json" 2>/dev/null)" || return 1
+    [[ "$configured_count" =~ ^[0-9]+$ ]] || return 1
+    if [[ "$configured_count" -eq 0 ]]; then
+        log_to_file "RCH fleet precheck: no workers configured"
+        return 0
+    fi
+
+    verification_json="$(update_run_in_target_context "" "$rch_bin" fleet verify --json 2>/dev/null)" || return 1
+    worker_tokens_output="$("$jq_bin" -er \
+        --argjson configured_count "$configured_count" '
+        if .success == true and
+            (.data | type) == "array" and
+            (.data | length) == $configured_count and
+            all(.data[];
+                .ssh_ok == true and
+                .disk_ok == true and
+                .rsync_ok == true and
+                .zstd_ok == true and
+                .rustup_ok == true and
+                (.issues | type) == "array" and
+                (.issues | length) == 0 and
+                (.current_version | type) == "string" and
+                (.current_version | length) > 0
+            )
+        then .data[].current_version
+        else error("invalid fleet verification")
+        end
+    ' <<< "$verification_json" 2>/dev/null)" || return 1
+    mapfile -t worker_tokens <<< "$worker_tokens_output"
+    [[ "${#worker_tokens[@]}" -eq "$configured_count" ]] || return 1
+
+    for worker_token in "${worker_tokens[@]}"; do
+        worker_token="${worker_token%)}"
+        if update_is_valid_rch_version "$worker_token"; then
+            worker_version="$worker_token"
+        else
+            if [[ -z "$tag_refs" ]]; then
+                tag_refs="$(update_fetch_rch_release_tag_refs 2>/dev/null)" || return 1
+            fi
+            worker_version="$(update_rch_release_version_for_commit "$worker_token" "$tag_refs" 2>/dev/null)" || return 1
+        fi
+
+        compare_exit=0
+        update_rch_version_is_greater_than "$worker_version" "$latest_version" || compare_exit=$?
+        case "$compare_exit" in
+            0)
+                echo "Refusing to downgrade RCH worker from $worker_version to $latest_version" >&2
+                return 1
+                ;;
+            1) ;;
+            *) return 1 ;;
+        esac
+    done
+
+    return 0
+}
+
+# RCH's installer falls back to its embedded INSTALLER_VERSION when the GitHub
+# API is rate-limited. That fallback can be older than the latest release and
+# has caused a successful-looking ACFS update to downgrade rch, rchd, and the
+# worker fleet. Resolve the release independently, pin it into the verified
+# installer environment, and prove all three local binaries match afterward.
+update_run_verified_rch_installer_current() {
+    local latest_version=""
+    local component=""
+    local component_version=""
+
+    if [[ -n "${RCH_INSTALL_DIR:-}" ]]; then
+        echo "Custom RCH_INSTALL_DIR is not supported by the verified ACFS updater" >&2
+        return 1
+    fi
+
+    latest_version="$(update_resolve_rch_latest_version 2>/dev/null || true)"
+    if ! update_is_valid_rch_version "$latest_version"; then
+        echo "Unable to resolve the latest RCH release; refusing an unpinned installer run" >&2
+        return 1
+    fi
+
+    update_rch_local_components_allow_version "$latest_version" || return 1
+    if ! update_rch_preflight_fleet_allows_version "$latest_version"; then
+        echo "RCH fleet cannot be safely advanced to release $latest_version" >&2
+        return 1
+    fi
+
+    update_run_verified_installer_with_env rch "VERSION=$latest_version" --easy-mode || return $?
+    if ! update_refresh_stack_user_service rchd.service rchd; then
+        echo "RCH daemon refresh did not prove the running executable matches the installed rchd" >&2
+        return 1
+    fi
+    if ! update_verify_rchd_user_service_current; then
+        echo "RCH daemon runtime is not the active installed rchd binary" >&2
+        return 1
+    fi
+
+    for component in rch rchd rch-wkr; do
+        component_version="$(update_rch_component_version "$component" 2>/dev/null || true)"
+        if [[ "$component_version" != "$latest_version" ]]; then
+            echo "RCH post-install version mismatch: $component is ${component_version:-missing}, expected $latest_version" >&2
+            return 1
+        fi
+    done
+
+    if ! update_verify_rch_configured_workers "$latest_version"; then
+        echo "RCH worker fleet did not verify at release $latest_version" >&2
+        return 1
+    fi
+
+    return 0
+}
+
 update_fetch_fsfs_artifact_checksum() {
     local checksum_url="$1"
     local checksum=""
@@ -6165,8 +6612,9 @@ update_stack() {
         fi
     fi
 
-    # RCH (Remote Compilation Helper) - always install/update and keep daemon/fleet setup active
-    run_cmd "RCH" update_run_verified_installer rch --easy-mode
+    # RCH (Remote Compilation Helper) - pin the independently resolved latest
+    # release so an upstream API-rate-limit fallback cannot downgrade the fleet.
+    run_cmd "RCH" update_run_verified_rch_installer_current
 
     # FrankenTerm - install/update the current ft binary. The legacy wa module
     # was renamed upstream and its source-build recipe no longer exists.
