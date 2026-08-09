@@ -7165,6 +7165,68 @@ EOF
     assert_success
 }
 
+write_agent_mail_service_race_stubs() {
+    init_stub_dir
+
+    cat > "$STUB_DIR/systemctl" <<'EOF'
+#!/usr/bin/env bash
+case "$*" in
+    "--user show-environment"|\
+    "--user daemon-reload"|\
+    "--user enable agent-mail.service"|\
+    "--user restart agent-mail.service"|\
+    "--user is-active --quiet agent-mail.service")
+        exit 0
+        ;;
+    "--user show agent-mail.service --property MainPID --value")
+        printf '4242\n'
+        exit 0
+        ;;
+esac
+exit 1
+EOF
+
+    cat > "$STUB_DIR/readlink" <<'EOF'
+#!/usr/bin/env bash
+if [[ "${1:-}" == "-f" && "${2:-}" == "$ACFS_TEST_AM_BIN" ]]; then
+    printf '%s\n' "$ACFS_TEST_AM_BIN"
+    exit 0
+fi
+if [[ "${1:-}" == "-f" && "${2:-}" == "/proc/4242/exe" ]]; then
+    count=0
+    if [[ -f "$ACFS_TEST_READLINK_COUNT_FILE" ]]; then
+        count="$(<"$ACFS_TEST_READLINK_COUNT_FILE")"
+    fi
+    count=$((count + 1))
+    printf '%s\n' "$count" > "$ACFS_TEST_READLINK_COUNT_FILE"
+    if [[ "$ACFS_TEST_PROC_MODE" == "delayed-match" && "$count" -ge 2 ]]; then
+        printf '%s\n' "$ACFS_TEST_AM_BIN"
+    else
+        printf '/usr/lib/systemd/systemd-executor\n'
+    fi
+    exit 0
+fi
+exec /usr/bin/readlink "$@"
+EOF
+
+    cat > "$STUB_DIR/sleep" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "${1:-}" >> "$ACFS_TEST_SLEEP_LOG"
+EOF
+
+    cat > "$STUB_DIR/ss" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+
+    cat > "$STUB_DIR/lsof" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+
+    chmod +x "$STUB_DIR/systemctl" "$STUB_DIR/readlink" "$STUB_DIR/sleep" "$STUB_DIR/ss" "$STUB_DIR/lsof"
+}
+
 @test "Agent Mail service configuration always restarts and proves current executable" {
     source_lib "stack"
     local service_cmd_file="$BATS_TEST_TMPDIR/agent-mail-service.cmd"
@@ -7179,10 +7241,72 @@ EOF
     assert_success
     run grep -F 'systemctl --user restart agent-mail.service' "$service_cmd_file"
     assert_success
+    run grep -F 'for _ in {1..30}; do' "$service_cmd_file"
+    assert_success
     run grep -F 'readlink -f "/proc/$main_pid/exe"' "$service_cmd_file"
     assert_success
-    run grep -F '[[ -n "$expected_real" && "$process_real" == "$expected_real" ]]' "$service_cmd_file"
+    run grep -F 'if [[ "$process_real" == "$expected_real" ]]; then' "$service_cmd_file"
     assert_success
+}
+
+@test "Agent Mail service configuration retries a transient systemd exec handoff" {
+    source_lib "stack"
+
+    export TARGET_USER="$(id -un)"
+    export TARGET_HOME="$HOME"
+    export ACFS_STACK_TRUST_TARGET_HOME=true
+    export ACFS_TEST_AM_BIN="$HOME/mcp_agent_mail/am"
+    export ACFS_TEST_PROC_MODE="delayed-match"
+    export ACFS_TEST_READLINK_COUNT_FILE="$HOME/readlink-count"
+    export ACFS_TEST_SLEEP_LOG="$HOME/sleep-calls"
+
+    mkdir -p "$(dirname "$ACFS_TEST_AM_BIN")"
+    cat > "$ACFS_TEST_AM_BIN" <<'EOF'
+#!/usr/bin/env bash
+printf 'am 0.3.24\n'
+EOF
+    chmod +x "$ACFS_TEST_AM_BIN"
+
+    write_agent_mail_service_race_stubs
+    export ACFS_BIN_DIR="$STUB_DIR"
+    _stack_run_as_user() {
+        bash -c "$1"
+    }
+
+    run _stack_configure_agent_mail_service
+    assert_success
+    [[ "$(<"$ACFS_TEST_READLINK_COUNT_FILE")" -eq 2 ]]
+    [[ "$(wc -l < "$ACFS_TEST_SLEEP_LOG")" -eq 1 ]]
+}
+
+@test "Agent Mail service configuration fails after bounded executable mismatch retries" {
+    source_lib "stack"
+
+    export TARGET_USER="$(id -un)"
+    export TARGET_HOME="$HOME"
+    export ACFS_STACK_TRUST_TARGET_HOME=true
+    export ACFS_TEST_AM_BIN="$HOME/mcp_agent_mail/am"
+    export ACFS_TEST_PROC_MODE="always-mismatch"
+    export ACFS_TEST_READLINK_COUNT_FILE="$HOME/readlink-count"
+    export ACFS_TEST_SLEEP_LOG="$HOME/sleep-calls"
+
+    mkdir -p "$(dirname "$ACFS_TEST_AM_BIN")"
+    cat > "$ACFS_TEST_AM_BIN" <<'EOF'
+#!/usr/bin/env bash
+printf 'am 0.3.24\n'
+EOF
+    chmod +x "$ACFS_TEST_AM_BIN"
+
+    write_agent_mail_service_race_stubs
+    export ACFS_BIN_DIR="$STUB_DIR"
+    _stack_run_as_user() {
+        bash -c "$1"
+    }
+
+    run _stack_configure_agent_mail_service
+    assert_failure
+    [[ "$(<"$ACFS_TEST_READLINK_COUNT_FILE")" -eq 30 ]]
+    [[ "$(wc -l < "$ACFS_TEST_SLEEP_LOG")" -eq 30 ]]
 }
 
 @test "stack SLB installer checks active Go PATH lines only" {

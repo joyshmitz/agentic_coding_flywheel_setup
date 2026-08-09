@@ -1694,23 +1694,21 @@ if command -v systemctl >/dev/null 2>&1 && systemctl --user show-environment >/d
     systemctl --user daemon-reload >/dev/null 2>&1 || true
     systemctl --user enable agent-mail.service >/dev/null 2>&1
     systemctl --user restart agent-mail.service >/dev/null 2>&1
-    active_waited=0
-    active_max_wait=30
-    until systemctl --user is-active --quiet agent-mail.service >/dev/null 2>&1; do
-        if [[ "$active_waited" -ge "$active_max_wait" ]]; then
-            break
+    expected_real="$(readlink -f "$am_bin" 2>/dev/null || true)"
+    [[ -n "$expected_real" ]] || exit 1
+    for _ in {1..30}; do
+        if systemctl --user is-active --quiet agent-mail.service >/dev/null 2>&1; then
+            main_pid="$(systemctl --user show agent-mail.service --property MainPID --value 2>/dev/null || true)"
+            if [[ "$main_pid" =~ ^[1-9][0-9]*$ ]]; then
+                process_real="$(readlink -f "/proc/$main_pid/exe" 2>/dev/null || true)"
+                if [[ "$process_real" == "$expected_real" ]]; then
+                    exit 0
+                fi
+            fi
         fi
         sleep 1
-        active_waited=$((active_waited + 1))
     done
-    systemctl --user is-active --quiet agent-mail.service >/dev/null 2>&1 || exit 1
-    main_pid="$(systemctl --user show agent-mail.service --property MainPID --value 2>/dev/null || true)"
-    expected_real="$(readlink -f "$am_bin" 2>/dev/null || true)"
-    process_real=""
-    if [[ "$main_pid" =~ ^[1-9][0-9]*$ ]]; then
-        process_real="$(readlink -f "/proc/$main_pid/exe" 2>/dev/null || true)"
-    fi
-    [[ -n "$expected_real" && "$process_real" == "$expected_real" ]]
+    exit 1
 else
     echo "Agent Mail: systemctl --user unavailable, using background fallback" >&2
     launch_agent_mail_fallback
