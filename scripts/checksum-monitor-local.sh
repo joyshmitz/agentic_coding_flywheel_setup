@@ -55,7 +55,13 @@ LOCK_FILE="$STATE_DIR/monitor.lock"
 RUN_TS="$(/usr/bin/date -u +%Y%m%dT%H%M%SZ)"
 LOG_FILE="$LOG_DIR/run-$RUN_TS.log"
 AUTHORIZATION_FILE="$STATE_DIR/authorized-checksum-change"
-EXPECTED_BUN_VERSION="1.4.0"
+# Bun floor. The monitor used to require this exact version, and bun's own
+# auto-upgrade (1.4.0 -> 1.4.1 -> 1.4.2) then failed the monitor closed on
+# every run for days (#355). A newer release of the same major is accepted;
+# a downgrade, a different major, or a pre-release/garbage string still
+# fails closed. Raise the floor deliberately when the lockfile or generator
+# starts depending on a newer Bun.
+MINIMUM_BUN_VERSION="1.4.0"
 MONITOR_RUN_BUDGET_SECONDS=1050
 MONITOR_FAILURE_RESERVE_SECONDS=60
 MONITOR_STARTED_AT_SECONDS=$SECONDS
@@ -417,20 +423,67 @@ assert_closed_publication_worktree() {
     fi
 }
 
+# bun_version_is_acceptable ACTUAL MINIMUM
+# True when ACTUAL is a plain X.Y.Z release with the same major as MINIMUM
+# and ACTUAL >= MINIMUM. Pre-release/build suffixes and anything that is not
+# three dotted integers are rejected (fail closed on the unknown).
+bun_version_is_acceptable() {
+    local actual="$1" minimum="$2"
+    local -a a=() m=()
+    [[ "$actual" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || return 1
+    a=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}")
+    [[ "$minimum" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]] || return 1
+    m=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}")
+    (( 10#${a[0]} == 10#${m[0]} )) || return 1
+    if (( 10#${a[1]} > 10#${m[1]} )); then
+        return 0
+    elif (( 10#${a[1]} < 10#${m[1]} )); then
+        return 1
+    fi
+    (( 10#${a[2]} >= 10#${m[2]} ))
+}
+
 # Consecutive fail-closed runs are tracked so a persistently broken monitor
 # (expired gh auth, dead network, wedged clone) alerts a human instead of
 # silently leaving checksums unmonitored. Alerting is strictly best-effort:
 # it must never mask the fail-closed exit or itself abort the trap path.
 FAIL_STREAK_FILE="$STATE_DIR/fail_closed_streak"
+# Last alert actually posted: "<epoch>\t<reason>". Alerts are deduplicated on
+# it so an unchanged failure produces one issue comment per day, not one
+# every 24 runs (the old cadence posted the identical text every ~6h for
+# two weeks on #355).
+FAIL_ALERT_FILE="$STATE_DIR/fail_closed_alert"
+FAIL_ALERT_REPEAT_SECONDS=86400
+FAIL_ALERT_MIN_STREAK=3
+
+# _fail_alert_due STREAK REASON [NOW_EPOCH]
+# True when an alert should be posted for this failure: the streak has just
+# reached the alert threshold, the reason differs from the last posted alert,
+# or the last alert is older than FAIL_ALERT_REPEAT_SECONDS. Never true below
+# the threshold. Pure: reads FAIL_ALERT_FILE, never writes it.
+_fail_alert_due() {
+    local streak="$1" reason="$2" now="${3:-}"
+    local last_epoch="" last_reason=""
+    (( streak >= FAIL_ALERT_MIN_STREAK )) || return 1
+    [[ -n "$now" ]] || now="$(date -u +%s 2>/dev/null || echo 0)"
+    if [[ -f "$FAIL_ALERT_FILE" && ! -L "$FAIL_ALERT_FILE" ]]; then
+        IFS=$'\t' read -r last_epoch last_reason < "$FAIL_ALERT_FILE" || true
+    fi
+    [[ "$last_epoch" =~ ^[0-9]+$ ]] || return 0      # nothing posted yet (or unreadable)
+    [[ "$last_reason" == "$reason" ]] || return 0    # the failure changed: say so
+    (( now - last_epoch >= FAIL_ALERT_REPEAT_SECONDS ))
+}
+
+_fail_alert_record() {
+    local reason="$1" now="${2:-}"
+    [[ -n "$now" ]] || now="$(date -u +%s 2>/dev/null || echo 0)"
+    printf '%s\t%s\n' "$now" "$reason" > "$FAIL_ALERT_FILE" 2>/dev/null || true
+}
 
 _alert_fail_closed_streak() {
     local streak="$1" reason="$2"
-    # Alert when the streak first crosses 3, then re-alert every 24 runs
-    # (~6h at the 15-minute timer cadence) while it persists.
-    if (( streak != 3 )) && { (( streak < 3 )) || (( streak % 24 != 0 )); }; then
-        return 0
-    fi
-    local alert_msg="ACFS checksum monitor has failed closed $streak times in a row on $(hostname 2>/dev/null || echo unknown-host). Latest reason: $reason. Checksum drift is NOT being monitored until this is fixed. See $LOG_DIR."
+    _fail_alert_due "$streak" "$reason" || return 0
+    local alert_msg="ACFS checksum monitor has failed closed $streak times in a row on $(hostname 2>/dev/null || echo unknown-host). Latest reason: $reason. Checksum drift is NOT being monitored until this is fixed. See $LOG_DIR. (Repeated at most once per 24h while the reason is unchanged.)"
     # Optional push notification
     if [[ -n "${ACFS_NTFY_TOPIC:-}" ]]; then
         curl -fsS -m 10 -A "OpenAI File Downloader, XaiImageApiFetch/1.0" \
@@ -445,25 +498,54 @@ _alert_fail_closed_streak() {
         --label monitoring \
         --search "Checksum monitor failing closed" \
         --json number -q '.[0].number' 2>>"$LOG_FILE" || true)"
+    local posted=false
     if [[ -n "$existing" && "$existing" != "null" ]]; then
-        run_failure_bounded gh issue comment "$existing" --repo "$repo_slug" \
-            --body "$alert_msg" >>"$LOG_FILE" 2>&1 \
-            && log "commented on existing monitoring issue #$existing" || true
+        if run_failure_bounded gh issue comment "$existing" --repo "$repo_slug" \
+            --body "$alert_msg" >>"$LOG_FILE" 2>&1; then
+            log "commented on existing monitoring issue #$existing"
+            posted=true
+        fi
     else
         if run_failure_bounded gh issue create --repo "$repo_slug" \
             --title "🚨 Checksum monitor failing closed - checksums unmonitored" \
             --label monitoring \
             --body "$alert_msg" >>"$LOG_FILE" 2>&1; then
             log "created monitoring alert issue"
-        else
+            posted=true
+        elif run_failure_bounded gh issue create --repo "$repo_slug" \
+            --title "🚨 Checksum monitor failing closed - checksums unmonitored" \
+            --body "$alert_msg" >>"$LOG_FILE" 2>&1; then
             # The label exists in the canonical repo; if it is ever missing,
             # an unlabeled alert (dedupe degraded) beats no alert at all.
-            run_failure_bounded gh issue create --repo "$repo_slug" \
-                --title "🚨 Checksum monitor failing closed - checksums unmonitored" \
-                --body "$alert_msg" >>"$LOG_FILE" 2>&1 \
-                && log "created monitoring alert issue (unlabeled fallback)" || true
+            log "created monitoring alert issue (unlabeled fallback)"
+            posted=true
         fi
     fi
+    # Only a delivered alert starts the repeat window; a failed post (gh
+    # auth, network) is retried on the next run instead of going quiet.
+    if [[ "$posted" == "true" ]]; then
+        _fail_alert_record "$reason"
+    fi
+}
+
+# After a streak that alerted, tell the same issue thread the monitor is
+# healthy again so the alert does not stand as the last word. Best-effort.
+_announce_recovery() {
+    local previous_streak="$1"
+    (( previous_streak >= FAIL_ALERT_MIN_STREAK )) || return 0
+    local repo_slug="Dicklesworthstone/agentic_coding_flywheel_setup"
+    local existing=""
+    local msg="ACFS checksum monitor recovered on $(hostname 2>/dev/null || echo unknown-host) after $previous_streak consecutive fail-closed runs; drift monitoring and publication are live again."
+    existing="$(run_failure_bounded gh issue list --repo "$repo_slug" --state open \
+        --label monitoring \
+        --search "Checksum monitor failing closed" \
+        --json number -q '.[0].number' 2>>"$LOG_FILE" || true)"
+    if [[ -n "$existing" && "$existing" != "null" ]]; then
+        run_failure_bounded gh issue comment "$existing" --repo "$repo_slug" \
+            --body "$msg" >>"$LOG_FILE" 2>&1 \
+            && log "posted recovery note on monitoring issue #$existing" || true
+    fi
+    rm -f -- "$FAIL_ALERT_FILE" 2>/dev/null || true
 }
 
 fail_closed() {
@@ -477,6 +559,11 @@ fail_closed() {
     log "summary: result=fail_closed state=$STATE streak=$streak repo=$MONITOR_REPO"
     exit 1
 }
+
+# Test hook: source the definitions above without running the monitor.
+if [[ "${ACFS_MONITOR_LIBRARY_ONLY:-0}" == "1" ]]; then
+    return 0 2>/dev/null || exit 0
+fi
 
 # ---- single-instance lock (timer overlap is a silent no-op) ----
 exec 9>"$LOCK_FILE"
@@ -618,8 +705,9 @@ BASE_HEAD="$(git rev-parse HEAD 2>/dev/null || true)"
 require_clean_tree || fail_closed "clone is not clean after synchronization"
 
 actual_bun_version="$(run_bun_clean --version 2>>"$LOG_FILE" || true)"
-[[ "$actual_bun_version" == "$EXPECTED_BUN_VERSION" ]] \
-    || fail_closed "Bun version mismatch: expected $EXPECTED_BUN_VERSION, found ${actual_bun_version:-unavailable}"
+bun_version_is_acceptable "$actual_bun_version" "$MINIMUM_BUN_VERSION" \
+    || fail_closed "Bun version unacceptable: need $MINIMUM_BUN_VERSION or a newer ${MINIMUM_BUN_VERSION%%.*}.x release, found ${actual_bun_version:-unavailable}"
+log "bun $actual_bun_version accepted (floor $MINIMUM_BUN_VERSION)"
 ( cd packages/manifest \
     && run_bun_clean_bounded 90 install --frozen-lockfile --ignore-scripts --silent >>"$LOG_FILE" 2>&1 ) \
     || fail_closed "frozen, lifecycle-disabled Bun install failed in packages/manifest"
@@ -912,8 +1000,11 @@ if [[ "$authorization_consumed" == "true" ]]; then
 fi
 
 # Only an accepted remote state can clear monitoring failure history.
+previous_fail_streak="$(command cat "$FAIL_STREAK_FILE" 2>/dev/null || echo 0)"
+[[ "$previous_fail_streak" =~ ^[0-9]+$ ]] || previous_fail_streak=0
 printf '0\n' > "$FAIL_STREAK_FILE" \
     || fail_closed "remote publication is verified but the healthy-state marker could not be written"
+_announce_recovery "$previous_fail_streak" || true
 advance_state REMOTE_VERIFIED HEALTHY
 
 log "summary: result=ok state=$STATE base=$BASE_HEAD published=$PUBLISH_HEAD push=$push_result mismatches=$mismatches errors=$errors skipped=$skipped trusted=${trusted_changed:-none} external=${external_changed:-none} committed=$committed"
