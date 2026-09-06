@@ -5141,7 +5141,8 @@ acfs_bun_global_bin_dir_as_target() {
     local dir=""
 
     [[ -n "$bun_bin" && -x "$bun_bin" ]] || return 1
-    dir="$(run_as_target "$bun_bin" pm -g bin 2>/dev/null | tail -n 1)"
+    # Never let a failing bun trip errexit when a caller runs this directly.
+    dir="$(run_as_target "$bun_bin" pm -g bin 2>/dev/null | tail -n 1 || true)"
     [[ "$dir" == /* ]] || return 1
     printf '%s\n' "$dir"
 }
