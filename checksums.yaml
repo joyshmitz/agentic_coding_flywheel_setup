@@ -1,4 +1,4 @@
-# checksums.yaml - Auto-generated 2026-09-04T00:36:47-04:00
+# checksums.yaml - Auto-generated 2026-09-06T01:22:16-04:00
 # Run: ./scripts/lib/security.sh --update-checksums
 
 installers:
@@ -32,7 +32,7 @@ installers:
 
   bv:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh"
-    sha256: "d072c0c0381123235f43d3b0d356a15bdb52f6f3c010bc1da4ae82a1b9147c53"
+    sha256: "4422fa2e3dc3cc14a1d5aa9ad6e0cde2d56490e08389e08ab22a6d4420abe9df"
 
   caam:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/coding_agent_account_manager/main/install.sh"
@@ -96,7 +96,7 @@ installers:
 
   mcp_agent_mail:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail_rust/refs/heads/main/install.sh"
-    sha256: "e154a22e00532c928a04a7d1e2fb0c5824202def20af368d34198a0754f77b57"
+    sha256: "469c3e2f1a1eddfb1df2844b675f704845df8df353ad326870739221fae84188"
 
   mdwb:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/markdown_web_browser/main/install.sh"
@@ -132,7 +132,7 @@ installers:
 
   pfr:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/power_failure_resumer/main/install.sh"
-    sha256: "ae1c7c9c1d6deb0fa862f2df482791cc90281f1d5c808d64893385b55cac93f4"
+    sha256: "980b56861828b01a1fc8db2ec2e9b7068b8efa0184ceef6433b84dec8ff6a8c9"
 
   pi:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/pi_agent_rust/main/install.sh"
@@ -172,7 +172,7 @@ installers:
 
   srps:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/system_resource_protection_script/main/install.sh"
-    sha256: "3c62e1abe7332a4678ef5e588525aee09aa3ad355df1a4a874e846d3a7b86622"
+    sha256: "a37fb479e261c22cff90fb9fcaab47366961c37474f546da79d232e90ac82d67"
 
   tru:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/toon_rust/main/install.sh"
@@ -184,7 +184,7 @@ installers:
 
   uv:
     url: "https://astral.sh/uv/install.sh"
-    sha256: "222e006c0fe4a0d793031833e469b21df72311f4e3526ffecca0e19e6dfabc32"
+    sha256: "a3196b75f697a1adaa5e4af34ffba7629c710931ab1dac33bab59ecf228080bb"
 
   xf:
     url: "https://raw.githubusercontent.com/Dicklesworthstone/xf/main/install.sh"

@@ -114,6 +114,7 @@ INTERNAL_CHECKSUM_REQUIRED_PATHS=(
     checksums.yaml
     scripts/preflight.sh
     scripts/lib/security.sh
+    scripts/lib/holds.sh
     scripts/lib/github_api.sh
     scripts/lib/contract.sh
     scripts/lib/agents.sh

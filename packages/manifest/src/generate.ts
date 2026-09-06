@@ -547,6 +547,7 @@ const INTERNAL_SCRIPTS_TO_CHECKSUM = [
   'checksums.yaml',
   'scripts/preflight.sh',
   'scripts/lib/security.sh',
+  'scripts/lib/holds.sh',
   'scripts/lib/github_api.sh',
   'scripts/lib/contract.sh',
   'scripts/lib/agents.sh',

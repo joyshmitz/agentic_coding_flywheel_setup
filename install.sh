@@ -147,6 +147,11 @@ ACFS_VERSION="0.9.0"
 # ------------------------------------------------------------
 declare -ag ACFS_PHASE_FAILURES=()
 declare -ag ACFS_MODULE_FAILURES=()
+# Optional (non-fatal) generated modules that did not install, as
+# "<module> (<reason>)". Populated by record_skipped_tool() below; without it a
+# stale installer pin on an optional module was one WARN line in a long log
+# while the same failure on a required module was named in the summary box (#387).
+declare -ag ACFS_OPTIONAL_MODULE_SKIPS=()
 # Set by acfs_stack_phase_selection_verdict() when SOME (but not all) of the
 # modules the user explicitly requested with --only failed and nothing else
 # went wrong: main exits 2 (the #357 partial-failure code) instead of 1.
@@ -3732,6 +3737,7 @@ acfs_load_internal_checksums_data() {
         checksums.yaml
         scripts/preflight.sh
         scripts/lib/security.sh
+        scripts/lib/holds.sh
         scripts/lib/github_api.sh
         scripts/lib/contract.sh
         scripts/lib/agents.sh
@@ -5035,6 +5041,42 @@ _acfs_validate_clean_runner_command() {
         log_error "Clean target runner requires a regular, non-symlink absolute script file"
         return 1
     fi
+}
+
+# Generated optional modules report a non-fatal failure through
+# record_skipped_tool "<module>" "<reason>" when it is defined (else they fall
+# back to state_tool_skip). install.sh does not source scripts/lib/tools.sh, so
+# this is the installer's own implementation: it keeps the persisted skip
+# marker and additionally records the module for the final summary box, using
+# the categorized reason the module set (checksum, network, missing
+# dependency, ...) when the generated call site only says "verified installer
+# failed" (#387).
+record_skipped_tool() {
+    local module="${1:-}"
+    local reason="${2:-installation failed}"
+    local existing=""
+
+    [[ -n "$module" ]] || return 0
+    if [[ "$reason" == "verified installer failed" && -n "${ACFS_LAST_MODULE_FAILURE_REASON:-}" ]]; then
+        reason="$ACFS_LAST_MODULE_FAILURE_REASON"
+    fi
+    ACFS_LAST_MODULE_FAILURE_REASON=""
+    # Verify-step reasons embed the whole probe command; keep the box readable.
+    if (( ${#reason} > 72 )); then
+        reason="${reason:0:69}..."
+    fi
+
+    for existing in "${ACFS_OPTIONAL_MODULE_SKIPS[@]}"; do
+        if [[ "$existing" == "$module ("* ]]; then
+            return 0
+        fi
+    done
+    ACFS_OPTIONAL_MODULE_SKIPS+=("$module ($reason)")
+
+    if type -t state_tool_skip >/dev/null 2>&1; then
+        state_tool_skip "$module" || true
+    fi
+    return 0
 }
 
 run_as_target() {
@@ -10467,6 +10509,10 @@ finalize() {
     try_step "Installing stack.sh" install_asset "scripts/lib/stack.sh" "$ACFS_HOME/scripts/lib/stack.sh" || return 1
     try_step "Installing contract.sh" install_asset "scripts/lib/contract.sh" "$ACFS_HOME/scripts/lib/contract.sh" || return 1
     try_step "Installing security.sh" install_asset "scripts/lib/security.sh" "$ACFS_HOME/scripts/lib/security.sh" || return 1
+    # holds.sh backs `acfs hold` / `acfs holds`, which the checksum-mismatch
+    # error printed by security.sh names as the end-user remediation, so it
+    # must be present on a fresh install and not only after acfs-update (#387).
+    try_step "Installing holds.sh" install_asset "scripts/lib/holds.sh" "$ACFS_HOME/scripts/lib/holds.sh" || return 1
     try_step "Installing github_api.sh" install_asset "scripts/lib/github_api.sh" "$ACFS_HOME/scripts/lib/github_api.sh" || return 1
     try_step "Installing tools.sh" install_asset "scripts/lib/tools.sh" "$ACFS_HOME/scripts/lib/tools.sh" || return 1
     try_step "Installing autofix.sh" install_asset "scripts/lib/autofix.sh" "$ACFS_HOME/scripts/lib/autofix.sh" || return 1
@@ -11107,6 +11153,25 @@ Tip: use --print to see upstream install scripts that will be fetched."
 ${failures_list_gum}
 Re-run the installer (it resumes) or check the log to retry these."
     fi
+    # Optional modules that were skipped are not failures of the run, but they
+    # are things that did not install: name them beside the failures instead of
+    # leaving a single WARN line in the log as the only trace (#387).
+    local optional_section_plain=""
+    local optional_section_gum=""
+    if [[ ${#ACFS_OPTIONAL_MODULE_SKIPS[@]} -gt 0 ]]; then
+        local _optional_item
+        local optional_list_plain=""
+        local optional_list_gum=""
+        for _optional_item in "${ACFS_OPTIONAL_MODULE_SKIPS[@]}"; do
+            optional_list_plain+="  ○ ${_optional_item}\n"
+            optional_list_gum+="  ○ ${_optional_item}
+"
+        done
+        optional_section_plain="${YELLOW}  ○  Optional modules skipped (not installed; see WARN lines above):${NC}\n${optional_list_plain}${GRAY}Checksum skips clear once the pin is refreshed: acfs update --stack${NC}\n\n"
+        optional_section_gum="○ Optional modules skipped (not installed; see WARN lines above):
+
+${optional_list_gum}Checksum skips clear once the pin is refreshed: acfs update --stack"
+    fi
 
     # Build dynamic Tailscale status
     local tailscale_section=""
@@ -11210,6 +11275,11 @@ ${tailscale_section:+Service Authentication:
 $tailscale_section
 
 }$ssh_key_warning_section$next_steps_content"
+    if [[ -n "$optional_section_gum" ]]; then
+        summary_content="${optional_section_gum}
+
+${summary_content}"
+    fi
     if [[ "$summary_has_failures" == "true" ]]; then
         summary_content="${failures_section_gum}
 
@@ -11247,6 +11317,9 @@ $summary_content"
             echo ""
             if [[ "$summary_has_failures" == "true" ]]; then
                 echo -e "$failures_section_plain"
+            fi
+            if [[ -n "$optional_section_plain" ]]; then
+                echo -e "$optional_section_plain"
             fi
             echo -e "Version: ${BLUE}$ACFS_VERSION${NC}"
             echo -e "Mode:    ${BLUE}$MODE${NC}"

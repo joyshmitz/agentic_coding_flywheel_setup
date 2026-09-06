@@ -1119,13 +1119,14 @@ describe('Generated script headers', () => {
     expect(countMatch).not.toBeNull();
     expect(rawEntries.length).toBe(checksums.size);
     expect(Number(countMatch?.[1])).toBe(checksums.size);
-    expect(checksums.size).toBe(113);
+    expect(checksums.size).toBe(114);
 
     const mandatoryPaths = [
       'install.sh',
       'checksums.yaml',
       'scripts/preflight.sh',
       'scripts/lib/security.sh',
+      'scripts/lib/holds.sh',
       'scripts/lib/github_api.sh',
       'scripts/lib/contract.sh',
       'scripts/lib/agents.sh',
