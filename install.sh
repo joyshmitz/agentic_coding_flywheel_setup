@@ -5135,10 +5135,22 @@ run_as_target() {
     fi
 
     local target_path_prefix="$primary_bin_dir:$user_home/.local/bin:$user_home/.acfs/bin:$user_home/.cargo/bin:$user_home/.bun/bin:$user_home/.atuin/bin:$user_home/go/bin"
-    local current_path="${PATH:-/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin}"
-    local command_path="$target_path_prefix:$current_path"
+    # Target-user commands must see the standard system prefixes explicitly.
+    # install.sh sanitizes its own PATH to the OS-owned directories, so
+    # inheriting $PATH alone would hide /usr/local/bin from every verify step
+    # even though `sudo make install` / `install -m755 ... /usr/local/bin`
+    # is where many upstream installers put their binaries (#386).
+    local system_path_prefix="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+    local current_path="${PATH:-}"
+    local command_path="$target_path_prefix:$system_path_prefix${current_path:+:$current_path}"
     if [[ "$clean_environment" == "true" ]]; then
-        command_path="/usr/sbin:/usr/bin:/sbin:/bin"
+        # Verified upstream installers get a fixed PATH with no caller or
+        # user-writable entries. It deliberately matches sudo's secure_path:
+        # /usr/local/{s,}bin are the FHS-standard root-owned prefixes that
+        # source builds (CMake, `make install`) and prebuilt-binary installers
+        # target, so an installer's own `command -v <tool>` post-install
+        # check must be able to find what it just installed (#386).
+        command_path="$system_path_prefix"
     fi
 
     # Environment variables to set for target user commands

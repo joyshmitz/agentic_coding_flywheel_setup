@@ -396,6 +396,32 @@ EOF
         || fail "Expected run_as_target to extend PATH for target-user bins, got: $captured"
 }
 
+@test "run_as_target: target-user PATH includes /usr/local/bin even when the caller PATH is OS-only (#386)" {
+    export TARGET_USER="testuser"
+    export TARGET_HOME="/home/testuser"
+    export ACFS_BIN_DIR="/home/testuser/.local/bin"
+
+    _acfs_getent_passwd_entry() {
+        if [[ "${1:-}" == "testuser" ]]; then
+            printf 'testuser:x:1000:1000::/home/testuser:/bin/bash\n'
+            return 0
+        fi
+        return 1
+    }
+
+    use_spy_sudo
+
+    # install.sh sanitizes its own PATH to the OS-owned directories before
+    # any module runs; verify steps such as stack.slb's `slb --help` must
+    # still find binaries that upstream installers place in /usr/local/bin.
+    local captured
+    PATH="/usr/sbin:/usr/bin:/sbin:/bin" run run_as_target env
+    assert_success
+    captured="$(cat "$STUB_DIR/sudo.log")"
+    [[ "$captured" == *"/home/testuser/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:/usr/sbin:/usr/bin:/sbin:/bin "* ]] \
+        || fail "Expected the system prefix (with /usr/local/bin) before the inherited PATH, got: $captured"
+}
+
 @test "run_as_target_runner clears ambient startup hooks and ACFS context" {
     local current_user
     local current_home
@@ -426,7 +452,10 @@ EOF
 
     run run_as_target_runner env RU_NON_INTERACTIVE=1 bash "$verified_script"
     assert_success
-    assert_output --partial "path=/usr/sbin:/usr/bin:/sbin:/bin"
+    # Fixed PATH = sudo secure_path: root-owned system prefixes only (no
+    # caller entries, no user-writable dirs), but /usr/local/{s,}bin present
+    # so an installer's `command -v` sees what `make install` produced (#386).
+    assert_output --partial "path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
     assert_output --partial "ru=1"
     assert_output --partial "bash_env=missing"
     assert_output --partial "acfs_raw=missing"

@@ -91,6 +91,35 @@ EOF
     [[ "$resolver_body" != *'/opt/homebrew/'* ]]
 }
 
+@test "security: verified-installer PATH is sudo secure_path in both run_as_target copies (#386)" {
+    # The clean-environment runner hands verified upstream installers a fixed
+    # PATH. It must stay free of caller and user-writable entries, but it must
+    # include /usr/local/{s,}bin: installers that `sudo make install` into
+    # /usr/local/bin and then `command -v` their own binary (SRPS ananicy-cpp)
+    # failed on every run when the sanitized PATH omitted it.
+    local expected='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin'
+    local file body prefix_line
+    for file in "$PROJECT_ROOT/install.sh" "$PROJECT_ROOT/scripts/lib/install_helpers.sh"; do
+        body="$(awk '
+            /^[[:space:]]*run_as_target\(\) \{/ { capture=1 }
+            capture { print }
+            capture && /^[[:space:]]*local -a env_args=/ { exit }
+        ' "$file")"
+        [[ -n "$body" ]] || fail "run_as_target PATH block not found in $file"
+        prefix_line="$(grep -E '^[[:space:]]*local system_path_prefix=' <<< "$body")"
+        [[ "$prefix_line" == *"\"$expected\""* ]] \
+            || fail "$file: system_path_prefix is not sudo secure_path: $prefix_line"
+        grep -Eq '^[[:space:]]*command_path="\$system_path_prefix"$' <<< "$body" \
+            || fail "$file: clean-environment command_path must be exactly the system prefix"
+        [[ "$body" != *'command_path="/usr/sbin:/usr/bin:/sbin:/bin"'* ]] \
+            || fail "$file: clean-environment PATH regressed to the OS-only set (drops /usr/local/bin)"
+        # The non-clean target-user PATH must also carry the system prefix
+        # explicitly instead of trusting an already-sanitized caller PATH.
+        grep -Eq '^[[:space:]]*local command_path="\$target_path_prefix:\$system_path_prefix' <<< "$body" \
+            || fail "$file: target-user PATH does not include the system prefix explicitly"
+    done
+}
+
 @test "security: autofix restore resolution excludes locally managed prefixes" {
     local privileged_path_line
     local resolver_body

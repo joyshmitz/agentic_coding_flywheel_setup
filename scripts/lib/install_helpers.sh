@@ -1189,10 +1189,17 @@ if [[ "${ACFS_FORCE_INSTALL_HELPERS_SECURITY_REDEFINE:-0}" == "1" ]] || ! declar
         fi
 
         local target_path_prefix="$primary_bin_dir:$user_home/.local/bin:$user_home/.acfs/bin:$user_home/.cargo/bin:$user_home/.bun/bin:$user_home/.atuin/bin:$user_home/go/bin"
-        local current_path="${PATH:-/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin}"
-        local command_path="$target_path_prefix:$current_path"
+        # Target-user commands must see the standard system prefixes explicitly:
+        # callers such as install.sh sanitize their own PATH to the OS-owned
+        # directories, so inheriting $PATH alone hides /usr/local/bin (#386).
+        local system_path_prefix="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin"
+        local current_path="${PATH:-}"
+        local command_path="$target_path_prefix:$system_path_prefix${current_path:+:$current_path}"
         if [[ "$clean_environment" == "true" ]]; then
-            command_path="/usr/sbin:/usr/bin:/sbin:/bin"
+            # Fixed PATH for verified upstream installers: no caller or
+            # user-writable entries, matching sudo's secure_path so an
+            # installer can find the binary it just placed in /usr/local/bin.
+            command_path="$system_path_prefix"
         fi
 
         # UV_NO_CONFIG prevents uv from looking for config in /root when running via sudo/runuser.
@@ -1204,7 +1211,9 @@ if [[ "${ACFS_FORCE_INSTALL_HELPERS_SECURITY_REDEFINE:-0}" == "1" ]] || ! declar
         # Pass core ACFS variables to the target user environment
         env_args+=("TARGET_USER=$user" "TARGET_HOME=$user_home")
         if [[ "$clean_environment" == "true" ]]; then
-            env_args=(-i "${env_args[@]}" "USER=$user" "LOGNAME=$user" "LANG=C.UTF-8")
+            # TERM survives sanitization (caller's value, `dumb` fallback) so
+            # installers that touch terminfo do not abort under `env -i` (#370).
+            env_args=(-i "${env_args[@]}" "USER=$user" "LOGNAME=$user" "LANG=C.UTF-8" "TERM=${TERM:-dumb}")
         fi
         # Preserve the target user's live service-manager socket without
         # accepting either value from the caller environment.
