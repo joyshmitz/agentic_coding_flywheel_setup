@@ -121,7 +121,8 @@ trap 'rm -rf "$STATE_TMP"' EXIT
     [[ -f "$FAIL_ALERT_FILE" ]] || fail "recovery below the alert threshold must not touch the alert record"
     [[ ! -s "$GH_CALLS" ]] || fail "recovery below the alert threshold must not talk to GitHub"
     _announce_recovery 3 || fail "_announce_recovery at threshold failed"
-    [[ ! -e "$FAIL_ALERT_FILE" ]] || fail "recovery did not clear the alert record"
+    [[ -f "$FAIL_ALERT_FILE" && ! -s "$FAIL_ALERT_FILE" ]] || fail "recovery did not reset the alert record"
+    due 3 "reason A" "$now"                       # next streak alerts again immediately
     grep -q '^gh issue list ' "$GH_CALLS" || fail "recovery did not look up the monitoring issue"
     ! grep -q '^gh issue comment ' "$GH_CALLS" || fail "recovery commented although no open issue was found"
     ! grep -q '^gh issue create ' "$GH_CALLS" || fail "recovery must never open an issue"

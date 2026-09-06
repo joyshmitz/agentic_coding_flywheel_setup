@@ -545,7 +545,9 @@ _announce_recovery() {
             --body "$msg" >>"$LOG_FILE" 2>&1 \
             && log "posted recovery note on monitoring issue #$existing" || true
     fi
-    rm -f -- "$FAIL_ALERT_FILE" 2>/dev/null || true
+    # Reset the dedupe window: an empty record reads as "nothing posted yet",
+    # so the next streak's first alert is not suppressed by this one's.
+    : > "$FAIL_ALERT_FILE" 2>/dev/null || true
 }
 
 fail_closed() {
