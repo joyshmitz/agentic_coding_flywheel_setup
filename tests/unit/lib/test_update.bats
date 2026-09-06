@@ -7345,6 +7345,9 @@ EOF_DASHBOARD_TRAP
     assert_success
     run grep -F 'wrapped_cmd+=" export PATH=$target_path_prefix_q:\$PATH; set -o pipefail; cd \"\$HOME\" || exit 1; $cmd"' "$agents"
     assert_success
+    # #388: bun global installs must land on the ~/.bun/bin this PATH advertises.
+    run grep -F 'wrapped_cmd+=" export BUN_INSTALL=$target_home_q/.bun;"' "$agents"
+    assert_success
 
     run grep -F '_lang_validate_target_user "$target_user" || return 1' "$languages"
     assert_success
@@ -7358,6 +7361,8 @@ EOF_DASHBOARD_TRAP
     run grep -F 'wrapped_cmd="export TARGET_USER=$target_user_q TARGET_HOME=$target_home_q HOME=$target_home_q;"' "$cloud_db"
     assert_success
     run grep -F 'wrapped_cmd+=" export PATH=$target_path_prefix_q:\$PATH; set -o pipefail; cd \"\$HOME\" || exit 1; $cmd"' "$cloud_db"
+    assert_success
+    run grep -F 'wrapped_cmd+=" export BUN_INSTALL=$target_home_q/.bun;"' "$cloud_db"
     assert_success
 
     run grep -F '_stack_validate_target_user "$target_user" || return 1' "$stack"

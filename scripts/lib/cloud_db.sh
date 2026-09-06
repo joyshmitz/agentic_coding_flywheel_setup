@@ -349,7 +349,10 @@ _cloud_run_as_user() {
     fi
     printf -v acfs_bin_dir_q '%q' "$preferred_bin_dir"
 
+    # BUN_INSTALL keeps `bun install -g` on the ~/.bun/bin in this PATH prefix
+    # instead of bun's XDG_CACHE_HOME fallback (#388).
     wrapped_cmd="export TARGET_USER=$target_user_q TARGET_HOME=$target_home_q HOME=$target_home_q;"
+    wrapped_cmd+=" export BUN_INSTALL=$target_home_q/.bun;"
     if [[ -n "$acfs_home_q" ]]; then
         wrapped_cmd+=" export ACFS_HOME=$acfs_home_q;"
     fi

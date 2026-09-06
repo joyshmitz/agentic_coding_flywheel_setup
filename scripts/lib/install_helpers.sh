@@ -764,7 +764,8 @@ acfs_apply_legacy_skips() {
 # HOME and ACFS_BIN_DIR are expanded by the target shell from env data, so
 # poisoned values stay inert while home-relative paths resolve correctly.
 _acfs_user_path_export_source() {
-    printf '%s\n' '_acfs_primary_bin="${ACFS_BIN_DIR:-$HOME/.local/bin}"; export PATH="${_acfs_primary_bin}:$HOME/.local/bin:$HOME/.acfs/bin:$HOME/.cargo/bin:$HOME/.bun/bin:$HOME/.atuin/bin:$HOME/go/bin:$PATH"'
+    # BUN_INSTALL keeps `bun install -g` on the ~/.bun/bin this PATH advertises (#388).
+    printf '%s\n' '_acfs_primary_bin="${ACFS_BIN_DIR:-$HOME/.local/bin}"; export BUN_INSTALL="$HOME/.bun"; export PATH="${_acfs_primary_bin}:$HOME/.local/bin:$HOME/.acfs/bin:$HOME/.cargo/bin:$HOME/.bun/bin:$HOME/.atuin/bin:$HOME/go/bin:$PATH"'
 }
 
 # Shell source for privileged commands. Root execution must never search the
@@ -1206,7 +1207,10 @@ if [[ "${ACFS_FORCE_INSTALL_HELPERS_SECURITY_REDEFINE:-0}" == "1" ]] || ! declar
         # HOME is set explicitly for consistent tool installs and path resolution.
         # PATH must include user-local ACFS bins because we deliberately avoid
         # login shells and therefore cannot depend on profile files.
-        local -a env_args=("UV_NO_CONFIG=1" "HOME=$user_home" "PATH=$command_path")
+        # BUN_INSTALL pins bun's global bin dir to the ~/.bun/bin on that PATH
+        # (the value acfs.zshrc exports); otherwise bun follows XDG_CACHE_HOME
+        # and strands `bun install -g` binaries in ~/.cache/.bun/bin (#388).
+        local -a env_args=("UV_NO_CONFIG=1" "HOME=$user_home" "PATH=$command_path" "BUN_INSTALL=$user_home/.bun")
 
         # Pass core ACFS variables to the target user environment
         env_args+=("TARGET_USER=$user" "TARGET_HOME=$user_home")

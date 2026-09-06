@@ -2446,10 +2446,134 @@ check_atuin_daemon() {
 }
 
 # Check core tools
+# #388: bun resolves its global bin dir as BUN_INSTALL_BIN, then
+# BUN_INSTALL/bin, then XDG_CACHE_HOME/.bun/bin, then ~/.cache/.bun/bin. ACFS
+# puts ~/.bun/bin on PATH and exports BUN_INSTALL accordingly, but an install
+# that ran without it (an older install.sh on a desktop that exports
+# XDG_CACHE_HOME, or a hand-run `bun install -g` from a shell without the
+# ACFS loader) leaves codex/wrangler/vercel in a directory nothing looks at.
+#
+# Prints one "<stranded path>\t<package>" line per binary that exists under a
+# bun cache-fallback bin dir but not under ~/.bun/bin. The package name comes
+# from the symlink target bun writes (../install/global/node_modules/<pkg>/...),
+# so the fix can reinstall exactly those packages. Nothing is moved or deleted.
+doctor_bun_stranded_global_binaries() {
+    local runtime_home=""
+    local expected_dir=""
+    local -a fallback_dirs=()
+    local dir=""
+    local seen_dirs=""
+    local entry=""
+    local name=""
+    local target=""
+    local scope=""
+    local package=""
+    local readlink_bin=""
+
+    runtime_home="$(doctor_runtime_home)"
+    [[ -n "$runtime_home" ]] || return 1
+    expected_dir="$runtime_home/.bun/bin"
+    readlink_bin="$(_acfs_doctor_system_binary_path readlink 2>/dev/null || true)"
+
+    if [[ -n "${XDG_CACHE_HOME:-}" && "$XDG_CACHE_HOME" == /* ]]; then
+        fallback_dirs+=("${XDG_CACHE_HOME%/}/.bun/bin")
+    fi
+    fallback_dirs+=("$runtime_home/.cache/.bun/bin")
+
+    for dir in "${fallback_dirs[@]}"; do
+        [[ "$dir" != "$expected_dir" ]] || continue
+        case ":$seen_dirs:" in *":$dir:"*) continue ;; esac
+        seen_dirs+=":$dir"
+        [[ -d "$dir" ]] || continue
+        for entry in "$dir"/*; do
+            [[ -e "$entry" || -L "$entry" ]] || continue
+            name="${entry##*/}"
+            # bun's own launchers are installed by bun's installer, not `bun install -g`.
+            case "$name" in bun|bunx) continue ;; esac
+            [[ -x "$entry" ]] || continue
+            [[ ! -e "$expected_dir/$name" ]] || continue
+            package=""
+            if [[ -L "$entry" && -n "$readlink_bin" ]]; then
+                target="$("$readlink_bin" "$entry" 2>/dev/null || true)"
+                if [[ "$target" == *node_modules/* ]]; then
+                    # "@openai/codex/bin/codex.js" -> "@openai/codex";
+                    # "wrangler/bin/wrangler.js"   -> "wrangler".
+                    target="${target#*node_modules/}"
+                    if [[ "$target" == @*/* ]]; then
+                        scope="${target%%/*}"
+                        target="${target#*/}"
+                        package="$scope/${target%%/*}"
+                    else
+                        package="${target%%/*}"
+                    fi
+                fi
+            fi
+            # Only a well-formed npm name may reach the suggested fix command.
+            [[ "$package" =~ ^(@[A-Za-z0-9._-]+/)?[A-Za-z0-9._-]+$ ]] || package="$name"
+            printf '%s\t%s\n' "$entry" "$package"
+        done
+    done
+    return 0
+}
+
+check_bun_global_bin_dir() {
+    local bun_bin=""
+    local runtime_home=""
+    local expected_dir=""
+    local stranded=""
+    local -a stranded_names=()
+    local -a stranded_packages=()
+    local path=""
+    local package=""
+    local resolved_dir=""
+    local details=""
+    local fix=""
+
+    bun_bin="$(doctor_binary_path bun 2>/dev/null || true)"
+    if [[ -z "$bun_bin" ]]; then
+        check "bun.global_bin_dir" "Bun global bin dir" "skip" "bun not installed"
+        return 0
+    fi
+    runtime_home="$(doctor_runtime_home)"
+    expected_dir="$runtime_home/.bun/bin"
+
+    stranded="$(doctor_bun_stranded_global_binaries 2>/dev/null || true)"
+    while IFS=$'\t' read -r path package; do
+        [[ -n "$path" ]] || continue
+        stranded_names+=("${path##*/}")
+        case " ${stranded_packages[*]:-} " in
+            *" $package "*) ;;
+            *) stranded_packages+=("$package") ;;
+        esac
+    done <<< "$stranded"
+
+    # Where a `bun install -g` typed in THIS environment would land. Only
+    # meaningful when doctor runs as the account it inspects.
+    if [[ "$runtime_home" == "${_acfs_doctor_current_home:-}" ]]; then
+        resolved_dir="$(HOME="$runtime_home" "$bun_bin" pm -g bin 2>/dev/null | tail -n 1 || true)"
+        [[ "$resolved_dir" == /* ]] || resolved_dir=""
+    fi
+
+    if [[ ${#stranded_names[@]} -gt 0 ]]; then
+        details="${#stranded_names[@]} global install(s) outside $expected_dir: ${stranded_names[*]}"
+        fix="BUN_INSTALL=\"\$HOME/.bun\" bun install -g --trust ${stranded_packages[*]}   (or: acfs doctor --fix --yes)"
+        check "bun.global_bin_dir" "Bun global installs stranded off PATH" "warn" "$details" "$fix"
+        return 0
+    fi
+    if [[ -n "$resolved_dir" && "$resolved_dir" != "$expected_dir" ]]; then
+        check "bun.global_bin_dir" "Bun global bin dir" "warn" \
+            "bun resolves its global bin dir to $resolved_dir, not $expected_dir (BUN_INSTALL is not \$HOME/.bun in this shell, so XDG_CACHE_HOME decides)" \
+            "export BUN_INSTALL=\"\$HOME/.bun\"   (the ACFS zshrc does this; make sure it is sourced)"
+        return 0
+    fi
+    check "bun.global_bin_dir" "Bun global bin dir" "pass" "$expected_dir"
+}
+
 check_core_tools() {
     section "Core tools"
 
     check_command "tool.bun" "Bun" "bun" "$(fix_for_module "lang.bun")"
+    check_bun_global_bin_dir
     check_command "tool.uv" "uv" "uv" "$(fix_for_module "lang.uv")"
     check_command "tool.cargo" "Cargo (Rust)" "cargo" "$(fix_for_module "lang.rust")"
     check_command "tool.go" "Go" "go" "$(doctor_pkg_install_hint golang-go go)"

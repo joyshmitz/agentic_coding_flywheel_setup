@@ -894,11 +894,13 @@ doctor_fix_build_runtime_env_args() {
         return 1
     }
 
+    # BUN_INSTALL keeps `bun install -g` fixers on ~/.bun/bin (#388).
     _env_args_ref=(
         "TARGET_USER=$runtime_user" \
         "TARGET_HOME=$runtime_home" \
         "HOME=$runtime_home" \
         "PATH=$runtime_path" \
+        "BUN_INSTALL=$runtime_home/.bun" \
         "USER=$runtime_user" \
         "LOGNAME=$runtime_user" \
         "LANG=C.UTF-8"
@@ -1762,6 +1764,11 @@ dispatch_fix() {
             fix_ssh_keepalive "$check_id"
             ;;
 
+        # bun global installs stranded in the XDG cache fallback dir (#388)
+        bun.global_bin_dir)
+            fix_bun_global_bin_dir "$check_id"
+            ;;
+
         # Agent CLI tools (fixes #213)
         agent.claude)
             fix_verified_install "$check_id" "claude" "claude"
@@ -1886,6 +1893,116 @@ fix_stack_install() {
     doctor_fix_log ERROR "Failed to install $binary_name"
     FIX_FAILED=$((FIX_FAILED + 1))
     return 1
+}
+
+# ============================================================
+# Fixer: bun global installs stranded off PATH (fix.bun.global_bin_dir, #388)
+# ============================================================
+
+# Reinstall, with BUN_INSTALL pinned to ~/.bun, every package whose binaries
+# a `bun install -g` left in bun's XDG cache fallback dir (~/.cache/.bun/bin)
+# instead of the ~/.bun/bin ACFS puts on PATH. The stranded copies are never
+# moved or deleted: the reinstall is what makes the tool reachable, and the
+# leftovers are inert.
+fix_bun_global_bin_dir() {
+    local check_id="$1"
+    local runtime_home=""
+    local bash_bin=""
+    local bun_bin=""
+    local expected_dir=""
+    local stranded=""
+    local path=""
+    local package=""
+    local name=""
+    local -a packages=()
+    local -a names=()
+    local -a installed_paths=()
+    local failed=0
+
+    if ! declare -f doctor_bun_stranded_global_binaries >/dev/null 2>&1; then
+        doctor_fix_log WARN "$check_id: stranded-binary scan unavailable (doctor.sh not loaded)"
+        FIX_SKIPPED=$((FIX_SKIPPED + 1))
+        return 0
+    fi
+
+    runtime_home="$(doctor_fix_runtime_home)"
+    bash_bin="$(doctor_fix_system_binary_path bash 2>/dev/null || true)"
+    bun_bin="$(doctor_fix_binary_path bun 2>/dev/null || true)"
+    if [[ -z "$runtime_home" || -z "$bash_bin" || -z "$bun_bin" ]]; then
+        doctor_fix_log ERROR "$check_id: cannot resolve runtime home, bash, or bun for the reinstall"
+        FIX_FAILED=$((FIX_FAILED + 1))
+        return 1
+    fi
+    expected_dir="$runtime_home/.bun/bin"
+
+    stranded="$(doctor_bun_stranded_global_binaries 2>/dev/null || true)"
+    while IFS=$'\t' read -r path package; do
+        [[ -n "$path" && -n "$package" ]] || continue
+        # Only a well-formed npm name is ever passed to bun.
+        [[ "$package" =~ ^(@[A-Za-z0-9._-]+/)?[A-Za-z0-9._-]+$ ]] || continue
+        names+=("${path##*/}")
+        case " ${packages[*]:-} " in
+            *" $package "*) ;;
+            *) packages+=("$package") ;;
+        esac
+    done <<< "$stranded"
+
+    if [[ ${#packages[@]} -eq 0 ]]; then
+        doctor_fix_log INFO "$check_id: no stranded bun global installs found"
+        return 0
+    fi
+
+    if [[ "$DOCTOR_FIX_DRY_RUN" == "true" ]]; then
+        FIXES_DRY_RUN+=("fix.bun.global_bin_dir|Reinstall ${packages[*]} into $expected_dir|$expected_dir|BUN_INSTALL=\"\$HOME/.bun\" bun install -g --trust ${packages[*]}")
+        doctor_fix_log DRY "Reinstall ${packages[*]} with BUN_INSTALL=$runtime_home/.bun"
+        return 0
+    fi
+
+    # doctor_fix_run_in_runtime_context exports BUN_INSTALL=<home>/.bun, so
+    # bun resolves its global bin dir to $expected_dir regardless of the
+    # caller's XDG_CACHE_HOME.
+    for package in "${packages[@]}"; do
+        if (
+            cd "$runtime_home" &&
+            doctor_fix_run_in_runtime_context "" \
+                "$bash_bin" --noprofile --norc -c '"$1" install -g --trust "$2"' _ "$bun_bin" "$package"
+        ) >/dev/null 2>&1; then
+            doctor_fix_log INFO "$check_id: reinstalled $package into $expected_dir"
+        else
+            doctor_fix_log ERROR "$check_id: bun install -g $package failed"
+            failed=$((failed + 1))
+        fi
+    done
+
+    hash -r
+    for name in "${names[@]}"; do
+        if [[ -x "$expected_dir/$name" ]]; then
+            installed_paths+=("$expected_dir/$name")
+        else
+            doctor_fix_log ERROR "$check_id: $name is still missing from $expected_dir after the reinstall"
+            failed=$((failed + 1))
+        fi
+    done
+
+    if [[ ${#installed_paths[@]} -gt 0 ]]; then
+        if ! doctor_fix_record_change_or_rollback \
+            "" \
+            false \
+            "install" "Reinstalled bun global packages into $expected_dir: ${packages[*]}" \
+            "# Manual rollback: remove the reinstalled binaries from $expected_dir if undesired" \
+            false "info" "$(doctor_fix_files_json "${installed_paths[@]}")" "[]" "[]"; then
+            FIX_FAILED=$((FIX_FAILED + 1))
+            return 1
+        fi
+    fi
+
+    if [[ "$failed" -gt 0 ]]; then
+        FIX_FAILED=$((FIX_FAILED + 1))
+        return 1
+    fi
+    FIXES_APPLIED+=("fix.bun.global_bin_dir|Reinstalled ${packages[*]} into $expected_dir")
+    FIX_APPLIED=$((FIX_APPLIED + 1))
+    return 0
 }
 
 fix_verified_install_with_env() {

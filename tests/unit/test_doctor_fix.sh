@@ -4441,6 +4441,157 @@ test_run_doctor_fix_dry_run_flag() {
 # Run all tests
 # ============================================================
 
+# ------------------------------------------------------------
+# fix_bun_global_bin_dir (#388): reinstall stranded bun globals with BUN_INSTALL pinned
+# ------------------------------------------------------------
+
+# A stand-in `bun` that behaves like the real one for `install -g`: it puts the
+# package's launcher under $BUN_INSTALL/bin and records the BUN_INSTALL it saw,
+# so the test proves the env plumbing rather than the stub.
+setup_fake_bun_for_global_bin_fix() {
+    mkdir -p "$HOME/.bun/bin" "$HOME/.cache/.bun/bin"
+    cat > "$HOME/.bun/bin/bun" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "${BUN_INSTALL:-<unset>}" >> "$HOME/.bun/bun-install-seen.log"
+if [[ "$1" == "install" && "$2" == "-g" && "$3" == "--trust" ]]; then
+    pkg="$4"
+    name="${pkg##*/}"
+    [[ -n "${BUN_INSTALL:-}" ]] || exit 3
+    mkdir -p "$BUN_INSTALL/bin"
+    printf '#!/usr/bin/env bash\nexit 0\n' > "$BUN_INSTALL/bin/$name"
+    chmod +x "$BUN_INSTALL/bin/$name"
+    exit 0
+fi
+exit 1
+EOF
+    chmod +x "$HOME/.bun/bin/bun"
+    # The stranded state: codex only exists in the cache fallback dir.
+    printf '#!/usr/bin/env bash\nexit 0\n' > "$HOME/.cache/.bun/bin/codex"
+    chmod +x "$HOME/.cache/.bun/bin/codex"
+    doctor_bun_stranded_global_binaries() {
+        printf '%s\t%s\n' "$HOME/.cache/.bun/bin/codex" "@openai/codex"
+    }
+}
+
+test_fix_bun_global_bin_dir_reinstalls_with_bun_install_pinned() {
+    setup_test_env
+    setup_fake_bun_for_global_bin_fix
+    export XDG_CACHE_HOME="$HOME/.cache"
+
+    start_autofix_session >/dev/null || {
+        echo "  Failed to start autofix session"
+        cleanup_test_env
+        return 1
+    }
+
+    if ! fix_bun_global_bin_dir "bun.global_bin_dir" >/dev/null 2>&1; then
+        echo "  fix_bun_global_bin_dir should succeed"
+        unset XDG_CACHE_HOME; unset -f doctor_bun_stranded_global_binaries
+        cleanup_test_env
+        return 1
+    fi
+    unset XDG_CACHE_HOME
+
+    if [[ ! -x "$HOME/.bun/bin/codex" ]]; then
+        echo "  reinstall did not land codex in ~/.bun/bin"
+        unset -f doctor_bun_stranded_global_binaries
+        cleanup_test_env
+        return 1
+    fi
+    if ! grep -qx "$HOME/.bun" "$HOME/.bun/bun-install-seen.log"; then
+        echo "  bun did not see BUN_INSTALL=\$HOME/.bun (got: $(cat "$HOME/.bun/bun-install-seen.log" 2>/dev/null))"
+        unset -f doctor_bun_stranded_global_binaries
+        cleanup_test_env
+        return 1
+    fi
+    # Nothing is moved or deleted: the stranded copy is left alone.
+    if [[ ! -x "$HOME/.cache/.bun/bin/codex" ]]; then
+        echo "  fixer must not remove the stranded copy"
+        unset -f doctor_bun_stranded_global_binaries
+        cleanup_test_env
+        return 1
+    fi
+    if ! jq -e 'select(.description | startswith("Reinstalled bun global packages into")) | select(.reversible == false)' "$ACFS_CHANGES_FILE" >/dev/null 2>&1; then
+        echo "  fixer did not record a non-reversible install change"
+        unset -f doctor_bun_stranded_global_binaries
+        cleanup_test_env
+        return 1
+    fi
+    if [[ "$FIX_APPLIED" -ne 1 ]]; then
+        echo "  expected FIX_APPLIED=1, got $FIX_APPLIED"
+        unset -f doctor_bun_stranded_global_binaries
+        cleanup_test_env
+        return 1
+    fi
+
+    unset -f doctor_bun_stranded_global_binaries
+    cleanup_test_env
+    return 0
+}
+
+test_fix_bun_global_bin_dir_dry_run_lists_packages() {
+    setup_test_env
+    setup_fake_bun_for_global_bin_fix
+    export DOCTOR_FIX_DRY_RUN=true
+
+    if ! fix_bun_global_bin_dir "bun.global_bin_dir" >/dev/null 2>&1; then
+        echo "  dry run should succeed"
+        unset -f doctor_bun_stranded_global_binaries
+        cleanup_test_env
+        return 1
+    fi
+    if [[ -x "$HOME/.bun/bin/codex" ]] || [[ -f "$HOME/.bun/bun-install-seen.log" ]]; then
+        echo "  dry run must not run bun"
+        unset -f doctor_bun_stranded_global_binaries
+        cleanup_test_env
+        return 1
+    fi
+    if [[ "${#FIXES_DRY_RUN[@]}" -ne 1 ]] || [[ "${FIXES_DRY_RUN[0]}" != *'bun install -g --trust @openai/codex'* ]]; then
+        echo "  dry run did not list the reinstall command: ${FIXES_DRY_RUN[*]:-<none>}"
+        unset -f doctor_bun_stranded_global_binaries
+        cleanup_test_env
+        return 1
+    fi
+
+    unset -f doctor_bun_stranded_global_binaries
+    cleanup_test_env
+    return 0
+}
+
+test_fix_bun_global_bin_dir_fails_when_binary_still_missing() {
+    setup_test_env
+    setup_fake_bun_for_global_bin_fix
+    # A bun that "succeeds" without producing the launcher.
+    cat > "$HOME/.bun/bin/bun" <<'EOF'
+#!/usr/bin/env bash
+exit 0
+EOF
+    chmod +x "$HOME/.bun/bin/bun"
+
+    start_autofix_session >/dev/null || {
+        echo "  Failed to start autofix session"
+        cleanup_test_env
+        return 1
+    }
+
+    if fix_bun_global_bin_dir "bun.global_bin_dir" >/dev/null 2>&1; then
+        echo "  fixer must fail when the binary is still missing after the reinstall"
+        unset -f doctor_bun_stranded_global_binaries
+        cleanup_test_env
+        return 1
+    fi
+    if [[ "$FIX_FAILED" -ne 1 ]]; then
+        echo "  expected FIX_FAILED=1, got $FIX_FAILED"
+        unset -f doctor_bun_stranded_global_binaries
+        cleanup_test_env
+        return 1
+    fi
+
+    unset -f doctor_bun_stranded_global_binaries
+    cleanup_test_env
+    return 0
+}
+
 main() {
     echo "============================================================"
     echo "Doctor Fix Unit Tests"
@@ -4509,6 +4660,9 @@ main() {
     run_test test_fix_stack_install_uses_trusted_shell_and_clean_environment
     run_test test_fix_stack_install_fails_when_binary_missing_after_successful_command
     run_test test_fix_stack_install_removes_binary_when_record_change_fails
+    run_test test_fix_bun_global_bin_dir_reinstalls_with_bun_install_pinned
+    run_test test_fix_bun_global_bin_dir_dry_run_lists_packages
+    run_test test_fix_bun_global_bin_dir_fails_when_binary_still_missing
 
     # fix_verified_install tests
     run_test test_fix_verified_install_applies

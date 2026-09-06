@@ -2715,7 +2715,9 @@ update_run_in_target_context() {
 
     local sanitized_acfs_home=""
     local env_assignment=""
-    local -a env_args=("UV_NO_CONFIG=1" "HOME=$target_home" "PATH=$target_path")
+    # BUN_INSTALL keeps `bun install -g` upgrades on the ~/.bun/bin ACFS puts on
+    # PATH instead of bun's XDG_CACHE_HOME fallback (#388).
+    local -a env_args=("UV_NO_CONFIG=1" "HOME=$target_home" "PATH=$target_path" "BUN_INSTALL=$target_home/.bun")
     [[ -n "$target_user" ]] && env_args+=("TARGET_USER=$target_user")
     [[ -n "$target_home" ]] && env_args+=("TARGET_HOME=$target_home")
     sanitized_acfs_home="$(update_sanitize_abs_nonroot_path "${ACFS_HOME:-}" 2>/dev/null || true)"

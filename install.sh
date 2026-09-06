@@ -5132,6 +5132,58 @@ acfs_optional_module_install_failed() {
     return 0
 }
 
+# Where bun puts `bun install -g` binaries for the target user, as bun itself
+# resolves it in the run_as_target environment (BUN_INSTALL_BIN, then
+# BUN_INSTALL/bin, then XDG_CACHE_HOME/.bun/bin, then ~/.cache/.bun/bin).
+# Prints nothing and fails when bun cannot answer (no global install yet).
+acfs_bun_global_bin_dir_as_target() {
+    local bun_bin="${1:-}"
+    local dir=""
+
+    [[ -n "$bun_bin" && -x "$bun_bin" ]] || return 1
+    dir="$(run_as_target "$bun_bin" pm -g bin 2>/dev/null | tail -n 1)"
+    [[ "$dir" == /* ]] || return 1
+    printf '%s\n' "$dir"
+}
+
+# After a `bun install -g <package>` that did not produce $TARGET_HOME/.bun/bin/<binary>:
+# ask bun where it actually puts global binaries and, when that is not the
+# ACFS bin dir, say so with the one-line fix. Silent when bun agrees on the
+# directory (then the install genuinely failed) or cannot answer (#388).
+# Returns 0 when a mismatch was reported, 1 otherwise.
+#   acfs_note_bun_global_bin_mismatch "<binary>" "<package spec>" "<bun path>"
+acfs_note_bun_global_bin_mismatch() {
+    local binary="${1:-}"
+    local package="${2:-$binary}"
+    local bun_bin="${3:-$TARGET_HOME/.bun/bin/bun}"
+    local expected_dir="$TARGET_HOME/.bun/bin"
+    local actual_dir=""
+
+    actual_dir="$(acfs_bun_global_bin_dir_as_target "$bun_bin" 2>/dev/null || true)"
+    [[ -n "$actual_dir" && "$actual_dir" != "$expected_dir" ]] || return 1
+    log_warn "$binary: bun's global bin dir resolved to $actual_dir, not $expected_dir (BUN_INSTALL is not $TARGET_HOME/.bun in that environment)"
+    if [[ -x "$actual_dir/$binary" ]]; then
+        log_detail "$binary is stranded at $actual_dir/$binary, which is not on the PATH ACFS configures"
+    fi
+    log_detail "Fix: BUN_INSTALL=\"\$HOME/.bun\" bun install -g --trust $package   (acfs doctor reports this as bun.global_bin_dir)"
+    return 0
+}
+
+# A `bun install -g <package>` reported success but <binary> is not in
+# $TARGET_HOME/.bun/bin: one warning that names the real location when bun
+# put it elsewhere, instead of N identical "binary not found" lines (#388).
+#   acfs_warn_bun_global_binary_missing "<binary>" "<package spec>" "<bun path>"
+acfs_warn_bun_global_binary_missing() {
+    local binary="${1:-}"
+    local package="${2:-$binary}"
+    local bun_bin="${3:-$TARGET_HOME/.bun/bin/bun}"
+
+    if ! acfs_note_bun_global_bin_mismatch "$binary" "$package" "$bun_bin"; then
+        log_warn "$binary: install finished but binary not found in $TARGET_HOME/.bun/bin"
+    fi
+    return 0
+}
+
 run_as_target() {
     local clean_environment=false
     if [[ "${1:-}" == "--acfs-clean-environment" ]]; then
@@ -5255,7 +5307,12 @@ run_as_target() {
     # avoid login shells and therefore cannot rely on profile files.
     # XDG_RUNTIME_DIR / DBUS_SESSION_BUS_ADDRESS let user services work even when
     # install.sh is running as root and switching to TARGET_USER non-interactively.
-    local -a env_args=("UV_NO_CONFIG=1" "HOME=$user_home" "PATH=$command_path" "TARGET_USER=$user" "TARGET_HOME=$user_home")
+    # BUN_INSTALL pins bun's global bin dir to the ~/.bun/bin that ACFS puts on
+    # PATH (the same value acfs.zshrc exports). Without it bun resolves
+    # $XDG_CACHE_HOME/.bun/bin (or ~/.cache/.bun/bin) on desktops that export
+    # XDG_CACHE_HOME, and every `bun install -g` (codex, wrangler, vercel, ...)
+    # lands on a directory nothing looks at (#388).
+    local -a env_args=("UV_NO_CONFIG=1" "HOME=$user_home" "PATH=$command_path" "BUN_INSTALL=$user_home/.bun" "TARGET_USER=$user" "TARGET_HOME=$user_home")
     if [[ "$clean_environment" == "true" ]]; then
         # TERM must survive sanitization: verified installers that touch
         # terminfo (e.g. SRPS's unguarded `tput` color helpers) die with
@@ -8682,6 +8739,7 @@ install_agents_phase() {
             log_success "Claude Code installed"
         else
             log_error "Claude Code installation failed (claude not found in standard paths)"
+            acfs_note_bun_global_bin_mismatch "claude" "@anthropic-ai/claude-code@latest" "$bun_bin" || true
         fi
     fi
 
@@ -8737,6 +8795,9 @@ install_agents_phase() {
     fi
     if [[ ! -x "$codex_bin_local" && ! -x "$TARGET_HOME/.bun/bin/codex" ]]; then
         log_error "Codex CLI installation failed (codex executable not found)"
+        # Name bun's real global bin dir when the install itself succeeded
+        # but landed off the ACFS PATH (#388).
+        acfs_note_bun_global_bin_mismatch "codex" "@openai/codex@latest" "$bun_bin" || true
         ACFS_MODULE_FAILURES+=("agents.codex (executable missing after install attempts)")
         agents_phase_rc=1
     fi
@@ -9234,7 +9295,7 @@ WRANGLER_SHIM
                             fi
                         fi
                     else
-                        log_warn "$cli: install finished but binary not found"
+                        acfs_warn_bun_global_binary_missing "$cli" "${cli}@latest" "$bun_bin"
                     fi
                 else
                     log_warn "$cli installation failed (optional)"
@@ -9280,7 +9341,7 @@ install_cloud_db_legacy() {
                     if [[ -x "$TARGET_HOME/.bun/bin/$cli" ]]; then
                         log_success "$cli installed"
                     else
-                        log_warn "$cli: install finished but binary not found"
+                        acfs_warn_bun_global_binary_missing "$cli" "${cli}@latest" "$bun_bin"
                     fi
                 else
                     log_warn "$cli installation failed (optional)"
