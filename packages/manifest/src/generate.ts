@@ -2138,6 +2138,22 @@ export function generateManifestIndex(manifest: Manifest, manifestSha256: string
   lines.push(')');
   lines.push('');
 
+  // #389: the legacy (non-generated) stack phase in install.sh addresses
+  // modules by their checksums.yaml tool key (pfr, ubs, ...). This reverse
+  // map lets it record optional-module skips under the manifest id the
+  // generated dispatch and `acfs doctor` use, so one module has one name in
+  // the install summary regardless of which phase implementation ran.
+  lines.push('# checksums.yaml tool key of every module installed through a verified');
+  lines.push('# upstream installer (#389). Modules without one have no entry.');
+  lines.push('declare -gA ACFS_MODULE_VERIFIED_INSTALLER_TOOL=(');
+  for (const module of orderedModules) {
+    if (module.verified_installer?.tool) {
+      lines.push(`  ['${module.id}']="${escapeBash(module.verified_installer.tool)}"`);
+    }
+  }
+  lines.push(')');
+  lines.push('');
+
   // #385: only modules that narrow themselves appear here. An absent key means
   // "applies to every family", so consumers treat a missing entry as allowed
   // and no entry has to be written for the overwhelming majority of modules.

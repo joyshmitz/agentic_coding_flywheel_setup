@@ -106,3 +106,120 @@ setup() {
     [[ "$output" == *"Installation Complete"* ]]
     [[ "$output" != *"Optional modules skipped"* ]]
 }
+
+# ------------------------------------------------------------------
+# #389: the default install runs the LEGACY stack phase (no category is
+# migrated to generated dispatch by default), whose optional call sites were
+# `try_step ... || log_warn "X installation may have failed"`. Those never
+# reached record_skipped_tool, so the "Optional modules skipped" block above
+# stayed empty on exactly the install it was added for.
+# ------------------------------------------------------------------
+
+legacy_setup() {
+    eval "$(sed -n '/^acfs_module_id_for_verified_installer_tool() {$/,/^}$/p' "$INSTALL_SH")"
+    eval "$(sed -n '/^acfs_optional_module_install_failed() {$/,/^}$/p' "$INSTALL_SH")"
+    [[ "$(type -t acfs_module_id_for_verified_installer_tool)" == "function" ]]
+    [[ "$(type -t acfs_optional_module_install_failed)" == "function" ]]
+    WARN_LINES=()
+    log_warn() { WARN_LINES+=("$1"); }
+}
+
+@test "acfs_module_id_for_verified_installer_tool prefers the stack module, then any module, then a synthetic id" {
+    legacy_setup
+    declare -gA ACFS_MODULE_VERIFIED_INSTALLER_TOOL=(
+        ["stack.power_failure_resumer"]="pfr"
+        ["utils.xf"]="xf"
+        ["agents.grok"]="grok"
+        ["stack.slb"]="slb"
+    )
+
+    [[ "$(acfs_module_id_for_verified_installer_tool pfr)" == "stack.power_failure_resumer" ]]
+    [[ "$(acfs_module_id_for_verified_installer_tool slb stack)" == "stack.slb" ]]
+    # Legacy stack sites also install utils.*/agents.* tools: any module wins over a synthetic id.
+    [[ "$(acfs_module_id_for_verified_installer_tool xf)" == "utils.xf" ]]
+    [[ "$(acfs_module_id_for_verified_installer_tool grok)" == "agents.grok" ]]
+    # Unknown tool: synthetic "<category>.<tool>" so the summary still names it.
+    [[ "$(acfs_module_id_for_verified_installer_tool nosuchtool)" == "stack.nosuchtool" ]]
+    run acfs_module_id_for_verified_installer_tool ""
+    [[ "$status" -ne 0 ]]
+}
+
+@test "acfs_module_id_for_verified_installer_tool falls back cleanly when the manifest index is not loaded" {
+    legacy_setup
+    unset ACFS_MODULE_VERIFIED_INSTALLER_TOOL
+    [[ "$(acfs_module_id_for_verified_installer_tool pfr)" == "stack.pfr" ]]
+}
+
+@test "acfs_optional_module_install_failed keeps the WARN line and records the categorized skip" {
+    legacy_setup
+    declare -gA ACFS_MODULE_VERIFIED_INSTALLER_TOOL=(["stack.power_failure_resumer"]="pfr")
+    ACFS_LAST_MODULE_FAILURE_REASON="checksum"
+
+    acfs_optional_module_install_failed "pfr" "PFR"
+
+    [[ ${#WARN_LINES[@]} -eq 1 && "${WARN_LINES[0]}" == "PFR installation may have failed" ]]
+    [[ ${#ACFS_OPTIONAL_MODULE_SKIPS[@]} -eq 1 ]]
+    [[ "${ACFS_OPTIONAL_MODULE_SKIPS[0]}" == "stack.power_failure_resumer (checksum)" ]]
+    [[ -z "$ACFS_LAST_MODULE_FAILURE_REASON" ]]
+    [[ ${#STATE_SKIPS[@]} -eq 1 && "${STATE_SKIPS[0]}" == "stack.power_failure_resumer" ]]
+    # Optional skips never touch the failure lists that decide the exit code.
+    [[ ${#ACFS_MODULE_FAILURES[@]} -eq 0 && ${#ACFS_PHASE_FAILURES[@]} -eq 0 ]]
+}
+
+@test "acfs_optional_module_install_failed without a categorized reason records the generic text" {
+    legacy_setup
+    unset ACFS_MODULE_VERIFIED_INSTALLER_TOOL
+    ACFS_LAST_MODULE_FAILURE_REASON=""
+
+    acfs_optional_module_install_failed "xf" "XF"
+
+    [[ "${ACFS_OPTIONAL_MODULE_SKIPS[0]}" == "stack.xf (verified installer failed)" ]]
+}
+
+@test "legacy stack phase routes every optional installer failure through acfs_optional_module_install_failed" {
+    # Static guard: a new legacy call site written as `|| log_warn "... may have failed"`
+    # would silently drop out of the summary again.
+    local phase
+    phase="$(sed -n '/^install_stack_phase() {$/,/^}$/p' "$INSTALL_SH")"
+    [[ -n "$phase" ]]
+    run grep -c 'acfs_optional_module_install_failed "' <<< "$phase"
+    (( output >= 38 ))
+    # The only remaining "may have failed" text belongs to the REQUIRED Agent Mail module.
+    run grep -E 'log_warn "[^"]* installation may have failed"' <<< "$phase"
+    [[ "$status" -ne 0 ]]
+    # Every call site passes a bare checksums.yaml tool key, never a module id.
+    run grep -E 'acfs_optional_module_install_failed "[a-z0-9_]*\.' <<< "$phase"
+    [[ "$status" -ne 0 ]]
+}
+
+@test "verified upstream runner clears a stale failure reason before each tool" {
+    # acfs_run_verified_upstream_script_as_target_with_env resets the reason at
+    # entry and tags a failing runner as "installer execution" when the
+    # security path set nothing, so the summary never blames tool B for tool A.
+    local fn
+    fn="$(sed -n '/^acfs_run_verified_upstream_script_as_target_with_env() {$/,/^}$/p' "$INSTALL_SH")"
+    [[ "$fn" == *'ACFS_LAST_MODULE_FAILURE_REASON=""'* ]]
+    [[ "$fn" == *': "${ACFS_LAST_MODULE_FAILURE_REASON:=installer execution}"'* ]]
+}
+
+@test "manifest index maps verified-installer tool keys to module ids" {
+    local index="$PROJECT_ROOT/scripts/generated/manifest_index.sh"
+    [[ -f "$index" ]]
+    # shellcheck disable=SC1090
+    source "$index"
+    [[ "$(declare -p ACFS_MODULE_VERIFIED_INSTALLER_TOOL 2>/dev/null)" == "declare -A"* ]]
+    [[ "${ACFS_MODULE_VERIFIED_INSTALLER_TOOL[stack.power_failure_resumer]}" == "pfr" ]]
+    [[ "${ACFS_MODULE_VERIFIED_INSTALLER_TOOL[stack.mcp_agent_mail]}" == "mcp_agent_mail" ]]
+
+    legacy_setup
+    # Every tool key the legacy stack phase reports resolves to a real manifest module.
+    local phase tool id
+    phase="$(sed -n '/^install_stack_phase() {$/,/^}$/p' "$INSTALL_SH")"
+    while IFS= read -r tool; do
+        id="$(acfs_module_id_for_verified_installer_tool "$tool")"
+        [[ -n "${ACFS_MODULE_CATEGORY[$id]:-}" ]] || {
+            echo "legacy tool '$tool' resolved to '$id', which is not a manifest module" >&2
+            return 1
+        }
+    done < <(grep -o 'acfs_optional_module_install_failed "[a-z0-9_]*"' <<< "$phase" | sed -E 's/.*"([a-z0-9_]+)"/\1/' | sort -u)
+}

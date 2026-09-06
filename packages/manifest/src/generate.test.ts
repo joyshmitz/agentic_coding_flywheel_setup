@@ -128,6 +128,28 @@ describe('Generated manifest_index.sh content', () => {
     }
   });
 
+  test('ACFS_MODULE_VERIFIED_INSTALLER_TOOL maps exactly the verified-installer modules (#389)', () => {
+    const mapMatch = manifestIndexContent.match(
+      /declare -gA ACFS_MODULE_VERIFIED_INSTALLER_TOOL=\(\s*([\s\S]*?)\s*\)/
+    );
+    expect(mapMatch).not.toBeNull();
+    const entries = new Map<string, string>();
+    for (const line of mapMatch![1].split('\n')) {
+      const entry = line.trim().match(/^\['([^']+)'\]="([^"]*)"$/);
+      if (entry) entries.set(entry[1], entry[2]);
+    }
+    const expected = manifest.modules.filter((m) => m.verified_installer?.tool);
+    expect(entries.size).toBe(expected.length);
+    for (const module of expected) {
+      expect(entries.get(module.id)).toBe(module.verified_installer!.tool);
+    }
+    // install.sh's legacy stack phase resolves tool keys back to module ids,
+    // so a tool key must identify one module.
+    const tools = [...entries.values()];
+    expect(new Set(tools).size).toBe(tools.length);
+    expect(entries.get('stack.power_failure_resumer')).toBe('pfr');
+  });
+
   test('modules are in dependency-respecting order', () => {
     // Extract the order from the file
     const orderMatch = manifestIndexContent.match(

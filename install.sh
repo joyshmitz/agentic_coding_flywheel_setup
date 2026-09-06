@@ -5079,6 +5079,59 @@ record_skipped_tool() {
     return 0
 }
 
+# Map a checksums.yaml tool key (pfr, ubs, ...) to its manifest module id
+# (stack.power_failure_resumer, stack.ultimate_bug_scanner, ...) using the
+# generated ACFS_MODULE_VERIFIED_INSTALLER_TOOL index, so the legacy stack
+# phase names a skipped module exactly as the generated dispatch and
+# `acfs doctor` do. A module in the preferred category wins; otherwise any
+# module with that tool key (the legacy stack phase also installs utils.*
+# and agents.* tools). Falls back to "<category>.<tool>" when the index is
+# not loaded or does not know the tool (#389).
+acfs_module_id_for_verified_installer_tool() {
+    local tool="${1:-}"
+    local category="${2:-stack}"
+    local map_decl=""
+    local module_id=""
+    local any_match=""
+
+    [[ -n "$tool" ]] || return 1
+    map_decl="$(declare -p ACFS_MODULE_VERIFIED_INSTALLER_TOOL 2>/dev/null || true)"
+    if [[ "$map_decl" == declare\ -A* ]]; then
+        for module_id in "${!ACFS_MODULE_VERIFIED_INSTALLER_TOOL[@]}"; do
+            [[ "${ACFS_MODULE_VERIFIED_INSTALLER_TOOL[$module_id]}" == "$tool" ]] || continue
+            if [[ "$module_id" == "$category."* ]]; then
+                printf '%s\n' "$module_id"
+                return 0
+            fi
+            [[ -n "$any_match" ]] || any_match="$module_id"
+        done
+    fi
+    if [[ -n "$any_match" ]]; then
+        printf '%s\n' "$any_match"
+        return 0
+    fi
+    printf '%s.%s\n' "$category" "$tool"
+}
+
+# Failure path for an OPTIONAL module in the legacy (non-generated) stack
+# phase: the run stays successful, but the module must reach the "Optional
+# modules skipped" summary block exactly like its generated counterpart
+# instead of being one WARN line in a long log (#389). The categorized
+# reason (checksum, network, ...) is whatever the verified-installer path
+# left in ACFS_LAST_MODULE_FAILURE_REASON; record_skipped_tool consumes it.
+#   acfs_optional_module_install_failed "<tool key>" "<display name>"
+acfs_optional_module_install_failed() {
+    local tool="${1:-}"
+    local display="${2:-$tool}"
+    local module_id=""
+
+    log_warn "$display installation may have failed"
+    [[ -n "$tool" ]] || return 0
+    module_id="$(acfs_module_id_for_verified_installer_tool "$tool" "stack")"
+    record_skipped_tool "$module_id" "verified installer failed"
+    return 0
+}
+
 run_as_target() {
     local clean_environment=false
     if [[ "${1:-}" == "--acfs-clean-environment" ]]; then
@@ -5680,16 +5733,27 @@ acfs_run_verified_upstream_script_as_target_with_env() {
         set --
     fi
 
-    acfs_load_upstream_checksums || return $?
+    # Cleared per attempt so a stale reason from an earlier tool can never be
+    # attributed to this one in the optional-skip summary (#389). The
+    # security.sh staging path sets the categorized reason (network,
+    # checksum, ...) on its own failure branches.
+    ACFS_LAST_MODULE_FAILURE_REASON=""
+    acfs_load_upstream_checksums || {
+        local load_status=$?
+        : "${ACFS_LAST_MODULE_FAILURE_REASON:=environment setup}"
+        return "$load_status"
+    }
 
     local url="${ACFS_UPSTREAM_URLS[$tool]:-}"
     local expected_sha256="${ACFS_UPSTREAM_SHA256[$tool]:-}"
     if [[ -z "$url" ]] || [[ -z "$expected_sha256" ]]; then
         log_error "No checksum recorded for upstream installer: $tool"
+        ACFS_LAST_MODULE_FAILURE_REASON="missing dependency"
         return 1
     fi
     if [[ -n "$runner_env_assignment" ]] && [[ ! "$runner_env_assignment" =~ ^[A-Za-z_][A-Za-z0-9_]*=[^[:space:]]+$ ]]; then
         log_error "Invalid inline env assignment for upstream installer '$tool': $runner_env_assignment"
+        ACFS_LAST_MODULE_FAILURE_REASON="environment setup"
         return 1
     fi
 
@@ -5708,12 +5772,14 @@ acfs_run_verified_upstream_script_as_target_with_env() {
     awk_bin="$(acfs_early_system_binary_path awk 2>/dev/null || true)"
     if [[ -z "$df_bin" || -z "$awk_bin" ]]; then
         log_error "Trusted df/awk are required for installer TMPDIR capacity checks"
+        ACFS_LAST_MODULE_FAILURE_REASON="environment setup"
         _acfs_remove_temp_files "$staged_installer"
         return 1
     fi
     if ! tmp_avail_kb="$("$df_bin" -Pk /tmp 2>/dev/null | "$awk_bin" 'NR==2{print $4}')" \
         || [[ ! "$tmp_avail_kb" =~ ^[0-9]+$ ]]; then
         log_error "Unable to determine available space for installer TMPDIR"
+        ACFS_LAST_MODULE_FAILURE_REASON="environment setup"
         _acfs_remove_temp_files "$staged_installer"
         return 1
     fi
@@ -5726,6 +5792,7 @@ acfs_run_verified_upstream_script_as_target_with_env() {
         acfs_mktemp_bin="$(acfs_early_system_binary_path mktemp 2>/dev/null || true)"
         if [[ -z "$acfs_mkdir_bin" || -z "$acfs_mktemp_bin" ]]; then
             log_error "Trusted mkdir/mktemp are required for installer TMPDIR setup"
+            ACFS_LAST_MODULE_FAILURE_REASON="environment setup"
             _acfs_remove_temp_files "$staged_installer"
             return 1
         fi
@@ -5733,6 +5800,7 @@ acfs_run_verified_upstream_script_as_target_with_env() {
             || _acfs_install_asset_has_symlink_component_under_prefix \
                 "$TARGET_HOME" "$acfs_tmpdir_parent"; then
             log_error "Refusing installer TMPDIR through a symlinked target-home path"
+            ACFS_LAST_MODULE_FAILURE_REASON="environment setup"
             _acfs_remove_temp_files "$staged_installer"
             return 1
         fi
@@ -5740,6 +5808,7 @@ acfs_run_verified_upstream_script_as_target_with_env() {
         # target-controlled ancestor symlink and chown an unrelated directory.
         if ! run_as_target "$acfs_mkdir_bin" -p "$acfs_tmpdir_parent" 2>/dev/null; then
             log_error "Target user cannot create installer TMPDIR parent: $acfs_tmpdir_parent"
+            ACFS_LAST_MODULE_FAILURE_REASON="environment setup"
             _acfs_remove_temp_files "$staged_installer"
             return 1
         fi
@@ -5747,6 +5816,7 @@ acfs_run_verified_upstream_script_as_target_with_env() {
             || _acfs_install_asset_has_symlink_component_under_prefix \
                 "$TARGET_HOME" "$acfs_tmpdir_parent"; then
             log_error "Installer TMPDIR parent is not a confined real directory"
+            ACFS_LAST_MODULE_FAILURE_REASON="environment setup"
             _acfs_remove_temp_files "$staged_installer"
             return 1
         fi
@@ -5755,6 +5825,7 @@ acfs_run_verified_upstream_script_as_target_with_env() {
             || [[ ! -d "$acfs_tmpdir" ]] \
             || [[ -L "$acfs_tmpdir" ]]; then
             log_error "Failed to create a confined target-user installer TMPDIR"
+            ACFS_LAST_MODULE_FAILURE_REASON="environment setup"
             _acfs_remove_temp_files "$staged_installer"
             return 1
         fi
@@ -5781,6 +5852,9 @@ acfs_run_verified_upstream_script_as_target_with_env() {
     fi
 
     _acfs_remove_temp_files "$staged_installer"
+    if [[ "$run_status" -ne 0 ]]; then
+        : "${ACFS_LAST_MODULE_FAILURE_REASON:=installer execution}"
+    fi
     return "$run_status"
 }
 
@@ -9983,7 +10057,7 @@ UNIT_EOF
         log_detail "Ultimate Bug Scanner already installed"
     else
         log_detail "Installing Ultimate Bug Scanner"
-        try_step "Installing UBS" acfs_run_verified_upstream_script_as_target "ubs" "bash" --easy-mode || log_warn "UBS installation may have failed"
+        try_step "Installing UBS" acfs_run_verified_upstream_script_as_target "ubs" "bash" --easy-mode || acfs_optional_module_install_failed "ubs" "UBS"
     fi
 
     # Beads Rust
@@ -9991,7 +10065,7 @@ UNIT_EOF
         log_detail "Beads Rust already installed"
     else
         log_detail "Installing Beads Rust"
-        try_step "Installing Beads Rust" acfs_run_verified_upstream_script_as_target "br" "bash" || log_warn "Beads Rust installation may have failed"
+        try_step "Installing Beads Rust" acfs_run_verified_upstream_script_as_target "br" "bash" || acfs_optional_module_install_failed "br" "Beads Rust"
     fi
 
     # Beads Viewer
@@ -9999,7 +10073,7 @@ UNIT_EOF
         log_detail "Beads Viewer already installed"
     else
         log_detail "Installing Beads Viewer"
-        try_step "Installing Beads Viewer" acfs_run_verified_upstream_script_as_target "bv" "bash" || log_warn "Beads Viewer installation may have failed"
+        try_step "Installing Beads Viewer" acfs_run_verified_upstream_script_as_target "bv" "bash" || acfs_optional_module_install_failed "bv" "Beads Viewer"
     fi
 
     # CASS (Coding Agent Session Search)
@@ -10007,7 +10081,7 @@ UNIT_EOF
         log_detail "CASS already installed"
     else
         log_detail "Installing CASS"
-        try_step "Installing CASS" acfs_run_verified_upstream_script_as_target "cass" "bash" --easy-mode --verify || log_warn "CASS installation may have failed"
+        try_step "Installing CASS" acfs_run_verified_upstream_script_as_target "cass" "bash" --easy-mode --verify || acfs_optional_module_install_failed "cass" "CASS"
     fi
 
     # CASS Memory System
@@ -10015,7 +10089,7 @@ UNIT_EOF
         log_detail "CASS Memory System already installed"
     else
         log_detail "Installing CASS Memory System"
-        try_step "Installing CM" acfs_run_verified_upstream_script_as_target "cm" "bash" --easy-mode --verify || log_warn "CM installation may have failed"
+        try_step "Installing CM" acfs_run_verified_upstream_script_as_target "cm" "bash" --easy-mode --verify || acfs_optional_module_install_failed "cm" "CM"
     fi
 
     # CAAM (Coding Agent Account Manager)
@@ -10023,7 +10097,7 @@ UNIT_EOF
         log_detail "CAAM already installed"
     else
         log_detail "Installing CAAM"
-        try_step "Installing CAAM" acfs_run_verified_upstream_script_as_target "caam" "bash" || log_warn "CAAM installation may have failed"
+        try_step "Installing CAAM" acfs_run_verified_upstream_script_as_target "caam" "bash" || acfs_optional_module_install_failed "caam" "CAAM"
     fi
 
     # SLB (Simultaneous Launch Button)
@@ -10034,7 +10108,7 @@ UNIT_EOF
     elif [[ "$ACFS_DISTRO_FAMILY" == "arch" ]]; then
         # No .deb/dpkg on Arch-family; use the upstream bash installer.
         log_detail "Installing SLB (upstream)"
-        try_step "Installing SLB (upstream)" acfs_run_verified_upstream_script_as_target "slb" "bash" || log_warn "SLB installation may have failed"
+        try_step "Installing SLB (upstream)" acfs_run_verified_upstream_script_as_target "slb" "bash" || acfs_optional_module_install_failed "slb" "SLB"
     else
         # The former .deb path fetched a pinned 0.2.0 GitHub release over
         # HTTPS with no checksum and installed it as root via dpkg — the one
@@ -10042,7 +10116,7 @@ UNIT_EOF
         # Use the checksum-verified upstream installer like every other tool
         # (the Arch branch above already does).
         log_detail "Installing SLB (verified upstream installer)"
-        try_step "Installing SLB (upstream)" acfs_run_verified_upstream_script_as_target "slb" "bash" || log_warn "SLB installation may have failed"
+        try_step "Installing SLB (upstream)" acfs_run_verified_upstream_script_as_target "slb" "bash" || acfs_optional_module_install_failed "slb" "SLB"
     fi
 
     # RU (Repo Updater)
@@ -10050,7 +10124,7 @@ UNIT_EOF
         log_detail "RU already installed"
     else
         log_detail "Installing RU"
-        try_step "Installing RU" acfs_run_verified_upstream_script_as_target_with_env "ru" "bash" "RU_NON_INTERACTIVE=1" || log_warn "RU installation may have failed"
+        try_step "Installing RU" acfs_run_verified_upstream_script_as_target_with_env "ru" "bash" "RU_NON_INTERACTIVE=1" || acfs_optional_module_install_failed "ru" "RU"
     fi
 
     # RCH (Remote Compilation Helper)
@@ -10058,7 +10132,7 @@ UNIT_EOF
         log_detail "RCH already installed"
     else
         log_detail "Installing RCH"
-        try_step "Installing RCH" acfs_run_verified_upstream_script_as_target "rch" "bash" || log_warn "RCH installation may have failed"
+        try_step "Installing RCH" acfs_run_verified_upstream_script_as_target "rch" "bash" || acfs_optional_module_install_failed "rch" "RCH"
     fi
 
     # FrankenSearch (fsfs)
@@ -10072,9 +10146,9 @@ UNIT_EOF
         # _stack_run_fsfs_installer pins the prebuilt -lite tarball with a
         # checksum; delegate to it when available.
         if declare -F _stack_run_fsfs_installer >/dev/null 2>&1; then
-            try_step "Installing FrankenSearch" _stack_run_fsfs_installer --easy-mode || log_warn "FrankenSearch installation may have failed"
+            try_step "Installing FrankenSearch" _stack_run_fsfs_installer --easy-mode || acfs_optional_module_install_failed "fsfs" "FrankenSearch"
         else
-            try_step "Installing FrankenSearch" acfs_run_verified_upstream_script_as_target "fsfs" "bash" --easy-mode || log_warn "FrankenSearch installation may have failed"
+            try_step "Installing FrankenSearch" acfs_run_verified_upstream_script_as_target "fsfs" "bash" --easy-mode || acfs_optional_module_install_failed "fsfs" "FrankenSearch"
         fi
     fi
 
@@ -10083,7 +10157,7 @@ UNIT_EOF
         log_detail "Process Triage already installed"
     else
         log_detail "Installing Process Triage"
-        try_step "Installing Process Triage" acfs_run_verified_upstream_script_as_target "pt" "bash" || log_warn "Process Triage installation may have failed"
+        try_step "Installing Process Triage" acfs_run_verified_upstream_script_as_target "pt" "bash" || acfs_optional_module_install_failed "pt" "Process Triage"
     fi
 
     # Storage Ballast Helper (sbh)
@@ -10091,7 +10165,7 @@ UNIT_EOF
         log_detail "Storage Ballast Helper already installed"
     else
         log_detail "Installing Storage Ballast Helper"
-        try_step "Installing SBH" acfs_run_verified_upstream_script_as_target "sbh" "bash" || log_warn "SBH installation may have failed"
+        try_step "Installing SBH" acfs_run_verified_upstream_script_as_target "sbh" "bash" || acfs_optional_module_install_failed "sbh" "SBH"
     fi
 
     # Cross-Agent Session Resumer (casr)
@@ -10099,7 +10173,7 @@ UNIT_EOF
         log_detail "CASR already installed"
     else
         log_detail "Installing CASR"
-        try_step "Installing CASR" acfs_run_verified_upstream_script_as_target "casr" "bash" || log_warn "CASR installation may have failed"
+        try_step "Installing CASR" acfs_run_verified_upstream_script_as_target "casr" "bash" || acfs_optional_module_install_failed "casr" "CASR"
     fi
 
     # Doodlestein Self-Releaser (dsr) — modular bash project with verified installer
@@ -10107,7 +10181,7 @@ UNIT_EOF
         log_detail "DSR already installed"
     else
         log_detail "Installing DSR"
-        try_step "Installing DSR" acfs_run_verified_upstream_script_as_target "dsr" "bash" --easy-mode || log_warn "DSR installation may have failed"
+        try_step "Installing DSR" acfs_run_verified_upstream_script_as_target "dsr" "bash" --easy-mode || acfs_optional_module_install_failed "dsr" "DSR"
     fi
 
     # Agent Settings Backup (asb)
@@ -10115,7 +10189,7 @@ UNIT_EOF
         log_detail "ASB already installed"
     else
         log_detail "Installing ASB"
-        try_step "Installing ASB" acfs_run_verified_upstream_script_as_target "asb" "bash" || log_warn "ASB installation may have failed"
+        try_step "Installing ASB" acfs_run_verified_upstream_script_as_target "asb" "bash" || acfs_optional_module_install_failed "asb" "ASB"
     fi
 
     # Post-Compact Reminder (pcr hook)
@@ -10137,7 +10211,7 @@ UNIT_EOF
         log_detail "Skipping Post-Compact Reminder because Claude Code is not installed"
     else
         log_detail "Installing Post-Compact Reminder"
-        try_step "Installing PCR" acfs_run_verified_upstream_script_as_target "pcr" "bash" --yes || log_warn "PCR installation may have failed"
+        try_step "Installing PCR" acfs_run_verified_upstream_script_as_target "pcr" "bash" --yes || acfs_optional_module_install_failed "pcr" "PCR"
     fi
 
     # Eidetic Engine (ee)
@@ -10145,7 +10219,7 @@ UNIT_EOF
         log_detail "Eidetic Engine already installed"
     else
         log_detail "Installing Eidetic Engine"
-        try_step "Installing EE" acfs_run_verified_upstream_script_as_target "ee" "bash" --easy-mode || log_warn "EE installation may have failed"
+        try_step "Installing EE" acfs_run_verified_upstream_script_as_target "ee" "bash" --easy-mode || acfs_optional_module_install_failed "ee" "EE"
     fi
 
     # Franken Markdown (fmd)
@@ -10153,7 +10227,7 @@ UNIT_EOF
         log_detail "Franken Markdown already installed"
     else
         log_detail "Installing Franken Markdown"
-        try_step "Installing FMD" acfs_run_verified_upstream_script_as_target "fmd" "bash" --easy-mode || log_warn "FMD installation may have failed"
+        try_step "Installing FMD" acfs_run_verified_upstream_script_as_target "fmd" "bash" --easy-mode || acfs_optional_module_install_failed "fmd" "FMD"
     fi
 
     # Pi Agent Rust (pi)
@@ -10161,7 +10235,7 @@ UNIT_EOF
         log_detail "Pi Agent already installed"
     else
         log_detail "Installing Pi Agent"
-        try_step "Installing PI" acfs_run_verified_upstream_script_as_target "pi" "bash" --yes --easy-mode || log_warn "PI installation may have failed"
+        try_step "Installing PI" acfs_run_verified_upstream_script_as_target "pi" "bash" --yes --easy-mode || acfs_optional_module_install_failed "pi" "PI"
     fi
 
     # Power Failure Resumer (pfr)
@@ -10169,7 +10243,7 @@ UNIT_EOF
         log_detail "Power Failure Resumer already installed"
     else
         log_detail "Installing Power Failure Resumer"
-        try_step "Installing PFR" acfs_run_verified_upstream_script_as_target "pfr" "bash" --easy-mode --install-skill || log_warn "PFR installation may have failed"
+        try_step "Installing PFR" acfs_run_verified_upstream_script_as_target "pfr" "bash" --easy-mode --install-skill || acfs_optional_module_install_failed "pfr" "PFR"
     fi
 
     # DCG (Destructive Command Guard)
@@ -10181,7 +10255,7 @@ UNIT_EOF
         if try_step "Installing DCG" acfs_run_verified_upstream_script_as_target "dcg" "bash"; then
             log_success "DCG installed. Run 'dcg doctor' to verify."
         else
-            log_warn "DCG installation may have failed"
+            acfs_optional_module_install_failed "dcg" "DCG"
             log_detail "Recovery: re-run the installer or run the DCG installer manually, then run: dcg install"
         fi
     fi
@@ -10213,7 +10287,7 @@ UNIT_EOF
         log_detail "TRU already installed"
     else
         log_detail "Installing TRU"
-        try_step "Installing TRU" acfs_run_verified_upstream_script_as_target "tru" "bash" || log_warn "TRU installation may have failed"
+        try_step "Installing TRU" acfs_run_verified_upstream_script_as_target "tru" "bash" || acfs_optional_module_install_failed "tru" "TRU"
     fi
 
     # Automated Plan Reviser (apr)
@@ -10221,7 +10295,7 @@ UNIT_EOF
         log_detail "APR already installed"
     else
         log_detail "Installing APR"
-        try_step "Installing APR" acfs_run_verified_upstream_script_as_target "apr" "bash" || log_warn "APR installation may have failed"
+        try_step "Installing APR" acfs_run_verified_upstream_script_as_target "apr" "bash" || acfs_optional_module_install_failed "apr" "APR"
     fi
 
     # Chat Shared Conversation to File (csctf)
@@ -10229,7 +10303,7 @@ UNIT_EOF
         log_detail "CSCTF already installed"
     else
         log_detail "Installing CSCTF"
-        try_step "Installing CSCTF" acfs_run_verified_upstream_script_as_target "csctf" "bash" || log_warn "CSCTF installation may have failed"
+        try_step "Installing CSCTF" acfs_run_verified_upstream_script_as_target "csctf" "bash" || acfs_optional_module_install_failed "csctf" "CSCTF"
     fi
 
     # Grok CLI (xAI)
@@ -10239,7 +10313,7 @@ UNIT_EOF
         log_detail "Installing Grok CLI"
         # Keep the verified-installer capability identical to the manifest
         # contract. A custom ACFS_BIN_DIR is handled by the link step below.
-        try_step "Installing Grok CLI" acfs_run_verified_upstream_script_as_target_with_env "grok" "bash" "GROK_BIN_DIR=$TARGET_HOME/.local/bin" || log_warn "Grok CLI installation may have failed"
+        try_step "Installing Grok CLI" acfs_run_verified_upstream_script_as_target_with_env "grok" "bash" "GROK_BIN_DIR=$TARGET_HOME/.local/bin" || acfs_optional_module_install_failed "grok" "Grok CLI"
         local grok_installed_bin=""
         local grok_candidate=""
         for grok_candidate in "$TARGET_HOME/.local/bin/grok" "$TARGET_HOME/.grok/bin/grok"; do
@@ -10258,7 +10332,7 @@ UNIT_EOF
         log_detail "GIIL already installed"
     else
         log_detail "Installing GIIL"
-        try_step "Installing GIIL" acfs_run_verified_upstream_script_as_target "giil" "bash" || log_warn "GIIL installation may have failed"
+        try_step "Installing GIIL" acfs_run_verified_upstream_script_as_target "giil" "bash" || acfs_optional_module_install_failed "giil" "GIIL"
     fi
 
     # JeffreysPrompts CLI (jfp)
@@ -10266,7 +10340,7 @@ UNIT_EOF
         log_detail "JFP already installed"
     else
         log_detail "Installing JFP"
-        try_step "Installing JFP" acfs_run_verified_upstream_script_as_target "jfp" "bash" || log_warn "JFP installation may have failed"
+        try_step "Installing JFP" acfs_run_verified_upstream_script_as_target "jfp" "bash" || acfs_optional_module_install_failed "jfp" "JFP"
     fi
 
     # Markdown Web Browser (mdwb)
@@ -10274,7 +10348,7 @@ UNIT_EOF
         log_detail "MDWB already installed"
     else
         log_detail "Installing MDWB"
-        try_step "Installing MDWB" acfs_run_verified_upstream_script_as_target "mdwb" "bash" || log_warn "MDWB installation may have failed"
+        try_step "Installing MDWB" acfs_run_verified_upstream_script_as_target "mdwb" "bash" || acfs_optional_module_install_failed "mdwb" "MDWB"
     fi
 
     # Meta Skill (ms)
@@ -10282,7 +10356,7 @@ UNIT_EOF
         log_detail "Meta Skill already installed"
     else
         log_detail "Installing Meta Skill"
-        try_step "Installing Meta Skill" acfs_run_verified_upstream_script_as_target "ms" "bash" --easy-mode || log_warn "Meta Skill installation may have failed"
+        try_step "Installing Meta Skill" acfs_run_verified_upstream_script_as_target "ms" "bash" --easy-mode || acfs_optional_module_install_failed "ms" "Meta Skill"
     fi
 
     # oh-my-pi (omp)
@@ -10292,7 +10366,7 @@ UNIT_EOF
         log_detail "Installing oh-my-pi"
         # --binary forces the prebuilt release binary (default ~/.local/bin) so
         # the install stays deterministic even when bun is present.
-        try_step "Installing oh-my-pi" acfs_run_verified_upstream_script_as_target "omp" "sh" --binary || log_warn "oh-my-pi installation may have failed"
+        try_step "Installing oh-my-pi" acfs_run_verified_upstream_script_as_target "omp" "sh" --binary || acfs_optional_module_install_failed "omp" "oh-my-pi"
         if [[ ! -x "$ACFS_BIN_DIR/omp" ]] && [[ -x "$TARGET_HOME/.local/bin/omp" ]]; then
             try_step "Linking omp into $ACFS_BIN_DIR" acfs_link_primary_bin_command "$TARGET_HOME/.local/bin/omp" "omp" || log_warn "Could not link omp into $ACFS_BIN_DIR"
         fi
@@ -10303,7 +10377,7 @@ UNIT_EOF
         log_detail "OpenCode already installed"
     else
         log_detail "Installing OpenCode"
-        try_step "Installing OpenCode" acfs_run_verified_upstream_script_as_target "opencode" "bash" || log_warn "OpenCode installation may have failed"
+        try_step "Installing OpenCode" acfs_run_verified_upstream_script_as_target "opencode" "bash" || acfs_optional_module_install_failed "opencode" "OpenCode"
         # The upstream installer hardcodes ~/.opencode/bin, which is on no PATH ACFS
         # manages; normalize the binary into the ACFS bin dir like claude/codex.
         if [[ -x "$TARGET_HOME/.opencode/bin/opencode" ]]; then
@@ -10316,7 +10390,7 @@ UNIT_EOF
         log_detail "RANO already installed"
     else
         log_detail "Installing RANO"
-        try_step "Installing RANO" acfs_run_verified_upstream_script_as_target "rano" "bash" || log_warn "RANO installation may have failed"
+        try_step "Installing RANO" acfs_run_verified_upstream_script_as_target "rano" "bash" || acfs_optional_module_install_failed "rano" "RANO"
     fi
 
     # Source to Prompt TUI (s2p)
@@ -10324,7 +10398,7 @@ UNIT_EOF
         log_detail "S2P already installed"
     else
         log_detail "Installing S2P"
-        try_step "Installing S2P" acfs_run_verified_upstream_script_as_target "s2p" "bash" || log_warn "S2P installation may have failed"
+        try_step "Installing S2P" acfs_run_verified_upstream_script_as_target "s2p" "bash" || acfs_optional_module_install_failed "s2p" "S2P"
     fi
 
     # System Resource Protection Script (srps)
@@ -10339,7 +10413,7 @@ UNIT_EOF
         log_detail "SRPS already installed"
     else
         log_detail "Installing SRPS"
-        try_step "Installing SRPS" acfs_run_verified_upstream_script_as_target "srps" "bash" --install || log_warn "SRPS installation may have failed"
+        try_step "Installing SRPS" acfs_run_verified_upstream_script_as_target "srps" "bash" --install || acfs_optional_module_install_failed "srps" "SRPS"
     fi
 
     # X Archive Search (xf)
@@ -10347,7 +10421,7 @@ UNIT_EOF
         log_detail "XF already installed"
     else
         log_detail "Installing XF"
-        try_step "Installing XF" acfs_run_verified_upstream_script_as_target "xf" "bash" --easy-mode || log_warn "XF installation may have failed"
+        try_step "Installing XF" acfs_run_verified_upstream_script_as_target "xf" "bash" --easy-mode || acfs_optional_module_install_failed "xf" "XF"
     fi
 
     # Brenner Bot
@@ -10355,7 +10429,7 @@ UNIT_EOF
         log_detail "Brenner Bot already installed"
     else
         log_detail "Installing Brenner Bot"
-        try_step "Installing Brenner Bot" acfs_run_verified_upstream_script_as_target "brenner_bot" "bash" --skip-cass || log_warn "Brenner Bot installation may have failed"
+        try_step "Installing Brenner Bot" acfs_run_verified_upstream_script_as_target "brenner_bot" "bash" --skip-cass || acfs_optional_module_install_failed "brenner_bot" "Brenner Bot"
     fi
 
     if [[ "$stack_phase_rc" -ne 0 ]]; then

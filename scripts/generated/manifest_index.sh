@@ -948,6 +948,58 @@ declare -gA ACFS_MODULE_OPTIONAL=(
   ['acfs.doctor']="0"
 )
 
+# checksums.yaml tool key of every module installed through a verified
+# upstream installer (#389). Modules without one have no entry.
+declare -gA ACFS_MODULE_VERIFIED_INSTALLER_TOOL=(
+  ['shell.omz']="ohmyzsh"
+  ['lang.bun']="bun"
+  ['lang.uv']="uv"
+  ['lang.rust']="rust"
+  ['lang.nvm']="nvm"
+  ['tools.atuin']="atuin"
+  ['tools.zoxide']="zoxide"
+  ['agents.claude']="claude"
+  ['agents.antigravity']="antigravity"
+  ['agents.opencode']="opencode"
+  ['agents.omp']="omp"
+  ['agents.grok']="grok"
+  ['stack.ntm']="ntm"
+  ['stack.mcp_agent_mail']="mcp_agent_mail"
+  ['stack.meta_skill']="ms"
+  ['stack.automated_plan_reviser']="apr"
+  ['stack.jeffreysprompts']="jfp"
+  ['stack.process_triage']="pt"
+  ['stack.ultimate_bug_scanner']="ubs"
+  ['stack.beads_rust']="br"
+  ['stack.beads_viewer']="bv"
+  ['stack.cass']="cass"
+  ['stack.cm']="cm"
+  ['stack.caam']="caam"
+  ['stack.slb']="slb"
+  ['stack.dcg']="dcg"
+  ['stack.ru']="ru"
+  ['stack.brenner_bot']="brenner_bot"
+  ['stack.rch']="rch"
+  ['stack.srps']="srps"
+  ['stack.frankensearch']="fsfs"
+  ['stack.storage_ballast_helper']="sbh"
+  ['stack.cross_agent_session_resumer']="casr"
+  ['stack.doodlestein_self_releaser']="dsr"
+  ['stack.agent_settings_backup']="asb"
+  ['stack.pcr']="pcr"
+  ['stack.eidetic_engine_cli']="ee"
+  ['stack.franken_markdown']="fmd"
+  ['stack.pi_agent_rust']="pi"
+  ['stack.power_failure_resumer']="pfr"
+  ['utils.giil']="giil"
+  ['utils.csctf']="csctf"
+  ['utils.xf']="xf"
+  ['utils.toon_rust']="tru"
+  ['utils.rano']="rano"
+  ['utils.mdwb']="mdwb"
+  ['utils.s2p']="s2p"
+)
+
 # Space-separated distro families a module applies to (#385).
 # A module with no entry here applies to every family.
 declare -gA ACFS_MODULE_FAMILIES=(
