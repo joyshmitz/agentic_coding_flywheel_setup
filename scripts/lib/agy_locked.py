@@ -4,6 +4,7 @@
 import json
 import os
 import pathlib
+import re
 import signal
 import shlex
 import subprocess
@@ -522,6 +523,86 @@ def filtered_args(argv):
     return result
 
 
+# Antigravity CLI subcommands (`agy --help`, 1.1.27). A bare word that names one
+# of these -- or is shaped like one -- is never rewritten into a prompt.
+AGY_SUBCOMMANDS = frozenset(
+    {
+        "agent",
+        "agents",
+        "changelog",
+        "help",
+        "install",
+        "mcp",
+        "mic-serve",
+        "models",
+        "plugin",
+        "plugins",
+        "remote-control",
+        "update",
+    }
+)
+# Flags that consume the next argv element (Go flag style: `-x v`, `--x v`;
+# `--x=v` is self-contained). Model flags are already stripped by
+# filtered_args, but they are listed so the scan is correct on raw argv too.
+AGY_VALUE_FLAGS = frozenset(
+    {
+        "add-dir",
+        "agent",
+        "conversation",
+        "effort",
+        "input-format",
+        "json-schema",
+        "log-file",
+        "m",
+        "mode",
+        "model",
+        "output-format",
+        "p",
+        "print",
+        "print-timeout",
+        "project",
+        "prompt",
+        "i",
+        "prompt-interactive",
+    }
+)
+# Flags that already supply the prompt (or select stdin as its source).
+AGY_PROMPT_FLAGS = frozenset({"p", "print", "prompt", "i", "prompt-interactive", "input-format"})
+SUBCOMMAND_SHAPE = re.compile(r"[a-z][a-z0-9-]*")
+
+
+def promote_positional_prompt(argv):
+    """Forward a bare positional prompt as `--print <prompt>`.
+
+    The Antigravity CLI reads a prompt only from -p/--print, -i, or stdin and
+    rejects a positional argument, while `cc "<prompt>"` and `cod "<prompt>"`
+    accept one -- so the onboarding block `agy "Hello! ..."` failed on exactly
+    the agent it was meant to confirm (#390). Rewrite only when the first
+    positional is unmistakably a prompt: not a known subcommand and not shaped
+    like one (a bare lowercase word such as a future `agy doctor` is left for
+    agy to judge). Nothing is rewritten when a prompt flag, an input-format
+    flag, or `--` is already present.
+    """
+    index = 0
+    while index < len(argv):
+        arg = argv[index]
+        if arg == "--":
+            return list(argv)
+        if arg.startswith("-") and arg != "-":
+            name, has_value, _value = arg.lstrip("-").partition("=")
+            if name in AGY_PROMPT_FLAGS:
+                return list(argv)
+            if name in AGY_VALUE_FLAGS and not has_value:
+                index += 2
+                continue
+            index += 1
+            continue
+        if arg == "-" or arg in AGY_SUBCOMMANDS or SUBCOMMAND_SHAPE.fullmatch(arg):
+            return list(argv)
+        return [*argv[:index], "--print", *argv[index:]]
+    return list(argv)
+
+
 def run_real_agy(args):
     with subprocess.Popen(args) as proc:
         previous_handlers = {}
@@ -555,7 +636,7 @@ def main():
         "--model",
         MODEL,
         "--dangerously-skip-permissions",
-        *filtered_args(sys.argv[1:]),
+        *promote_positional_prompt(filtered_args(sys.argv[1:])),
     ]
     try:
         return run_real_agy(args)

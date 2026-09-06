@@ -326,6 +326,92 @@ legacy_agy_source_contract() {
 echo "agy install contract tests"
 
 # 1. KNOWN_INSTALLERS registers the antigravity installer URL (5.3).
+# #390: the Antigravity CLI reads a prompt only from -p/--print, -i, or stdin,
+# so `agy "<prompt>"` (the shape cc/cod accept, and the shape the onboarding
+# docs taught) errored. The launcher forwards an unmistakable positional
+# prompt as --print and leaves subcommands, prompt flags and `--` alone.
+positional_prompt_parity_contract() {
+  python3 - <<'PY'
+import sys
+
+sys.path.insert(0, "scripts/lib")
+import agy_locked
+
+cases = [
+    # The onboarding block and doc examples become the supported form.
+    (["Hello! Please confirm you're working."], ["--print", "Hello! Please confirm you're working."]),
+    (["explain the repo structure"], ["--print", "explain the repo structure"]),
+    # Flags before the prompt are scanned correctly (value, =value, boolean).
+    (["--effort", "high", "review this PR"], ["--effort", "high", "--print", "review this PR"]),
+    (["--effort=high", "review this PR"], ["--effort=high", "--print", "review this PR"]),
+    (["-c", "what changed?"], ["-c", "--print", "what changed?"]),
+    (["--agent", "reviewer", "Hello!"], ["--agent", "reviewer", "--print", "Hello!"]),
+    # An explicit prompt source is never second-guessed.
+    (["-p", "already a prompt"], ["-p", "already a prompt"]),
+    (["--print=already", "x y"], ["--print=already", "x y"]),
+    (["--prompt", "alias form"], ["--prompt", "alias form"]),
+    (["-i", "interactive prompt"], ["-i", "interactive prompt"]),
+    (["--prompt-interactive", "a b"], ["--prompt-interactive", "a b"]),
+    (["--input-format", "stream-json", "weird positional"], ["--input-format", "stream-json", "weird positional"]),
+    # Subcommands, subcommand-shaped words, `--`, stdin marker, empty argv.
+    (["models"], ["models"]),
+    (["mcp", "list"], ["mcp", "list"]),
+    (["doctor"], ["doctor"]),
+    (["--", "Hello there"], ["--", "Hello there"]),
+    (["-"], ["-"]),
+    ([], []),
+    (["--version"], ["--version"]),
+    (["--sandbox", "Fix it."], ["--sandbox", "--print", "Fix it."]),
+]
+for argv, want in cases:
+    got = agy_locked.promote_positional_prompt(argv)
+    assert got == want, f"{argv!r} -> {got!r}, want {want!r}"
+    assert argv == list(argv), "input argv must not be mutated"
+
+# main() applies the promotion AFTER model/permission flags are stripped.
+src = open("scripts/lib/agy_locked.py", encoding="utf-8").read()
+assert "*promote_positional_prompt(filtered_args(sys.argv[1:]))," in src, "main() does not promote a positional prompt"
+# Every documented subcommand from `agy --help` 1.1.27 is protected.
+for sub in ["agent", "agents", "changelog", "help", "install", "mcp", "mic-serve", "models", "plugin", "plugins", "remote-control", "update"]:
+    assert sub in agy_locked.AGY_SUBCOMMANDS, sub
+PY
+}
+
+# The launcher must actually hand agy-real `--print <prompt>` for the
+# onboarding command, and pass a subcommand through untouched.
+positional_prompt_launcher_end_to_end() {
+  local sandbox
+  sandbox="$(mktemp -d "${TMPDIR:-/tmp}/acfs-agy-parity.XXXXXX")" || return 1
+  mkdir -p "$sandbox/.local/bin" || return 1
+  printf '#!/usr/bin/env bash\nprintf "%%s\\n" "$@"\n' > "$sandbox/.local/bin/agy-real" || return 1
+  chmod +x "$sandbox/.local/bin/agy-real" || return 1
+  local out
+  out="$(HOME="$sandbox" ACFS_BIN_DIR="$sandbox/.local/bin" python3 scripts/lib/agy_locked.py "Hello! Please confirm you're working." 2>/dev/null)" || return 1
+  [[ "$out" == *$'--print\nHello! Please confirm you'"'"'re working.' ]] || { echo "  launcher argv: $out"; return 1; }
+  out="$(HOME="$sandbox" ACFS_BIN_DIR="$sandbox/.local/bin" python3 scripts/lib/agy_locked.py models 2>/dev/null)" || return 1
+  [[ "$out" != *"--print"* && "$out" == *$'\nmodels' ]] || { echo "  launcher argv: $out"; return 1; }
+}
+
+# Docs teach the form that works even without the wrapper.
+docs_use_print_flag_for_agy_prompts() {
+  local f
+  local -a docs=(
+    acfs/onboard/lessons/04_agents_login.md
+    apps/web/components/lessons/agents-login-lesson.tsx
+    apps/web/components/lessons/welcome-lesson.tsx
+    apps/web/app/learn/commands/page.tsx
+    apps/web/lib/commands.ts
+  )
+  for f in "${docs[@]}"; do
+    [[ -f "$f" ]] || { echo "  missing $f"; return 1; }
+    if grep -nE "\bagy ['\"]" "$f"; then
+      echo "  $f still shows a positional agy prompt"
+      return 1
+    fi
+    grep -qE "\bagy -p ['\"]" "$f" || { echo "  $f has no agy -p example"; return 1; }
+  done
+}
+
 check "security.sh registers antigravity installer" \
   "grep -q '\[antigravity\]=\"https://antigravity.google/cli/install.sh\"' scripts/lib/security.sh"
 
@@ -408,6 +494,12 @@ check "agy locked launcher only treats priming as an exact invocation" \
   "grep -Fq 'sys.argv[1:] == [PRIME_SETTINGS_FLAG]' scripts/lib/agy_locked.py"
 check "agy locked launcher is valid Python" \
   "python3 -m py_compile scripts/lib/agy_locked.py"
+check "agy locked launcher forwards a bare positional prompt as --print (#390)" \
+  "positional_prompt_parity_contract"
+check "agy locked launcher hands agy-real --print for the onboarding command and passes subcommands through" \
+  "positional_prompt_launcher_end_to_end"
+check "onboarding and web docs teach agy -p, the form that works without the wrapper" \
+  "docs_use_print_flag_for_agy_prompts"
 check "agents-only update does not fail on missing Bun when Codex is absent" \
   "grep -q 'not installed; Codex CLI not installed' scripts/lib/update.sh"
 check "doctor checks for the agy alias" \

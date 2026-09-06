@@ -394,7 +394,7 @@ const archLayers: ArchLayer[] = [
         shortName: "agy",
         description:
           "Google's coding assistant, pinned to Gemini 3.8 Flash (High). Excellent for research-heavy tasks, fresh-eyes review, and large codebases. (Successor to the retired Gemini CLI / gmi.)",
-        commands: ["agy", "agy 'explain this codebase'"],
+        commands: ["agy", "agy -p 'explain this codebase'"],
         dependencies: ["tmux", "runtimes", "git"],
         status: "ready",
       },

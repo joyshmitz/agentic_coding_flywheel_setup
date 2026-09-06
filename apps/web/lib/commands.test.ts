@@ -22,10 +22,20 @@ describe("agy command reference entry", () => {
     expect(agy?.docsUrl).toBe("/learn/tools/antigravity-cli");
   });
 
+  test("the agy example passes its prompt with -p (#390)", () => {
+    // The Antigravity CLI reads a prompt only from -p/--print, -i, or stdin
+    // and rejects a positional argument, unlike cc/cod. The documented form
+    // must work even without the ACFS launcher's positional-prompt shim.
+    const agy = COMMANDS.find((c) => c.name === "agy");
+    expect(agy?.example).toMatch(/^agy -p ["']/);
+  });
+
   test("legacy gmi command is retained (no over-migration)", () => {
     const gmi = COMMANDS.find((c) => c.name === "gmi");
     expect(gmi).toBeDefined();
     expect(gmi?.fullName.toLowerCase()).toContain("legacy");
+    // gmi launches the same locked agy, so its example needs -p as well.
+    expect(gmi?.example).toMatch(/^gmi -p ["']/);
   });
 });
 

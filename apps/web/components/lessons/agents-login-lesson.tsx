@@ -243,8 +243,16 @@ caam backup agy my-main-account`}
         <div className="mt-6 space-y-4">
           <CodeBlock code={`cc "Hello! Please confirm you're working."`} />
           <CodeBlock code={`cod "Hello! Please confirm you're working."`} />
-          <CodeBlock code={`agy "Hello! Please confirm you're working."`} />
+          <CodeBlock code={`agy -p "Hello! Please confirm you're working."`} />
         </div>
+        <Paragraph>
+          Antigravity takes its prompt through <InlineCode>-p</InlineCode>{" "}
+          (print mode) or <InlineCode>-i</InlineCode> (interactive), where
+          Claude and Codex accept it as a plain argument. The ACFS{" "}
+          <InlineCode>agy</InlineCode> launcher also forwards a bare quoted prompt as{" "}
+          <InlineCode>-p</InlineCode>, but <InlineCode>-p</InlineCode> is the
+          form that works everywhere.
+        </Paragraph>
       </Section>
 
       <Divider />
@@ -623,7 +631,7 @@ const SCENARIOS: Scenario[] = [
       },
       antigravity: {
         lines: [
-          { text: '$ agy "Create SSH keys for GitHub"', type: "command", delay: 0 },
+          { text: '$ agy -p "Create SSH keys for GitHub"', type: "command", delay: 0 },
           { text: "Let me explain SSH key cryptography...", type: "info", delay: 500 },
           { text: "Ed25519 uses Edwards-curve Digital Sig...", type: "info", delay: 1000 },
           { text: '$ ssh-keygen -t ed25519 -C "user@dev"', type: "command", delay: 1600 },
@@ -672,7 +680,7 @@ const SCENARIOS: Scenario[] = [
       },
       antigravity: {
         lines: [
-          { text: '$ agy "Help me set up API auth"', type: "command", delay: 0 },
+          { text: '$ agy -p "Help me set up API auth"', type: "command", delay: 0 },
           { text: "There are several auth approaches:", type: "info", delay: 500 },
           { text: "1. Environment variables (recommended)", type: "info", delay: 900 },
           { text: "2. Config files (~/.config/...)", type: "info", delay: 1200 },
@@ -813,12 +821,12 @@ const SCENARIOS: Scenario[] = [
       },
       antigravity: {
         lines: [
-          { text: '$ agy "Update the documentation"', type: "command", delay: 0 },
+          { text: '$ agy -p "Update the documentation"', type: "command", delay: 0 },
           { text: "Processing request...", type: "info", delay: 400 },
           { text: "Error: Quota exceeded for gemini-pro", type: "error", delay: 1000 },
           { text: "$ caam activate agy work-acct", type: "command", delay: 1500 },
           { text: "Switched to work-acct", type: "success", delay: 2000 },
-          { text: '$ agy "Update the documentation"', type: "command", delay: 2400 },
+          { text: '$ agy -p "Update the documentation"', type: "command", delay: 2400 },
           { text: "Documentation updated across 8 files.", type: "success", delay: 3400 },
         ],
         result: "success",
@@ -859,7 +867,7 @@ const SCENARIOS: Scenario[] = [
       },
       antigravity: {
         lines: [
-          { text: '$ agy "Document the payments module"', type: "command", delay: 0 },
+          { text: '$ agy -p "Document the payments module"', type: "command", delay: 0 },
           { text: "Analyzing module public API...", type: "info", delay: 500 },
           { text: "Generating JSDoc annotations...", type: "info", delay: 1100 },
           { text: "Created: docs/payments-guide.md", type: "output", delay: 1800 },

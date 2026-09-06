@@ -129,7 +129,7 @@ export const COMMANDS: CommandRef[] = [
     fullName: "Antigravity CLI",
     description: "Google coding agent, pinned to Gemini 3.8 Flash (High).",
     category: "agents",
-    example: 'agy "review this PR"',
+    example: 'agy -p "review this PR"',
     docsUrl: "/learn/tools/antigravity-cli",
   },
   {
@@ -137,7 +137,7 @@ export const COMMANDS: CommandRef[] = [
     fullName: "Gemini CLI (legacy)",
     description: "Legacy shortcut retained for old habits; now launches locked agy.",
     category: "agents",
-    example: 'gmi "review this PR"',
+    example: 'gmi -p "review this PR"',
     aliases: ["gemini"],
     docsUrl: "/learn/tools/gemini-cli",
   },

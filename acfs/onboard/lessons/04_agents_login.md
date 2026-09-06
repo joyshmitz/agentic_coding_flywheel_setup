@@ -135,8 +135,13 @@ cod "Hello! Please confirm you're working."
 ```
 
 ```bash
-agy "Hello! Please confirm you're working."
+agy -p "Hello! Please confirm you're working."
 ```
+
+Antigravity takes its prompt through `-p` (print mode) or `-i` (interactive),
+where Claude and Codex accept it as a plain argument. The ACFS `agy` launcher
+also forwards a bare quoted prompt as `-p`, but `-p` is the form that works
+everywhere.
 
 ---
 
