@@ -117,11 +117,87 @@ setup() {
 
 legacy_setup() {
     eval "$(sed -n '/^acfs_module_id_for_verified_installer_tool() {$/,/^}$/p' "$INSTALL_SH")"
+    eval "$(sed -n '/^acfs_legacy_module_is_required() {$/,/^}$/p' "$INSTALL_SH")"
     eval "$(sed -n '/^acfs_optional_module_install_failed() {$/,/^}$/p' "$INSTALL_SH")"
     [[ "$(type -t acfs_module_id_for_verified_installer_tool)" == "function" ]]
+    [[ "$(type -t acfs_legacy_module_is_required)" == "function" ]]
     [[ "$(type -t acfs_optional_module_install_failed)" == "function" ]]
     WARN_LINES=()
+    ERROR_LINES=()
     log_warn() { WARN_LINES+=("$1"); }
+    log_error() { ERROR_LINES+=("$1"); }
+}
+
+# The legacy stack phase's call sites are all `|| acfs_optional_module_install_failed`,
+# but nine of those tools (br, bv, cass, cm, caam, dcg, ru, ubs, ms) are
+# `optional: false` in the manifest. Those must land in the failure list the
+# exit code reads, never under "Optional modules skipped".
+@test "acfs_optional_module_install_failed records a REQUIRED manifest module as a module failure, not an optional skip" {
+    legacy_setup
+    declare -gA ACFS_MODULE_VERIFIED_INSTALLER_TOOL=(["stack.ultimate_bug_scanner"]="ubs")
+    declare -gA ACFS_MODULE_OPTIONAL=(["stack.ultimate_bug_scanner"]="0")
+    ACFS_LAST_MODULE_FAILURE_REASON="checksum"
+
+    acfs_optional_module_install_failed "ubs" "UBS"
+
+    [[ ${#ACFS_MODULE_FAILURES[@]} -eq 1 ]]
+    [[ "${ACFS_MODULE_FAILURES[0]}" == "stack.ultimate_bug_scanner (checksum)" ]]
+    [[ ${#ACFS_OPTIONAL_MODULE_SKIPS[@]} -eq 0 ]]
+    [[ ${#STATE_SKIPS[@]} -eq 0 ]]
+    [[ ${#WARN_LINES[@]} -eq 0 ]]
+    [[ ${#ERROR_LINES[@]} -eq 1 && "${ERROR_LINES[0]}" == *"UBS installation failed"*"stack.ultimate_bug_scanner"*"checksum"* ]]
+    # Consumed, like the optional path, so the next module cannot inherit it.
+    [[ -z "$ACFS_LAST_MODULE_FAILURE_REASON" ]]
+}
+
+@test "acfs_optional_module_install_failed without a categorized reason still names a required module's failure" {
+    legacy_setup
+    declare -gA ACFS_MODULE_VERIFIED_INSTALLER_TOOL=(["stack.beads_rust"]="br")
+    declare -gA ACFS_MODULE_OPTIONAL=(["stack.beads_rust"]="0")
+    ACFS_LAST_MODULE_FAILURE_REASON=""
+
+    acfs_optional_module_install_failed "br" "Beads Rust"
+
+    [[ "${ACFS_MODULE_FAILURES[0]}" == "stack.beads_rust (verified installer failed)" ]]
+    [[ ${#ACFS_OPTIONAL_MODULE_SKIPS[@]} -eq 0 ]]
+}
+
+@test "acfs_optional_module_install_failed stays lenient for a module the loaded index does not classify" {
+    legacy_setup
+    declare -gA ACFS_MODULE_VERIFIED_INSTALLER_TOOL=(["stack.ultimate_bug_scanner"]="ubs")
+    # Index loaded, but this module has no optional entry: never invent a failure.
+    declare -gA ACFS_MODULE_OPTIONAL=(["stack.beads_rust"]="0")
+
+    acfs_optional_module_install_failed "ubs" "UBS"
+    [[ ${#ACFS_MODULE_FAILURES[@]} -eq 0 ]]
+    [[ "${ACFS_OPTIONAL_MODULE_SKIPS[0]}" == "stack.ultimate_bug_scanner (verified installer failed)" ]]
+
+    # No index at all: same lenient path.
+    unset ACFS_MODULE_OPTIONAL
+    acfs_optional_module_install_failed "br" "Beads Rust"
+    [[ ${#ACFS_MODULE_FAILURES[@]} -eq 0 ]]
+    [[ ${#ACFS_OPTIONAL_MODULE_SKIPS[@]} -eq 2 ]]
+}
+
+@test "acfs_legacy_module_is_required reads only an explicit optional=0 from the index" {
+    legacy_setup
+    unset ACFS_MODULE_OPTIONAL
+    ! acfs_legacy_module_is_required "stack.beads_rust"
+    ! acfs_legacy_module_is_required ""
+    declare -gA ACFS_MODULE_OPTIONAL=(["stack.beads_rust"]="0" ["stack.power_failure_resumer"]="1")
+    acfs_legacy_module_is_required "stack.beads_rust"
+    ! acfs_legacy_module_is_required "stack.power_failure_resumer"
+    ! acfs_legacy_module_is_required "stack.nosuchmodule"
+}
+
+@test "legacy stack phase folds module failures recorded during the phase into its exit status" {
+    # The call sites stay `|| helper` (return 0 under set -e), so the phase
+    # tail must compare ACFS_MODULE_FAILURES against its entry snapshot.
+    local phase
+    phase="$(sed -n '/^install_stack_phase() {$/,/^}$/p' "$INSTALL_SH")"
+    [[ "$phase" == *'local stack_failures_before=${#ACFS_MODULE_FAILURES[@]}'* ]]
+    grep -Eq '^[[:space:]]*if \[\[ "\$stack_phase_rc" -eq 0 \]\] && \(\( \$\{#ACFS_MODULE_FAILURES\[@\]\} > stack_failures_before \)\); then$' <<< "$phase"
+    grep -Eq '^[[:space:]]*stack_phase_rc=1$' <<< "$phase"
 }
 
 @test "acfs_module_id_for_verified_installer_tool prefers the stack module, then any module, then a synthetic id" {
@@ -222,4 +298,31 @@ legacy_setup() {
             return 1
         }
     done < <(grep -o 'acfs_optional_module_install_failed "[a-z0-9_]*"' <<< "$phase" | sed -E 's/.*"([a-z0-9_]+)"/\1/' | sort -u)
+
+    # With the real index loaded, every legacy call site lands where the
+    # manifest's optional flag says: required modules in the failure list, the
+    # rest in the optional-skip list. Guards the 38 sites against the manifest.
+    local required_seen=0 optional_seen=0
+    while IFS= read -r tool; do
+        id="$(acfs_module_id_for_verified_installer_tool "$tool")"
+        ACFS_MODULE_FAILURES=()
+        ACFS_OPTIONAL_MODULE_SKIPS=()
+        acfs_optional_module_install_failed "$tool" "$tool"
+        if [[ "${ACFS_MODULE_OPTIONAL[$id]:-}" == "0" ]]; then
+            required_seen=$((required_seen + 1))
+            [[ ${#ACFS_MODULE_FAILURES[@]} -eq 1 && ${#ACFS_OPTIONAL_MODULE_SKIPS[@]} -eq 0 ]] || {
+                echo "required module $id ($tool) was recorded as an optional skip" >&2
+                return 1
+            }
+        else
+            optional_seen=$((optional_seen + 1))
+            [[ ${#ACFS_MODULE_FAILURES[@]} -eq 0 && ${#ACFS_OPTIONAL_MODULE_SKIPS[@]} -eq 1 ]] || {
+                echo "optional module $id ($tool) was recorded as a failure" >&2
+                return 1
+            }
+        fi
+    done < <(grep -o 'acfs_optional_module_install_failed "[a-z0-9_]*"' <<< "$phase" | sed -E 's/.*"([a-z0-9_]+)"/\1/' | sort -u)
+    # br bv caam cass cm dcg ms ru ubs are required today; the rest optional.
+    (( required_seen >= 9 ))
+    (( optional_seen >= 25 ))
 }

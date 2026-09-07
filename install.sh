@@ -5113,21 +5113,52 @@ acfs_module_id_for_verified_installer_tool() {
     printf '%s.%s\n' "$category" "$tool"
 }
 
-# Failure path for an OPTIONAL module in the legacy (non-generated) stack
-# phase: the run stays successful, but the module must reach the "Optional
-# modules skipped" summary block exactly like its generated counterpart
-# instead of being one WARN line in a long log (#389). The categorized
-# reason (checksum, network, ...) is whatever the verified-installer path
-# left in ACFS_LAST_MODULE_FAILURE_REASON; record_skipped_tool consumes it.
+# True when the loaded manifest index marks <module id> `optional: false`.
+# Without an index, or for a module it does not know, this is false so callers
+# stay on the lenient path instead of inventing a failure.
+acfs_legacy_module_is_required() {
+    local module_id="${1:-}"
+    local map_decl=""
+
+    [[ -n "$module_id" ]] || return 1
+    map_decl="$(declare -p ACFS_MODULE_OPTIONAL 2>/dev/null || true)"
+    [[ "$map_decl" == declare\ -A* ]] || return 1
+    [[ "${ACFS_MODULE_OPTIONAL[$module_id]:-}" == "0" ]]
+}
+
+# Failure path for a module in the legacy (non-generated) stack phase whose
+# call site is written as non-fatal (`try_step ... || <this>`). The verdict
+# follows the manifest, not the call site:
+#   - an OPTIONAL module reaches the "Optional modules skipped" summary block
+#     exactly like its generated counterpart instead of being one WARN line in
+#     a long log (#389); the run stays successful;
+#   - a REQUIRED module (`optional: false`: br, bv, cass, cm, caam, dcg, ru,
+#     ubs, ms) is recorded in ACFS_MODULE_FAILURES, so the summary names it
+#     as a failure and the run exits non-zero, which is the verdict the
+#     generated dispatch reaches for the same module. Listing it under
+#     "Optional modules skipped" would print success over a required module.
+# The categorized reason (checksum, network, ...) is whatever the
+# verified-installer path left in ACFS_LAST_MODULE_FAILURE_REASON.
 #   acfs_optional_module_install_failed "<tool key>" "<display name>"
 acfs_optional_module_install_failed() {
     local tool="${1:-}"
     local display="${2:-$tool}"
     local module_id=""
+    local reason=""
 
-    log_warn "$display installation may have failed"
-    [[ -n "$tool" ]] || return 0
+    if [[ -z "$tool" ]]; then
+        log_warn "$display installation may have failed"
+        return 0
+    fi
     module_id="$(acfs_module_id_for_verified_installer_tool "$tool" "stack")"
+    if acfs_legacy_module_is_required "$module_id"; then
+        reason="${ACFS_LAST_MODULE_FAILURE_REASON:-verified installer failed}"
+        ACFS_LAST_MODULE_FAILURE_REASON=""
+        log_error "$display installation failed ($module_id is a required module: $reason)"
+        ACFS_MODULE_FAILURES+=("$module_id ($reason)")
+        return 0
+    fi
+    log_warn "$display installation may have failed"
     record_skipped_tool "$module_id" "verified installer failed"
     return 0
 }
@@ -10494,8 +10525,14 @@ UNIT_EOF
         try_step "Installing Brenner Bot" acfs_run_verified_upstream_script_as_target "brenner_bot" "bash" --skip-cass || acfs_optional_module_install_failed "brenner_bot" "Brenner Bot"
     fi
 
+    # Required modules that acfs_optional_module_install_failed recorded above
+    # keep their call sites non-fatal (set -e), so fold them into the phase
+    # result here: the phase reports failure and is retried on resume.
+    if [[ "$stack_phase_rc" -eq 0 ]] && (( ${#ACFS_MODULE_FAILURES[@]} > stack_failures_before )); then
+        stack_phase_rc=1
+    fi
     if [[ "$stack_phase_rc" -ne 0 ]]; then
-        log_warn "Stack phase finished with generated-module failures (see summary); the phase will be retried on resume"
+        log_warn "Stack phase finished with module failures (see summary); the phase will be retried on resume"
         return 1
     fi
     log_success "Agent Flywheel stack installed"

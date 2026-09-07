@@ -32,6 +32,10 @@ trap 'rm -rf "$STATE_TMP"' EXIT
     set -euo pipefail
     export ACFS_MONITOR_STATE="$STATE_TMP/state"
     export ACFS_MONITOR_REPO="$STATE_TMP/does-not-exist"
+    # The alert path also pushes to ntfy when this is set; gh is stubbed below
+    # but curl is not, so a maintainer shell that exports the topic must not
+    # send a live notification from a unit test.
+    unset ACFS_NTFY_TOPIC
     ACFS_MONITOR_LIBRARY_ONLY=1
     # shellcheck source=../checksum-monitor-local.sh
     source "$MONITOR"
